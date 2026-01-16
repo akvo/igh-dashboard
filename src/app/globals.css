@@ -1,26 +1,269 @@
 @import "tailwindcss";
 
+/* ============================================
+   IGH Dashboard - Global Theme
+   Based on design system color palette
+   ============================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf6eb;
+  --foreground: #262626;
 }
 
 @theme inline {
+  /* Base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-public-sans);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* ==========================================
+     PRIMARY - Orange
+     ========================================== */
+  --color-orange-50: #fff1ed;
+  --color-orange-100: #ffd4c7;
+  --color-orange-200: #ffbfab;
+  --color-orange-300: #fea285;
+  --color-orange-400: #fe906d;
+  --color-orange-500: #fe7449;
+  --color-orange-600: #e76a42;
+  --color-orange-700: #b45234;
+  --color-orange-800: #8c4028;
+  --color-orange-900: #6b311f;
+
+  /* ==========================================
+     SECONDARY - Warm White / Cream
+     ========================================== */
+  --color-cream-50: #fffefd;
+  --color-cream-100: #fefcf9;
+  --color-cream-200: #fdfbf6;
+  --color-cream-300: #fcf9f2;
+  --color-cream-400: #fcf8ef;
+  --color-cream-500: #fbf6eb;
+  --color-cream-600: #e4e0d6;
+  --color-cream-700: #b2afa7;
+  --color-cream-800: #8a8781;
+  --color-cream-900: #696763;
+
+  /* ==========================================
+     FUNCTIONAL - Green (Success)
+     ========================================== */
+  --color-green-50: #f4fbf6;
+  --color-green-100: #dcf2e4;
+  --color-green-200: #cbecd7;
+  --color-green-300: #b3e4c5;
+  --color-green-400: #a4deba;
+  --color-green-500: #8dd6a9;
+  --color-green-600: #80c39a;
+  --color-green-700: #649878;
+  --color-green-800: #4e765d;
+  --color-green-900: #3b5a47;
+
+  /* ==========================================
+     FUNCTIONAL - Blue (Info)
+     ========================================== */
+  --color-blue-50: #f4fafc;
+  --color-blue-100: #deeef4;
+  --color-blue-200: #cee6ef;
+  --color-blue-300: #b7dbe8;
+  --color-blue-400: #a9d4e4;
+  --color-blue-500: #94c9dd;
+  --color-blue-600: #87b7c9;
+  --color-blue-700: #698f9d;
+  --color-blue-800: #516f7a;
+  --color-blue-900: #3e545d;
+
+  /* ==========================================
+     FUNCTIONAL - Yellow (Warning)
+     ========================================== */
+  --color-yellow-50: #fef8ee;
+  --color-yellow-100: #fae8cb;
+  --color-yellow-200: #f8ddb1;
+  --color-yellow-300: #f5cd8e;
+  --color-yellow-400: #f3c378;
+  --color-yellow-500: #f0b456;
+  --color-yellow-600: #daa44e;
+  --color-yellow-700: #aa803d;
+  --color-yellow-800: #84632f;
+  --color-yellow-900: #654c24;
+
+  /* ==========================================
+     NEUTRALS - Black (with opacity)
+     ========================================== */
+  --color-black: #262626;
+  --color-black-4: rgba(38, 38, 38, 0.04);
+  --color-black-7: rgba(38, 38, 38, 0.07);
+  --color-black-12: rgba(38, 38, 38, 0.12);
+  --color-black-16: rgba(38, 38, 38, 0.16);
+  --color-black-24: rgba(38, 38, 38, 0.24);
+  --color-black-32: rgba(38, 38, 38, 0.32);
+  --color-black-48: rgba(38, 38, 38, 0.48);
+  --color-black-56: rgba(38, 38, 38, 0.56);
+  --color-black-64: rgba(38, 38, 38, 0.64);
+  --color-black-72: rgba(38, 38, 38, 0.72);
+  --color-black-88: rgba(38, 38, 38, 0.88);
+
+  /* ==========================================
+     NEUTRALS - White (with opacity)
+     ========================================== */
+  --color-white: #ffffff;
+  --color-white-4: rgba(255, 255, 255, 0.04);
+  --color-white-7: rgba(255, 255, 255, 0.07);
+  --color-white-12: rgba(255, 255, 255, 0.12);
+  --color-white-16: rgba(255, 255, 255, 0.16);
+  --color-white-24: rgba(255, 255, 255, 0.24);
+  --color-white-32: rgba(255, 255, 255, 0.32);
+  --color-white-48: rgba(255, 255, 255, 0.48);
+  --color-white-56: rgba(255, 255, 255, 0.56);
+  --color-white-64: rgba(255, 255, 255, 0.64);
+  --color-white-72: rgba(255, 255, 255, 0.72);
+  --color-white-88: rgba(255, 255, 255, 0.88);
+
+  /* ==========================================
+     DATA VISUALIZATION - Chart Colors
+     ========================================== */
+  /* Primary chart palette */
+  --color-chart-orange: #fe7449;
+  --color-chart-yellow: #f0b456;
+  --color-chart-purple: #cbafde;
+  --color-chart-brown: #b08888;
+  --color-chart-beige: #e3d6c1;
+  --color-chart-peach: #f9a78d;
+  --color-chart-pink: #ffdcd1;
+  --color-chart-gold: #cc9949;
+  --color-chart-teal: #6ab085;
+  --color-chart-blue: #54a5c4;
+  --color-chart-violet: #b28fc9;
+
+  /* Secondary chart palette */
+  --color-chart-dark-brown: #875252;
+  --color-chart-tan: #bfab8a;
+  --color-chart-rust: #ad5133;
+  --color-chart-mint: #c8dcd0;
+  --color-chart-sky: #a6c4cf;
+  --color-chart-cream: #e5c78a;
+  --color-chart-lavender: #d9cae3;
+  --color-chart-rose: #d6c6c6;
+  --color-chart-sand: #f2e8d8;
+
+  /* ==========================================
+     R&D PHASE COLORS (for pipeline charts)
+     ========================================== */
+  --color-phase-preclinical: #8c4028;
+  --color-phase-1: #fe7449;
+  --color-phase-2: #fdba74;
+  --color-phase-3: #ddd6fe;
+  --color-phase-4: #f0b456;
+  --color-phase-approved: #a78bfa;
+
+  /* ==========================================
+     SEMANTIC COLORS
+     ========================================== */
+  --color-primary: #fe7449;
+  --color-primary-hover: #e76a42;
+  --color-primary-active: #b45234;
+
+  --color-success: #8dd6a9;
+  --color-success-dark: #649878;
+
+  --color-warning: #f0b456;
+  --color-warning-dark: #aa803d;
+
+  --color-info: #94c9dd;
+  --color-info-dark: #698f9d;
+
+  --color-error: #e76a42;
+  --color-error-dark: #8c4028;
+
+  /* ==========================================
+     COMPONENT TOKENS
+     ========================================== */
+  /* Cards */
+  --color-card-bg: #ffffff;
+  --color-card-border: rgba(38, 38, 38, 0.12);
+
+  /* Sidebar */
+  --color-sidebar-bg: #ffffff;
+  --color-sidebar-active: #fff1ed;
+  --color-sidebar-hover: #fef8ee;
+
+  /* Table */
+  --color-table-header: #fcf9f2;
+  --color-table-row-hover: #fef8ee;
+  --color-table-border: rgba(38, 38, 38, 0.12);
+
+  /* Inputs */
+  --color-input-bg: #ffffff;
+  --color-input-border: rgba(38, 38, 38, 0.24);
+  --color-input-focus: #fe7449;
+
+  /* Chips */
+  --color-chip-active-bg: #fe7449;
+  --color-chip-active-text: #ffffff;
+  --color-chip-inactive-bg: #fcf9f2;
+  --color-chip-inactive-text: #262626;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-public-sans), system-ui, sans-serif;
 }
+
+/* ==========================================
+   TYPOGRAPHY SCALE - Public Sans
+   Based on design system typography
+   ========================================== */
+
+/* Display styles */
+.display-1 { font-size: 72px; line-height: 1.1; letter-spacing: -0.02em; }
+.display-2 { font-size: 60px; line-height: 1.1; letter-spacing: -0.02em; }
+.display-3 { font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; }
+
+/* Heading styles */
+.heading-1, h1 { font-size: 40px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-2, h2 { font-size: 36px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-3, h3 { font-size: 32px; line-height: 1.25; }
+.heading-4, h4 { font-size: 28px; line-height: 1.3; }
+.heading-5, h5 { font-size: 24px; line-height: 1.35; }
+.heading-6, h6 { font-size: 20px; line-height: 1.4; }
+
+/* Title styles */
+.title-1 { font-size: 18px; line-height: 1.4; }
+.title-2 { font-size: 16px; line-height: 1.5; }
+
+/* Body styles */
+.body-1 { font-size: 16px; line-height: 1.5; }
+.body-2 { font-size: 14px; line-height: 1.5; }
+
+/* Paragraph */
+.para { font-size: 16px; line-height: 1.6; }
+
+/* Caption styles */
+.caption-1 { font-size: 12px; line-height: 1.4; }
+.caption-2 { font-size: 11px; line-height: 1.4; }
+
+/* Overline */
+.overline {
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Font weight utilities */
+.font-normal { font-weight: 400; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* ==========================================
+   UTILITY CLASSES
+   ========================================== */
+
+/* Phase badge colors */
+.badge-preclinical { background-color: var(--color-phase-preclinical); color: white; }
+.badge-phase-1 { background-color: var(--color-phase-1); color: white; }
+.badge-phase-2 { background-color: var(--color-phase-2); color: var(--color-black); }
+.badge-phase-3 { background-color: var(--color-phase-3); color: var(--color-black); }
+.badge-phase-4 { background-color: var(--color-phase-4); color: var(--color-black); }
+.badge-approved { background-color: var(--color-phase-approved); color: white; }
