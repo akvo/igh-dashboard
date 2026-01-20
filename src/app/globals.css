@@ -283,3 +283,16 @@ body {
 .badge-phase-3 { background-color: var(--color-phase-3); color: var(--color-black); }
 .badge-phase-4 { background-color: var(--color-phase-4); color: var(--color-black); }
 .badge-approved { background-color: var(--color-phase-approved); color: white; }
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.button-spinner {
+  animation: spin 1s linear infinite;
+}
