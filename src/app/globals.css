@@ -182,9 +182,25 @@
   --color-card-border: rgba(38, 38, 38, 0.12);
 
   /* Sidebar */
-  --color-sidebar-bg: #ffffff;
-  --color-sidebar-active: #fff1ed;
-  --color-sidebar-hover: #fef8ee;
+  --color-sidebar-bg: #F9F9FA;
+  --color-sidebar-active: #ffffff;
+  --color-sidebar-hover: #ffffff;
+  --color-sidebar-section: #8C929C;
+  --color-sidebar-text: #5B616D;
+  --color-sidebar-text-active: #fe7449;
+  --color-sidebar-icon: #AFB3BB;
+
+  /* Gray scale (UI elements) */
+  --color-gray-50: #F9F9FA;
+  --color-gray-100: #F3F4F6;
+  --color-gray-200: #E5E7EB;
+  --color-gray-300: #D1D5DB;
+  --color-gray-400: #9CA3AF;
+  --color-gray-500: #8C929C;
+  --color-gray-600: #5B616D;
+  --color-gray-700: #374151;
+  --color-gray-800: #1F2937;
+  --color-gray-900: #111827;
 
   /* Table */
   --color-table-header: #fcf9f2;
