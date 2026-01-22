@@ -11,11 +11,11 @@ const Header = ({
   className = '',
 }) => {
   return (
-    <header className={`flex items-center justify-between px-10 h-[72px] bg-black border-b-2 border-orange-500 ${className}`}>
+    <header className={`flex items-center justify-between px-4 sm:px-6 lg:px-10 h-[72px] bg-black border-b-2 border-orange-500 ${className}`}>
       <div className="flex items-center gap-3">
         {logo || <DefaultLogo />}
       </div>
-      <nav className="flex items-center gap-2">
+      <nav className="hidden md:flex items-center gap-2">
         {navItems.map((item) => (
           <NavItem
             key={item.label}
@@ -27,6 +27,14 @@ const Header = ({
           />
         ))}
       </nav>
+      {/* Mobile menu button */}
+      <button className="md:hidden border-none bg-transparent cursor-pointer p-2">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
     </header>
   );
 };
