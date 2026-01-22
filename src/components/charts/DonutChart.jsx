@@ -127,7 +127,7 @@ export default function DonutChart({
 
   return (
     <div
-      className={`w-full ${isHorizontal ? 'flex items-center' : ''} ${
+      className={`w-full overflow-hidden ${isHorizontal ? 'flex items-center' : ''} ${
         legendPosition === 'left' ? 'flex-row-reverse' : ''
       }`}
     >

@@ -236,12 +236,12 @@ body {
 .display-3 { font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; }
 
 /* Heading styles */
-.heading-1, h1 { font-size: 40px; line-height: 1.2; letter-spacing: -0.01em; }
-.heading-2, h2 { font-size: 36px; line-height: 1.2; letter-spacing: -0.01em; }
-.heading-3, h3 { font-size: 32px; line-height: 1.25; }
-.heading-4, h4 { font-size: 28px; line-height: 1.3; }
-.heading-5, h5 { font-size: 24px; line-height: 1.35; }
-.heading-6, h6 { font-size: 20px; line-height: 1.4; }
+.heading-1 { font-size: 40px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-2 { font-size: 36px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-3 { font-size: 32px; line-height: 1.25; }
+.heading-4 { font-size: 28px; line-height: 1.3; }
+.heading-5 { font-size: 24px; line-height: 1.35; }
+.heading-6 { font-size: 20px; line-height: 1.4; }
 
 /* Title styles */
 .title-1 { font-size: 18px; line-height: 1.4; }

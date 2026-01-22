@@ -106,7 +106,7 @@ export default function StackedBarChart({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-hidden">
       {showFilters && (
         <div className="flex flex-wrap gap-4 mb-6">
           {phases.map((phase) => (
@@ -169,8 +169,8 @@ export default function StackedBarChart({
             layout={layout}
             margin={{
               top: 10,
-              right: 20,
-              left: isHorizontalBars ? 80 : 20,
+              right: 10,
+              left: 5,
               bottom: xAxisLabel ? 40 : 20,
             }}
             barCategoryGap="20%"
@@ -197,8 +197,8 @@ export default function StackedBarChart({
                   dataKey={categoryKey}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 14 }}
-                  width={75}
+                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                  width={65}
                 />
               </>
             ) : (

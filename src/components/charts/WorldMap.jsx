@@ -125,7 +125,7 @@ export default function WorldMap({
 
   if (!geoData) {
     return (
-      <div className="w-full relative">
+      <div className="w-full relative overflow-hidden">
         <div
           style={{ height }}
           className="flex items-center justify-center bg-cream-100 rounded-lg"

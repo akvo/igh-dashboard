@@ -124,7 +124,7 @@ export default function BubbleChart({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full overflow-hidden">
       <div style={{ height: height - (showLegend ? 60 : 0) }}>
         <svg
           width="100%"
