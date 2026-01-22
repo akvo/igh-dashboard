@@ -20,15 +20,10 @@ const Dropdown = ({
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
+      setMenuPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width });
     }
   }, []);
 
-  // Update position when opening
   useEffect(() => {
     if (isOpen) {
       updatePosition();
@@ -41,7 +36,6 @@ const Dropdown = ({
     }
   }, [isOpen, updatePosition]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event) => {
@@ -76,18 +70,8 @@ const Dropdown = ({
     ? createPortal(
         <div
           ref={menuRef}
-          style={{
-            position: 'fixed',
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`,
-            width: `${menuPosition.width}px`,
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-            zIndex: 9999,
-            maxHeight: '240px',
-            overflowY: 'auto',
-          }}
+          className="fixed bg-white rounded-lg shadow-lg z-[9999] max-h-60 overflow-y-auto"
+          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px`, width: `${menuPosition.width}px` }}
         >
           {options.map((option, index) => {
             const optValue = typeof option === 'object' ? option.value : option;
@@ -99,24 +83,9 @@ const Dropdown = ({
                 key={optValue}
                 type="button"
                 onClick={() => handleSelect(option)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '10px 16px',
-                  fontSize: '14px',
-                  color: isSelected ? '#fe7449' : '#262626',
-                  backgroundColor: isSelected ? '#fff1ed' : 'transparent',
-                  border: 'none',
-                  borderBottom: index < options.length - 1 ? '1px solid #f3f4f6' : 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) e.currentTarget.style.backgroundColor = '#f9fafb';
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent';
-                }}
+                className={`block w-full px-4 py-2.5 text-sm text-left border-none cursor-pointer transition-colors
+                  ${isSelected ? 'text-orange-500 bg-orange-50' : 'text-black bg-transparent hover:bg-gray-50'}
+                  ${index < options.length - 1 ? 'border-b border-gray-100' : ''}`}
               >
                 {optLabel}
               </button>
@@ -128,42 +97,18 @@ const Dropdown = ({
     : null;
 
   return (
-    <div className={className} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className={`flex flex-col gap-2 ${className}`}>
       {label && (
-        <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '400' }}>
-          {label}
-        </span>
+        <span className="text-sm text-gray-500 font-normal">{label}</span>
       )}
       <button
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          padding: '12px 16px',
-          fontSize: '16px',
-          fontWeight: '400',
-          color: '#262626',
-          backgroundColor: '#F2F2F4',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
+        className="flex items-center justify-between w-full px-4 py-3 text-base font-normal text-black bg-gray-100 border-none rounded-lg cursor-pointer text-left"
       >
         <span>{displayValue}</span>
-        <ChevronDownIcon
-          style={{
-            width: '20px',
-            height: '20px',
-            color: '#6b7280',
-            transition: 'transform 0.2s ease',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
-        />
+        <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {menu}
     </div>

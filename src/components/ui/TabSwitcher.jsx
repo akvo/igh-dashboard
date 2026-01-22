@@ -1,33 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-
 const TabSwitcher = ({
   tabs = [],
   activeTab,
   onChange,
   className = '',
 }) => {
-  const [hoveredIndex, setHoveredIndex] = useState(null);
-
   return (
-    <div
-      className={className}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        backgroundColor: '#F2F2F4',
-        borderRadius: '10px',
-        padding: '4px',
-        gap: '4px',
-      }}
-    >
-      {tabs.map((tab, index) => {
+    <div className={`inline-flex items-center bg-gray-100 rounded-[10px] p-1 gap-1 ${className}`}>
+      {tabs.map((tab) => {
         const tabValue = typeof tab === 'object' ? tab.value : tab;
         const tabLabel = typeof tab === 'object' ? tab.label : tab;
         const TabIcon = typeof tab === 'object' ? tab.icon : null;
         const isActive = tabValue === activeTab;
-        const isHovered = hoveredIndex === index && !isActive;
         const iconOnly = TabIcon && !tabLabel;
 
         return (
@@ -35,32 +20,17 @@ const TabSwitcher = ({
             key={tabValue}
             type="button"
             onClick={() => onChange && onChange(tabValue)}
-            onMouseEnter={() => setHoveredIndex(index)}
-            onMouseLeave={() => setHoveredIndex(null)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: tabLabel ? '8px' : '0',
-              padding: iconOnly ? '10px' : '10px 20px',
-              fontSize: '14px',
-              fontWeight: isActive ? '500' : '400',
-              color: isActive ? '#262626' : '#9ca3af',
-              backgroundColor: isActive ? '#ffffff' : isHovered ? 'rgba(255,255,255,0.5)' : 'transparent',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.08)' : 'none',
-              whiteSpace: 'nowrap',
-            }}
+            className={`inline-flex items-center whitespace-nowrap border-none cursor-pointer transition-all duration-200 rounded-lg text-sm
+              ${tabLabel ? 'gap-2' : 'gap-0'}
+              ${iconOnly ? 'p-2.5' : 'px-5 py-2.5'}
+              ${isActive
+                ? 'bg-white text-black font-medium shadow-sm'
+                : 'bg-transparent text-gray-400 font-normal hover:bg-white/50'
+              }`}
           >
             {TabIcon && (
               <TabIcon
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  color: isActive ? '#262626' : '#9ca3af',
-                }}
+                className={`w-[18px] h-[18px] ${isActive ? 'text-black' : 'text-gray-400'}`}
                 strokeWidth={2}
               />
             )}

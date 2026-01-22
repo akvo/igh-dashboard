@@ -60,7 +60,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${publicSans.variable} antialiased`}>
-        <Header navItems={navItems} />
+        <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
+          <Header navItems={navItems} />
+        </div>
         {children}
       </body>
     </html>

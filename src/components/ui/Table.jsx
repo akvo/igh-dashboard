@@ -17,21 +17,7 @@ const ExploreLink = ({ href, onClick, children = 'Explore' }) => {
     <a
       href={href || '#'}
       onClick={onClick ? handleClick : undefined}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        color: '#fe7449',
-        fontSize: '14px',
-        textDecoration: 'none',
-        cursor: 'pointer',
-        whiteSpace: 'nowrap',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.textDecoration = 'underline';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.textDecoration = 'none';
-      }}
+      className="inline-flex items-center text-orange-500 text-sm no-underline cursor-pointer whitespace-nowrap hover:underline"
     >
       {children}
       <svg
@@ -43,7 +29,7 @@ const ExploreLink = ({ href, onClick, children = 'Explore' }) => {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        style={{ marginLeft: '4px', flexShrink: 0 }}
+        className="ml-1 shrink-0"
       >
         <line x1="5" y1="12" x2="19" y2="12" />
         <polyline points="12 5 19 12 12 19" />
@@ -54,27 +40,18 @@ const ExploreLink = ({ href, onClick, children = 'Explore' }) => {
 
 // Empty state component
 const EmptyState = ({ title = 'No data found', description, onClear }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 16px' }}>
-    <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#fff1ed', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
-      <SearchIcon style={{ width: '32px', height: '32px', color: '#ffa07a' }} strokeWidth={1.5} />
+  <div className="flex flex-col items-center justify-center py-16 px-4">
+    <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-4">
+      <SearchIcon className="w-8 h-8 text-orange-300" strokeWidth={1.5} />
     </div>
-    <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#262626', marginBottom: '8px' }}>{title}</h3>
+    <h3 className="text-lg font-semibold text-black mb-2">{title}</h3>
     {description && (
-      <p style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center', marginBottom: '16px', maxWidth: '320px' }}>{description}</p>
+      <p className="text-sm text-gray-500 text-center mb-4 max-w-xs">{description}</p>
     )}
     {onClear && (
       <button
         onClick={onClear}
-        style={{
-          padding: '8px 16px',
-          fontSize: '14px',
-          fontWeight: '500',
-          color: '#fe7449',
-          border: '1px solid #fe7449',
-          borderRadius: '8px',
-          backgroundColor: 'transparent',
-          cursor: 'pointer',
-        }}
+        className="px-4 py-2 text-sm font-medium text-orange-500 border border-orange-500 rounded-lg bg-transparent cursor-pointer"
       >
         Clear search
       </button>
@@ -102,45 +79,28 @@ const Pagination = ({
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderTop: '1px solid #e5e7eb' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+      <div className="flex items-center gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          style={{
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '4px',
-            backgroundColor: '#f3f4f6',
-            border: 'none',
-            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-            opacity: currentPage === 1 ? 0.4 : 1,
-          }}
+          className={`w-8 h-8 flex items-center justify-center rounded bg-gray-100 border-none ${currentPage === 1 ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
         >
-          <ChevronLeftIcon style={{ width: '16px', height: '16px', color: '#4b5563' }} />
+          <ChevronLeftIcon className="w-4 h-4 text-gray-600" />
         </button>
 
         {getPageNumbers().map((page, index) =>
           page === '...' ? (
-            <span key={`ellipsis-${index}`} style={{ padding: '0 4px', color: '#9ca3af', fontSize: '14px' }}>...</span>
+            <span key={`ellipsis-${index}`} className="px-1 text-gray-400 text-sm">...</span>
           ) : (
             <button
               key={page}
               onClick={() => onPageChange(page)}
-              style={{
-                width: '32px',
-                height: '32px',
-                fontSize: '14px',
-                borderRadius: '4px',
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: currentPage === page ? '#fe7449' : 'transparent',
-                color: currentPage === page ? '#ffffff' : '#4b5563',
-                fontWeight: currentPage === page ? '500' : '400',
-              }}
+              className={`w-8 h-8 text-sm rounded border-none cursor-pointer ${
+                currentPage === page
+                  ? 'bg-orange-500 text-white font-medium'
+                  : 'bg-transparent text-gray-600 font-normal'
+              }`}
             >
               {page}
             </button>
@@ -150,50 +110,25 @@ const Pagination = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          style={{
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '4px',
-            backgroundColor: '#f3f4f6',
-            border: 'none',
-            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-            opacity: currentPage === totalPages ? 0.4 : 1,
-          }}
+          className={`w-8 h-8 flex items-center justify-center rounded bg-gray-100 border-none ${currentPage === totalPages ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
         >
-          <ChevronRightIcon style={{ width: '16px', height: '16px', color: '#4b5563' }} />
+          <ChevronRightIcon className="w-4 h-4 text-gray-600" />
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '14px', color: '#6b7280' }}>Results per page:</span>
-        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-500">Results per page:</span>
+        <div className="relative inline-flex items-center">
           <select
             value={resultsPerPage}
             onChange={(e) => onResultsPerPageChange(Number(e.target.value))}
-            style={{
-              padding: '8px 32px 8px 12px',
-              fontSize: '14px',
-              border: 'none',
-              borderRadius: '8px',
-              backgroundColor: '#F2F2F4',
-              cursor: 'pointer',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
-              color: '#262626',
-              fontWeight: '500',
-            }}
+            className="appearance-none px-3 py-2 pr-8 text-sm border-none rounded-lg bg-gray-100 cursor-pointer text-black font-medium"
           >
             {resultsPerPageOptions.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
-          <ChevronDownIcon
-            style={{ position: 'absolute', right: '8px', pointerEvents: 'none', width: '16px', height: '16px', color: '#6b7280' }}
-          />
+          <ChevronDownIcon className="absolute right-2 w-4 h-4 text-gray-500 pointer-events-none" />
         </div>
       </div>
     </div>
@@ -242,7 +177,7 @@ export default function Table({
       case 'name-with-link':
         return (
           <div>
-            <div style={{ color: '#262626', marginBottom: '4px' }}>{value}</div>
+            <div className="text-black mb-1">{value}</div>
             <ExploreLink
               onClick={column.onClick ? () => column.onClick(value, row) : undefined}
               href={column.getHref ? column.getHref(value, row) : '#'}
@@ -263,53 +198,43 @@ export default function Table({
         );
 
       case 'number':
-        return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{typeof value === 'number' ? value.toLocaleString() : value}</span>;
+        return <span className="tabular-nums">{typeof value === 'number' ? value.toLocaleString() : value}</span>;
 
       case 'date':
-        if (!value) return <span style={{ color: '#9ca3af' }}>-</span>;
-        return <span style={{ color: '#4b5563', fontVariantNumeric: 'tabular-nums' }}>{new Date(value).toLocaleDateString()}</span>;
+        if (!value) return <span className="text-gray-400">-</span>;
+        return <span className="text-gray-600 tabular-nums">{new Date(value).toLocaleDateString()}</span>;
 
       case 'truncate':
         return (
-          <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: column.maxWidth || '200px' }} title={value}>
+          <span className="block overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: column.maxWidth || '200px' }} title={value}>
             {value || '-'}
           </span>
         );
 
       default:
-        return <span style={{ color: '#262626' }}>{value ?? '-'}</span>;
+        return <span className="text-black">{value ?? '-'}</span>;
     }
   };
 
   if (data.length === 0) {
     return (
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }} className={className}>
+      <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
         <EmptyState title={emptyState?.title} description={emptyState?.description} onClear={emptyState?.onClear} />
       </div>
     );
   }
 
   return (
-    <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }} className={className}>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
           <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.accessor}
-                  style={{
-                    padding: '14px 16px',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    fontWeight: '400',
-                    color: '#262626',
-                    backgroundColor: '#FEF8EE',
-                    borderBottom: '1px solid #e5e7eb',
-                    whiteSpace: 'nowrap',
-                    width: column.width,
-                    minWidth: column.minWidth,
-                  }}
+                  className="px-4 py-3.5 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200 whitespace-nowrap"
+                  style={{ width: column.width, minWidth: column.minWidth }}
                 >
                   {column.header}
                 </th>
@@ -321,20 +246,12 @@ export default function Table({
               <tr
                 key={row.id || rowIndex}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                style={{ cursor: onRowClick ? 'pointer' : 'default' }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fdfcfa'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                className={`${onRowClick ? 'cursor-pointer' : 'cursor-default'} hover:bg-cream-200 transition-colors`}
               >
                 {columns.map((column) => (
                   <td
                     key={column.accessor}
-                    style={{
-                      padding: '16px',
-                      fontSize: '14px',
-                      verticalAlign: 'top',
-                      borderBottom: '1px solid #e5e7eb',
-                      color: '#262626',
-                    }}
+                    className="px-4 py-4 text-sm align-top border-b border-gray-200 text-black"
                   >
                     {renderCell(row, column)}
                   </td>

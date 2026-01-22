@@ -55,7 +55,8 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`h-screen flex flex-col transition-all duration-300 bg-sidebar-bg ${
+      style={{ height: 'calc(100vh - 74px)', position: 'sticky', top: '74px' }}
+      className={`flex flex-col transition-all duration-300 bg-sidebar-bg ${
         isExpanded ? 'w-64' : 'w-16'
       }`}
     >

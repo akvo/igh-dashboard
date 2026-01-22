@@ -13,54 +13,22 @@ const StatCard = ({
   tooltip,
   className = '',
 }) => {
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [isInfoHovered, setIsInfoHovered] = useState(false);
 
   return (
-    <div
-      className={className}
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        border: '1px solid #e5e7eb',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-      }}
-    >
+    <div className={`bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-4 ${className}`}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#262626', margin: 0 }}>
-          {title}
-        </h3>
+      <div className="flex items-start justify-between">
+        <h3 className="text-base font-semibold text-black">{title}</h3>
         {tooltip && (
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <InfoIcon
-              style={{
-                width: '20px',
-                height: '20px',
-                color: '#9ca3af',
-                cursor: 'pointer',
-              }}
+              className="w-5 h-5 text-gray-400 cursor-pointer"
               onMouseEnter={() => setIsInfoHovered(true)}
               onMouseLeave={() => setIsInfoHovered(false)}
             />
             {isInfoHovered && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '28px',
-                  right: 0,
-                  backgroundColor: '#262626',
-                  color: '#ffffff',
-                  fontSize: '12px',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  whiteSpace: 'nowrap',
-                  zIndex: 10,
-                }}
-              >
+              <div className="absolute top-7 right-0 bg-black text-white text-xs px-3 py-2 rounded-md whitespace-nowrap z-10">
                 {tooltip}
               </div>
             )}
@@ -70,18 +38,16 @@ const StatCard = ({
 
       {/* Value */}
       <div>
-        <div style={{ fontSize: '40px', fontWeight: '800', color: '#262626', lineHeight: 1.2 }}>
+        <div className="text-[40px] font-extrabold text-black leading-tight">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </div>
         {description && (
-          <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '8px', margin: '8px 0 0 0' }}>
-            {description}
-          </p>
+          <p className="text-sm text-gray-500 mt-2">{description}</p>
         )}
       </div>
 
       {/* Button */}
-      {(buttonText) && (
+      {buttonText && (
         <a
           href={buttonHref || '#'}
           onClick={(e) => {
@@ -90,24 +56,7 @@ const StatCard = ({
               onButtonClick();
             }
           }}
-          style={{
-            display: 'block',
-            width: '100%',
-            padding: '12px 16px',
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#6b7280',
-            backgroundColor: isButtonHovered ? '#f9fafb' : 'transparent',
-            border: '1px solid #e5e7eb',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            textAlign: 'center',
-            textDecoration: 'none',
-            marginTop: '8px',
-            transition: 'background-color 0.2s ease',
-          }}
-          onMouseEnter={() => setIsButtonHovered(true)}
-          onMouseLeave={() => setIsButtonHovered(false)}
+          className="block w-full py-3 px-4 text-sm font-medium text-gray-600 bg-transparent border border-gray-200 rounded-lg cursor-pointer text-center no-underline mt-2 hover:bg-gray-50 transition-colors"
         >
           {buttonText}
         </a>

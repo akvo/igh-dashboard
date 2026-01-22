@@ -11,25 +11,11 @@ const Header = ({
   className = '',
 }) => {
   return (
-    <header
-      className={className}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 40px',
-        height: '72px',
-        backgroundColor: '#262626',
-        borderBottom: '2px solid #fe7449',
-      }}
-    >
-      {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <header className={`flex items-center justify-between px-10 h-[72px] bg-black border-b-2 border-orange-500 ${className}`}>
+      <div className="flex items-center gap-3">
         {logo || <DefaultLogo />}
       </div>
-
-      {/* Navigation */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <nav className="flex items-center gap-2">
         {navItems.map((item) => (
           <NavItem
             key={item.label}
@@ -55,20 +41,14 @@ const NavItem = ({ label, hasDropdown, href, onClick, items }) => {
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.left,
-      });
+      setMenuPosition({ top: rect.bottom + 4, left: rect.left });
     }
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      updatePosition();
-    }
+    if (isOpen) updatePosition();
   }, [isOpen, updatePosition]);
 
-  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event) => {
@@ -89,26 +69,18 @@ const NavItem = ({ label, hasDropdown, href, onClick, items }) => {
           ref={menuRef}
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => { setIsOpen(false); setIsHovered(false); }}
-          style={{
-            position: 'fixed',
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`,
-            minWidth: '180px',
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-            zIndex: 9999,
-            overflow: 'hidden',
-          }}
+          className="fixed min-w-[180px] bg-white rounded-lg shadow-lg z-[9999] overflow-hidden"
+          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
         >
           {items.map((subItem, index) => (
-            <DropdownItem
+            <a
               key={subItem.label}
-              label={subItem.label}
-              href={subItem.href}
-              onClick={subItem.onClick}
-              isLast={index === items.length - 1}
-            />
+              href={subItem.href || '#'}
+              onClick={(e) => { if (subItem.onClick) { e.preventDefault(); subItem.onClick(); } }}
+              className={`block px-4 py-2.5 text-sm text-black no-underline hover:bg-gray-50 transition-colors ${index < items.length - 1 ? 'border-b border-gray-100' : ''}`}
+            >
+              {subItem.label}
+            </a>
           ))}
         </div>,
         document.body
@@ -118,46 +90,18 @@ const NavItem = ({ label, hasDropdown, href, onClick, items }) => {
   return (
     <div
       ref={buttonRef}
-      style={{ position: 'relative' }}
+      className="relative"
       onMouseEnter={() => { setIsHovered(true); if (hasDropdown) setIsOpen(true); }}
       onMouseLeave={() => { setIsHovered(false); setIsOpen(false); }}
     >
       <a
         href={href || '#'}
-        onClick={(e) => {
-          if (onClick) {
-            e.preventDefault();
-            onClick();
-          }
-        }}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-          padding: '8px 16px',
-          fontSize: '14px',
-          fontWeight: '500',
-          color: '#ffffff',
-          textDecoration: 'none',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          borderRadius: '4px',
-          backgroundColor: isHovered ? 'rgba(255,255,255,0.08)' : 'transparent',
-          transition: 'background-color 0.2s ease',
-          whiteSpace: 'nowrap',
-        }}
+        onClick={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
+        className={`inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-white no-underline tracking-wider uppercase rounded whitespace-nowrap transition-colors ${isHovered ? 'bg-white/[0.08]' : 'bg-transparent'}`}
       >
         {label}
         {hasDropdown && (
-          <ChevronDownIcon
-            style={{
-              width: '14px',
-              height: '14px',
-              color: '#ffffff',
-              transition: 'transform 0.2s ease',
-              transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}
-          />
+          <ChevronDownIcon className={`w-3.5 h-3.5 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         )}
       </a>
       {menu}
@@ -165,54 +109,12 @@ const NavItem = ({ label, hasDropdown, href, onClick, items }) => {
   );
 };
 
-const DropdownItem = ({ label, href, onClick, isLast }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <a
-      href={href || '#'}
-      onClick={(e) => {
-        if (onClick) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        display: 'block',
-        padding: '10px 16px',
-        fontSize: '14px',
-        color: '#262626',
-        textDecoration: 'none',
-        backgroundColor: isHovered ? '#f9fafb' : 'transparent',
-        borderBottom: !isLast ? '1px solid #f3f4f6' : 'none',
-        transition: 'background-color 0.15s ease',
-      }}
-    >
-      {label}
-    </a>
-  );
-};
-
 const DefaultLogo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-    <div
-      style={{
-        width: '40px',
-        height: '40px',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: '6px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <span style={{ fontSize: '11px', color: '#ffffff', fontWeight: '600' }}>Logo</span>
+  <div className="flex items-center gap-3">
+    <div className="w-10 h-10 bg-white/20 rounded-md flex items-center justify-center">
+      <span className="text-[11px] text-white font-semibold">Logo</span>
     </div>
-    <span style={{ fontSize: '16px', fontWeight: '700', color: '#ffffff' }}>
-      Impact Global Health
-    </span>
+    <span className="text-base font-bold text-white">Impact Global Health</span>
   </div>
 );
 
