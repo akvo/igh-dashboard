@@ -145,8 +145,8 @@ export default function WorldMap({
         onMouseMove={handleMouseMove}
       >
         <g>
-          {geoData.features.map((country) => {
-            const countryId = String(country.id);
+          {geoData.features.map((country, index) => {
+            const countryId = country.id != null ? String(country.id) : `country-${index}`;
             const isHovered = hoveredCountry === countryId;
             return (
               <path

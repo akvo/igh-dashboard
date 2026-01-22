@@ -7,7 +7,7 @@ const TabSwitcher = ({
   className = '',
 }) => {
   return (
-    <div className={`inline-flex items-center bg-gray-100 rounded-[10px] p-1 gap-1 ${className}`}>
+    <div className={`inline-flex items-center bg-[#F2F2F4] rounded-[10px] p-1 gap-1 ${className}`}>
       {tabs.map((tab) => {
         const tabValue = typeof tab === 'object' ? tab.value : tab;
         const tabLabel = typeof tab === 'object' ? tab.label : tab;
