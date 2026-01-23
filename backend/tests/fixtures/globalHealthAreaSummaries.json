@@ -1,0 +1,22 @@
+{
+  "globalHealthAreaSummaries": [
+    {
+      "global_health_area": "Neglected disease",
+      "candidateCount": 3611,
+      "diseaseCount": 112,
+      "productCount": 7
+    },
+    {
+      "global_health_area": "Sexual & reproductive health",
+      "candidateCount": 2719,
+      "diseaseCount": 49,
+      "productCount": 7
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "candidateCount": 2233,
+      "diseaseCount": 53,
+      "productCount": 5
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "igh-olap-graphql-api",
+  "version": "1.0.0",
+  "description": "GraphQL API for Global Portfolio Overview dashboard",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run tests/dashboard.fixture.test.ts",
+    "test:e2e": "vitest run tests/dashboard.test.ts",
+    "test:all": "vitest run",
+    "test:watch": "vitest",
+    "test:capture": "npx tsx tests/fixtures/capture.ts"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.11.0",
+    "better-sqlite3": "^11.7.0",
+    "dataloader": "^2.2.3",
+    "graphql": "^16.9.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

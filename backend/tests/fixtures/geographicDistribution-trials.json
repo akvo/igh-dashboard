@@ -1,0 +1,361 @@
+{
+  "geographicDistribution": [
+    {
+      "country_key": 50,
+      "country_name": "South Africa",
+      "iso_code": "49",
+      "location_scope": "Trial Location",
+      "candidateCount": 11
+    },
+    {
+      "country_key": 54,
+      "country_name": "Tanzania",
+      "iso_code": "53",
+      "location_scope": "Trial Location",
+      "candidateCount": 11
+    },
+    {
+      "country_key": 29,
+      "country_name": "Kenya",
+      "iso_code": "28",
+      "location_scope": "Trial Location",
+      "candidateCount": 9
+    },
+    {
+      "country_key": 24,
+      "country_name": "India",
+      "iso_code": "23",
+      "location_scope": "Trial Location",
+      "candidateCount": 7
+    },
+    {
+      "country_key": 8,
+      "country_name": "Burkina Faso",
+      "iso_code": "7",
+      "location_scope": "Trial Location",
+      "candidateCount": 6
+    },
+    {
+      "country_key": 60,
+      "country_name": "United States of America",
+      "iso_code": "60",
+      "location_scope": "Trial Location",
+      "candidateCount": 6
+    },
+    {
+      "country_key": 40,
+      "country_name": "Peru",
+      "iso_code": "39",
+      "location_scope": "Trial Location",
+      "candidateCount": 5
+    },
+    {
+      "country_key": 150,
+      "country_name": "Mali",
+      "iso_code": "163",
+      "location_scope": "Trial Location",
+      "candidateCount": 5
+    },
+    {
+      "country_key": 6,
+      "country_name": "Brazil",
+      "iso_code": "5",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 55,
+      "country_name": "Thailand",
+      "iso_code": "54",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 116,
+      "country_name": "Georgia",
+      "iso_code": "126",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 134,
+      "country_name": "Kazakhstan",
+      "iso_code": "147",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 140,
+      "country_name": "Lesotho",
+      "iso_code": "153",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 158,
+      "country_name": "Mozambique",
+      "iso_code": "174",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 170,
+      "country_name": "Pakistan",
+      "iso_code": "188",
+      "location_scope": "Trial Location",
+      "candidateCount": 4
+    },
+    {
+      "country_key": 41,
+      "country_name": "Philippines",
+      "iso_code": "40",
+      "location_scope": "Trial Location",
+      "candidateCount": 3
+    },
+    {
+      "country_key": 58,
+      "country_name": "Uganda",
+      "iso_code": "58",
+      "location_scope": "Trial Location",
+      "candidateCount": 3
+    },
+    {
+      "country_key": 88,
+      "country_name": "Cambodia",
+      "iso_code": "92",
+      "location_scope": "Trial Location",
+      "candidateCount": 3
+    },
+    {
+      "country_key": 114,
+      "country_name": "Gabon",
+      "iso_code": "124",
+      "location_scope": "Trial Location",
+      "candidateCount": 3
+    },
+    {
+      "country_key": 129,
+      "country_name": "Indonesia",
+      "iso_code": "141",
+      "location_scope": "Trial Location",
+      "candidateCount": 3
+    },
+    {
+      "country_key": 2,
+      "country_name": "Argentina",
+      "iso_code": "1",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 9,
+      "country_name": "Canada",
+      "iso_code": "8",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 20,
+      "country_name": "Germany",
+      "iso_code": "19",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 59,
+      "country_name": "United Kingdom",
+      "iso_code": "59",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 75,
+      "country_name": "Bangladesh",
+      "iso_code": "77",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 84,
+      "country_name": "Botswana",
+      "iso_code": "86",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 147,
+      "country_name": "Malawi",
+      "iso_code": "160",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 165,
+      "country_name": "Nigeria",
+      "iso_code": "182",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 211,
+      "country_name": "Vietnam",
+      "iso_code": "240",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 213,
+      "country_name": "Zimbabwe",
+      "iso_code": "244",
+      "location_scope": "Trial Location",
+      "candidateCount": 2
+    },
+    {
+      "country_key": 5,
+      "country_name": "Belgium",
+      "iso_code": "4",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 15,
+      "country_name": "Democratic Republic of Congo",
+      "iso_code": "14",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 19,
+      "country_name": "France",
+      "iso_code": "18",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 35,
+      "country_name": "Mexico",
+      "iso_code": "34",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 46,
+      "country_name": "Russia",
+      "iso_code": "45",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 47,
+      "country_name": "Singapore",
+      "iso_code": "46",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 53,
+      "country_name": "Switzerland",
+      "iso_code": "52",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 61,
+      "country_name": "Zambia",
+      "iso_code": "61",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 96,
+      "country_name": "Congo",
+      "iso_code": "102",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 115,
+      "country_name": "Gambia",
+      "iso_code": "125",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 117,
+      "country_name": "Ghana",
+      "iso_code": "127",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 123,
+      "country_name": "Guinea",
+      "iso_code": "134",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 126,
+      "country_name": "Haiti",
+      "iso_code": "137",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 131,
+      "country_name": "Cote D`Ivoire (Ivory Coast)",
+      "iso_code": "144",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 138,
+      "country_name": "Laos",
+      "iso_code": "151",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 148,
+      "country_name": "Malaysia",
+      "iso_code": "161",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 156,
+      "country_name": "Mongolia",
+      "iso_code": "171",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 159,
+      "country_name": "Myanmar",
+      "iso_code": "175",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 164,
+      "country_name": "Niger",
+      "iso_code": "181",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 185,
+      "country_name": "Senegal",
+      "iso_code": "207",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    },
+    {
+      "country_key": 203,
+      "country_name": "Ukraine",
+      "iso_code": "230",
+      "location_scope": "Trial Location",
+      "candidateCount": 1
+    }
+  ]
+}

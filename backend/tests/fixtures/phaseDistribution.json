@@ -1,0 +1,148 @@
+{
+  "phaseDistribution": [
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Discovery",
+      "sort_order": 10,
+      "candidateCount": 15
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Preclinical",
+      "sort_order": 25,
+      "candidateCount": 205
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Early development (concept and research)",
+      "sort_order": 36,
+      "candidateCount": 25
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Early development (feasibility and planning)",
+      "sort_order": 37,
+      "candidateCount": 1
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Phase I",
+      "sort_order": 40,
+      "candidateCount": 111
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Phase II",
+      "sort_order": 50,
+      "candidateCount": 88
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Phase III",
+      "sort_order": 60,
+      "candidateCount": 85
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Late development (design and development)",
+      "sort_order": 72,
+      "candidateCount": 13
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Late development (clinical validation and launch readiness)",
+      "sort_order": 75,
+      "candidateCount": 56
+    },
+    {
+      "global_health_area": "Emerging infectious disease",
+      "phase_name": "Phase IV",
+      "sort_order": 90,
+      "candidateCount": 3
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Discovery",
+      "sort_order": 10,
+      "candidateCount": 46
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Primary and secondary screening and optimisation",
+      "sort_order": 20,
+      "candidateCount": 3
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Preclinical",
+      "sort_order": 25,
+      "candidateCount": 183
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Development",
+      "sort_order": 30,
+      "candidateCount": 5
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Early development (concept and research)",
+      "sort_order": 36,
+      "candidateCount": 53
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Early development (feasibility and planning)",
+      "sort_order": 37,
+      "candidateCount": 11
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Phase I",
+      "sort_order": 40,
+      "candidateCount": 154
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Phase II",
+      "sort_order": 50,
+      "candidateCount": 135
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Phase III",
+      "sort_order": 60,
+      "candidateCount": 47
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Late development (design and development)",
+      "sort_order": 72,
+      "candidateCount": 63
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Late development (clinical validation and launch readiness)",
+      "sort_order": 75,
+      "candidateCount": 102
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Regulatory filing",
+      "sort_order": 80,
+      "candidateCount": 1
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "PQ listing and regulatory approval",
+      "sort_order": 85,
+      "candidateCount": 2
+    },
+    {
+      "global_health_area": "Neglected disease",
+      "phase_name": "Phase IV",
+      "sort_order": 90,
+      "candidateCount": 2
+    }
+  ]
+}

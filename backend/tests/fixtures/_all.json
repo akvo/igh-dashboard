@@ -1,0 +1,1316 @@
+{
+  "portfolioKPIs": {
+    "portfolioKPIs": {
+      "totalDiseases": 215,
+      "totalCandidates": 8581,
+      "approvedProducts": 0
+    }
+  },
+  "globalHealthAreaSummaries": {
+    "globalHealthAreaSummaries": [
+      {
+        "global_health_area": "Neglected disease",
+        "candidateCount": 3611,
+        "diseaseCount": 112,
+        "productCount": 7
+      },
+      {
+        "global_health_area": "Sexual & reproductive health",
+        "candidateCount": 2719,
+        "diseaseCount": 49,
+        "productCount": 7
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "candidateCount": 2233,
+        "diseaseCount": 53,
+        "productCount": 5
+      }
+    ]
+  },
+  "geographicDistribution-trials": {
+    "geographicDistribution": [
+      {
+        "country_key": 50,
+        "country_name": "South Africa",
+        "iso_code": "49",
+        "location_scope": "Trial Location",
+        "candidateCount": 11
+      },
+      {
+        "country_key": 54,
+        "country_name": "Tanzania",
+        "iso_code": "53",
+        "location_scope": "Trial Location",
+        "candidateCount": 11
+      },
+      {
+        "country_key": 29,
+        "country_name": "Kenya",
+        "iso_code": "28",
+        "location_scope": "Trial Location",
+        "candidateCount": 9
+      },
+      {
+        "country_key": 24,
+        "country_name": "India",
+        "iso_code": "23",
+        "location_scope": "Trial Location",
+        "candidateCount": 7
+      },
+      {
+        "country_key": 8,
+        "country_name": "Burkina Faso",
+        "iso_code": "7",
+        "location_scope": "Trial Location",
+        "candidateCount": 6
+      },
+      {
+        "country_key": 60,
+        "country_name": "United States of America",
+        "iso_code": "60",
+        "location_scope": "Trial Location",
+        "candidateCount": 6
+      },
+      {
+        "country_key": 40,
+        "country_name": "Peru",
+        "iso_code": "39",
+        "location_scope": "Trial Location",
+        "candidateCount": 5
+      },
+      {
+        "country_key": 150,
+        "country_name": "Mali",
+        "iso_code": "163",
+        "location_scope": "Trial Location",
+        "candidateCount": 5
+      },
+      {
+        "country_key": 6,
+        "country_name": "Brazil",
+        "iso_code": "5",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 55,
+        "country_name": "Thailand",
+        "iso_code": "54",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 116,
+        "country_name": "Georgia",
+        "iso_code": "126",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 134,
+        "country_name": "Kazakhstan",
+        "iso_code": "147",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 140,
+        "country_name": "Lesotho",
+        "iso_code": "153",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 158,
+        "country_name": "Mozambique",
+        "iso_code": "174",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 170,
+        "country_name": "Pakistan",
+        "iso_code": "188",
+        "location_scope": "Trial Location",
+        "candidateCount": 4
+      },
+      {
+        "country_key": 41,
+        "country_name": "Philippines",
+        "iso_code": "40",
+        "location_scope": "Trial Location",
+        "candidateCount": 3
+      },
+      {
+        "country_key": 58,
+        "country_name": "Uganda",
+        "iso_code": "58",
+        "location_scope": "Trial Location",
+        "candidateCount": 3
+      },
+      {
+        "country_key": 88,
+        "country_name": "Cambodia",
+        "iso_code": "92",
+        "location_scope": "Trial Location",
+        "candidateCount": 3
+      },
+      {
+        "country_key": 114,
+        "country_name": "Gabon",
+        "iso_code": "124",
+        "location_scope": "Trial Location",
+        "candidateCount": 3
+      },
+      {
+        "country_key": 129,
+        "country_name": "Indonesia",
+        "iso_code": "141",
+        "location_scope": "Trial Location",
+        "candidateCount": 3
+      },
+      {
+        "country_key": 2,
+        "country_name": "Argentina",
+        "iso_code": "1",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 9,
+        "country_name": "Canada",
+        "iso_code": "8",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 20,
+        "country_name": "Germany",
+        "iso_code": "19",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 59,
+        "country_name": "United Kingdom",
+        "iso_code": "59",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 75,
+        "country_name": "Bangladesh",
+        "iso_code": "77",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 84,
+        "country_name": "Botswana",
+        "iso_code": "86",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 147,
+        "country_name": "Malawi",
+        "iso_code": "160",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 165,
+        "country_name": "Nigeria",
+        "iso_code": "182",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 211,
+        "country_name": "Vietnam",
+        "iso_code": "240",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 213,
+        "country_name": "Zimbabwe",
+        "iso_code": "244",
+        "location_scope": "Trial Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 5,
+        "country_name": "Belgium",
+        "iso_code": "4",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 15,
+        "country_name": "Democratic Republic of Congo",
+        "iso_code": "14",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 19,
+        "country_name": "France",
+        "iso_code": "18",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 35,
+        "country_name": "Mexico",
+        "iso_code": "34",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 46,
+        "country_name": "Russia",
+        "iso_code": "45",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 47,
+        "country_name": "Singapore",
+        "iso_code": "46",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 53,
+        "country_name": "Switzerland",
+        "iso_code": "52",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 61,
+        "country_name": "Zambia",
+        "iso_code": "61",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 96,
+        "country_name": "Congo",
+        "iso_code": "102",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 115,
+        "country_name": "Gambia",
+        "iso_code": "125",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 117,
+        "country_name": "Ghana",
+        "iso_code": "127",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 123,
+        "country_name": "Guinea",
+        "iso_code": "134",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 126,
+        "country_name": "Haiti",
+        "iso_code": "137",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 131,
+        "country_name": "Cote D`Ivoire (Ivory Coast)",
+        "iso_code": "144",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 138,
+        "country_name": "Laos",
+        "iso_code": "151",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 148,
+        "country_name": "Malaysia",
+        "iso_code": "161",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 156,
+        "country_name": "Mongolia",
+        "iso_code": "171",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 159,
+        "country_name": "Myanmar",
+        "iso_code": "175",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 164,
+        "country_name": "Niger",
+        "iso_code": "181",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 185,
+        "country_name": "Senegal",
+        "iso_code": "207",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 203,
+        "country_name": "Ukraine",
+        "iso_code": "230",
+        "location_scope": "Trial Location",
+        "candidateCount": 1
+      }
+    ]
+  },
+  "geographicDistribution-dev": {
+    "geographicDistribution": [
+      {
+        "country_key": 25,
+        "country_name": "Ireland",
+        "iso_code": "24",
+        "location_scope": "Developer Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 59,
+        "country_name": "United Kingdom",
+        "iso_code": "59",
+        "location_scope": "Developer Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 60,
+        "country_name": "United States of America",
+        "iso_code": "60",
+        "location_scope": "Developer Location",
+        "candidateCount": 2
+      },
+      {
+        "country_key": 3,
+        "country_name": "Australia",
+        "iso_code": "2",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 10,
+        "country_name": "China",
+        "iso_code": "9",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 16,
+        "country_name": "Denmark",
+        "iso_code": "15",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 52,
+        "country_name": "Sweden",
+        "iso_code": "51",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 55,
+        "country_name": "Thailand",
+        "iso_code": "54",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 75,
+        "country_name": "Bangladesh",
+        "iso_code": "77",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 117,
+        "country_name": "Ghana",
+        "iso_code": "127",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 185,
+        "country_name": "Senegal",
+        "iso_code": "207",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 195,
+        "country_name": "Taiwan",
+        "iso_code": "221",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      },
+      {
+        "country_key": 215,
+        "country_name": "Iran",
+        "iso_code": "246",
+        "location_scope": "Developer Location",
+        "candidateCount": 1
+      }
+    ]
+  },
+  "phaseDistribution": {
+    "phaseDistribution": [
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Discovery",
+        "sort_order": 10,
+        "candidateCount": 15
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Preclinical",
+        "sort_order": 25,
+        "candidateCount": 205
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Early development (concept and research)",
+        "sort_order": 36,
+        "candidateCount": 25
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Early development (feasibility and planning)",
+        "sort_order": 37,
+        "candidateCount": 1
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Phase I",
+        "sort_order": 40,
+        "candidateCount": 111
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Phase II",
+        "sort_order": 50,
+        "candidateCount": 88
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Phase III",
+        "sort_order": 60,
+        "candidateCount": 85
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Late development (design and development)",
+        "sort_order": 72,
+        "candidateCount": 13
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Late development (clinical validation and launch readiness)",
+        "sort_order": 75,
+        "candidateCount": 56
+      },
+      {
+        "global_health_area": "Emerging infectious disease",
+        "phase_name": "Phase IV",
+        "sort_order": 90,
+        "candidateCount": 3
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Discovery",
+        "sort_order": 10,
+        "candidateCount": 46
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Primary and secondary screening and optimisation",
+        "sort_order": 20,
+        "candidateCount": 3
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Preclinical",
+        "sort_order": 25,
+        "candidateCount": 183
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Development",
+        "sort_order": 30,
+        "candidateCount": 5
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Early development (concept and research)",
+        "sort_order": 36,
+        "candidateCount": 53
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Early development (feasibility and planning)",
+        "sort_order": 37,
+        "candidateCount": 11
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase I",
+        "sort_order": 40,
+        "candidateCount": 154
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase II",
+        "sort_order": 50,
+        "candidateCount": 135
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase III",
+        "sort_order": 60,
+        "candidateCount": 47
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Late development (design and development)",
+        "sort_order": 72,
+        "candidateCount": 63
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Late development (clinical validation and launch readiness)",
+        "sort_order": 75,
+        "candidateCount": 102
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Regulatory filing",
+        "sort_order": 80,
+        "candidateCount": 1
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "PQ listing and regulatory approval",
+        "sort_order": 85,
+        "candidateCount": 2
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase IV",
+        "sort_order": 90,
+        "candidateCount": 2
+      }
+    ]
+  },
+  "phaseDistribution-filtered": {
+    "phaseDistribution": [
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Discovery",
+        "sort_order": 10,
+        "candidateCount": 46
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Primary and secondary screening and optimisation",
+        "sort_order": 20,
+        "candidateCount": 3
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Preclinical",
+        "sort_order": 25,
+        "candidateCount": 183
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Development",
+        "sort_order": 30,
+        "candidateCount": 5
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Early development (concept and research)",
+        "sort_order": 36,
+        "candidateCount": 53
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Early development (feasibility and planning)",
+        "sort_order": 37,
+        "candidateCount": 11
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase I",
+        "sort_order": 40,
+        "candidateCount": 154
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase II",
+        "sort_order": 50,
+        "candidateCount": 135
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase III",
+        "sort_order": 60,
+        "candidateCount": 47
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Late development (design and development)",
+        "sort_order": 72,
+        "candidateCount": 63
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Late development (clinical validation and launch readiness)",
+        "sort_order": 75,
+        "candidateCount": 102
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Regulatory filing",
+        "sort_order": 80,
+        "candidateCount": 1
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "PQ listing and regulatory approval",
+        "sort_order": 85,
+        "candidateCount": 2
+      },
+      {
+        "global_health_area": "Neglected disease",
+        "phase_name": "Phase IV",
+        "sort_order": 90,
+        "candidateCount": 2
+      }
+    ]
+  },
+  "filterOptions": {
+    "products": [
+      {
+        "product_key": 91,
+        "product_name": "Adjunct/associated complications"
+      },
+      {
+        "product_key": 54,
+        "product_name": "Adjuvants and immunomodulators"
+      },
+      {
+        "product_key": 67,
+        "product_name": "Adulticidal oviposition and larvicidal traps"
+      },
+      {
+        "product_key": 72,
+        "product_name": "Attractive targeted sugar bait"
+      },
+      {
+        "product_key": 69,
+        "product_name": "Auto-dissemination devices"
+      },
+      {
+        "product_key": 106,
+        "product_name": "BP monitoring"
+      },
+      {
+        "product_key": 82,
+        "product_name": "Bioactive peptide"
+      },
+      {
+        "product_key": 36,
+        "product_name": "Biological vector control products"
+      },
+      {
+        "product_key": 32,
+        "product_name": "Biologics"
+      },
+      {
+        "product_key": 55,
+        "product_name": "Broad-spectrum antivirals"
+      },
+      {
+        "product_key": 35,
+        "product_name": "Chemical vector control products"
+      },
+      {
+        "product_key": 8,
+        "product_name": "Chemoprophylaxis"
+      },
+      {
+        "product_key": 90,
+        "product_name": "Control blood loss"
+      },
+      {
+        "product_key": 78,
+        "product_name": "Deactivated - Bioactive compounds"
+      },
+      {
+        "product_key": 79,
+        "product_name": "Deactivated - Microbial interventions"
+      },
+      {
+        "product_key": 88,
+        "product_name": "Devices"
+      },
+      {
+        "product_key": 17,
+        "product_name": "Diagnosis"
+      },
+      {
+        "product_key": 18,
+        "product_name": "Diagnosis (confirmatory)"
+      },
+      {
+        "product_key": 34,
+        "product_name": "Diagnostics"
+      },
+      {
+        "product_key": 89,
+        "product_name": "Dietary supplements"
+      },
+      {
+        "product_key": 101,
+        "product_name": "Digital/algorithm based approaches"
+      },
+      {
+        "product_key": 60,
+        "product_name": "Drug delivery technologies and devices"
+      },
+      {
+        "product_key": 51,
+        "product_name": "Drug susceptibility"
+      },
+      {
+        "product_key": 30,
+        "product_name": "Drugs"
+      },
+      {
+        "product_key": 97,
+        "product_name": "EHG/EMG"
+      },
+      {
+        "product_key": 26,
+        "product_name": "Endectocides"
+      },
+      {
+        "product_key": 87,
+        "product_name": "FMT"
+      },
+      {
+        "product_key": 92,
+        "product_name": "Fatty acids"
+      },
+      {
+        "product_key": 95,
+        "product_name": "Fermented foods"
+      },
+      {
+        "product_key": 59,
+        "product_name": "General diagnostic platforms"
+      },
+      {
+        "product_key": 61,
+        "product_name": "General diagnostic platforms"
+      },
+      {
+        "product_key": 24,
+        "product_name": "Genetic manipulation"
+      },
+      {
+        "product_key": 85,
+        "product_name": "Glycans"
+      },
+      {
+        "product_key": 70,
+        "product_name": "IRS (Non-pyrethroid)"
+      },
+      {
+        "product_key": 2,
+        "product_name": "IRS (Pyrethroid only)"
+      },
+      {
+        "product_key": 74,
+        "product_name": "IRS + ITN"
+      },
+      {
+        "product_key": 71,
+        "product_name": "ITNs (Non-pyrethroid)"
+      },
+      {
+        "product_key": 3,
+        "product_name": "ITNs (Pyrethroid only)"
+      },
+      {
+        "product_key": 23,
+        "product_name": "ITNs (Pyrethroid plus insect growth regulator)"
+      },
+      {
+        "product_key": 22,
+        "product_name": "ITNs (Pyrethroid – chlorfenapyr)"
+      },
+      {
+        "product_key": 21,
+        "product_name": "ITNs (Pyrethroid–PBO)"
+      },
+      {
+        "product_key": 47,
+        "product_name": "Immunoglobulin products - animal plasma/serum derived"
+      },
+      {
+        "product_key": 48,
+        "product_name": "Immunoglobulin products - recombinant"
+      },
+      {
+        "product_key": 80,
+        "product_name": "Individual biomarker tests"
+      },
+      {
+        "product_key": 68,
+        "product_name": "Lethal house lures"
+      },
+      {
+        "product_key": 100,
+        "product_name": "MRI"
+      },
+      {
+        "product_key": 84,
+        "product_name": "Microbial metabolites"
+      },
+      {
+        "product_key": 33,
+        "product_name": "Microbicides"
+      },
+      {
+        "product_key": 98,
+        "product_name": "Multi-biomarker tests"
+      },
+      {
+        "product_key": 94,
+        "product_name": "Multi-marker prediction tests"
+      },
+      {
+        "product_key": 99,
+        "product_name": "Multi-parametric tests"
+      },
+      {
+        "product_key": 52,
+        "product_name": "Multiplex platform"
+      },
+      {
+        "product_key": 38,
+        "product_name": "Multipurpose prevention technologies"
+      },
+      {
+        "product_key": 81,
+        "product_name": "Non-biomarker test"
+      },
+      {
+        "product_key": 49,
+        "product_name": "Non-immunoglobulin products - animal/naturally derived; recombinant"
+      },
+      {
+        "product_key": 1,
+        "product_name": "Nucleic acid test"
+      },
+      {
+        "product_key": 4,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 9,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 16,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 20,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 29,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 43,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 50,
+        "product_name": "Other"
+      },
+      {
+        "product_key": 103,
+        "product_name": "Other imaging"
+      },
+      {
+        "product_key": 107,
+        "product_name": "Other measurements/tools"
+      },
+      {
+        "product_key": 37,
+        "product_name": "Platform technologies"
+      },
+      {
+        "product_key": 83,
+        "product_name": "Polyphenols"
+      },
+      {
+        "product_key": 65,
+        "product_name": "Population alteration"
+      },
+      {
+        "product_key": 66,
+        "product_name": "Population reduction"
+      },
+      {
+        "product_key": 7,
+        "product_name": "PrEP/PEP"
+      },
+      {
+        "product_key": 44,
+        "product_name": "Preventative"
+      },
+      {
+        "product_key": 12,
+        "product_name": "Preventive (Adult)"
+      },
+      {
+        "product_key": 11,
+        "product_name": "Preventive (Paediatric)"
+      },
+      {
+        "product_key": 10,
+        "product_name": "Preventive (all age groups)"
+      },
+      {
+        "product_key": 86,
+        "product_name": "Probiotics"
+      },
+      {
+        "product_key": 28,
+        "product_name": "Reduced pathogen transmission by a microorganism"
+      },
+      {
+        "product_key": 73,
+        "product_name": "Repel and lure device"
+      },
+      {
+        "product_key": 14,
+        "product_name": "Reservoir targeted"
+      },
+      {
+        "product_key": 63,
+        "product_name": "Reservoir targeted vaccines"
+      },
+      {
+        "product_key": 45,
+        "product_name": "Reservoir-targeted"
+      },
+      {
+        "product_key": 53,
+        "product_name": "Single disease"
+      },
+      {
+        "product_key": 42,
+        "product_name": "Small-molecule therapies"
+      },
+      {
+        "product_key": 27,
+        "product_name": "Spatial repellent"
+      },
+      {
+        "product_key": 25,
+        "product_name": "Sterile insect technique"
+      },
+      {
+        "product_key": 19,
+        "product_name": "Test of cure"
+      },
+      {
+        "product_key": 13,
+        "product_name": "Therapeutic"
+      },
+      {
+        "product_key": 76,
+        "product_name": "Therapeutic - natural/botanical"
+      },
+      {
+        "product_key": 77,
+        "product_name": "Therapeutic - synthetic"
+      },
+      {
+        "product_key": 56,
+        "product_name": "Therapeutic platforms"
+      },
+      {
+        "product_key": 15,
+        "product_name": "Transmission blocking"
+      },
+      {
+        "product_key": 46,
+        "product_name": "Transmission-blocking"
+      },
+      {
+        "product_key": 93,
+        "product_name": "Traps (Pyriproxyfen)"
+      },
+      {
+        "product_key": 5,
+        "product_name": "Treatment"
+      },
+      {
+        "product_key": 75,
+        "product_name": "Treatment DS/MDR"
+      },
+      {
+        "product_key": 6,
+        "product_name": "Treatment MDR"
+      },
+      {
+        "product_key": 102,
+        "product_name": "Ultrasound technique"
+      },
+      {
+        "product_key": 104,
+        "product_name": "Ultrasound technique - Abdominal"
+      },
+      {
+        "product_key": 105,
+        "product_name": "Ultrasound technique - Doppler"
+      },
+      {
+        "product_key": 96,
+        "product_name": "Ultrasound technique - Transvaginal"
+      },
+      {
+        "product_key": 62,
+        "product_name": "Vaccine delivery technologies and devices"
+      },
+      {
+        "product_key": 57,
+        "product_name": "Vaccine platforms"
+      },
+      {
+        "product_key": 31,
+        "product_name": "Vaccines"
+      },
+      {
+        "product_key": 58,
+        "product_name": "Vector control products"
+      },
+      {
+        "product_key": 64,
+        "product_name": "Vector control products Reservoir targeted vaccines"
+      },
+      {
+        "product_key": 41,
+        "product_name": "x_Reservoir-targeted"
+      },
+      {
+        "product_key": 39,
+        "product_name": "x_Therapeutic"
+      },
+      {
+        "product_key": 40,
+        "product_name": "x_Transmission-blocking"
+      }
+    ],
+    "availableYears": [
+      2015,
+      2019,
+      2021,
+      2023,
+      2024,
+      2025
+    ],
+    "locationScopes": [
+      "Developer Location",
+      "Target Country",
+      "Trial Location"
+    ]
+  },
+  "temporalSnapshots": {
+    "temporalSnapshots": [
+      {
+        "year": 2023,
+        "phase_name": "Discovery",
+        "sort_order": 10,
+        "candidateCount": 61
+      },
+      {
+        "year": 2023,
+        "phase_name": "Primary and secondary screening and optimisation",
+        "sort_order": 20,
+        "candidateCount": 3
+      },
+      {
+        "year": 2023,
+        "phase_name": "Preclinical",
+        "sort_order": 25,
+        "candidateCount": 388
+      },
+      {
+        "year": 2023,
+        "phase_name": "Development",
+        "sort_order": 30,
+        "candidateCount": 5
+      },
+      {
+        "year": 2023,
+        "phase_name": "Early development (concept and research)",
+        "sort_order": 36,
+        "candidateCount": 78
+      },
+      {
+        "year": 2023,
+        "phase_name": "Early development (feasibility and planning)",
+        "sort_order": 37,
+        "candidateCount": 12
+      },
+      {
+        "year": 2023,
+        "phase_name": "Phase I",
+        "sort_order": 40,
+        "candidateCount": 265
+      },
+      {
+        "year": 2023,
+        "phase_name": "Phase II",
+        "sort_order": 50,
+        "candidateCount": 223
+      },
+      {
+        "year": 2023,
+        "phase_name": "Phase III",
+        "sort_order": 60,
+        "candidateCount": 132
+      },
+      {
+        "year": 2023,
+        "phase_name": "Late development (design and development)",
+        "sort_order": 72,
+        "candidateCount": 76
+      },
+      {
+        "year": 2023,
+        "phase_name": "Late development (clinical validation and launch readiness)",
+        "sort_order": 75,
+        "candidateCount": 158
+      },
+      {
+        "year": 2023,
+        "phase_name": "Regulatory filing",
+        "sort_order": 80,
+        "candidateCount": 1
+      },
+      {
+        "year": 2023,
+        "phase_name": "PQ listing and regulatory approval",
+        "sort_order": 85,
+        "candidateCount": 2
+      },
+      {
+        "year": 2023,
+        "phase_name": "Phase IV",
+        "sort_order": 90,
+        "candidateCount": 5
+      },
+      {
+        "year": 2024,
+        "phase_name": "Discovery",
+        "sort_order": 10,
+        "candidateCount": 15
+      },
+      {
+        "year": 2024,
+        "phase_name": "Preclinical",
+        "sort_order": 25,
+        "candidateCount": 204
+      },
+      {
+        "year": 2024,
+        "phase_name": "Early development (concept and research)",
+        "sort_order": 36,
+        "candidateCount": 17
+      },
+      {
+        "year": 2024,
+        "phase_name": "Early development (feasibility and planning)",
+        "sort_order": 37,
+        "candidateCount": 1
+      },
+      {
+        "year": 2024,
+        "phase_name": "Phase I",
+        "sort_order": 40,
+        "candidateCount": 111
+      },
+      {
+        "year": 2024,
+        "phase_name": "Phase II",
+        "sort_order": 50,
+        "candidateCount": 88
+      },
+      {
+        "year": 2024,
+        "phase_name": "Phase III",
+        "sort_order": 60,
+        "candidateCount": 85
+      },
+      {
+        "year": 2024,
+        "phase_name": "Late development (design and development)",
+        "sort_order": 72,
+        "candidateCount": 13
+      },
+      {
+        "year": 2024,
+        "phase_name": "Late development (clinical validation and launch readiness)",
+        "sort_order": 75,
+        "candidateCount": 45
+      },
+      {
+        "year": 2024,
+        "phase_name": "Phase IV",
+        "sort_order": 90,
+        "candidateCount": 3
+      }
+    ]
+  }
+}
