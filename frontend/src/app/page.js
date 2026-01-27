@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
 import {
   BubbleChart,
@@ -193,6 +193,44 @@ export default function Home() {
   const [mapTab, setMapTab] = useState('trials');
   const [chartViewTab, setChartViewTab] = useState('visual');
 
+  const bubbleChartRef = useRef(null);
+  const worldMapRef = useRef(null);
+  const priorityBarRef = useRef(null);
+  const priorityDonutRef = useRef(null);
+
+  // Download CSV function
+  const downloadCSV = useCallback((data, filename) => {
+    const headers = Object.keys(data[0]).join(',');
+    const rows = data.map(row => Object.values(row).join(','));
+    const csv = [headers, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
+  // Download PNG function using html2canvas
+  const downloadPNG = useCallback(async (ref, filename) => {
+    if (!ref.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(ref.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+      });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.png`;
+      a.click();
+    } catch (error) {
+      console.error('Error generating PNG:', error);
+    }
+  }, []);
+
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
       {/* Sidebar */}
@@ -259,15 +297,22 @@ export default function Home() {
                     of candidates and products
                   </p>
                 </div>
-                <TabSwitcher
-                  activeTab={chartViewTab}
-                  onChange={setChartViewTab}
-                  tabs={[
-                    { value: 'visual', icon: PieChartIcon },
-                    { value: 'table', icon: ListIcon },
-                  ]}
-                />
+                <div className="flex items-center gap-2">
+                  <ChartMenu
+                    onDownloadCSV={() => downloadCSV(bubbleData, 'scale-of-innovation')}
+                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-innovation')}
+                  />
+                  <TabSwitcher
+                    activeTab={chartViewTab}
+                    onChange={setChartViewTab}
+                    tabs={[
+                      { value: 'visual', icon: PieChartIcon },
+                      { value: 'table', icon: ListIcon },
+                    ]}
+                  />
+                </div>
               </div>
+              <div ref={bubbleChartRef}>
               {chartViewTab === 'visual' ? (
                 <BubbleChart
                   data={bubbleData}
@@ -317,6 +362,7 @@ export default function Home() {
                   </table>
                 </div>
               )}
+              </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
                 An overview of R&D volume categorized by global health area.
                 This bubble chart visualizes the relative scale of investment
@@ -337,21 +383,27 @@ export default function Home() {
                     (2025)
                   </p>
                 </div>
-                <button className="border-none bg-[#F2F2F4] cursor-pointer p-2 rounded-lg">
-                  <MoreHorizontalIcon className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="mb-4">
-                <TabNav
-                  activeTab={mapTab}
-                  onChange={setMapTab}
-                  tabs={[
-                    { label: 'Location of clinical trials', value: 'trials' },
-                    { label: 'Location of development', value: 'development' },
-                  ]}
+                <ChartMenu
+                  onDownloadCSV={() => {
+                    const mapDataArray = Object.entries(worldMapData).map(([code, value]) => ({ countryCode: code, value }));
+                    downloadCSV(mapDataArray, 'geographic-distribution');
+                  }}
+                  onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
                 />
               </div>
-              <WorldMap data={worldMapData} height={280} showLegend={false} />
+              <div ref={worldMapRef}>
+                <div className="mb-4">
+                  <TabNav
+                    activeTab={mapTab}
+                    onChange={setMapTab}
+                    tabs={[
+                      { label: 'Location of clinical trials', value: 'trials' },
+                      { label: 'Location of development', value: 'development' },
+                    ]}
+                  />
+                </div>
+                <WorldMap data={worldMapData} height={280} showLegend={false} />
+              </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
                 A global heat map illustrating the concentration of R&D pipeline
                 activity and product approvals. This map identifies regional
@@ -496,8 +548,8 @@ export default function Home() {
                     <span className="text-base font-semibold text-black">
                       Priorities
                     </span>
-                    <button className="border-none bg-[#F2F2F4] cursor-pointer p-2 rounded-lg">
-                      <MoreHorizontalIcon className="w-5 h-5 text-gray-500" />
+                    <button className="border-none bg-[#F2F2F4] cursor-pointer p-3 rounded-[10px] hover:bg-gray-200 transition-colors">
+                      <MoreHorizontalIcon className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
                   <div className="text-3xl sm:text-4xl font-extrabold text-black mb-1">
@@ -570,12 +622,13 @@ export default function Home() {
                       Total amount of diseases with priority
                     </p>
                   </div>
-                  <button className="border-none bg-[#F2F2F4] cursor-pointer p-2 rounded-lg shrink-0">
-                    <MoreHorizontalIcon className="w-5 h-5 text-gray-500" />
-                  </button>
+                  <ChartMenu
+                    onDownloadCSV={() => downloadCSV(priorityBarData, 'share-of-diseases-with-priority')}
+                    onDownloadPNG={() => downloadPNG(priorityBarRef, 'share-of-diseases-with-priority')}
+                  />
                 </div>
                 <div className="border-b border-gray-200 mb-4"></div>
-                <div className="mt-auto">
+                <div className="mt-auto" ref={priorityBarRef}>
                   <StackedBarChart
                     data={priorityBarData}
                     phases={priorityBarPhases}
@@ -592,12 +645,13 @@ export default function Home() {
                   <span className="text-base sm:text-lg font-bold text-black">
                     Share of priorities dedicated to women or children
                   </span>
-                  <button className="border-none bg-[#F2F2F4] cursor-pointer p-2 rounded-lg">
-                    <MoreHorizontalIcon className="w-5 h-5 text-gray-500" />
-                  </button>
+                  <ChartMenu
+                    onDownloadCSV={() => downloadCSV(priorityDonutData, 'share-of-priorities-women-children')}
+                    onDownloadPNG={() => downloadPNG(priorityDonutRef, 'share-of-priorities-women-children')}
+                  />
                 </div>
                 <div className="border-b border-gray-200 mb-4"></div>
-                <div className="mt-auto">
+                <div className="mt-auto" ref={priorityDonutRef}>
                   <DonutChart
                     data={priorityDonutData}
                     colors={priorityDonutColors}

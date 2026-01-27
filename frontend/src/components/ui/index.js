@@ -6,3 +6,4 @@ export { default as StatCard } from './StatCard';
 export { default as TabSwitcher } from './TabSwitcher';
 export { default as Header } from './Header';
 export { default as TabNav } from './TabNav';
+export { default as ChartMenu } from './ChartMenu';
