@@ -17,11 +17,20 @@ import {
   ClockIcon,
 } from '@/components/icons';
 
-// Sample data
-const bubbleData = [
-  { name: 'Neglected diseases', value: 2101 },
-  { name: "Women's health", value: 1591 },
-  { name: 'Emerging infectious diseases', value: 953 },
+// GraphQL hooks with fixture fallback
+import {
+  usePortfolioKPIsWithFallback,
+  useGlobalHealthAreaSummariesWithFallback,
+  usePhaseDistributionWithFallback,
+  useGeographicDistributionWithFallback,
+  useTemporalSnapshotsWithFallback,
+} from '@/graphql/hooks';
+
+// Fallback static data (used only if hooks fail completely)
+const fallbackBubbleData = [
+  { name: 'Neglected diseases', value: 3611 },
+  { name: "Women's health", value: 2719 },
+  { name: 'Emerging infectious diseases', value: 2233 },
 ];
 
 const portfolioData = [
@@ -198,6 +207,18 @@ export default function Home() {
   const priorityBarRef = useRef(null);
   const priorityDonutRef = useRef(null);
 
+  // GraphQL data hooks with fixture fallback
+  const { kpis, loading: kpisLoading } = usePortfolioKPIsWithFallback();
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummariesWithFallback();
+  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistributionWithFallback();
+  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistributionWithFallback(
+    mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
+  );
+  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshotsWithFallback([2023, 2024]);
+
+  // Use GraphQL data or fallback
+  const bubbleData = gqlBubbleData.length > 0 ? gqlBubbleData : fallbackBubbleData;
+
   // Download CSV function
   const downloadCSV = useCallback((data, filename) => {
     const headers = Object.keys(data[0]).join(',');
@@ -258,29 +279,30 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stat Cards */}
+          {/* Stat Cards - Connected to GraphQL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatCard
-              title="Number of diseases"
-              value={111}
-              description="Total number of diseases"
-              buttonText="Explore pipeline for diseases"
-              tooltip="All diseases tracked in the pipeline"
-            />
-            <StatCard
-              title="Total number of candidates"
-              value={4022}
-              description="Total number of candidates."
-              buttonText="Explore candidates"
-              tooltip="All candidates in the pipeline"
-            />
-            <StatCard
-              title="Approved products"
-              value={200}
-              description="Total number of approved products."
-              buttonText="Explore approved products"
-              tooltip="Products that received approval"
-            />
+            {kpisLoading ? (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              kpis.map((kpi) => (
+                <StatCard
+                  key={kpi.id}
+                  title={kpi.title}
+                  value={kpi.value}
+                  description={kpi.description}
+                  buttonText={kpi.buttonText}
+                  tooltip={kpi.description}
+                />
+              ))
+            )}
           </div>
 
           {/* Bubble Chart + World Map */}
