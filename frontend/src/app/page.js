@@ -100,48 +100,66 @@ const priorityBarPhases = [
 ];
 
 const priorityBarData = [
-  { category: 'Neglected', segment1: 30, segment2: 25, segment3: 20, segment4: 15 },
-  { category: 'Infectious', segment1: 40, segment2: 35, segment3: 25, segment4: 20 },
-  { category: "Women's", segment1: 15, segment2: 12, segment3: 10, segment4: 8 },
+  {
+    category: 'Neglected',
+    segment1: 30,
+    segment2: 25,
+    segment3: 20,
+    segment4: 15,
+  },
+  {
+    category: 'Infectious',
+    segment1: 40,
+    segment2: 35,
+    segment3: 25,
+    segment4: 20,
+  },
+  {
+    category: "Women's",
+    segment1: 15,
+    segment2: 12,
+    segment3: 10,
+    segment4: 8,
+  },
 ];
 
 const worldMapData = {
-  '840': 45, // United States
-  '356': 38, // India
-  '156': 30, // China
+  840: 45, // United States
+  356: 38, // India
+  156: 30, // China
   '076': 25, // Brazil
-  '566': 22, // Nigeria
-  '404': 20, // Kenya
-  '710': 18, // South Africa
-  '764': 15, // Thailand
-  '826': 35, // United Kingdom
-  '276': 28, // Germany
-  '250': 22, // France
+  566: 22, // Nigeria
+  404: 20, // Kenya
+  710: 18, // South Africa
+  764: 15, // Thailand
+  826: 35, // United Kingdom
+  276: 28, // Germany
+  250: 22, // France
   '036': 12, // Australia
-  '392': 32, // Japan
-  '124': 28, // Canada
-  '484': 16, // Mexico
+  392: 32, // Japan
+  124: 28, // Canada
+  484: 16, // Mexico
   '032': 14, // Argentina
-  '170': 12, // Colombia
-  '818': 10, // Egypt
-  '800': 19, // Uganda
-  '834': 17, // Tanzania
-  '180': 15, // DR Congo
-  '231': 13, // Ethiopia
-  '288': 11, // Ghana
-  '608': 20, // Philippines
-  '360': 18, // Indonesia
+  170: 12, // Colombia
+  818: 10, // Egypt
+  800: 19, // Uganda
+  834: 17, // Tanzania
+  180: 15, // DR Congo
+  231: 13, // Ethiopia
+  288: 11, // Ghana
+  608: 20, // Philippines
+  360: 18, // Indonesia
   '050': 22, // Bangladesh
-  '586': 16, // Pakistan
-  '704': 14, // Vietnam
-  '752': 24, // Sweden
-  '756': 26, // Switzerland
-  '528': 20, // Netherlands
-  '380': 18, // Italy
-  '724': 16, // Spain
+  586: 16, // Pakistan
+  704: 14, // Vietnam
+  752: 24, // Sweden
+  756: 26, // Switzerland
+  528: 20, // Netherlands
+  380: 18, // Italy
+  724: 16, // Spain
   '056': 22, // Belgium
-  '578': 20, // Norway
-  '410': 30, // South Korea
+  578: 20, // Norway
+  410: 30, // South Korea
 };
 
 export default function Home() {
@@ -213,8 +231,8 @@ export default function Home() {
                     Scale of innovation efforts across health pipelines
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Click on tabular view to see a list of diseases with amount of
-                    candidates and products
+                    Click on tabular view to see a list of diseases with amount
+                    of candidates and products
                   </p>
                 </div>
                 <TabSwitcher
@@ -613,8 +631,8 @@ export default function Home() {
                   </h4>
                   <p className="text-xs text-gray-500 mb-3">
                     This report offers a quantified assessment of the actual and
-                    potential impact of the 2025 US funding cuts giving a system-wide, data-driven
-                    picture of the ripple effects by...
+                    potential impact of the 2025 US funding cuts giving a
+                    system-wide, data-driven picture of the ripple effects by...
                   </p>
                   <TextLink className="mt-auto">Read more</TextLink>
                 </div>

@@ -1,16 +1,16 @@
-import { Public_Sans } from "next/font/google";
-import "./globals.css";
-import Header from "@/components/ui/Header";
+import { Public_Sans } from 'next/font/google';
+import './globals.css';
+import Header from '@/components/ui/Header';
 
 const publicSans = Public_Sans({
-  variable: "--font-public-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  variable: '--font-public-sans',
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata = {
-  title: "IGH Dashboard",
-  description: "Innovation in Global Health Dashboard",
+  title: 'IGH Dashboard',
+  description: 'Innovation in Global Health Dashboard',
 };
 
 const navItems = [
