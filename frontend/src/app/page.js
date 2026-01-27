@@ -162,10 +162,34 @@ const worldMapData = {
   410: 30, // South Korea
 };
 
+const healthAreaOptions = [
+  'Neglected Diseases',
+  "Women's Health",
+  'Emerging Infectious Diseases',
+];
+
+const productOptions = [
+  'Vaccines',
+  'Drugs',
+  'Diagnostics',
+  'Biologics',
+  'Dietary supplements',
+  'VCP',
+];
+
+const rdStageOptions = [
+  'Pre-clinical',
+  'Phase 1',
+  'Phase 2',
+  'Phase 3',
+  'Phase 4',
+  'Approved',
+];
+
 export default function Home() {
-  const [healthArea, setHealthArea] = useState('');
-  const [product, setProduct] = useState('');
-  const [sorting, setSorting] = useState('');
+  const [healthArea, setHealthArea] = useState([]);
+  const [product, setProduct] = useState([]);
+  const [rdStage, setRdStage] = useState([]);
   const [mapTab, setMapTab] = useState('trials');
   const [chartViewTab, setChartViewTab] = useState('visual');
 
@@ -367,12 +391,9 @@ export default function Home() {
                   value={healthArea}
                   onChange={setHealthArea}
                   placeholder="All"
-                  options={[
-                    'All',
-                    'Neglected Diseases',
-                    "Women's Health",
-                    'Emerging Infectious Diseases',
-                  ]}
+                  options={healthAreaOptions}
+                  multiSelect={true}
+                  showClearText={true}
                 />
               </div>
               <div className="flex-1 min-w-[180px]">
@@ -381,23 +402,28 @@ export default function Home() {
                   value={product}
                   onChange={setProduct}
                   placeholder="All"
-                  options={['All', 'Vaccine', 'Drug', 'Biologic', 'Diagnostic']}
+                  options={productOptions}
+                  multiSelect={true}
+                  showClearText={true}
                 />
               </div>
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
-                  label="Least/most common"
-                  value={sorting}
-                  onChange={setSorting}
+                  label="Select R&D stage"
+                  value={rdStage}
+                  onChange={setRdStage}
                   placeholder="All"
-                  options={['All', 'Most common', 'Least common']}
+                  options={rdStageOptions}
+                  multiSelect={true}
+                  showSearch={true}
+                  showClearText={true}
                 />
               </div>
               <button
                 onClick={() => {
-                  setHealthArea('');
-                  setProduct('');
-                  setSorting('');
+                  setHealthArea([]);
+                  setProduct([]);
+                  setRdStage([]);
                 }}
                 className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
               >
