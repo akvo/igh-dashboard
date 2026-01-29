@@ -125,7 +125,7 @@ export default function WorldMap({
 
   if (!geoData) {
     return (
-      <div className="w-full relative">
+      <div className="w-full relative overflow-hidden">
         <div
           style={{ height }}
           className="flex items-center justify-center bg-cream-100 rounded-lg"
@@ -145,8 +145,8 @@ export default function WorldMap({
         onMouseMove={handleMouseMove}
       >
         <g>
-          {geoData.features.map((country) => {
-            const countryId = String(country.id);
+          {geoData.features.map((country, index) => {
+            const countryId = country.id != null ? String(country.id) : `country-${index}`;
             const isHovered = hoveredCountry === countryId;
             return (
               <path

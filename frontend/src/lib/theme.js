@@ -118,6 +118,20 @@ export const colors = {
   // Neutrals
   black: '#262626',
   white: '#ffffff',
+
+  // Gray scale (UI elements)
+  gray: {
+    50: '#F9F9FA',
+    100: '#F3F4F6',
+    200: '#E5E7EB',
+    300: '#D1D5DB',
+    400: '#9CA3AF',
+    500: '#8C929C',
+    600: '#5B616D',
+    700: '#374151',
+    800: '#1F2937',
+    900: '#111827',
+  },
 };
 
 // R&D Phase Colors (for pipeline/stacked bar charts)
@@ -233,9 +247,14 @@ export const componentTokens = {
     border: 'rgba(38, 38, 38, 0.12)',
   },
   sidebar: {
-    bg: '#ffffff',
-    active: '#fff1ed',
-    hover: '#fef8ee',
+    bg: '#F9F9FA',
+    active: '#ffffff',
+    hover: '#ffffff',
+    section: '#8C929C',
+    text: '#5B616D',
+    textActive: '#262626',
+    icon: '#AFB3BB',
+    iconActive: '#fe7449',
   },
   table: {
     header: '#fcf9f2',
