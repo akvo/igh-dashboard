@@ -22,3 +22,8 @@ export {
   useTemporalSnapshots,
   useTemporalSnapshotsWithFallback,
 } from './useTemporalSnapshots';
+
+export {
+  useProducts,
+  useProductsWithFallback,
+} from './useProducts';

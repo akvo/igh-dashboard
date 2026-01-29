@@ -2,7 +2,6 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_PHASE_DISTRIBUTION } from '../queries';
-import { phaseDistributionFixture } from '@/data/fixtures';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformPhaseDistribution } from '@/lib/transformations';
 
@@ -29,8 +28,8 @@ export function usePhaseDistribution(globalHealthArea, productKey) {
   const { chartData, phases } = transformPhaseDistribution(rawData);
 
   return {
-    chartData,
-    phases,
+    chartData: chartData || [],
+    phases: phases || [],
     loading: loading && !cachedData,
     error,
     raw: rawData,
@@ -38,21 +37,7 @@ export function usePhaseDistribution(globalHealthArea, productKey) {
   };
 }
 
-// Hook with fixture fallback
+// Alias for consistency (no fallback data)
 export function usePhaseDistributionWithFallback(globalHealthArea, productKey) {
-  const { chartData, phases, loading, error, raw, usingCache } = usePhaseDistribution(globalHealthArea, productKey);
-
-  if (error || (!loading && chartData.length === 0)) {
-    const fixture = phaseDistributionFixture.phaseDistribution;
-    const transformed = transformPhaseDistribution(fixture);
-    return {
-      ...transformed,
-      loading: false,
-      error: null,
-      usingFixture: true,
-      usingCache: false,
-    };
-  }
-
-  return { chartData, phases, loading, error, usingFixture: false, usingCache };
+  return usePhaseDistribution(globalHealthArea, productKey);
 }

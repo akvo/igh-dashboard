@@ -2,7 +2,6 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_GEOGRAPHIC_DISTRIBUTION } from '../queries';
-import { geographicDistributionTrialsFixture, geographicDistributionDevFixture } from '@/data/fixtures';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformGeographicDistribution } from '@/lib/transformations';
 
@@ -26,8 +25,8 @@ export function useGeographicDistribution(locationScope = 'Trial Location') {
   const { mapData, distributionList } = transformGeographicDistribution(rawData);
 
   return {
-    mapData,
-    distributionList,
+    mapData: mapData || {},
+    distributionList: distributionList || [],
     loading: loading && !cachedData,
     error,
     raw: rawData,
@@ -35,27 +34,7 @@ export function useGeographicDistribution(locationScope = 'Trial Location') {
   };
 }
 
-// Hook with fixture fallback
+// Alias for consistency (no fallback data)
 export function useGeographicDistributionWithFallback(locationScope = 'Trial Location') {
-  const { mapData, distributionList, loading, error, raw, usingCache } = useGeographicDistribution(locationScope);
-
-  if (error || (!loading && Object.keys(mapData).length === 0)) {
-    // Select fixture based on location scope
-    const fixtureData = locationScope === 'Developer Location'
-      ? geographicDistributionDevFixture.geographicDistribution
-      : geographicDistributionTrialsFixture.geographicDistribution;
-
-    const transformed = transformGeographicDistribution(fixtureData);
-
-    return {
-      mapData: transformed.mapData,
-      distributionList: transformed.distributionList,
-      loading: false,
-      error: null,
-      usingFixture: true,
-      usingCache: false,
-    };
-  }
-
-  return { mapData, distributionList, loading, error, usingFixture: false, usingCache };
+  return useGeographicDistribution(locationScope);
 }

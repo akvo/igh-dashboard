@@ -2,7 +2,6 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_GLOBAL_HEALTH_AREA_SUMMARIES } from '../queries';
-import { globalHealthAreaSummariesFixture } from '@/data/fixtures';
 import { useDashboardStore } from '@/store';
 import { transformGlobalHealthAreaSummaries } from '@/lib/transformations';
 
@@ -26,7 +25,7 @@ export function useGlobalHealthAreaSummaries() {
   const bubbleData = transformGlobalHealthAreaSummaries(rawData);
 
   return {
-    bubbleData,
+    bubbleData: bubbleData || [],
     loading: loading && !cachedData,
     error,
     raw: rawData,
@@ -34,20 +33,7 @@ export function useGlobalHealthAreaSummaries() {
   };
 }
 
-// Hook with fixture fallback
+// Alias for consistency (no fallback data)
 export function useGlobalHealthAreaSummariesWithFallback() {
-  const { bubbleData, loading, error, raw, usingCache } = useGlobalHealthAreaSummaries();
-
-  if (error || (!loading && bubbleData.length === 0)) {
-    const fixture = globalHealthAreaSummariesFixture.globalHealthAreaSummaries;
-    return {
-      bubbleData: transformGlobalHealthAreaSummaries(fixture),
-      loading: false,
-      error: null,
-      usingFixture: true,
-      usingCache: false,
-    };
-  }
-
-  return { bubbleData, loading, error, usingFixture: false, usingCache };
+  return useGlobalHealthAreaSummaries();
 }
