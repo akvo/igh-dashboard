@@ -92,6 +92,24 @@ export const geographicDistributionTrialsFixture = {
   ],
 };
 
+export const geographicDistributionDevFixture = {
+  geographicDistribution: [
+    { country_key: 25, country_name: 'Ireland', iso_code: '372', candidateCount: 2 },
+    { country_key: 59, country_name: 'United Kingdom', iso_code: '826', candidateCount: 2 },
+    { country_key: 60, country_name: 'United States of America', iso_code: '840', candidateCount: 2 },
+    { country_key: 3, country_name: 'Australia', iso_code: '036', candidateCount: 1 },
+    { country_key: 10, country_name: 'China', iso_code: '156', candidateCount: 1 },
+    { country_key: 16, country_name: 'Denmark', iso_code: '208', candidateCount: 1 },
+    { country_key: 52, country_name: 'Sweden', iso_code: '752', candidateCount: 1 },
+    { country_key: 55, country_name: 'Thailand', iso_code: '764', candidateCount: 1 },
+    { country_key: 75, country_name: 'Bangladesh', iso_code: '050', candidateCount: 1 },
+    { country_key: 117, country_name: 'Ghana', iso_code: '288', candidateCount: 1 },
+    { country_key: 185, country_name: 'Senegal', iso_code: '686', candidateCount: 1 },
+    { country_key: 195, country_name: 'Taiwan', iso_code: '158', candidateCount: 1 },
+    { country_key: 215, country_name: 'Iran', iso_code: '364', candidateCount: 1 },
+  ],
+};
+
 export const temporalSnapshotsFixture = {
   temporalSnapshots: [
     { year: 2023, phase_name: 'Discovery', sort_order: 10, candidateCount: 61 },

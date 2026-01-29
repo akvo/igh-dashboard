@@ -3,53 +3,51 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_GLOBAL_HEALTH_AREA_SUMMARIES } from '../queries';
 import { globalHealthAreaSummariesFixture } from '@/data/fixtures';
+import { useDashboardStore } from '@/store';
+import { transformGlobalHealthAreaSummaries } from '@/lib/transformations';
 
-// Map API health area names to display names
-const healthAreaDisplayNames = {
-  'Neglected disease': 'Neglected diseases',
-  'Sexual & reproductive health': "Women's health",
-  'Emerging infectious disease': 'Emerging infectious diseases',
-};
+const CACHE_KEY = 'globalHealthAreaSummaries';
 
 export function useGlobalHealthAreaSummaries() {
-  const { data, loading, error } = useQuery(GET_GLOBAL_HEALTH_AREA_SUMMARIES);
+  const { actions } = useDashboardStore();
+  const cachedData = actions.getCachedData(CACHE_KEY);
 
-  // Transform data for bubble chart
-  const bubbleData = data?.globalHealthAreaSummaries?.map((item) => ({
-    name: healthAreaDisplayNames[item.global_health_area] || item.global_health_area,
-    value: item.candidateCount,
-    diseaseCount: item.diseaseCount,
-    productCount: item.productCount,
-    originalName: item.global_health_area,
-  })) || [];
+  const { data, loading, error } = useQuery(GET_GLOBAL_HEALTH_AREA_SUMMARIES, {
+    skip: !!cachedData,
+    fetchPolicy: 'network-only',
+    onCompleted: (result) => {
+      if (result?.globalHealthAreaSummaries) {
+        actions.setCache(CACHE_KEY, result.globalHealthAreaSummaries);
+      }
+    },
+  });
+
+  const rawData = cachedData || data?.globalHealthAreaSummaries;
+  const bubbleData = transformGlobalHealthAreaSummaries(rawData);
 
   return {
     bubbleData,
-    loading,
+    loading: loading && !cachedData,
     error,
-    raw: data?.globalHealthAreaSummaries,
+    raw: rawData,
+    usingCache: !!cachedData,
   };
 }
 
 // Hook with fixture fallback
 export function useGlobalHealthAreaSummariesWithFallback() {
-  const { bubbleData, loading, error, raw } = useGlobalHealthAreaSummaries();
+  const { bubbleData, loading, error, raw, usingCache } = useGlobalHealthAreaSummaries();
 
   if (error || (!loading && bubbleData.length === 0)) {
     const fixture = globalHealthAreaSummariesFixture.globalHealthAreaSummaries;
     return {
-      bubbleData: fixture.map((item) => ({
-        name: healthAreaDisplayNames[item.global_health_area] || item.global_health_area,
-        value: item.candidateCount,
-        diseaseCount: item.diseaseCount,
-        productCount: item.productCount,
-        originalName: item.global_health_area,
-      })),
+      bubbleData: transformGlobalHealthAreaSummaries(fixture),
       loading: false,
       error: null,
       usingFixture: true,
+      usingCache: false,
     };
   }
 
-  return { bubbleData, loading, error, usingFixture: false };
+  return { bubbleData, loading, error, usingFixture: false, usingCache };
 }

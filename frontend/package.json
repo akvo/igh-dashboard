@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -20,7 +22,8 @@
     "react-dom": "19.2.3",
     "react-is": "^19.2.3",
     "recharts": "^3.6.0",
-    "topojson-client": "^3.1.0"
+    "topojson-client": "^3.1.0",
+    "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.0.0",

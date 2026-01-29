@@ -3,81 +3,53 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_PORTFOLIO_KPIS } from '../queries';
 import { portfolioKPIsFixture } from '@/data/fixtures';
+import { useDashboardStore } from '@/store';
+import { transformPortfolioKPIs } from '@/lib/transformations';
+
+const CACHE_KEY = 'portfolioKPIs';
 
 export function usePortfolioKPIs() {
-  const { data, loading, error } = useQuery(GET_PORTFOLIO_KPIS);
+  const { cache, actions } = useDashboardStore();
+  const cachedData = actions.getCachedData(CACHE_KEY);
 
-  // Transform data for UI
-  const kpis = data?.portfolioKPIs
-    ? [
-        {
-          id: 'diseases',
-          title: 'Number of diseases',
-          value: data.portfolioKPIs.totalDiseases,
-          description: 'Total number of diseases',
-          buttonText: 'Explore pipeline for diseases',
-        },
-        {
-          id: 'candidates',
-          title: 'Total number of candidates',
-          value: data.portfolioKPIs.totalCandidates,
-          description: 'Total number of candidates.',
-          buttonText: 'Explore candidates',
-        },
-        {
-          id: 'approved',
-          title: 'Approved products',
-          value: data.portfolioKPIs.approvedProducts,
-          description: 'Total number of approved products.',
-          buttonText: 'Explore approved products',
-        },
-      ]
-    : [];
+  const { data, loading, error } = useQuery(GET_PORTFOLIO_KPIS, {
+    skip: !!cachedData, // Skip fetch if we have fresh cached data
+    fetchPolicy: 'network-only',
+    onCompleted: (result) => {
+      if (result?.portfolioKPIs) {
+        actions.setCache(CACHE_KEY, result.portfolioKPIs);
+      }
+    },
+  });
+
+  // Use cached data or fresh Apollo data
+  const rawData = cachedData || data?.portfolioKPIs;
+  const kpis = transformPortfolioKPIs(rawData);
 
   return {
     kpis,
-    loading,
+    loading: loading && !cachedData,
     error,
-    raw: data?.portfolioKPIs,
+    raw: rawData,
+    usingCache: !!cachedData,
   };
 }
 
 // Hook with fixture fallback for development without backend
 export function usePortfolioKPIsWithFallback() {
-  const { kpis, loading, error, raw } = usePortfolioKPIs();
+  const { kpis, loading, error, raw, usingCache } = usePortfolioKPIs();
 
   // Use fixture data if there's an error or no data
   if (error || (!loading && kpis.length === 0)) {
     const fixture = portfolioKPIsFixture.portfolioKPIs;
     return {
-      kpis: [
-        {
-          id: 'diseases',
-          title: 'Number of diseases',
-          value: fixture.totalDiseases,
-          description: 'Total number of diseases',
-          buttonText: 'Explore pipeline for diseases',
-        },
-        {
-          id: 'candidates',
-          title: 'Total number of candidates',
-          value: fixture.totalCandidates,
-          description: 'Total number of candidates.',
-          buttonText: 'Explore candidates',
-        },
-        {
-          id: 'approved',
-          title: 'Approved products',
-          value: fixture.approvedProducts,
-          description: 'Total number of approved products.',
-          buttonText: 'Explore approved products',
-        },
-      ],
+      kpis: transformPortfolioKPIs(fixture),
       loading: false,
       error: null,
       usingFixture: true,
+      usingCache: false,
     };
   }
 
-  return { kpis, loading, error, usingFixture: false };
+  return { kpis, loading, error, usingFixture: false, usingCache };
 }

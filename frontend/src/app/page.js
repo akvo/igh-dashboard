@@ -132,45 +132,6 @@ const priorityBarData = [
   },
 ];
 
-const worldMapData = {
-  840: 45, // United States
-  356: 38, // India
-  156: 30, // China
-  '076': 25, // Brazil
-  566: 22, // Nigeria
-  404: 20, // Kenya
-  710: 18, // South Africa
-  764: 15, // Thailand
-  826: 35, // United Kingdom
-  276: 28, // Germany
-  250: 22, // France
-  '036': 12, // Australia
-  392: 32, // Japan
-  124: 28, // Canada
-  484: 16, // Mexico
-  '032': 14, // Argentina
-  170: 12, // Colombia
-  818: 10, // Egypt
-  800: 19, // Uganda
-  834: 17, // Tanzania
-  180: 15, // DR Congo
-  231: 13, // Ethiopia
-  288: 11, // Ghana
-  608: 20, // Philippines
-  360: 18, // Indonesia
-  '050': 22, // Bangladesh
-  586: 16, // Pakistan
-  704: 14, // Vietnam
-  752: 24, // Sweden
-  756: 26, // Switzerland
-  528: 20, // Netherlands
-  380: 18, // Italy
-  724: 16, // Spain
-  '056': 22, // Belgium
-  578: 20, // Norway
-  410: 30, // South Korea
-};
-
 const healthAreaOptions = [
   'Neglected Diseases',
   "Women's Health",
@@ -407,7 +368,7 @@ export default function Home() {
                 </div>
                 <ChartMenu
                   onDownloadCSV={() => {
-                    const mapDataArray = Object.entries(worldMapData).map(([code, value]) => ({ countryCode: code, value }));
+                    const mapDataArray = Object.entries(gqlMapData).map(([code, value]) => ({ countryCode: code, value }));
                     downloadCSV(mapDataArray, 'geographic-distribution');
                   }}
                   onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
@@ -424,7 +385,7 @@ export default function Home() {
                     ]}
                   />
                 </div>
-                <WorldMap data={worldMapData} height={280} showLegend={false} />
+                <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
                 A global heat map illustrating the concentration of R&D pipeline
