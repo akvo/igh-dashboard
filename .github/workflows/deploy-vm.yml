@@ -13,7 +13,6 @@ jobs:
   deploy:
     name: Deploy to test environment
     runs-on: ubuntu-latest
-    needs: run-tests
     environment: Test
     steps:
       - name: Checkout
