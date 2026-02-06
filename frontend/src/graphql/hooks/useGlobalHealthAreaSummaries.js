@@ -32,8 +32,3 @@ export function useGlobalHealthAreaSummaries() {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function useGlobalHealthAreaSummariesWithFallback() {
-  return useGlobalHealthAreaSummaries();
-}

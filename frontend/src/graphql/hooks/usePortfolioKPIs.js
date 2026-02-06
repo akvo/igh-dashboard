@@ -32,8 +32,3 @@ export function usePortfolioKPIs() {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function usePortfolioKPIsWithFallback() {
-  return usePortfolioKPIs();
-}

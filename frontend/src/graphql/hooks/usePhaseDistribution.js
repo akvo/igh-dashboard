@@ -36,8 +36,3 @@ export function usePhaseDistribution(globalHealthArea, productKey) {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function usePhaseDistributionWithFallback(globalHealthArea, productKey) {
-  return usePhaseDistribution(globalHealthArea, productKey);
-}

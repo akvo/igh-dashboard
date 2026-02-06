@@ -15,14 +15,13 @@ import {
   ClockIcon,
 } from '@/components/icons';
 
-// GraphQL hooks with fixture fallback
 import {
-  usePortfolioKPIsWithFallback,
-  useGlobalHealthAreaSummariesWithFallback,
-  usePhaseDistributionWithFallback,
-  useGeographicDistributionWithFallback,
-  useTemporalSnapshotsWithFallback,
-  useProductsWithFallback,
+  usePortfolioKPIs,
+  useGlobalHealthAreaSummaries,
+  usePhaseDistribution,
+  useGeographicDistribution,
+  useTemporalSnapshots,
+  useProducts,
 } from '@/graphql/hooks';
 
 // Map display names to API names for health areas
@@ -52,21 +51,20 @@ export default function Home() {
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
 
-  // GraphQL data hooks with fixture fallback
-  const { kpis, loading: kpisLoading } = usePortfolioKPIsWithFallback();
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummariesWithFallback();
-  const { products, loading: productsLoading } = useProductsWithFallback();
-  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistributionWithFallback(
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries();
+  const { products, loading: productsLoading } = useProducts();
+  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
-  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshotsWithFallback([2023, 2024]);
+  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
 
   // Convert filter selections to API params
   const selectedHealthAreaApi = healthArea.length > 0 ? healthAreaDisplayToApi[healthArea[0]] : null;
   const selectedProductKey = product.length > 0 ? product[0] : null;
 
   // Phase distribution with filters
-  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistributionWithFallback(
+  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistribution(
     selectedHealthAreaApi,
     selectedProductKey
   );

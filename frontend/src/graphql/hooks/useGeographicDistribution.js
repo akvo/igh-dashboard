@@ -33,8 +33,3 @@ export function useGeographicDistribution(locationScope = 'Trial Location') {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function useGeographicDistributionWithFallback(locationScope = 'Trial Location') {
-  return useGeographicDistribution(locationScope);
-}

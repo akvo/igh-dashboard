@@ -29,8 +29,3 @@ export function useProducts() {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function useProductsWithFallback() {
-  return useProducts();
-}

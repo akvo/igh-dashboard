@@ -33,8 +33,3 @@ export function useTemporalSnapshots(years) {
     usingCache: !!cachedData,
   };
 }
-
-// Alias for consistency (no fallback data)
-export function useTemporalSnapshotsWithFallback(years) {
-  return useTemporalSnapshots(years);
-}
