@@ -7,9 +7,7 @@ import type { GeographicDistributionRow } from "../types.js";
  *
  * @param location_scope - "Trial Location", "Target Country", or "Developer Location"
  */
-export function getGeographicDistribution(
-  location_scope: string
-): GeographicDistributionRow[] {
+export function getGeographicDistribution(location_scope: string): GeographicDistributionRow[] {
   const db = getDatabase();
 
   // Map Visualization: Geographic distribution of candidates
@@ -31,7 +29,7 @@ export function getGeographicDistribution(
       AND g.country_name IS NOT NULL
     GROUP BY g.country_key, g.country_name, g.iso_code, bg.location_scope
     ORDER BY candidateCount DESC
-  `
+  `,
     )
     .all(location_scope) as GeographicDistributionRow[];
 
@@ -51,7 +49,7 @@ export function getLocationScopes(): string[] {
     FROM bridge_candidate_geography
     WHERE location_scope IS NOT NULL
     ORDER BY location_scope
-  `
+  `,
     )
     .all() as { location_scope: string }[];
 

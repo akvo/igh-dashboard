@@ -1165,6 +1165,77 @@
       "Trial Location"
     ]
   },
+  "candidates-default": {
+    "candidates": {
+      "nodes": [
+        {
+          "candidate_key": 6642,
+          "candidate_name": null,
+          "vin_candidateid": "57bfaf72-83a6-ed11-aad0-00224818a41a",
+          "vin_candidate_code": "3593",
+          "developers_agg": "Kyoto University"
+        },
+        {
+          "candidate_key": 6657,
+          "candidate_name": null,
+          "vin_candidateid": "f68365e7-84a6-ed11-aad0-00224818a41a",
+          "vin_candidate_code": "3598",
+          "developers_agg": "Cambridge Design Partnership"
+        },
+        {
+          "candidate_key": 6781,
+          "candidate_name": null,
+          "vin_candidateid": "c59b91e5-0ea8-ed11-aad0-00224818a41a",
+          "vin_candidate_code": "3655",
+          "developers_agg": "Teleflex"
+        },
+        {
+          "candidate_key": 7437,
+          "candidate_name": null,
+          "vin_candidateid": "2c89f985-5ab9-ed11-b596-00224818a41a",
+          "vin_candidate_code": "3931",
+          "developers_agg": "Liferiver Bio-Tech Corp"
+        },
+        {
+          "candidate_key": 7446,
+          "candidate_name": null,
+          "vin_candidateid": "68f41586-5bb9-ed11-b596-00224818a41a",
+          "vin_candidate_code": "3934",
+          "developers_agg": "Eurobio Scientific"
+        }
+      ],
+      "totalCount": 8581,
+      "hasNextPage": true
+    }
+  },
+  "candidates-filtered": {
+    "candidates": {
+      "nodes": [
+        {
+          "candidate_key": 134,
+          "candidate_name": "1,4-azaindoles"
+        },
+        {
+          "candidate_key": 4325,
+          "candidate_name": "1,8-dibromo-3,4,7-trichloro-3,7-dimethyl-1E, 5E-octadiene"
+        },
+        {
+          "candidate_key": 3267,
+          "candidate_name": "1-(2-methyl-8-naphthalen-1-yl-imidazo-[1,2-α]pyridin-3-yl)ethanone"
+        },
+        {
+          "candidate_key": 1702,
+          "candidate_name": "10-1074-LS, 3BNC117-LS"
+        },
+        {
+          "candidate_key": 4072,
+          "candidate_name": "10-1074-LS-J, 3BNC117-LS-J"
+        }
+      ],
+      "totalCount": 3611,
+      "hasNextPage": true
+    }
+  },
   "temporalSnapshots": {
     "temporalSnapshots": [
       {
@@ -1312,5 +1383,41 @@
         "candidateCount": 3
       }
     ]
+  },
+  "candidate-detail": {
+    "candidate": {
+      "candidate_key": 6642,
+      "candidate_name": null,
+      "vin_candidateid": "57bfaf72-83a6-ed11-aad0-00224818a41a",
+      "vin_candidate_code": "3593",
+      "developers_agg": "Kyoto University",
+      "disease": {
+        "disease_key": 489,
+        "disease_name": "Postpartum haemorrhage (PPH) - Devices",
+        "global_health_area": "Sexual & reproductive health"
+      },
+      "phase": null,
+      "product": {
+        "product_key": 88,
+        "product_name": "Devices"
+      },
+      "developers": [
+        {
+          "developer_key": 2061,
+          "developer_name": "Kyoto University"
+        },
+        {
+          "developer_key": 2061,
+          "developer_name": "Kyoto University"
+        },
+        {
+          "developer_key": 2061,
+          "developer_name": "Kyoto University"
+        }
+      ],
+      "geographies": [],
+      "priorities": [],
+      "clinicalTrials": []
+    }
   }
 }

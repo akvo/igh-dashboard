@@ -1,0 +1,1 @@
+{"version":3,"file":"dataloader.d.ts","sourceRoot":"","sources":["../../src/utils/dataloader.ts"],"names":[],"mappings":"AAAA,OAAO,UAAU,MAAM,YAAY,CAAC;AAEpC,OAAO,KAAK,EACV,UAAU,EACV,QAAQ,EACR,UAAU,EACV,YAAY,EACZ,WAAW,EACX,kBAAkB,EAClB,sBAAsB,EACtB,oBAAoB,EACrB,MAAM,gBAAgB,CAAC;AAExB;;;GAGG;AACH,wBAAgB,aAAa;;;;;;;;;EAiM5B;AAED,MAAM,MAAM,OAAO,GAAG,UAAU,CAAC,OAAO,aAAa,CAAC,CAAC"}

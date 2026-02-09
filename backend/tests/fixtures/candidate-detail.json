@@ -1,0 +1,36 @@
+{
+  "candidate": {
+    "candidate_key": 6642,
+    "candidate_name": null,
+    "vin_candidateid": "57bfaf72-83a6-ed11-aad0-00224818a41a",
+    "vin_candidate_code": "3593",
+    "developers_agg": "Kyoto University",
+    "disease": {
+      "disease_key": 489,
+      "disease_name": "Postpartum haemorrhage (PPH) - Devices",
+      "global_health_area": "Sexual & reproductive health"
+    },
+    "phase": null,
+    "product": {
+      "product_key": 88,
+      "product_name": "Devices"
+    },
+    "developers": [
+      {
+        "developer_key": 2061,
+        "developer_name": "Kyoto University"
+      },
+      {
+        "developer_key": 2061,
+        "developer_name": "Kyoto University"
+      },
+      {
+        "developer_key": 2061,
+        "developer_name": "Kyoto University"
+      }
+    ],
+    "geographies": [],
+    "priorities": [],
+    "clinicalTrials": []
+  }
+}

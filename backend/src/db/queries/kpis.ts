@@ -16,7 +16,7 @@ export function getPortfolioKPIs(): PortfolioKPIs {
     FROM fact_pipeline_snapshot f
     JOIN dim_disease d ON f.disease_key = d.disease_key
     WHERE f.is_active_flag = 1
-  `
+  `,
     )
     .get() as { count: number };
 
@@ -28,7 +28,7 @@ export function getPortfolioKPIs(): PortfolioKPIs {
     SELECT COUNT(DISTINCT candidate_key) as count
     FROM fact_pipeline_snapshot
     WHERE is_active_flag = 1
-  `
+  `,
     )
     .get() as { count: number };
 
@@ -42,7 +42,7 @@ export function getPortfolioKPIs(): PortfolioKPIs {
     JOIN dim_phase p ON f.phase_key = p.phase_key
     WHERE f.is_active_flag = 1
       AND p.phase_name LIKE '%Approved%'
-  `
+  `,
     )
     .get() as { count: number };
 
