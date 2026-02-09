@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon } from '@/components/icons';
+import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts } from '@/graphql/hooks';
 
@@ -16,6 +16,14 @@ export default function PortfolioAnalysis() {
   const [portfolioTab, setPortfolioTab] = useState('candidates');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [extractTab, setExtractTab] = useState('candidates-approved');
+  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [columnSearchQuery, setColumnSearchQuery] = useState('');
+  const [extractSearchQuery, setExtractSearchQuery] = useState('');
+  const [extractHealthArea, setExtractHealthArea] = useState('');
+  const [extractDisease, setExtractDisease] = useState('');
+  const [extractProduct, setExtractProduct] = useState('');
+  const [extractRdStage, setExtractRdStage] = useState('');
 
   // Fetch data from API
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
@@ -175,6 +183,58 @@ export default function PortfolioAnalysis() {
     US: 150, BR: 80, CN: 120, IN: 90, RU: 60, AU: 40, ZA: 30, NG: 25, KE: 20, EG: 15,
   };
 
+  // Available columns for Extract custom details
+  const availableColumns = [
+    { id: 'type', label: 'Type' },
+    { id: 'ighId', label: 'IGH ID' },
+    { id: 'altNames', label: 'Alternative names' },
+    { id: 'gha', label: 'Global health area' },
+    { id: 'primaryDisease', label: 'Primary disease' },
+    { id: 'secondaryDisease', label: 'Secondary disease' },
+    { id: 'product', label: 'Product' },
+    { id: 'subProduct', label: 'Sub product' },
+    { id: 'indication', label: 'Indication' },
+    { id: 'target', label: 'Target' },
+  ];
+
+  const filteredColumns = availableColumns.filter((col) =>
+    col.label.toLowerCase().includes(columnSearchQuery.toLowerCase())
+  );
+
+  const handleSelectAllColumns = () => {
+    setSelectedColumns(availableColumns.map((col) => col.id));
+  };
+
+  const handleClearColumns = () => {
+    setSelectedColumns([]);
+  };
+
+  const handleToggleColumn = (colId) => {
+    setSelectedColumns((prev) =>
+      prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId]
+    );
+  };
+
+  const handleResetExtractFilters = () => {
+    setExtractHealthArea('');
+    setExtractDisease('');
+    setExtractProduct('');
+    setExtractRdStage('');
+  };
+
+  // Dummy data for extract table
+  const extractTableData = [
+    { name: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of...', disease: 'Malaria', product: 'Drugs', ageSpecific: 'No data available', researchStatus: 'Approved' },
+    { name: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditio...', disease: 'Dengue', product: 'Drugs', ageSpecific: '18+', researchStatus: 'Phase 2' },
+    { name: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', disease: 'Tuberculosis', product: 'Drugs', ageSpecific: '6+', researchStatus: 'Phase 1' },
+    { name: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', disease: 'HIV/AIDS', product: 'Drugs', ageSpecific: '12+', researchStatus: 'Pre clinical' },
+    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', disease: 'COVID-19', product: 'Drugs', ageSpecific: '3+', researchStatus: 'Discovery' },
+    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown' },
+  ];
+
+  // R&D stage options
+  const rdStageOptions = ['Discovery', 'Pre clinical', 'Phase 1', 'Phase 2', 'Phase 3', 'Approved'];
+
   // Dummy data for technology types table
   const technologyTypesData = [
     { name: 'Immunoglobulin products - animal plasma/serum derived', discovery: 1, preClinical: 132, phase1: 1, phase2: 4, phase3: 1, approved: 0 },
@@ -225,8 +285,8 @@ export default function PortfolioAnalysis() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <TabSwitcher
                 tabs={[
-                  { value: 'explore', label: 'Explore visual insights' },
-                  { value: 'extract', label: 'Extract custom details' },
+                  { value: 'explore', label: 'Explore visual insights', icon: ChartIcon },
+                  { value: 'extract', label: 'Extract custom details', icon: ListIcon },
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
@@ -240,90 +300,118 @@ export default function PortfolioAnalysis() {
               </a>
             </div>
 
-            {/* Filters */}
-            <div className="flex items-end gap-4">
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Global health area"
-                  value={healthArea}
-                  onChange={setHealthArea}
-                  placeholder="All"
-                  options={healthAreaOptions}
-                  multiSelect={true}
-                  loading={healthAreasLoading}
-                />
+            {/* Filters for Explore tab */}
+            {activeTab === 'explore' && (
+              <div className="flex items-end gap-4">
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Global health area"
+                    value={healthArea}
+                    onChange={setHealthArea}
+                    placeholder="All"
+                    options={healthAreaOptions}
+                    multiSelect={true}
+                    loading={healthAreasLoading}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Diseases"
+                    value={disease}
+                    onChange={setDisease}
+                    placeholder="All"
+                    options={diseaseOptions}
+                    multiSelect={true}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Product"
+                    value={product}
+                    onChange={setProduct}
+                    placeholder="All"
+                    options={productOptions}
+                    multiSelect={true}
+                    loading={productsLoading}
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+                >
+                  Clear
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
               </div>
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Diseases"
-                  value={disease}
-                  onChange={setDisease}
-                  placeholder="All"
-                  options={diseaseOptions}
-                  multiSelect={true}
-                />
-              </div>
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Product"
-                  value={product}
-                  onChange={setProduct}
-                  placeholder="All"
-                  options={productOptions}
-                  multiSelect={true}
-                  loading={productsLoading}
-                />
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={handleClearFilters}
-                className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
-              >
-                Clear
-                <RefreshIcon className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+            )}
 
-          {/* Pipeline Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {kpisLoading ? (
-              <>
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                    <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                  </div>
+            {/* Sub-tabs for Extract tab */}
+            {activeTab === 'extract' && (
+              <div className="flex gap-6 border-b border-gray-200">
+                {[
+                  { value: 'candidates-approved', label: 'Candidates & Approved Products' },
+                  { value: 'rd-priorities', label: 'R&D Priorities & Candidates' },
+                  { value: 'clinical-trials', label: 'Clinical Trials & Candidates' },
+                  { value: 'rd-only', label: 'R&D Priorities' },
+                ].map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setExtractTab(tab.value)}
+                    className={`pb-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+                      extractTab === tab.value
+                        ? 'text-black border-orange-500'
+                        : 'text-gray-400 border-transparent hover:text-gray-600'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
                 ))}
-              </>
-            ) : (
-              <>
-                <StatCard
-                  title="Pipeline"
-                  value={activeCandidates}
-                  description="Active candidates"
-                  tooltip="Number of candidates currently in active development"
-                />
-                <StatCard
-                  title="Pipeline"
-                  value={ongoingTrials}
-                  description="Ongoing clinical trials"
-                  tooltip="Number of clinical trials currently in progress"
-                />
-                <StatCard
-                  title="Pipeline"
-                  value={approvedProducts}
-                  description="Approved products"
-                  tooltip="Number of products that have received approval"
-                />
-              </>
+              </div>
             )}
           </div>
 
           {/* Content based on active tab */}
           {activeTab === 'explore' ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <>
+              {/* Pipeline Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {kpisLoading ? (
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                        <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <StatCard
+                      title="Pipeline"
+                      value={activeCandidates}
+                      description="Active candidates"
+                      tooltip="Number of candidates currently in active development"
+                    />
+                    <StatCard
+                      title="Pipeline"
+                      value={ongoingTrials}
+                      description="Ongoing clinical trials"
+                      tooltip="Number of clinical trials currently in progress"
+                    />
+                    <StatCard
+                      title="Pipeline"
+                      value={approvedProducts}
+                      description="Approved products"
+                      tooltip="Number of products that have received approval"
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Charts Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Global pipeline overview - takes 2 columns */}
               <div className="lg:col-span-2 bg-white border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -391,13 +479,257 @@ export default function PortfolioAnalysis() {
                 />
               </div>
             </div>
+            </>
           ) : (
-            <div className="text-gray-500 text-center py-12 bg-white border border-gray-200">
-              Extract custom details content will go here (Data table with pagination)
+            <div>
+              {/* Main content card */}
+              <div className="bg-white border border-gray-200">
+                {/* Header */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
+                      <p className="text-sm text-gray-500">Select the columns you would like to include in the overview and click on apply.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search item"
+                          value={extractSearchQuery}
+                          onChange={(e) => setExtractSearchQuery(e.target.value)}
+                          className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <button
+                        className={`flex items-center gap-2 px-4 py-2 text-sm border ${
+                          selectedColumns.length > 0
+                            ? 'text-gray-600 border-gray-300 hover:bg-gray-50'
+                            : 'text-gray-400 border-gray-200 cursor-not-allowed'
+                        }`}
+                        disabled={selectedColumns.length === 0}
+                      >
+                        <CloudDownloadIcon className="w-4 h-4" />
+                        Download CSV
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Filters row */}
+                  <div className="flex items-end gap-4 mt-4">
+                    <div className="min-w-[180px]">
+                      <Dropdown
+                        label="Global health area"
+                        value={extractHealthArea}
+                        onChange={setExtractHealthArea}
+                        placeholder="All"
+                        options={healthAreaOptions}
+                        compact={true}
+                      />
+                    </div>
+                    <div className="min-w-[180px]">
+                      <Dropdown
+                        label="Diseases"
+                        value={extractDisease}
+                        onChange={setExtractDisease}
+                        placeholder="All"
+                        options={diseaseOptions}
+                        compact={true}
+                      />
+                    </div>
+                    <div className="min-w-[180px]">
+                      <Dropdown
+                        label="Product"
+                        value={extractProduct}
+                        onChange={setExtractProduct}
+                        placeholder="All"
+                        options={['Drugs', 'Vaccines', 'Diagnostics', 'Biologics']}
+                        compact={true}
+                      />
+                    </div>
+                    <div className="min-w-[180px]">
+                      <Dropdown
+                        label="R&D stage"
+                        value={extractRdStage}
+                        onChange={setExtractRdStage}
+                        placeholder="All"
+                        options={rdStageOptions}
+                        compact={true}
+                      />
+                    </div>
+                    <div className="flex-1" />
+                    <button
+                      onClick={handleResetExtractFilters}
+                      className="flex items-center gap-2 text-sm text-gray-500 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
+                    >
+                      Reset filters
+                      <RefreshIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Two column layout */}
+                <div className="flex">
+                  {/* Left: Available columns */}
+                  <div className="w-[280px] border-r border-gray-200 p-4">
+                    <h4 className="text-base font-bold text-black mb-4">Available columns</h4>
+                    <div className="relative mb-4">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search item"
+                        value={columnSearchQuery}
+                        onChange={(e) => setColumnSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 border-none focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-600">Select columns</span>
+                      <button
+                        onClick={handleSelectAllColumns}
+                        className="text-sm text-orange-500 hover:underline cursor-pointer border-none bg-transparent"
+                      >
+                        Select all
+                      </button>
+                    </div>
+
+                    <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                      {filteredColumns.map((col) => (
+                        <div
+                          key={col.id}
+                          className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleToggleColumn(col.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
+                                selectedColumns.includes(col.id)
+                                  ? 'border-orange-500 bg-orange-500'
+                                  : 'border-gray-300 bg-white'
+                              }`}
+                            >
+                              {selectedColumns.includes(col.id) && (
+                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </span>
+                            <span className="text-sm text-gray-700">{col.label}</span>
+                          </div>
+                          <FilterIcon className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Apply / Clear buttons */}
+                    <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+                      <button className="flex-1 px-4 py-2 text-sm font-medium text-orange-500 bg-transparent border border-orange-500 hover:bg-orange-50">
+                        Apply
+                      </button>
+                      <button
+                        onClick={handleClearColumns}
+                        className="flex-1 px-4 py-2 text-sm text-gray-500 bg-gray-100 border-none hover:bg-gray-200"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right: Data table or empty state */}
+                  <div className="flex-1">
+                    {selectedColumns.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-32">
+                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                          <InfoIcon className="w-6 h-6 text-orange-500" />
+                        </div>
+                        <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
+                        <p className="text-sm text-gray-500 text-center max-w-xs">
+                          Select table columns you'd like to include in the overview
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-200">
+                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Age specific</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Research status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {extractTableData.map((item, index) => (
+                                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <td className="py-4 px-4">
+                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.name}</div>
+                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
+                                  </td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.ageSpecific}</td>
+                                  <td className="py-4 px-4">
+                                    <span className={`px-2 py-1 text-xs ${getRdStageStyle(item.researchStatus)}`}>
+                                      {item.researchStatus}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
+                          <div className="flex items-center gap-2">
+                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
+                              <ChevronLeftIcon className="w-5 h-5" />
+                            </button>
+                            {[1, 2, 3, 4, 5].map((page) => (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-8 h-8 text-sm rounded ${
+                                  currentPage === page
+                                    ? 'bg-orange-500 text-white'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                            <span className="text-gray-400">...</span>
+                            <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
+                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
+                              <ChevronRightIcon className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            Results per page:
+                            <Dropdown
+                              value={[]}
+                              onChange={() => {}}
+                              placeholder="6"
+                              options={['6', '12', '24', '48']}
+                              compact={true}
+                              className="w-20"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Aggregated portfolio section */}
+          {/* Aggregated portfolio section - only in explore tab */}
+          {activeTab === 'explore' && (
           <div className="bg-white border border-gray-200 p-6 mt-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
@@ -966,6 +1298,7 @@ export default function PortfolioAnalysis() {
               </div>
             )}
           </div>
+          )}
         </div>
       </main>
     </div>
