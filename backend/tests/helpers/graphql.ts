@@ -28,7 +28,7 @@ export function getServer(): ApolloServer {
  */
 export async function query<T = unknown>(
   queryString: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
 ): Promise<{ data: T; errors?: Array<{ message: string }> }> {
   const srv = getServer();
 
@@ -41,7 +41,7 @@ export async function query<T = unknown>(
       contextValue: {
         loaders: createLoaders(),
       },
-    }
+    },
   );
 
   if (response.body.kind === "single") {

@@ -49,6 +49,74 @@ interface Product {
   product_name: string | null;
 }
 
+interface CandidateNode {
+  candidate_key: number;
+  candidate_name: string | null;
+  vin_candidateid: string | null;
+  vin_candidate_code: string | null;
+  developers_agg: string | null;
+}
+
+interface CandidateConnection {
+  nodes: CandidateNode[];
+  totalCount: number;
+  hasNextPage: boolean;
+}
+
+interface DimDisease {
+  disease_key: number;
+  disease_name: string | null;
+  global_health_area: string | null;
+}
+
+interface DimPhase {
+  phase_key: number;
+  phase_name: string | null;
+  sort_order: number | null;
+}
+
+interface DimProduct {
+  product_key: number;
+  product_name: string | null;
+}
+
+interface DimDeveloper {
+  developer_key: number;
+  developer_name: string | null;
+}
+
+interface CandidateGeography {
+  country_key: number;
+  country_name: string | null;
+  iso_code: string | null;
+  location_scope: string | null;
+}
+
+interface DimPriority {
+  priority_key: number;
+  priority_name: string | null;
+  indication: string | null;
+  intended_use: string | null;
+}
+
+interface FactClinicalTrialEvent {
+  trial_id: number;
+  candidate_key: number | null;
+  trial_phase: string | null;
+  enrollment_count: number | null;
+  status: string | null;
+}
+
+interface CandidateDetail extends CandidateNode {
+  disease: DimDisease | null;
+  phase: DimPhase | null;
+  product: DimProduct | null;
+  developers: DimDeveloper[];
+  geographies: CandidateGeography[];
+  priorities: DimPriority[];
+  clinicalTrials: FactClinicalTrialEvent[];
+}
+
 // =============================================================================
 // KPI Cards
 // =============================================================================
@@ -113,9 +181,7 @@ describe("Bubble Chart", () => {
       }
     }`);
 
-    const areaNames = data.globalHealthAreaSummaries.map(
-      (s) => s.global_health_area
-    );
+    const areaNames = data.globalHealthAreaSummaries.map((s) => s.global_health_area);
     expect(areaNames).toContain("Neglected disease");
     expect(areaNames).toContain("Emerging infectious disease");
     // Sexual & reproductive health
@@ -125,8 +191,8 @@ describe("Bubble Chart", () => {
           name.includes("Sexual") ||
           name.includes("reproductive") ||
           name.includes("Women") ||
-          name.includes("SRH")
-      )
+          name.includes("SRH"),
+      ),
     ).toBe(true);
   });
 
@@ -194,9 +260,7 @@ describe("Geographic Map", () => {
     }`);
 
     // At least some countries should have ISO codes
-    const withIsoCodes = data.geographicDistribution.filter(
-      (row) => row.iso_code !== null
-    );
+    const withIsoCodes = data.geographicDistribution.filter((row) => row.iso_code !== null);
     expect(withIsoCodes.length).toBeGreaterThan(0);
   });
 
@@ -302,7 +366,7 @@ describe("Temporal Analysis", () => {
           sort_order
           candidateCount
         }
-      }`
+      }`,
     );
 
     expect(data.temporalSnapshots.length).toBeGreaterThan(0);
@@ -319,7 +383,7 @@ describe("Temporal Analysis", () => {
           sort_order
           candidateCount
         }
-      }`
+      }`,
     );
 
     expect(data.temporalSnapshots.length).toBeGreaterThan(0);
@@ -339,7 +403,7 @@ describe("Temporal Analysis", () => {
           phase_name
           candidateCount
         }
-      }`
+      }`,
     );
 
     // Should have at least some years with data
@@ -352,5 +416,358 @@ describe("Temporal Analysis", () => {
       expect(row.phase_name).toBeDefined();
       expect(row.candidateCount).toBeGreaterThan(0);
     });
+  });
+});
+
+// =============================================================================
+// Candidates List
+// =============================================================================
+
+describe("Candidates List", () => {
+  it("returns paginated candidates with defaults (limit 20)", async () => {
+    const { data } = await query<{ candidates: CandidateConnection }>(`{
+      candidates {
+        nodes {
+          candidate_key
+          candidate_name
+        }
+        totalCount
+        hasNextPage
+      }
+    }`);
+
+    expect(data.candidates.nodes.length).toBeGreaterThan(0);
+    expect(data.candidates.nodes.length).toBeLessThanOrEqual(20);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    expect(typeof data.candidates.hasNextPage).toBe("boolean");
+  });
+
+  it("respects limit and offset parameters", async () => {
+    const { data } = await query<{ candidates: CandidateConnection }>(`{
+      candidates(limit: 3, offset: 0) {
+        nodes {
+          candidate_key
+          candidate_name
+        }
+        totalCount
+        hasNextPage
+      }
+    }`);
+
+    expect(data.candidates.nodes.length).toBeLessThanOrEqual(3);
+    // With a small limit against the full dataset, hasNextPage should be true
+    expect(data.candidates.hasNextPage).toBe(true);
+  });
+
+  it("filters by global_health_area", async () => {
+    const { data: allData } = await query<{ candidates: CandidateConnection }>(`{
+      candidates {
+        totalCount
+      }
+    }`);
+
+    const { data: filteredData } = await query<{ candidates: CandidateConnection }>(`{
+      candidates(filter: { global_health_area: "Neglected disease" }) {
+        totalCount
+        nodes {
+          candidate_key
+        }
+      }
+    }`);
+
+    expect(filteredData.candidates.totalCount).toBeGreaterThan(0);
+    expect(filteredData.candidates.totalCount).toBeLessThan(allData.candidates.totalCount);
+  });
+
+  it("returns hasNextPage: true when more results exist", async () => {
+    const { data } = await query<{ candidates: CandidateConnection }>(`{
+      candidates(limit: 1) {
+        nodes {
+          candidate_key
+        }
+        totalCount
+        hasNextPage
+      }
+    }`);
+
+    // There should be more than 1 candidate total
+    expect(data.candidates.totalCount).toBeGreaterThan(1);
+    expect(data.candidates.hasNextPage).toBe(true);
+  });
+});
+
+// =============================================================================
+// Candidate Detail
+// =============================================================================
+
+describe("Candidate Detail", () => {
+  it("returns a candidate by key", async () => {
+    // First fetch a valid candidate_key
+    const { data: listData } = await query<{ candidates: CandidateConnection }>(`{
+      candidates(limit: 1) {
+        nodes {
+          candidate_key
+          candidate_name
+        }
+      }
+    }`);
+
+    const candidateKey = listData.candidates.nodes[0].candidate_key;
+
+    const { data } = await query<{ candidate: CandidateNode | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          candidate_key
+          candidate_name
+          vin_candidateid
+          vin_candidate_code
+          developers_agg
+        }
+      }`,
+      { key: candidateKey },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    expect(data.candidate!.candidate_key).toBe(candidateKey);
+    expect(data.candidate!.candidate_name).toBeDefined();
+  });
+
+  it("returns null for non-existent candidate key", async () => {
+    const { data } = await query<{ candidate: CandidateNode | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          candidate_key
+          candidate_name
+        }
+      }`,
+      { key: 999999 },
+    );
+
+    expect(data.candidate).toBeNull();
+  });
+});
+
+// =============================================================================
+// Nested Resolvers on DimCandidateCore
+// =============================================================================
+
+describe("Nested Resolvers on DimCandidateCore", () => {
+  // Helper to fetch the first candidate key
+  async function getFirstCandidateKey(): Promise<number> {
+    const { data } = await query<{ candidates: CandidateConnection }>(`{
+      candidates(limit: 1) {
+        nodes {
+          candidate_key
+        }
+      }
+    }`);
+    return data.candidates.nodes[0].candidate_key;
+  }
+
+  it("resolves disease on a candidate", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { disease: DimDisease | null } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          disease {
+            disease_key
+            disease_name
+            global_health_area
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    // disease may be null if no snapshot exists, but the field should resolve
+    if (data.candidate!.disease) {
+      expect(data.candidate!.disease.disease_key).toBeDefined();
+      expect(typeof data.candidate!.disease.disease_name).toBe("string");
+    }
+  });
+
+  it("resolves phase on a candidate", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { phase: DimPhase | null } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          phase {
+            phase_key
+            phase_name
+            sort_order
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    if (data.candidate!.phase) {
+      expect(data.candidate!.phase.phase_key).toBeDefined();
+    }
+  });
+
+  it("resolves product on a candidate", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { product: DimProduct | null } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          product {
+            product_key
+            product_name
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    if (data.candidate!.product) {
+      expect(data.candidate!.product.product_key).toBeDefined();
+    }
+  });
+
+  it("resolves developers array", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { developers: DimDeveloper[] } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          developers {
+            developer_key
+            developer_name
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    expect(Array.isArray(data.candidate!.developers)).toBe(true);
+  });
+
+  it("resolves geographies array", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { geographies: CandidateGeography[] } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          geographies {
+            country_key
+            country_name
+            iso_code
+            location_scope
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    expect(Array.isArray(data.candidate!.geographies)).toBe(true);
+  });
+
+  it("resolves priorities array", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{ candidate: { priorities: DimPriority[] } | null }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          priorities {
+            priority_key
+            priority_name
+            indication
+            intended_use
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    expect(Array.isArray(data.candidate!.priorities)).toBe(true);
+  });
+
+  it("resolves clinicalTrials array", async () => {
+    const key = await getFirstCandidateKey();
+
+    const { data } = await query<{
+      candidate: { clinicalTrials: FactClinicalTrialEvent[] } | null;
+    }>(
+      `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          clinicalTrials {
+            trial_id
+            trial_phase
+            enrollment_count
+            status
+          }
+        }
+      }`,
+      { key },
+    );
+
+    expect(data.candidate).not.toBeNull();
+    expect(Array.isArray(data.candidate!.clinicalTrials)).toBe(true);
+  });
+
+  it("resolves all nested fields in a single query (DataLoader batching)", async () => {
+    // Fetch 3 candidates with all nested fields to exercise DataLoader batching
+    const { data } = await query<{ candidates: { nodes: CandidateDetail[] } }>(`{
+      candidates(limit: 3) {
+        nodes {
+          candidate_key
+          candidate_name
+          disease {
+            disease_key
+            disease_name
+            global_health_area
+          }
+          phase {
+            phase_key
+            phase_name
+            sort_order
+          }
+          product {
+            product_key
+            product_name
+          }
+          developers {
+            developer_key
+            developer_name
+          }
+          geographies {
+            country_key
+            country_name
+            iso_code
+            location_scope
+          }
+          priorities {
+            priority_key
+            priority_name
+          }
+          clinicalTrials {
+            trial_id
+            trial_phase
+            status
+          }
+        }
+      }
+    }`);
+
+    expect(data.candidates.nodes.length).toBeGreaterThan(0);
+
+    for (const candidate of data.candidates.nodes) {
+      expect(candidate.candidate_key).toBeDefined();
+      // All array fields should be arrays (even if empty)
+      expect(Array.isArray(candidate.developers)).toBe(true);
+      expect(Array.isArray(candidate.geographies)).toBe(true);
+      expect(Array.isArray(candidate.priorities)).toBe(true);
+      expect(Array.isArray(candidate.clinicalTrials)).toBe(true);
+    }
   });
 });

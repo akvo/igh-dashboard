@@ -6,8 +6,6 @@ import type {
   DimGeography,
   DimDeveloper,
   DimPriority,
-  DimCandidateTech,
-  DimCandidateRegulatory,
   FactClinicalTrialEvent,
   CandidateGeography,
 } from "../types.js";
@@ -24,7 +22,7 @@ export function getDiseases(): DimDisease[] {
     SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
     FROM dim_disease
     ORDER BY disease_name
-  `
+  `,
     )
     .all() as DimDisease[];
 }
@@ -41,7 +39,7 @@ export function getDiseaseByKey(disease_key: number): DimDisease | null {
     SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
     FROM dim_disease
     WHERE disease_key = ?
-  `
+  `,
     )
     .get(disease_key) as DimDisease | undefined;
 
@@ -60,7 +58,7 @@ export function getPhases(): DimPhase[] {
     SELECT phase_key, vin_rdstageid, phase_name, sort_order
     FROM dim_phase
     ORDER BY sort_order
-  `
+  `,
     )
     .all() as DimPhase[];
 }
@@ -77,7 +75,7 @@ export function getPhaseByKey(phase_key: number): DimPhase | null {
     SELECT phase_key, vin_rdstageid, phase_name, sort_order
     FROM dim_phase
     WHERE phase_key = ?
-  `
+  `,
     )
     .get(phase_key) as DimPhase | undefined;
 
@@ -96,7 +94,7 @@ export function getProducts(): DimProduct[] {
     SELECT product_key, vin_productid, product_name, product_type
     FROM dim_product
     ORDER BY product_name
-  `
+  `,
     )
     .all() as DimProduct[];
 }
@@ -113,7 +111,7 @@ export function getProductByKey(product_key: number): DimProduct | null {
     SELECT product_key, vin_productid, product_name, product_type
     FROM dim_product
     WHERE product_key = ?
-  `
+  `,
     )
     .get(product_key) as DimProduct | undefined;
 
@@ -132,7 +130,7 @@ export function getCountries(): DimGeography[] {
     SELECT country_key, vin_countryid, country_name, iso_code, region_name
     FROM dim_geography
     ORDER BY country_name
-  `
+  `,
     )
     .all() as DimGeography[];
 }
@@ -140,9 +138,7 @@ export function getCountries(): DimGeography[] {
 /**
  * Get developers for a candidate via bridge table.
  */
-export function getDevelopersByCandidateKey(
-  candidate_key: number
-): DimDeveloper[] {
+export function getDevelopersByCandidateKey(candidate_key: number): DimDeveloper[] {
   const db = getDatabase();
 
   return db
@@ -153,7 +149,7 @@ export function getDevelopersByCandidateKey(
     JOIN bridge_candidate_developer bd ON d.developer_key = bd.developer_key
     WHERE bd.candidate_key = ?
     ORDER BY d.developer_name
-  `
+  `,
     )
     .all(candidate_key) as DimDeveloper[];
 }
@@ -161,9 +157,7 @@ export function getDevelopersByCandidateKey(
 /**
  * Get priorities for a candidate via bridge table.
  */
-export function getPrioritiesByCandidateKey(
-  candidate_key: number
-): DimPriority[] {
+export function getPrioritiesByCandidateKey(candidate_key: number): DimPriority[] {
   const db = getDatabase();
 
   return db
@@ -174,7 +168,7 @@ export function getPrioritiesByCandidateKey(
     JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
     WHERE bp.candidate_key = ?
     ORDER BY p.priority_name
-  `
+  `,
     )
     .all(candidate_key) as DimPriority[];
 }
@@ -182,9 +176,7 @@ export function getPrioritiesByCandidateKey(
 /**
  * Get geographies for a candidate via bridge table.
  */
-export function getGeographiesByCandidateKey(
-  candidate_key: number
-): CandidateGeography[] {
+export function getGeographiesByCandidateKey(candidate_key: number): CandidateGeography[] {
   const db = getDatabase();
 
   return db
@@ -195,7 +187,7 @@ export function getGeographiesByCandidateKey(
     JOIN bridge_candidate_geography bg ON g.country_key = bg.country_key
     WHERE bg.candidate_key = ?
     ORDER BY g.country_name
-  `
+  `,
     )
     .all(candidate_key) as CandidateGeography[];
 }
@@ -203,9 +195,7 @@ export function getGeographiesByCandidateKey(
 /**
  * Get clinical trials for a candidate.
  */
-export function getClinicalTrialsByCandidateKey(
-  candidate_key: number
-): FactClinicalTrialEvent[] {
+export function getClinicalTrialsByCandidateKey(candidate_key: number): FactClinicalTrialEvent[] {
   const db = getDatabase();
 
   return db
@@ -215,49 +205,7 @@ export function getClinicalTrialsByCandidateKey(
     FROM fact_clinical_trial_event
     WHERE candidate_key = ?
     ORDER BY trial_phase
-  `
+  `,
     )
     .all(candidate_key) as FactClinicalTrialEvent[];
-}
-
-/**
- * Get technology info by key.
- */
-export function getTechnologyByKey(
-  technology_key: number
-): DimCandidateTech | null {
-  const db = getDatabase();
-
-  const tech = db
-    .prepare(
-      `
-    SELECT technology_key, platform, technology_type, molecule_type, route_of_admin
-    FROM dim_candidate_tech
-    WHERE technology_key = ?
-  `
-    )
-    .get(technology_key) as DimCandidateTech | undefined;
-
-  return tech || null;
-}
-
-/**
- * Get regulatory info by key.
- */
-export function getRegulatoryByKey(
-  regulatory_key: number
-): DimCandidateRegulatory | null {
-  const db = getDatabase();
-
-  const reg = db
-    .prepare(
-      `
-    SELECT regulatory_key, approval_status, sra_approval_flag, fda_approval_date, who_prequal_date
-    FROM dim_candidate_regulatory
-    WHERE regulatory_key = ?
-  `
-    )
-    .get(regulatory_key) as DimCandidateRegulatory | undefined;
-
-  return reg || null;
 }

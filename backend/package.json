@@ -12,7 +12,12 @@
     "test:e2e": "vitest run tests/dashboard.test.ts",
     "test:all": "vitest run",
     "test:watch": "vitest",
-    "test:capture": "npx tsx tests/fixtures/capture.ts"
+    "test:capture": "npx tsx tests/fixtures/capture.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\"",
+    "check": "tsc --noEmit && eslint . && prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\""
   },
   "dependencies": {
     "@apollo/server": "^4.11.0",
@@ -21,10 +26,15 @@
     "graphql": "^16.9.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.7",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.54.0",
     "vitest": "^2.1.8"
   }
 }

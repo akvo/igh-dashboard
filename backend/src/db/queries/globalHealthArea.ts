@@ -24,7 +24,7 @@ export function getGlobalHealthAreaSummaries(): GlobalHealthAreaSummary[] {
       AND d.global_health_area IS NOT NULL
     GROUP BY d.global_health_area
     ORDER BY candidateCount DESC
-  `
+  `,
     )
     .all() as GlobalHealthAreaSummary[];
 
