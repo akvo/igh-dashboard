@@ -81,6 +81,63 @@ export interface FilterOptionsFixture {
   locationScopes: string[];
 }
 
+export interface CandidateNode {
+  candidate_key: number;
+  candidate_name: string | null;
+  vin_candidateid: string | null;
+  vin_candidate_code: string | null;
+  developers_agg: string | null;
+}
+
+export interface CandidatesDefaultFixture {
+  candidates: {
+    nodes: CandidateNode[];
+    totalCount: number;
+    hasNextPage: boolean;
+  };
+}
+
+export interface CandidatesFilteredFixture {
+  candidates: {
+    nodes: Array<{ candidate_key: number; candidate_name: string | null }>;
+    totalCount: number;
+    hasNextPage: boolean;
+  };
+}
+
+export interface CandidateDetailFixture {
+  candidate:
+    | (CandidateNode & {
+        disease: {
+          disease_key: number;
+          disease_name: string | null;
+          global_health_area: string | null;
+        } | null;
+        phase: { phase_key: number; phase_name: string | null; sort_order: number | null } | null;
+        product: { product_key: number; product_name: string | null } | null;
+        developers: Array<{ developer_key: number; developer_name: string | null }>;
+        geographies: Array<{
+          country_key: number;
+          country_name: string | null;
+          iso_code: string | null;
+          location_scope: string | null;
+        }>;
+        priorities: Array<{
+          priority_key: number;
+          priority_name: string | null;
+          indication: string | null;
+          intended_use: string | null;
+        }>;
+        clinicalTrials: Array<{
+          trial_id: number;
+          trial_phase: string | null;
+          enrollment_count: number | null;
+          status: string | null;
+        }>;
+      })
+    | null;
+}
+
 // Lazy-loaded fixtures (only loaded when accessed)
 let _portfolioKPIs: PortfolioKPIsFixture | null = null;
 let _globalHealthAreaSummaries: GlobalHealthAreaSummariesFixture | null = null;
@@ -90,6 +147,9 @@ let _phaseDistribution: PhaseDistributionFixture | null = null;
 let _phaseDistributionFiltered: PhaseDistributionFixture | null = null;
 let _temporalSnapshots: TemporalSnapshotsFixture | null = null;
 let _filterOptions: FilterOptionsFixture | null = null;
+let _candidatesDefault: CandidatesDefaultFixture | null = null;
+let _candidatesFiltered: CandidatesFilteredFixture | null = null;
+let _candidateDetail: CandidateDetailFixture | null = null;
 
 export function getPortfolioKPIs(): PortfolioKPIsFixture {
   if (!_portfolioKPIs) {
@@ -100,21 +160,27 @@ export function getPortfolioKPIs(): PortfolioKPIsFixture {
 
 export function getGlobalHealthAreaSummaries(): GlobalHealthAreaSummariesFixture {
   if (!_globalHealthAreaSummaries) {
-    _globalHealthAreaSummaries = loadFixture<GlobalHealthAreaSummariesFixture>("globalHealthAreaSummaries");
+    _globalHealthAreaSummaries = loadFixture<GlobalHealthAreaSummariesFixture>(
+      "globalHealthAreaSummaries",
+    );
   }
   return _globalHealthAreaSummaries;
 }
 
 export function getGeographicDistributionTrials(): GeographicDistributionFixture {
   if (!_geographicDistributionTrials) {
-    _geographicDistributionTrials = loadFixture<GeographicDistributionFixture>("geographicDistribution-trials");
+    _geographicDistributionTrials = loadFixture<GeographicDistributionFixture>(
+      "geographicDistribution-trials",
+    );
   }
   return _geographicDistributionTrials;
 }
 
 export function getGeographicDistributionDev(): GeographicDistributionFixture {
   if (!_geographicDistributionDev) {
-    _geographicDistributionDev = loadFixture<GeographicDistributionFixture>("geographicDistribution-dev");
+    _geographicDistributionDev = loadFixture<GeographicDistributionFixture>(
+      "geographicDistribution-dev",
+    );
   }
   return _geographicDistributionDev;
 }
@@ -128,7 +194,9 @@ export function getPhaseDistribution(): PhaseDistributionFixture {
 
 export function getPhaseDistributionFiltered(): PhaseDistributionFixture {
   if (!_phaseDistributionFiltered) {
-    _phaseDistributionFiltered = loadFixture<PhaseDistributionFixture>("phaseDistribution-filtered");
+    _phaseDistributionFiltered = loadFixture<PhaseDistributionFixture>(
+      "phaseDistribution-filtered",
+    );
   }
   return _phaseDistributionFiltered;
 }
@@ -145,6 +213,27 @@ export function getFilterOptions(): FilterOptionsFixture {
     _filterOptions = loadFixture<FilterOptionsFixture>("filterOptions");
   }
   return _filterOptions;
+}
+
+export function getCandidatesDefault(): CandidatesDefaultFixture {
+  if (!_candidatesDefault) {
+    _candidatesDefault = loadFixture<CandidatesDefaultFixture>("candidates-default");
+  }
+  return _candidatesDefault;
+}
+
+export function getCandidatesFiltered(): CandidatesFilteredFixture {
+  if (!_candidatesFiltered) {
+    _candidatesFiltered = loadFixture<CandidatesFilteredFixture>("candidates-filtered");
+  }
+  return _candidatesFiltered;
+}
+
+export function getCandidateDetail(): CandidateDetailFixture {
+  if (!_candidateDetail) {
+    _candidateDetail = loadFixture<CandidateDetailFixture>("candidate-detail");
+  }
+  return _candidateDetail;
 }
 
 // Direct exports for convenience (will throw if fixture files don't exist)
@@ -172,5 +261,14 @@ export const fixtures = {
   },
   get filterOptions() {
     return getFilterOptions();
+  },
+  get candidatesDefault() {
+    return getCandidatesDefault();
+  },
+  get candidatesFiltered() {
+    return getCandidatesFiltered();
+  },
+  get candidateDetail() {
+    return getCandidateDetail();
   },
 };

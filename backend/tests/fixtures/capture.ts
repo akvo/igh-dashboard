@@ -97,6 +97,35 @@ const QUERIES: Record<string, { query: string; variables?: Record<string, unknow
       locationScopes
     }`,
   },
+
+  "candidates-default": {
+    query: `{
+      candidates(limit: 5) {
+        nodes {
+          candidate_key
+          candidate_name
+          vin_candidateid
+          vin_candidate_code
+          developers_agg
+        }
+        totalCount
+        hasNextPage
+      }
+    }`,
+  },
+
+  "candidates-filtered": {
+    query: `{
+      candidates(filter: { global_health_area: "Neglected disease" }, limit: 5) {
+        nodes {
+          candidate_key
+          candidate_name
+        }
+        totalCount
+        hasNextPage
+      }
+    }`,
+  },
 };
 
 async function captureFixtures() {
@@ -110,12 +139,13 @@ async function captureFixtures() {
   // First, get available years for temporal query
   const yearsResponse = await server.executeOperation(
     { query: `{ availableYears }` },
-    { contextValue: { loaders: createLoaders() } }
+    { contextValue: { loaders: createLoaders() } },
   );
 
   let availableYears: number[] = [];
   if (yearsResponse.body.kind === "single" && yearsResponse.body.singleResult.data) {
-    availableYears = (yearsResponse.body.singleResult.data as { availableYears: number[] }).availableYears;
+    availableYears = (yearsResponse.body.singleResult.data as { availableYears: number[] })
+      .availableYears;
   }
 
   // Add temporal query with actual years from the database
@@ -132,13 +162,85 @@ async function captureFixtures() {
     variables: { years: yearsToCapture },
   };
 
+  // Get a candidate key for the detail fixture
+  const candidateListResponse = await server.executeOperation(
+    {
+      query: `{ candidates(limit: 1) { nodes { candidate_key } } }`,
+    },
+    { contextValue: { loaders: createLoaders() } },
+  );
+
+  let firstCandidateKey: number | null = null;
+  if (
+    candidateListResponse.body.kind === "single" &&
+    candidateListResponse.body.singleResult.data
+  ) {
+    const listData = candidateListResponse.body.singleResult.data as {
+      candidates: { nodes: Array<{ candidate_key: number }> };
+    };
+    if (listData.candidates.nodes.length > 0) {
+      firstCandidateKey = listData.candidates.nodes[0].candidate_key;
+    }
+  }
+
+  if (firstCandidateKey !== null) {
+    QUERIES["candidate-detail"] = {
+      query: `query GetCandidate($key: Int!) {
+        candidate(candidate_key: $key) {
+          candidate_key
+          candidate_name
+          vin_candidateid
+          vin_candidate_code
+          developers_agg
+          disease {
+            disease_key
+            disease_name
+            global_health_area
+          }
+          phase {
+            phase_key
+            phase_name
+            sort_order
+          }
+          product {
+            product_key
+            product_name
+          }
+          developers {
+            developer_key
+            developer_name
+          }
+          geographies {
+            country_key
+            country_name
+            iso_code
+            location_scope
+          }
+          priorities {
+            priority_key
+            priority_name
+            indication
+            intended_use
+          }
+          clinicalTrials {
+            trial_id
+            trial_phase
+            enrollment_count
+            status
+          }
+        }
+      }`,
+      variables: { key: firstCandidateKey },
+    };
+  }
+
   const results: Record<string, unknown> = {};
 
   for (const [name, { query, variables }] of Object.entries(QUERIES)) {
     try {
       const response = await server.executeOperation(
         { query, variables },
-        { contextValue: { loaders: createLoaders() } }
+        { contextValue: { loaders: createLoaders() } },
       );
 
       if (response.body.kind === "single") {
@@ -178,7 +280,11 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   const checks: Array<{ name: string; pass: boolean; message: string }> = [];
 
   // portfolioKPIs: 3 non-negative integers
-  const kpis = fixtures.portfolioKPIs as { portfolioKPIs: { totalDiseases: number; totalCandidates: number; approvedProducts: number } } | undefined;
+  const kpis = fixtures.portfolioKPIs as
+    | {
+        portfolioKPIs: { totalDiseases: number; totalCandidates: number; approvedProducts: number };
+      }
+    | undefined;
   if (kpis?.portfolioKPIs) {
     const { totalDiseases, totalCandidates, approvedProducts } = kpis.portfolioKPIs;
     checks.push({
@@ -189,7 +295,9 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   }
 
   // globalHealthAreaSummaries: Exactly 3 items
-  const summaries = fixtures.globalHealthAreaSummaries as { globalHealthAreaSummaries: Array<{ global_health_area: string }> } | undefined;
+  const summaries = fixtures.globalHealthAreaSummaries as
+    | { globalHealthAreaSummaries: Array<{ global_health_area: string }> }
+    | undefined;
   if (summaries?.globalHealthAreaSummaries) {
     checks.push({
       name: "globalHealthAreaSummaries",
@@ -199,7 +307,9 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   }
 
   // geographicDistribution-trials: Has iso_code
-  const trials = fixtures["geographicDistribution-trials"] as { geographicDistribution: Array<{ iso_code: string | null }> } | undefined;
+  const trials = fixtures["geographicDistribution-trials"] as
+    | { geographicDistribution: Array<{ iso_code: string | null }> }
+    | undefined;
   if (trials?.geographicDistribution) {
     const withIso = trials.geographicDistribution.filter((r) => r.iso_code).length;
     checks.push({
@@ -210,9 +320,13 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   }
 
   // phaseDistribution: Has sort_order
-  const phases = fixtures.phaseDistribution as { phaseDistribution: Array<{ sort_order: number }> } | undefined;
+  const phases = fixtures.phaseDistribution as
+    | { phaseDistribution: Array<{ sort_order: number }> }
+    | undefined;
   if (phases?.phaseDistribution) {
-    const allHaveSortOrder = phases.phaseDistribution.every((r) => typeof r.sort_order === "number");
+    const allHaveSortOrder = phases.phaseDistribution.every(
+      (r) => typeof r.sort_order === "number",
+    );
     checks.push({
       name: "phaseDistribution",
       pass: allHaveSortOrder && phases.phaseDistribution.length > 0,
@@ -221,7 +335,9 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   }
 
   // temporalSnapshots: Multiple years
-  const temporal = fixtures.temporalSnapshots as { temporalSnapshots: Array<{ year: number }> } | undefined;
+  const temporal = fixtures.temporalSnapshots as
+    | { temporalSnapshots: Array<{ year: number }> }
+    | undefined;
   if (temporal?.temporalSnapshots) {
     const years = [...new Set(temporal.temporalSnapshots.map((r) => r.year))];
     checks.push({
@@ -232,7 +348,9 @@ function validateFixtures(fixtures: Record<string, unknown>) {
   }
 
   // filterOptions: Non-empty products and years
-  const filters = fixtures.filterOptions as { products: unknown[]; availableYears: number[]; locationScopes: string[] } | undefined;
+  const filters = fixtures.filterOptions as
+    | { products: unknown[]; availableYears: number[]; locationScopes: string[] }
+    | undefined;
   if (filters) {
     checks.push({
       name: "filterOptions.products",

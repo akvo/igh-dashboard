@@ -1,0 +1,28 @@
+{
+  "candidates": {
+    "nodes": [
+      {
+        "candidate_key": 134,
+        "candidate_name": "1,4-azaindoles"
+      },
+      {
+        "candidate_key": 4325,
+        "candidate_name": "1,8-dibromo-3,4,7-trichloro-3,7-dimethyl-1E, 5E-octadiene"
+      },
+      {
+        "candidate_key": 3267,
+        "candidate_name": "1-(2-methyl-8-naphthalen-1-yl-imidazo-[1,2-α]pyridin-3-yl)ethanone"
+      },
+      {
+        "candidate_key": 1702,
+        "candidate_name": "10-1074-LS, 3BNC117-LS"
+      },
+      {
+        "candidate_key": 4072,
+        "candidate_name": "10-1074-LS-J, 3BNC117-LS-J"
+      }
+    ],
+    "totalCount": 3611,
+    "hasNextPage": true
+  }
+}

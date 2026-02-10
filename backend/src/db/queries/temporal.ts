@@ -10,9 +10,7 @@ interface TemporalSnapshotFilters {
  * Get temporal snapshots for cross-pipeline analysis.
  * Returns candidate counts by year and phase.
  */
-export function getTemporalSnapshots(
-  filters?: TemporalSnapshotFilters
-): TemporalSnapshotRow[] {
+export function getTemporalSnapshots(filters?: TemporalSnapshotFilters): TemporalSnapshotRow[] {
   const db = getDatabase();
 
   // Cross-pipeline temporal analysis
@@ -69,7 +67,7 @@ export function getAvailableYears(): number[] {
     WHERE f.is_active_flag = 1
       AND dt.year IS NOT NULL
     ORDER BY dt.year
-  `
+  `,
     )
     .all() as { year: number }[];
 

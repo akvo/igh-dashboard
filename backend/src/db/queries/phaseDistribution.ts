@@ -10,9 +10,7 @@ interface PhaseDistributionFilters {
  * Get phase distribution for stacked bar chart visualization.
  * Returns candidate counts grouped by global health area and phase.
  */
-export function getPhaseDistribution(
-  filters?: PhaseDistributionFilters
-): PhaseDistributionRow[] {
+export function getPhaseDistribution(filters?: PhaseDistributionFilters): PhaseDistributionRow[] {
   const db = getDatabase();
 
   // Stacked Bar Chart: Phase distribution by global health area

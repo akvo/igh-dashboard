@@ -15,9 +15,7 @@ class DatabaseManager {
 
   constructor(dbPath?: string) {
     // Default path: star_schema.db in the graphql-api root
-    this.dbPath =
-      dbPath ||
-      path.resolve(import.meta.dirname, "..", "..", "star_schema.db");
+    this.dbPath = dbPath || path.resolve(import.meta.dirname, "..", "..", "star_schema.db");
   }
 
   /**
@@ -27,14 +25,12 @@ class DatabaseManager {
     let stat: fs.Stats;
     try {
       stat = fs.statSync(this.dbPath);
-    } catch (err) {
+    } catch {
       throw new Error(`Database file not found: ${this.dbPath}`);
     }
 
     const changed =
-      !this.lastStat ||
-      stat.ino !== this.lastStat.ino ||
-      stat.mtimeMs !== this.lastStat.mtimeMs;
+      !this.lastStat || stat.ino !== this.lastStat.ino || stat.mtimeMs !== this.lastStat.mtimeMs;
 
     if (changed || !this.db) {
       if (this.db) {

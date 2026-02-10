@@ -16,7 +16,6 @@ import {
   type GeographicDistributionFixture,
   type PhaseDistributionFixture,
   type TemporalSnapshotsFixture,
-  type FilterOptionsFixture,
 } from "./fixtures/index.js";
 
 // Mock all database query modules BEFORE importing resolvers
@@ -26,7 +25,7 @@ vi.mock("../src/db/queries/kpis.js", () => ({
 
 vi.mock("../src/db/queries/globalHealthArea.js", () => ({
   getGlobalHealthAreaSummaries: vi.fn(
-    () => fixtures.globalHealthAreaSummaries.globalHealthAreaSummaries
+    () => fixtures.globalHealthAreaSummaries.globalHealthAreaSummaries,
   ),
 }));
 
@@ -34,20 +33,18 @@ vi.mock("../src/db/queries/geographic.js", () => ({
   getGeographicDistribution: vi.fn((scope: string) =>
     scope === "Trial Location"
       ? fixtures.geographicDistributionTrials.geographicDistribution
-      : fixtures.geographicDistributionDev.geographicDistribution
+      : fixtures.geographicDistributionDev.geographicDistribution,
   ),
   getLocationScopes: vi.fn(() => fixtures.filterOptions.locationScopes),
 }));
 
 vi.mock("../src/db/queries/phaseDistribution.js", () => ({
-  getPhaseDistribution: vi.fn(
-    (filters?: { global_health_area?: string; product_key?: number }) => {
-      if (filters?.global_health_area === "Neglected disease") {
-        return fixtures.phaseDistributionFiltered.phaseDistribution;
-      }
-      return fixtures.phaseDistribution.phaseDistribution;
+  getPhaseDistribution: vi.fn((filters?: { global_health_area?: string; product_key?: number }) => {
+    if (filters?.global_health_area === "Neglected disease") {
+      return fixtures.phaseDistributionFiltered.phaseDistribution;
     }
-  ),
+    return fixtures.phaseDistribution.phaseDistribution;
+  }),
 }));
 
 vi.mock("../src/db/queries/temporal.js", () => ({
@@ -90,7 +87,7 @@ beforeAll(() => {
 
 async function query<T = unknown>(
   queryString: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
 ): Promise<{ data: T; errors?: Array<{ message: string }> }> {
   const response = await server.executeOperation(
     {
@@ -110,7 +107,7 @@ async function query<T = unknown>(
           snapshotByCandidateLoader: { load: vi.fn(() => null) },
         },
       },
-    }
+    },
   );
 
   if (response.body.kind === "single") {
@@ -183,9 +180,7 @@ describe("Bubble Chart (Fixtures)", () => {
       }
     }`);
 
-    const areaNames = data.globalHealthAreaSummaries.map(
-      (s) => s.global_health_area
-    );
+    const areaNames = data.globalHealthAreaSummaries.map((s) => s.global_health_area);
     expect(areaNames).toContain("Neglected disease");
     expect(areaNames).toContain("Emerging infectious disease");
   });
@@ -246,9 +241,7 @@ describe("Geographic Map (Fixtures)", () => {
     }`);
 
     // At least some countries should have ISO codes
-    const withIsoCodes = data.geographicDistribution.filter(
-      (row) => row.iso_code !== null
-    );
+    const withIsoCodes = data.geographicDistribution.filter((row) => row.iso_code !== null);
     expect(withIsoCodes.length).toBeGreaterThan(0);
   });
 
@@ -309,7 +302,9 @@ describe("Phase Distribution (Fixtures)", () => {
   });
 
   it("returns products for filter dropdown", async () => {
-    const { data } = await query<{ products: Array<{ product_key: number; product_name: string | null }> }>(`{
+    const { data } = await query<{
+      products: Array<{ product_key: number; product_name: string | null }>;
+    }>(`{
       products {
         product_key
         product_name
@@ -344,7 +339,7 @@ describe("Temporal Analysis (Fixtures)", () => {
           candidateCount
         }
       }`,
-      { years: [2024] }
+      { years: [2024] },
     );
 
     expect(data.temporalSnapshots.length).toBeGreaterThan(0);
@@ -360,7 +355,7 @@ describe("Temporal Analysis (Fixtures)", () => {
           candidateCount
         }
       }`,
-      { years: [2024] }
+      { years: [2024] },
     );
 
     data.temporalSnapshots.forEach((row) => {

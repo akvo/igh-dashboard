@@ -12,7 +12,7 @@ import type {
 export function getCandidates(
   filter?: CandidateFilter,
   limit = 20,
-  offset = 0
+  offset = 0,
 ): CandidateConnection {
   const db = getDatabase();
 
@@ -53,8 +53,7 @@ export function getCandidates(
     params.push(filter.year);
   }
 
-  const whereClause =
-    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   // Count total matching candidates
   const countSql = `
@@ -86,9 +85,7 @@ export function getCandidates(
     LIMIT ? OFFSET ?
   `;
 
-  const nodes = db
-    .prepare(dataSql)
-    .all(...params, limit, offset) as DimCandidateCore[];
+  const nodes = db.prepare(dataSql).all(...params, limit, offset) as DimCandidateCore[];
 
   return {
     nodes,
@@ -100,9 +97,7 @@ export function getCandidates(
 /**
  * Get a single candidate by key.
  */
-export function getCandidateByKey(
-  candidate_key: number
-): DimCandidateCore | null {
+export function getCandidateByKey(candidate_key: number): DimCandidateCore | null {
   const db = getDatabase();
 
   const candidate = db
@@ -116,7 +111,7 @@ export function getCandidateByKey(
       developers_agg
     FROM dim_candidate_core
     WHERE candidate_key = ?
-  `
+  `,
     )
     .get(candidate_key) as DimCandidateCore | undefined;
 
@@ -126,20 +121,19 @@ export function getCandidateByKey(
 /**
  * Get the pipeline snapshot for a candidate (for joining related dimensions).
  */
-export function getCandidateSnapshot(
-  candidate_key: number
-): FactPipelineSnapshot | null {
+export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapshot | null {
   const db = getDatabase();
 
   const snapshot = db
     .prepare(
       `
-    SELECT *
+    SELECT snapshot_id, candidate_key, product_key, disease_key,
+           technology_key, regulatory_key, phase_key, date_key, is_active_flag
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1
     LIMIT 1
-  `
+  `,
     )
     .get(candidate_key) as FactPipelineSnapshot | undefined;
 
