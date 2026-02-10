@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ChartMenu } from '@/components/ui';
-import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon } from '@/components/icons';
+import { Dropdown, ChartMenu, Table } from '@/components/ui';
+import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
 
 export default function CrossPipelineAnalytics() {
@@ -13,11 +13,12 @@ export default function CrossPipelineAnalytics() {
   const [selectedPhases, setSelectedPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
 
   // Multi-variable section state
-  const [compareDisease, setCompareDisease] = useState('');
-  const [compareYear, setCompareYear] = useState('');
-  const [compareSeveralDiseases, setCompareSeveralDiseases] = useState(false);
-  const [selectedProductTab, setSelectedProductTab] = useState('all');
-  const [comparedTo, setComparedTo] = useState('');
+  const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
+  const [compareYear, setCompareYear] = useState('2019');
+  const [compareSeveralDiseases, setCompareSeveralDiseases] = useState(true);
+  const [selectedProductTab, setSelectedProductTab] = useState('drugs');
+  const [comparedTo, setComparedTo] = useState('2024');
+  const [multiVarPhases, setMultiVarPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
 
   // Options
   const healthAreaOptions = ['Neglected diseases', 'Emerging infectious disease', 'HIV/AIDS', 'Malaria', 'Tuberculosis'];
@@ -57,19 +58,38 @@ export default function CrossPipelineAnalytics() {
   };
 
   const handleClearCompare = () => {
-    setCompareDisease('');
+    setCompareDisease([]);
     setCompareYear('');
   };
 
   // Check if comparison is selected
-  const hasCompareSelection = compareDisease && compareYear;
+  const hasCompareSelection = compareDisease.length > 0 && compareYear;
 
-  // Dummy comparison data
-  const comparisonData = [
-    { disease: 'HIV', value: 3 },
-    { disease: 'Malaria', value: 3 },
-    { disease: 'Dengue', value: 0 },
+  // Dummy comparison data for stat cards
+  const comparisonStats = [
+    { disease: 'HIV', value: 3, change: 60 },
+    { disease: 'Malaria', value: 3, change: 40 },
+    { disease: 'Dengue', value: 0, change: 40 },
   ];
+
+  // Dummy data for multi-variable chart
+  const multiVarChartData = [
+    { category: 'HIV', discovery: 35, preClinical: 45, phase1: 30, phase2: 25, phase3: 20, approved: 15 },
+    { category: 'Malaria', discovery: 45, preClinical: 55, phase1: 40, phase2: 35, phase3: 30, approved: 25 },
+    { category: 'Dengue', discovery: 15, preClinical: 20, phase1: 15, phase2: 10, phase3: 8, approved: 5 },
+  ];
+
+  // Dummy data for multi-variable table
+  const multiVarTableData = [
+    { disease: 'HIV', preClinical: 2, phase1: 0, phase2: 2, phase3: 1, phase4: 0, approved: 1 },
+    { disease: 'Malaria', preClinical: 0, phase1: 0, phase2: 0, phase3: 1, phase4: 0, approved: 1 },
+    { disease: 'Dengue', preClinical: 1, phase1: 2, phase2: 1, phase3: 1, phase4: 1, approved: 2 },
+  ];
+
+  const handleMultiVarPhaseToggle = (phaseId) => {
+    setMultiVarPhases((prev) =>
+      prev.includes(phaseId) ? prev.filter((id) => id !== phaseId) : [...prev, phaseId]
+    );};
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -218,6 +238,7 @@ export default function CrossPipelineAnalytics() {
                   onChange={setCompareDisease}
                   placeholder="All"
                   options={diseaseOptions}
+                  multiSelect={true}
                   compact={true}
                 />
               </div>
@@ -304,16 +325,78 @@ export default function CrossPipelineAnalytics() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-6">
-                {comparisonData.map((item) => (
-                  <div key={item.disease} className="border border-gray-200 p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-base font-medium text-black">{item.disease}</h4>
-                      <InfoIcon className="w-4 h-4 text-gray-400" />
+              <div className="py-6">
+                {/* Stat cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {comparisonStats.map((item) => (
+                    <div key={item.disease} className="border border-gray-200 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-base font-medium text-black">{item.disease}</h4>
+                        <InfoIcon className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <div className="text-4xl font-bold text-black mb-2">{item.value}</div>
+                      <div className="flex items-center gap-1 text-sm">
+                        <TrendingUpIcon className="w-4 h-4 text-green-500" />
+                        <span className="text-green-500">{item.change}%</span>
+                        <span className="text-gray-500">Year-over-Year</span>
+                      </div>
                     </div>
-                    <div className="text-4xl font-bold text-black">{item.value}</div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
+                {/* Phase checkboxes */}
+                <div className="flex items-center gap-6 py-4 border-t border-gray-200">
+                  {phases.map((phase) => (
+                    <label key={phase.id} className="flex items-center gap-2 cursor-pointer">
+                      <span
+                        onClick={() => handleMultiVarPhaseToggle(phase.id)}
+                        className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
+                          multiVarPhases.includes(phase.id)
+                            ? 'border-transparent'
+                            : 'border-gray-300 bg-white'
+                        }`}
+                        style={{
+                          backgroundColor: multiVarPhases.includes(phase.id) ? phase.color : undefined,
+                        }}
+                      >
+                        {multiVarPhases.includes(phase.id) && (
+                          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                            <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span className="text-sm text-gray-700">{phase.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* Chart */}
+                <div className="mt-4 mb-8">
+                  <StackedBarChart
+                    data={multiVarChartData}
+                    phases={phases.filter((p) => multiVarPhases.includes(p.id)).map((p) => ({ key: p.id, label: p.label, color: p.color }))}
+                    layout="vertical"
+                    height={200}
+                    xAxisLabel="Amount of Candidates/Products"
+                    yAxisLabel="Disease"
+                    showFilters={false}
+                  />
+                </div>
+
+                {/* Data table */}
+                <Table
+                  columns={[
+                    { header: 'Disease', accessor: 'disease' },
+                    { header: 'Pre-clinical', accessor: 'preClinical', type: 'number' },
+                    { header: 'Phase 1', accessor: 'phase1', type: 'number' },
+                    { header: 'Phase 2', accessor: 'phase2', type: 'number' },
+                    { header: 'Phase 3', accessor: 'phase3', type: 'number' },
+                    { header: 'Phase 4', accessor: 'phase4', type: 'number' },
+                    { header: 'Approved', accessor: 'approved', render: (value) => <span className="font-medium text-orange-500">{value}</span> },
+                  ]}
+                  data={multiVarTableData}
+                  pagination={false}
+                />
               </div>
             )}
           </div>
