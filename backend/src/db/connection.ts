@@ -15,7 +15,10 @@ class DatabaseManager {
 
   constructor(dbPath?: string) {
     // Default path: star_schema.db in the graphql-api root
-    this.dbPath = dbPath || path.resolve(import.meta.dirname, "..", "..", "star_schema.db");
+    this.dbPath =
+      dbPath ||
+      process.env.DATABASE_PATH ||
+      path.resolve(import.meta.dirname, "..", "..", "star_schema.db");
   }
 
   /**
