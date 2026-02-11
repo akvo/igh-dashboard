@@ -135,6 +135,7 @@ export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapsho
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1
+    ORDER BY snapshot_id DESC
     LIMIT 1
   `,
     )
