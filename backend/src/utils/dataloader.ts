@@ -205,11 +205,17 @@ export function createLoaders() {
           FROM fact_pipeline_snapshot
           WHERE candidate_key IN (${placeholders})
             AND is_active_flag = 1
+          ORDER BY snapshot_id DESC
         `,
           )
           .all(...candidateKeys) as FactPipelineSnapshot[];
 
-        const map = new Map(rows.map((r) => [r.candidate_key as number, r]));
+        const map = new Map<number, FactPipelineSnapshot>();
+        for (const r of rows) {
+          if (!map.has(r.candidate_key as number)) {
+            map.set(r.candidate_key as number, r);
+          }
+        }
         return candidateKeys.map((k) => map.get(k) || null);
       },
     ),
