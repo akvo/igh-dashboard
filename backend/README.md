@@ -37,7 +37,7 @@ graphql-api/
 │       └── dataloader.ts     # DataLoader factories for N+1 prevention
 ├── tests/
 │   ├── e2e/                         # API tests against static test DB
-│   │   ├── dashboard.test.ts
+│   │   ├── global-portfolio-overview.test.ts
 │   │   ├── temporal.test.ts
 │   │   ├── candidates.test.ts
 │   │   └── nested-resolvers.test.ts
