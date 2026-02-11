@@ -15,6 +15,22 @@ export default tseslint.config(
         "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
+
+      // Hard limits — block builds/CI
+      complexity: ["error", { max: 10 }],
+      "max-depth": ["error", { max: 4 }],
+
+      // Flags — visible but don't block
+      "max-lines-per-function": ["warn", { max: 60, skipBlankLines: true, skipComments: true }],
+      "max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  // Downgrade hard limits to warnings in test files
+  {
+    files: ["tests/**/*.ts"],
+    rules: {
+      complexity: ["warn", { max: 10 }],
+      "max-depth": ["warn", { max: 4 }],
     },
   },
 );

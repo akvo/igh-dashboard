@@ -15,6 +15,7 @@ import type {
  * Create DataLoaders for batch loading related entities.
  * Prevents N+1 query problems when resolving nested relationships.
  */
+// eslint-disable-next-line max-lines-per-function -- flat factory; each loader is independent
 export function createLoaders() {
   return {
     // Batch load diseases by disease_key

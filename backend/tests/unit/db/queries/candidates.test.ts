@@ -24,14 +24,13 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("getCandidates", () => {
+describe("getCandidates — pagination", () => {
   it("caps limit at 100", () => {
     mockGet.mockReturnValue({ total: 0 });
     mockAll.mockReturnValue([]);
 
     getCandidates(undefined, 200, 0);
 
-    // The last two args to .all() are limit and offset
     const allCallArgs = mockAll.mock.calls[0];
     const limitArg = allCallArgs[allCallArgs.length - 2];
     expect(limitArg).toBe(100);
@@ -72,18 +71,17 @@ describe("getCandidates", () => {
     expect(result.hasNextPage).toBe(false);
     expect(result.totalCount).toBe(5);
   });
+});
 
+describe("getCandidates — is_active filter", () => {
   it("defaults to is_active_flag = 1 when no filter provided", () => {
     mockGet.mockReturnValue({ total: 0 });
     mockAll.mockReturnValue([]);
 
     getCandidates();
 
-    // The count query should have is_active_flag = 1 in it
-    // We verify by checking no is_active param was explicitly passed but the query still runs
-    // The get() call is for count — its args should be empty (no filter params besides is_active default)
     expect(mockGet).toHaveBeenCalledTimes(1);
-    // No explicit params for is_active (it's baked into the WHERE clause as a literal)
+    // No explicit params for is_active (baked into WHERE clause as literal)
     expect(mockGet.mock.calls[0]).toEqual([]);
   });
 
@@ -93,7 +91,6 @@ describe("getCandidates", () => {
 
     getCandidates({ is_active: false }, 20, 0);
 
-    // When is_active is explicitly set, it's a parameterised ? with value 0
     const getCallArgs = mockGet.mock.calls[0];
     expect(getCallArgs).toContain(0);
   });

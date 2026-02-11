@@ -43,7 +43,11 @@ function makeContext(loaderOverrides: Record<string, { load: ReturnType<typeof v
 
 describe("disease resolver", () => {
   it("returns disease when snapshot has disease_key", async () => {
-    const disease = { disease_key: 10, disease_name: "Malaria", global_health_area: "Neglected disease" };
+    const disease = {
+      disease_key: 10,
+      disease_name: "Malaria",
+      global_health_area: "Neglected disease",
+    };
     const ctx = makeContext({
       snapshotByCandidateLoader: {
         load: vi.fn().mockResolvedValue({ disease_key: 10, phase_key: null, product_key: null }),
@@ -190,7 +194,9 @@ describe("developers resolver", () => {
 
 describe("geographies resolver", () => {
   it("calls geographiesByCandidateLoader with parent.candidate_key", async () => {
-    const geos = [{ country_key: 1, country_name: "Kenya", iso_code: "KE", location_scope: "Trial Location" }];
+    const geos = [
+      { country_key: 1, country_name: "Kenya", iso_code: "KE", location_scope: "Trial Location" },
+    ];
     const ctx = makeContext({
       geographiesByCandidateLoader: { load: vi.fn().mockResolvedValue(geos) },
     });
@@ -220,7 +226,15 @@ describe("priorities resolver", () => {
 
 describe("clinicalTrials resolver", () => {
   it("calls clinicalTrialsByCandidateLoader with parent.candidate_key", async () => {
-    const trials = [{ trial_id: 1, candidate_key: 3, trial_phase: "Phase I", enrollment_count: 100, status: "Active" }];
+    const trials = [
+      {
+        trial_id: 1,
+        candidate_key: 3,
+        trial_phase: "Phase I",
+        enrollment_count: 100,
+        status: "Active",
+      },
+    ];
     const ctx = makeContext({
       clinicalTrialsByCandidateLoader: { load: vi.fn().mockResolvedValue(trials) },
     });
