@@ -6,6 +6,8 @@ import type {
   FactPipelineSnapshot,
 } from "../types.js";
 
+const MAX_LIMIT = 100;
+
 /**
  * Get candidates with filtering and pagination.
  */
@@ -14,6 +16,7 @@ export function getCandidates(
   limit = 20,
   offset = 0,
 ): CandidateConnection {
+  limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
 
   // Build WHERE conditions based on filters
