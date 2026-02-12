@@ -14,6 +14,7 @@ const Dropdown = ({
   multiSelect = false,
   showSearch = false,
   showClearText = false,
+  compact = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -61,22 +62,8 @@ const Dropdown = ({
   const getDisplayValue = () => {
     if (multiSelect) {
       const count = selectedValues.length;
-      if (count === 0 || count === options.length) {
-        return (
-          <>
-            <span className="flex items-center gap-2">
-              <span className="w-4 h-4 border border-gray-300 rounded flex items-center justify-center">
-                {(count === 0 || count === options.length) && (
-                  <span className="w-2.5 h-2.5 bg-transparent rounded-sm" />
-                )}
-              </span>
-              {placeholder}
-            </span>
-            {options.length > 0 && (
-              <span className="text-orange-500 ml-1">({options.length})</span>
-            )}
-          </>
-        );
+      if (count === 0) {
+        return placeholder;
       }
       return (
         <>
@@ -202,8 +189,9 @@ const Dropdown = ({
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full px-4 py-3 text-base font-normal text-black bg-white rounded-lg cursor-pointer text-left transition-colors
-          ${isOpen ? 'border-2 border-orange-500' : 'border border-gray-200'}`}
+        className={`flex items-center justify-between w-full text-sm font-normal text-black cursor-pointer text-left transition-colors
+          ${compact ? 'px-3 py-2 h-[36px]' : 'px-4 py-2.5 h-[44px]'}
+          ${isOpen ? 'bg-white border-2 border-orange-500' : 'bg-gray-100'}`}
       >
         <span className="flex items-center">{getDisplayValue()}</span>
         <div className="flex items-center gap-2">
