@@ -1,0 +1,39 @@
+{
+  "name": "igh-olap-graphql-api",
+  "version": "1.0.0",
+  "description": "GraphQL API for Global Portfolio Overview dashboard",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run tests/unit/",
+    "test:e2e": "vitest run tests/e2e/",
+    "test:all": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\"",
+    "check": "tsc --noEmit && eslint . && prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.config.*\" \"*.json\""
+  },
+  "dependencies": {
+    "@apollo/server": "^4.11.0",
+    "better-sqlite3": "^11.7.0",
+    "dataloader": "^2.2.3",
+    "graphql": "^16.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.7",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^2.1.8"
+  }
+}
