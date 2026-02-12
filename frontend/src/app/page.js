@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
@@ -8,175 +8,30 @@ import {
   BubbleChart,
   StackedBarChart,
   WorldMap,
-  DonutChart,
 } from '@/components/charts';
 import {
   PieChartIcon,
   ListIcon,
-  MoreHorizontalIcon,
   ClockIcon,
 } from '@/components/icons';
 
-// Sample data
-const bubbleData = [
-  { name: 'Neglected diseases', value: 2101 },
-  { name: "Women's health", value: 1591 },
-  { name: 'Emerging infectious diseases', value: 953 },
-];
+import {
+  usePortfolioKPIs,
+  useGlobalHealthAreaSummaries,
+  usePhaseDistribution,
+  useGeographicDistribution,
+  useTemporalSnapshots,
+  useProducts,
+} from '@/graphql/hooks';
 
-const portfolioData = [
-  {
-    category: "Women's Health",
-    preClinical: 40,
-    phase1: 55,
-    phase2: 80,
-    phase3: 60,
-    phase4: 30,
-    approved: 35,
-  },
-  {
-    category: 'Emerging Infectious Diseases',
-    preClinical: 60,
-    phase1: 70,
-    phase2: 90,
-    phase3: 50,
-    phase4: 25,
-    approved: 40,
-  },
-  {
-    category: 'Neglected diseases',
-    preClinical: 80,
-    phase1: 85,
-    phase2: 70,
-    phase3: 45,
-    phase4: 20,
-    approved: 50,
-  },
-];
-
-const crossPipelineData = [
-  {
-    category: '2019',
-    preClinical: 50,
-    phase1: 60,
-    phase2: 80,
-    phase3: 55,
-    phase4: 30,
-    approved: 25,
-  },
-  {
-    category: '2023',
-    preClinical: 65,
-    phase1: 75,
-    phase2: 95,
-    phase3: 60,
-    phase4: 35,
-    approved: 40,
-  },
-  {
-    category: '2024',
-    preClinical: 80,
-    phase1: 85,
-    phase2: 100,
-    phase3: 65,
-    phase4: 40,
-    approved: 50,
-  },
-];
-
-const priorityDonutData = [
-  { name: 'Yes', value: 40 },
-  { name: 'NA', value: 35 },
-  { name: 'No', value: 25 },
-];
-
-const priorityDonutColors = ['#fe7449', '#f9a78d', '#ffd4c7'];
-
-const priorityBarPhases = [
-  { key: 'segment1', label: 'High priority', color: '#8c4028' },
-  { key: 'segment2', label: 'Medium priority', color: '#fe7449' },
-  { key: 'segment3', label: 'Low priority', color: '#f9a78d' },
-  { key: 'segment4', label: 'Minimal', color: '#ffd4c7' },
-];
-
-const priorityBarData = [
-  {
-    category: 'Neglected',
-    segment1: 30,
-    segment2: 25,
-    segment3: 20,
-    segment4: 15,
-  },
-  {
-    category: 'Infectious',
-    segment1: 40,
-    segment2: 35,
-    segment3: 25,
-    segment4: 20,
-  },
-  {
-    category: "Women's",
-    segment1: 15,
-    segment2: 12,
-    segment3: 10,
-    segment4: 8,
-  },
-];
-
-const worldMapData = {
-  840: 45, // United States
-  356: 38, // India
-  156: 30, // China
-  '076': 25, // Brazil
-  566: 22, // Nigeria
-  404: 20, // Kenya
-  710: 18, // South Africa
-  764: 15, // Thailand
-  826: 35, // United Kingdom
-  276: 28, // Germany
-  250: 22, // France
-  '036': 12, // Australia
-  392: 32, // Japan
-  124: 28, // Canada
-  484: 16, // Mexico
-  '032': 14, // Argentina
-  170: 12, // Colombia
-  818: 10, // Egypt
-  800: 19, // Uganda
-  834: 17, // Tanzania
-  180: 15, // DR Congo
-  231: 13, // Ethiopia
-  288: 11, // Ghana
-  608: 20, // Philippines
-  360: 18, // Indonesia
-  '050': 22, // Bangladesh
-  586: 16, // Pakistan
-  704: 14, // Vietnam
-  752: 24, // Sweden
-  756: 26, // Switzerland
-  528: 20, // Netherlands
-  380: 18, // Italy
-  724: 16, // Spain
-  '056': 22, // Belgium
-  578: 20, // Norway
-  410: 30, // South Korea
+// Map display names to API names for health areas
+const healthAreaDisplayToApi = {
+  'Neglected diseases': 'Neglected disease',
+  "Women's health": 'Sexual & reproductive health',
+  'Emerging infectious diseases': 'Emerging infectious disease',
 };
 
-const healthAreaOptions = [
-  'Neglected Diseases',
-  "Women's Health",
-  'Emerging Infectious Diseases',
-];
-
-const productOptions = [
-  'Vaccines',
-  'Drugs',
-  'Diagnostics',
-  'Biologics',
-  'Dietary supplements',
-  'VCP',
-];
-
+// R&D stage options for filtering (these map to phase labels)
 const rdStageOptions = [
   'Pre-clinical',
   'Phase 1',
@@ -195,8 +50,68 @@ export default function Home() {
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
-  const priorityBarRef = useRef(null);
-  const priorityDonutRef = useRef(null);
+
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries();
+  const { products, loading: productsLoading } = useProducts();
+  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
+    mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
+  );
+  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
+
+  // Convert filter selections to API params
+  const selectedHealthAreaApi = healthArea.length > 0 ? healthAreaDisplayToApi[healthArea[0]] : null;
+  const selectedProductKey = product.length > 0 ? product[0] : null;
+
+  // Phase distribution with filters
+  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistribution(
+    selectedHealthAreaApi,
+    selectedProductKey
+  );
+
+  // Product options for dropdown (from API)
+  const productOptions = useMemo(() =>
+    products.map(p => ({ label: p.product_name, value: p.product_key })),
+    [products]
+  );
+
+  // Filter phases client-side based on R&D stage selection
+  const filteredPortfolioPhases = useMemo(() => {
+    if (rdStage.length === 0) return portfolioPhases;
+
+    // Map R&D stage display names to phase labels
+    const stageToPhaseMap = {
+      'Pre-clinical': ['Discovery', 'Preclinical', 'Screening'],
+      'Phase 1': ['Phase I'],
+      'Phase 2': ['Phase II'],
+      'Phase 3': ['Phase III'],
+      'Phase 4': ['Phase IV'],
+      'Approved': ['PQ/Approval', 'Reg Filing'],
+    };
+
+    const allowedLabels = rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
+    return portfolioPhases.filter(phase => allowedLabels.includes(phase.label));
+  }, [portfolioPhases, rdStage]);
+
+  // Filter chart data to only include selected phases
+  const filteredPortfolioChartData = useMemo(() => {
+    if (rdStage.length === 0) return portfolioChartData;
+
+    const allowedKeys = filteredPortfolioPhases.map(p => p.key);
+    return portfolioChartData.map(row => {
+      const filtered = { category: row.category };
+      allowedKeys.forEach(key => {
+        if (row[key] !== undefined) filtered[key] = row[key];
+      });
+      return filtered;
+    });
+  }, [portfolioChartData, filteredPortfolioPhases, rdStage]);
+
+  // Health area options derived from API data
+  const healthAreaOptions = useMemo(() =>
+    (gqlBubbleData || []).map(item => item.name),
+    [gqlBubbleData]
+  );
 
   // Download CSV function
   const downloadCSV = useCallback((data, filename) => {
@@ -258,29 +173,30 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Stat Cards */}
+          {/* Stat Cards - Connected to GraphQL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <StatCard
-              title="Number of diseases"
-              value={111}
-              description="Total number of diseases"
-              buttonText="Explore pipeline for diseases"
-              tooltip="All diseases tracked in the pipeline"
-            />
-            <StatCard
-              title="Total number of candidates"
-              value={4022}
-              description="Total number of candidates."
-              buttonText="Explore candidates"
-              tooltip="All candidates in the pipeline"
-            />
-            <StatCard
-              title="Approved products"
-              value={200}
-              description="Total number of approved products."
-              buttonText="Explore approved products"
-              tooltip="Products that received approval"
-            />
+            {kpisLoading ? (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                    <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              kpis.map((kpi) => (
+                <StatCard
+                  key={kpi.id}
+                  title={kpi.title}
+                  value={kpi.value}
+                  description={kpi.description}
+                  buttonText={kpi.buttonText}
+                  tooltip={kpi.description}
+                />
+              ))
+            )}
           </div>
 
           {/* Bubble Chart + World Map */}
@@ -299,7 +215,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <ChartMenu
-                    onDownloadCSV={() => downloadCSV(bubbleData, 'scale-of-innovation')}
+                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-innovation')}
                     onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-innovation')}
                   />
                   <TabSwitcher
@@ -313,9 +229,17 @@ export default function Home() {
                 </div>
               </div>
               <div ref={bubbleChartRef}>
-              {chartViewTab === 'visual' ? (
+              {bubbleLoading ? (
+                <div className="h-[320px] flex items-center justify-center">
+                  <div className="animate-pulse text-gray-400">Loading chart...</div>
+                </div>
+              ) : !gqlBubbleData || gqlBubbleData.length === 0 ? (
+                <div className="h-[320px] flex items-center justify-center">
+                  <div className="text-gray-400">No data available</div>
+                </div>
+              ) : chartViewTab === 'visual' ? (
                 <BubbleChart
-                  data={bubbleData}
+                  data={gqlBubbleData}
                   height={320}
                   colors={['#fe7449', '#f9a78d', '#8c4028']}
                 />
@@ -336,8 +260,8 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      {bubbleData.map((item) => {
-                        const total = bubbleData.reduce(
+                      {gqlBubbleData.map((item) => {
+                        const total = gqlBubbleData.reduce(
                           (sum, d) => sum + d.value,
                           0
                         );
@@ -385,7 +309,7 @@ export default function Home() {
                 </div>
                 <ChartMenu
                   onDownloadCSV={() => {
-                    const mapDataArray = Object.entries(worldMapData).map(([code, value]) => ({ countryCode: code, value }));
+                    const mapDataArray = Object.entries(gqlMapData).map(([code, value]) => ({ countryCode: code, value }));
                     downloadCSV(mapDataArray, 'geographic-distribution');
                   }}
                   onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
@@ -402,7 +326,7 @@ export default function Home() {
                     ]}
                   />
                 </div>
-                <WorldMap data={worldMapData} height={280} showLegend={false} />
+                <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
                 A global heat map illustrating the concentration of R&D pipeline
@@ -484,13 +408,20 @@ export default function Home() {
             </div>
 
             {/* Chart */}
-            <StackedBarChart
-              data={portfolioData}
-              layout="vertical"
-              height={250}
-              xAxisLabel="Amount of Candidates"
-              showFilters={true}
-            />
+            {portfolioLoading || productsLoading ? (
+              <div className="h-[250px] flex items-center justify-center">
+                <div className="animate-pulse text-gray-400">Loading chart...</div>
+              </div>
+            ) : (
+              <StackedBarChart
+                data={filteredPortfolioChartData}
+                phases={filteredPortfolioPhases}
+                layout="vertical"
+                height={250}
+                xAxisLabel="Amount of Candidates"
+                showFilters={true}
+              />
+            )}
           </div>
 
           {/* Cross-pipeline Analytics */}
@@ -514,16 +445,23 @@ export default function Home() {
               comparison of a pipeline over time, or between two or more
               diseases.
             </p>
-            <StackedBarChart
-              data={crossPipelineData}
-              layout="vertical"
-              height={220}
-              xAxisLabel="Amount of Candidates"
-              showFilters={true}
-            />
+            {temporalLoading ? (
+              <div className="h-[220px] flex items-center justify-center">
+                <div className="animate-pulse text-gray-400">Loading chart...</div>
+              </div>
+            ) : (
+              <StackedBarChart
+                data={temporalChartData}
+                phases={temporalPhases}
+                layout="vertical"
+                height={220}
+                xAxisLabel="Amount of Candidates"
+                showFilters={true}
+              />
+            )}
           </div>
 
-          {/* Priority Alignment */}
+          {/* Priority Alignment - Data not available from API */}
           <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
@@ -534,133 +472,11 @@ export default function Home() {
                   Compare WHO priorities with pipeline
                 </p>
               </div>
-              <button className="px-5 py-2 text-sm font-medium text-black bg-transparent border border-gray-200 rounded-lg cursor-pointer">
-                View all
-              </button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Priorities Column */}
-              <div className="flex flex-col gap-4">
-                {/* Priorities Header Card */}
-                <div className="rounded-xl border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-base font-semibold text-black">
-                      Priorities
-                    </span>
-                    <button className="border-none bg-[#F2F2F4] cursor-pointer p-3 rounded-[10px] hover:bg-gray-200 transition-colors">
-                      <MoreHorizontalIcon className="w-5 h-5 text-gray-400" />
-                    </button>
-                  </div>
-                  <div className="text-3xl sm:text-4xl font-extrabold text-black mb-1">
-                    164
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    Total number of priorities
-                  </p>
-                </div>
-
-                {/* Health Area Cards with mini progress */}
-                {[
-                  { name: 'Neglected diseases', percent: 20 },
-                  { name: 'Emerging infectious diseases', percent: 10 },
-                  { name: "Women's health", percent: 5 },
-                ].map((item) => (
-                  <div
-                    key={item.name}
-                    className="rounded-xl border border-gray-200 p-6 flex items-center justify-between"
-                  >
-                    <div>
-                      <h4 className="text-sm font-semibold text-black mb-1">
-                        {item.name}
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        Share with dedicated priority.
-                      </p>
-                    </div>
-                    {/* Mini circular progress */}
-                    <div className="relative w-16 h-16 shrink-0 ml-4">
-                      <svg
-                        className="w-full h-full -rotate-90"
-                        viewBox="0 0 36 36"
-                      >
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="15"
-                          fill="none"
-                          stroke="#e5e7eb"
-                          strokeWidth="3"
-                        />
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="15"
-                          fill="none"
-                          stroke="#fe7449"
-                          strokeWidth="3"
-                          strokeDasharray={`${item.percent * 0.942} 94.2`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-black">
-                        {item.percent}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Share of diseases with priority */}
-              <div className="rounded-xl border border-gray-200 p-6 flex flex-col">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div>
-                    <span className="text-base sm:text-lg font-bold text-black block mb-1">
-                      Share of diseases with priority
-                    </span>
-                    <p className="text-sm text-gray-500">
-                      Total amount of diseases with priority
-                    </p>
-                  </div>
-                  <ChartMenu
-                    onDownloadCSV={() => downloadCSV(priorityBarData, 'share-of-diseases-with-priority')}
-                    onDownloadPNG={() => downloadPNG(priorityBarRef, 'share-of-diseases-with-priority')}
-                  />
-                </div>
-                <div className="border-b border-gray-200 mb-4"></div>
-                <div className="mt-auto" ref={priorityBarRef}>
-                  <StackedBarChart
-                    data={priorityBarData}
-                    phases={priorityBarPhases}
-                    layout="horizontal"
-                    height={320}
-                    showFilters={false}
-                  />
-                </div>
-              </div>
-
-              {/* Share of priorities dedicated to women or children */}
-              <div className="rounded-xl border border-gray-200 p-6 flex flex-col">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-base sm:text-lg font-bold text-black">
-                    Share of priorities dedicated to women or children
-                  </span>
-                  <ChartMenu
-                    onDownloadCSV={() => downloadCSV(priorityDonutData, 'share-of-priorities-women-children')}
-                    onDownloadPNG={() => downloadPNG(priorityDonutRef, 'share-of-priorities-women-children')}
-                  />
-                </div>
-                <div className="border-b border-gray-200 mb-4"></div>
-                <div className="mt-auto" ref={priorityDonutRef}>
-                  <DonutChart
-                    data={priorityDonutData}
-                    colors={priorityDonutColors}
-                    height={340}
-                    innerRadius={60}
-                    outerRadius={125}
-                    showLegend={true}
-                  />
-                </div>
+            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <p className="text-gray-400 mb-2">Data not available from API</p>
+                <p className="text-xs text-gray-300">Priority alignment data is not yet supported by the backend</p>
               </div>
             </div>
           </div>

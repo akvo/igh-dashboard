@@ -1,6 +1,7 @@
 import { Public_Sans } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/ui/Header';
+import { ApolloProvider } from '@/lib/apollo-provider';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -60,10 +61,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${publicSans.variable} antialiased`}>
-        <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-          <Header navItems={navItems} />
-        </div>
-        {children}
+        <ApolloProvider>
+          <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
+            <Header navItems={navItems} />
+          </div>
+          {children}
+        </ApolloProvider>
       </body>
     </html>
   );
