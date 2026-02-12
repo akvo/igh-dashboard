@@ -8,7 +8,7 @@ GraphQL API serving the Global Portfolio Overview dashboard, backed by a read-on
 npm install
 npm run dev      # Development with hot-reload (tsx watch)
 npm run build    # Compile TypeScript
-npm run test     # Run fixture-based tests
+npm run test     # Run unit tests
 ```
 
 Endpoint: `http://localhost:4000`
@@ -36,9 +36,18 @@ graphql-api/
 │   └── utils/
 │       └── dataloader.ts     # DataLoader factories for N+1 prevention
 ├── tests/
-│   ├── dashboard.fixture.test.ts  # Fast tests using captured fixtures
-│   ├── dashboard.test.ts          # E2E tests against real database
-│   └── fixtures/                  # Captured API responses
+│   ├── e2e/                         # API tests against static test DB
+│   │   ├── global-portfolio-overview.test.ts
+│   │   ├── temporal.test.ts
+│   │   ├── candidates.test.ts
+│   │   └── nested-resolvers.test.ts
+│   ├── unit/                        # Mocked business-logic tests
+│   │   ├── db/queries/candidates.test.ts
+│   │   └── schema/resolvers.test.ts
+│   ├── helpers/
+│   │   ├── graphql.ts               # Shared Apollo test client
+│   │   └── types.ts                 # Shared response type definitions
+│   └── star_schema.db               # Static DB snapshot for tests
 ├── docs/
 │   └── FRONTEND_API_MAPPING.md    # Complete API reference for frontend
 └── package.json
@@ -164,13 +173,19 @@ export function getPortfolioKPIs() {
 
 | Command | Description | When to Use |
 |---------|-------------|-------------|
-| `npm run test` | Fixture-based tests | Fast iteration, CI |
-| `npm run test:e2e` | Tests against real DB | Verify actual data |
-| `npm run test:capture` | Regenerate fixtures | After schema/query changes |
+| `npm run test` | Unit tests (mocked DB) | Fast iteration, CI |
+| `npm run test:e2e` | E2E tests against static test DB | Verify API behaviour |
+| `npm run test:all` | Both unit and E2E | Full verification |
 | `npm run test:watch` | Watch mode | Active development |
 
-**Fixture-based tests** (`dashboard.fixture.test.ts`) use captured JSON responses, making them fast and database-independent. Use these for routine development.
+**Unit tests** (`tests/unit/`) mock `getDatabase()` and test business logic in isolation — pagination capping, filter construction, resolver chaining.
 
-**E2E tests** (`dashboard.test.ts`) hit the real SQLite database. Run these when you need to verify actual data or after ETL changes.
+**E2E tests** (`tests/e2e/`) run real GraphQL queries against a static snapshot of the database (`tests/star_schema.db`), so results are deterministic regardless of ETL refreshes.
 
-**Capturing fixtures**: After modifying queries or the database schema, regenerate fixtures with `npm run test:capture` to keep fixture tests in sync.
+## Code Quality
+
+| Command | Description |
+|---------|-------------|
+| `npm run lint` | ESLint check |
+| `npm run format:check` | Prettier check |
+| `npm run check` | All checks (tsc + ESLint + Prettier) |

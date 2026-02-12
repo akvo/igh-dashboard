@@ -6,6 +6,42 @@ import type {
   FactPipelineSnapshot,
 } from "../types.js";
 
+const MAX_LIMIT = 100;
+
+const FILTER_COLUMN_MAP: Array<[keyof CandidateFilter, string]> = [
+  ["global_health_area", "d.global_health_area = ?"],
+  ["disease_key", "f.disease_key = ?"],
+  ["product_key", "f.product_key = ?"],
+  ["phase_key", "f.phase_key = ?"],
+  ["year", "dt.year = ?"],
+];
+
+function buildCandidateWhereClause(filter?: CandidateFilter): {
+  whereClause: string;
+  params: (string | number)[];
+} {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  // is_active has special default-to-true logic
+  if (filter?.is_active !== undefined) {
+    conditions.push("f.is_active_flag = ?");
+    params.push(filter.is_active ? 1 : 0);
+  } else {
+    conditions.push("f.is_active_flag = 1");
+  }
+
+  for (const [key, sql] of FILTER_COLUMN_MAP) {
+    if (filter?.[key] != null) {
+      conditions.push(sql);
+      params.push(filter[key] as string | number);
+    }
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { whereClause, params };
+}
+
 /**
  * Get candidates with filtering and pagination.
  */
@@ -14,48 +50,10 @@ export function getCandidates(
   limit = 20,
   offset = 0,
 ): CandidateConnection {
+  limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
+  const { whereClause, params } = buildCandidateWhereClause(filter);
 
-  // Build WHERE conditions based on filters
-  const conditions: string[] = [];
-  const params: (string | number)[] = [];
-
-  if (filter?.is_active !== undefined) {
-    conditions.push("f.is_active_flag = ?");
-    params.push(filter.is_active ? 1 : 0);
-  } else {
-    // Default to active candidates
-    conditions.push("f.is_active_flag = 1");
-  }
-
-  if (filter?.global_health_area) {
-    conditions.push("d.global_health_area = ?");
-    params.push(filter.global_health_area);
-  }
-
-  if (filter?.disease_key) {
-    conditions.push("f.disease_key = ?");
-    params.push(filter.disease_key);
-  }
-
-  if (filter?.product_key) {
-    conditions.push("f.product_key = ?");
-    params.push(filter.product_key);
-  }
-
-  if (filter?.phase_key) {
-    conditions.push("f.phase_key = ?");
-    params.push(filter.phase_key);
-  }
-
-  if (filter?.year) {
-    conditions.push("dt.year = ?");
-    params.push(filter.year);
-  }
-
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-  // Count total matching candidates
   const countSql = `
     SELECT COUNT(DISTINCT c.candidate_key) as total
     FROM dim_candidate_core c
@@ -68,7 +66,6 @@ export function getCandidates(
   const countResult = db.prepare(countSql).get(...params) as { total: number };
   const totalCount = countResult.total;
 
-  // Fetch paginated candidates
   const dataSql = `
     SELECT DISTINCT
       c.candidate_key,
@@ -132,6 +129,7 @@ export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapsho
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1
+    ORDER BY snapshot_id DESC
     LIMIT 1
   `,
     )
