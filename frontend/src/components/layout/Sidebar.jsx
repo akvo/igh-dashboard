@@ -22,7 +22,7 @@ const defaultMenuItems = [
     items: [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
       { id: 'portfolio-analysis', label: 'Portfolio Analysis', icon: ChartIcon, href: '/portfolio-analysis' },
-      { id: 'cross-pipeline', label: 'Cross-Pipeline Analytics', icon: RefreshIcon, href: '/cross-pipeline' },
+      { id: 'cross-pipeline-analytics', label: 'Cross-Pipeline Analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
       { id: 'who-priority', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority' },
       { id: 'ai-search', label: 'AI Data Search', icon: BoltIcon, href: '/ai-search' },
     ],
