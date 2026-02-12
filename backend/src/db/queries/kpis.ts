@@ -21,27 +21,29 @@ export function getPortfolioKPIs(): PortfolioKPIs {
     .get() as { count: number };
 
   // KPI Card: "Total candidates"
-  // Count distinct active candidates in the pipeline
+  // Count distinct active candidates with candidate_type = 'Candidate'
   const candidates = db
     .prepare(
       `
-    SELECT COUNT(DISTINCT candidate_key) as count
-    FROM fact_pipeline_snapshot
-    WHERE is_active_flag = 1
+    SELECT COUNT(DISTINCT f.candidate_key) as count
+    FROM fact_pipeline_snapshot f
+    JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key
+    WHERE f.is_active_flag = 1
+      AND c.candidate_type = 'Candidate'
   `,
     )
     .get() as { count: number };
 
   // KPI Card: "Approved products"
-  // Count distinct products in approved phases
+  // Count distinct candidates with candidate_type = 'Product'
   const approved = db
     .prepare(
       `
-    SELECT COUNT(DISTINCT f.product_key) as count
+    SELECT COUNT(DISTINCT f.candidate_key) as count
     FROM fact_pipeline_snapshot f
-    JOIN dim_phase p ON f.phase_key = p.phase_key
+    JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key
     WHERE f.is_active_flag = 1
-      AND p.phase_name LIKE '%Approved%'
+      AND c.candidate_type = 'Product'
   `,
     )
     .get() as { count: number };

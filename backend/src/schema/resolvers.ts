@@ -23,10 +23,14 @@ export const resolvers = {
     globalHealthAreaSummaries: () => getGlobalHealthAreaSummaries(),
 
     // Stacked bar chart
-    phaseDistribution: (_: unknown, args: { global_health_area?: string; product_key?: number }) =>
+    phaseDistribution: (
+      _: unknown,
+      args: { global_health_area?: string; product_key?: number; candidate_type?: string },
+    ) =>
       getPhaseDistribution({
         global_health_area: args.global_health_area,
         product_key: args.product_key,
+        candidate_type: args.candidate_type,
       }),
 
     // Map
@@ -34,10 +38,22 @@ export const resolvers = {
       getGeographicDistribution(args.location_scope),
 
     // Cross-pipeline temporal
-    temporalSnapshots: (_: unknown, args: { years?: number[]; disease_key?: number }) =>
+    temporalSnapshots: (
+      _: unknown,
+      args: {
+        years?: number[];
+        disease_key?: number;
+        global_health_area?: string;
+        product_key?: number;
+        candidate_type?: string;
+      },
+    ) =>
       getTemporalSnapshots({
         years: args.years,
         disease_key: args.disease_key,
+        global_health_area: args.global_health_area,
+        product_key: args.product_key,
+        candidate_type: args.candidate_type,
       }),
 
     // Lists with pagination

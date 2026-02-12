@@ -46,6 +46,7 @@ export const typeDefs = `#graphql
     priority_name: String
     indication: String
     intended_use: String
+    disease_key: Int
   }
 
   type DimDate {
@@ -69,6 +70,9 @@ export const typeDefs = `#graphql
     sra_approval_flag: Int
     fda_approval_date: String
     who_prequal_date: String
+    who_prequalification: String
+    nra_approval_status: String
+    nra_approval_date: String
   }
 
   type DimDeveloper {
@@ -82,6 +86,17 @@ export const typeDefs = `#graphql
     candidate_name: String
     vin_candidate_code: String
     developers_agg: String
+    alternative_names: String
+    target: String
+    mechanism_of_action: String
+    key_features: String
+    known_funders_agg: String
+    development_status: String
+    current_rd_stage: String
+    countries_approved_count: Int
+    countries_approved_agg: String
+    candidate_type: String
+    indication: String
 
     # Resolved via joins
     disease: DimDisease
@@ -104,6 +119,16 @@ export const typeDefs = `#graphql
     trial_phase: String
     enrollment_count: Int
     status: String
+    vin_clinicaltrialid: String
+    disease_key: Int
+    product_key: Int
+    trial_name: String
+    trial_title: String
+    sponsor: String
+    locations: String
+    age_groups: String
+    study_type: String
+    source_text: String
   }
 
   # =============================================================================
@@ -187,13 +212,13 @@ export const typeDefs = `#graphql
     globalHealthAreaSummaries: [GlobalHealthAreaSummary!]!
 
     # Stacked bar chart
-    phaseDistribution(global_health_area: String, product_key: Int): [PhaseDistributionRow!]!
+    phaseDistribution(global_health_area: String, product_key: Int, candidate_type: String): [PhaseDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], disease_key: Int): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], disease_key: Int, global_health_area: String, product_key: Int, candidate_type: String): [TemporalSnapshotRow!]!
 
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!

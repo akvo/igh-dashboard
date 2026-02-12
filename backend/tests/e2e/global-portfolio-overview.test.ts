@@ -24,7 +24,7 @@ describe("KPI Cards", () => {
 
     expect(data.portfolioKPIs.totalDiseases).toBeGreaterThan(0);
     expect(data.portfolioKPIs.totalCandidates).toBeGreaterThan(0);
-    expect(data.portfolioKPIs.approvedProducts).toBeGreaterThanOrEqual(0);
+    expect(data.portfolioKPIs.approvedProducts).toBeGreaterThan(0);
   });
 
   it("returns integer values for all KPIs", async () => {
@@ -240,6 +240,37 @@ describe("Phase Distribution — filters", () => {
     );
 
     expect(Array.isArray(data.phaseDistribution)).toBe(true);
+  });
+});
+
+describe("Phase Distribution — candidate_type filter", () => {
+  it("filters by candidate_type", async () => {
+    const { data: allData } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution {
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution(candidate_type: "Candidate") {
+        global_health_area
+        phase_name
+        sort_order
+        candidateCount
+      }
+    }`);
+
+    expect(data.phaseDistribution.length).toBeGreaterThan(0);
+    const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
+    const unfilteredTotal = allData.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
   });
 });
 

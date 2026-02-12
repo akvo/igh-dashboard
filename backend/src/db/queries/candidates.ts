@@ -72,7 +72,18 @@ export function getCandidates(
       c.vin_candidateid,
       c.candidate_name,
       c.vin_candidate_code,
-      c.developers_agg
+      c.developers_agg,
+      c.alternative_names,
+      c.target,
+      c.mechanism_of_action,
+      c.key_features,
+      c.known_funders_agg,
+      c.development_status,
+      c.current_rd_stage,
+      c.countries_approved_count,
+      c.countries_approved_agg,
+      c.candidate_type,
+      c.indication
     FROM dim_candidate_core c
     JOIN fact_pipeline_snapshot f ON c.candidate_key = f.candidate_key
     LEFT JOIN dim_disease d ON f.disease_key = d.disease_key
@@ -105,7 +116,18 @@ export function getCandidateByKey(candidate_key: number): DimCandidateCore | nul
       vin_candidateid,
       candidate_name,
       vin_candidate_code,
-      developers_agg
+      developers_agg,
+      alternative_names,
+      target,
+      mechanism_of_action,
+      key_features,
+      known_funders_agg,
+      development_status,
+      current_rd_stage,
+      countries_approved_count,
+      countries_approved_agg,
+      candidate_type,
+      indication
     FROM dim_candidate_core
     WHERE candidate_key = ?
   `,
@@ -125,7 +147,8 @@ export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapsho
     .prepare(
       `
     SELECT snapshot_id, candidate_key, product_key, disease_key,
-           technology_key, regulatory_key, phase_key, date_key, is_active_flag
+           technology_key, regulatory_key, phase_key, date_key, is_active_flag,
+           secondary_disease_key, sub_product_key
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1

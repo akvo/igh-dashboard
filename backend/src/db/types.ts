@@ -50,6 +50,7 @@ export interface DimPriority {
   priority_name: string | null;
   indication: string | null;
   intended_use: string | null;
+  disease_key: number | null;
 }
 
 export interface DimDate {
@@ -65,6 +66,17 @@ export interface DimCandidateCore {
   candidate_name: string | null;
   vin_candidate_code: string | null;
   developers_agg: string | null;
+  alternative_names: string | null;
+  target: string | null;
+  mechanism_of_action: string | null;
+  key_features: string | null;
+  known_funders_agg: string | null;
+  development_status: string | null;
+  current_rd_stage: string | null;
+  countries_approved_count: number | null;
+  countries_approved_agg: string | null;
+  candidate_type: string | null;
+  indication: string | null;
 }
 
 export interface DimCandidateTech {
@@ -81,6 +93,9 @@ export interface DimCandidateRegulatory {
   sra_approval_flag: number | null;
   fda_approval_date: string | null;
   who_prequal_date: string | null;
+  who_prequalification: string | null;
+  nra_approval_status: string | null;
+  nra_approval_date: string | null;
 }
 
 export interface DimDeveloper {
@@ -102,6 +117,8 @@ export interface FactPipelineSnapshot {
   phase_key: number | null;
   date_key: number | null;
   is_active_flag: number | null;
+  secondary_disease_key: number | null;
+  sub_product_key: number | null;
 }
 
 export interface FactClinicalTrialEvent {
@@ -111,6 +128,16 @@ export interface FactClinicalTrialEvent {
   trial_phase: string | null;
   enrollment_count: number | null;
   status: string | null;
+  vin_clinicaltrialid: string | null;
+  disease_key: number | null;
+  product_key: number | null;
+  trial_name: string | null;
+  trial_title: string | null;
+  sponsor: string | null;
+  locations: string | null;
+  age_groups: string | null;
+  study_type: string | null;
+  source_text: string | null;
 }
 
 // =============================================================================

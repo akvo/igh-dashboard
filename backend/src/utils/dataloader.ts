@@ -107,7 +107,7 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT bp.candidate_key, p.priority_key, p.vin_rdpriorityid, p.priority_name, p.indication, p.intended_use
+          SELECT bp.candidate_key, p.priority_key, p.vin_rdpriorityid, p.priority_name, p.indication, p.intended_use, p.disease_key
           FROM dim_priority p
           JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
           WHERE bp.candidate_key IN (${placeholders})
@@ -125,6 +125,7 @@ export function createLoaders() {
           priority_name: row.priority_name,
           indication: row.indication,
           intended_use: row.intended_use,
+          disease_key: row.disease_key,
         });
         map.set(row.candidate_key, existing);
       }
@@ -173,7 +174,9 @@ export function createLoaders() {
         const rows = db
           .prepare(
             `
-          SELECT trial_id, candidate_key, start_date_key, trial_phase, enrollment_count, status
+          SELECT trial_id, candidate_key, start_date_key, trial_phase, enrollment_count, status,
+                 vin_clinicaltrialid, disease_key, product_key, trial_name, trial_title,
+                 sponsor, locations, age_groups, study_type, source_text
           FROM fact_clinical_trial_event
           WHERE candidate_key IN (${placeholders})
           ORDER BY trial_phase
@@ -202,7 +205,8 @@ export function createLoaders() {
           .prepare(
             `
           SELECT snapshot_id, candidate_key, product_key, disease_key,
-                 technology_key, regulatory_key, phase_key, date_key, is_active_flag
+                 technology_key, regulatory_key, phase_key, date_key, is_active_flag,
+                 secondary_disease_key, sub_product_key
           FROM fact_pipeline_snapshot
           WHERE candidate_key IN (${placeholders})
             AND is_active_flag = 1
