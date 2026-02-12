@@ -16,7 +16,7 @@ const StatCard = ({
   const [isInfoHovered, setIsInfoHovered] = useState(false);
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-4 ${className}`}>
+    <div className={`bg-white border border-gray-200 p-6 flex flex-col gap-4 ${className}`}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <h3 className="text-base font-semibold text-black">{title}</h3>
