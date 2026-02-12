@@ -15,12 +15,12 @@ import type {
  * Create DataLoaders for batch loading related entities.
  * Prevents N+1 query problems when resolving nested relationships.
  */
+// eslint-disable-next-line max-lines-per-function -- flat factory; each loader is independent
 export function createLoaders() {
-  const db = getDatabase();
-
   return {
     // Batch load diseases by disease_key
     diseaseLoader: new DataLoader<number, DimDisease | null>(async (keys) => {
+      const db = getDatabase();
       const placeholders = keys.map(() => "?").join(", ");
       const rows = db
         .prepare(
@@ -38,6 +38,7 @@ export function createLoaders() {
 
     // Batch load phases by phase_key
     phaseLoader: new DataLoader<number, DimPhase | null>(async (keys) => {
+      const db = getDatabase();
       const placeholders = keys.map(() => "?").join(", ");
       const rows = db
         .prepare(
@@ -55,6 +56,7 @@ export function createLoaders() {
 
     // Batch load products by product_key
     productLoader: new DataLoader<number, DimProduct | null>(async (keys) => {
+      const db = getDatabase();
       const placeholders = keys.map(() => "?").join(", ");
       const rows = db
         .prepare(
@@ -72,6 +74,7 @@ export function createLoaders() {
 
     // Batch load developers by candidate_key (one-to-many)
     developersByCandidateLoader: new DataLoader<number, DimDeveloper[]>(async (candidateKeys) => {
+      const db = getDatabase();
       const placeholders = candidateKeys.map(() => "?").join(", ");
       const rows = db
         .prepare(
@@ -99,6 +102,7 @@ export function createLoaders() {
 
     // Batch load priorities by candidate_key (one-to-many)
     prioritiesByCandidateLoader: new DataLoader<number, DimPriority[]>(async (candidateKeys) => {
+      const db = getDatabase();
       const placeholders = candidateKeys.map(() => "?").join(", ");
       const rows = db
         .prepare(
@@ -130,6 +134,7 @@ export function createLoaders() {
     // Batch load geographies by candidate_key (one-to-many)
     geographiesByCandidateLoader: new DataLoader<number, CandidateGeography[]>(
       async (candidateKeys) => {
+        const db = getDatabase();
         const placeholders = candidateKeys.map(() => "?").join(", ");
         const rows = db
           .prepare(
@@ -163,6 +168,7 @@ export function createLoaders() {
     // Batch load clinical trials by candidate_key (one-to-many)
     clinicalTrialsByCandidateLoader: new DataLoader<number, FactClinicalTrialEvent[]>(
       async (candidateKeys) => {
+        const db = getDatabase();
         const placeholders = candidateKeys.map(() => "?").join(", ");
         const rows = db
           .prepare(
@@ -190,6 +196,7 @@ export function createLoaders() {
     // Batch load pipeline snapshots by candidate_key
     snapshotByCandidateLoader: new DataLoader<number, FactPipelineSnapshot | null>(
       async (candidateKeys) => {
+        const db = getDatabase();
         const placeholders = candidateKeys.map(() => "?").join(", ");
         const rows = db
           .prepare(
@@ -199,11 +206,17 @@ export function createLoaders() {
           FROM fact_pipeline_snapshot
           WHERE candidate_key IN (${placeholders})
             AND is_active_flag = 1
+          ORDER BY snapshot_id DESC
         `,
           )
           .all(...candidateKeys) as FactPipelineSnapshot[];
 
-        const map = new Map(rows.map((r) => [r.candidate_key as number, r]));
+        const map = new Map<number, FactPipelineSnapshot>();
+        for (const r of rows) {
+          if (!map.has(r.candidate_key as number)) {
+            map.set(r.candidate_key as number, r);
+          }
+        }
         return candidateKeys.map((k) => map.get(k) || null);
       },
     ),

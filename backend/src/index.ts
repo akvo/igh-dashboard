@@ -18,3 +18,11 @@ const { url } = await startStandaloneServer(server, {
 });
 
 console.log(`GraphQL API ready at ${url}`);
+
+async function shutdown(signal: string) {
+  console.log(`${signal} received, draining connections...`);
+  await server.stop();
+  process.exit(0);
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

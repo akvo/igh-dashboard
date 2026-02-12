@@ -1,4 +1,8 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import { defineConfig } from "vitest/config";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
@@ -10,6 +14,11 @@ export default defineConfig({
 
     // Include TypeScript files
     include: ["tests/**/*.test.ts"],
+
+    // Point all tests at the static test database
+    env: {
+      DATABASE_PATH: path.resolve(__dirname, "tests/star_schema.db"),
+    },
 
     // Ensure ESM support
     alias: {
