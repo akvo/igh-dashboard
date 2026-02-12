@@ -83,7 +83,7 @@ export function getPhaseByKey(phase_key: number): DimPhase | null {
 }
 
 /**
- * Get all products for filter dropdown.
+ * Get products that have at least one candidate in the pipeline.
  */
 export function getProducts(): DimProduct[] {
   const db = getDatabase();
@@ -91,9 +91,11 @@ export function getProducts(): DimProduct[] {
   return db
     .prepare(
       `
-    SELECT product_key, vin_productid, product_name, product_type
-    FROM dim_product
-    ORDER BY product_name
+    SELECT DISTINCT p.product_key, p.vin_productid, p.product_name, p.product_type
+    FROM dim_product p
+    JOIN fact_pipeline_snapshot f ON p.product_key = f.product_key
+    WHERE f.is_active_flag = 1
+    ORDER BY p.product_name
   `,
     )
     .all() as DimProduct[];
