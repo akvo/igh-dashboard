@@ -66,7 +66,8 @@ export default function Home() {
   // Phase distribution with filters
   const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistribution(
     selectedHealthAreaApi,
-    selectedProductKey
+    selectedProductKey,
+    'Candidate'
   );
 
   // Product options for dropdown (from API)
