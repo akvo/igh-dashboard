@@ -23,23 +23,23 @@ describe('portfolioKPIs transformations', () => {
       expect(result).toHaveLength(3);
       expect(result[0]).toEqual({
         id: 'diseases',
-        title: 'Number of diseases',
+        title: 'Diseases covered',
         value: 215,
-        description: 'Total number of diseases',
-        buttonText: 'Explore pipeline for diseases',
+        description: 'See full list of diseases',
+        buttonText: 'See full list of diseases',
       });
       expect(result[1]).toEqual({
         id: 'candidates',
-        title: 'Total number of candidates',
+        title: 'Candidates in development',
         value: 8581,
-        description: 'Total number of candidates.',
+        description: 'Explore candidates',
         buttonText: 'Explore candidates',
       });
       expect(result[2]).toEqual({
         id: 'approved',
-        title: 'Approved products',
+        title: 'Approved health products',
         value: 5,
-        description: 'Total number of approved products.',
+        description: 'Explore approved products',
         buttonText: 'Explore approved products',
       });
     });
