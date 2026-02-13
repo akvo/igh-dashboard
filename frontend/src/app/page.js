@@ -40,6 +40,13 @@ const rdStageOptions = [
   'Approved',
 ];
 
+// Global health area options for cross-pipeline filter
+const globalHealthAreaOptions = [
+  { label: 'Neglected diseases', value: 'Neglected disease' },
+  { label: "Women's health", value: 'Sexual & reproductive health' },
+  { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
+];
+
 // Map R&D stage display names to actual DB phase_name values
 const stageToPhaseMap = {
   'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
@@ -56,6 +63,8 @@ export default function Home() {
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useState(['Candidate', 'Product']);
   const [mapTab, setMapTab] = useState('trials');
   const [chartViewTab, setChartViewTab] = useState('visual');
+  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useState([]);
+  const [crossProduct, setCrossProduct] = useState([]);
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
@@ -68,7 +77,11 @@ export default function Home() {
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
-  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
+  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
+    [2023, 2024],
+    crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
+    crossProduct.length > 0 ? crossProduct : null,
+  );
 
   // Convert R&D stage selections to phase names for server-side filtering
   const selectedPhaseNames = useMemo(() => {
@@ -404,6 +417,42 @@ export default function Home() {
               comparison of a pipeline over time, or between two or more
               diseases.
             </p>
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-end gap-4 mb-5">
+              <div className="flex-1 min-w-[180px]">
+                <Dropdown
+                  label="Global health area"
+                  value={crossGlobalHealthArea}
+                  onChange={setCrossGlobalHealthArea}
+                  placeholder="All"
+                  options={globalHealthAreaOptions}
+                  multiSelect={true}
+                  showClearText={true}
+                />
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <Dropdown
+                  label="Product"
+                  value={crossProduct}
+                  onChange={setCrossProduct}
+                  placeholder="All"
+                  options={productOptions}
+                  multiSelect={true}
+                  showClearText={true}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCrossGlobalHealthArea([]);
+                  setCrossProduct([]);
+                }}
+                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+              >
+                Reset filters
+              </button>
+            </div>
+
             {temporalLoading ? (
               <div className="h-[220px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>

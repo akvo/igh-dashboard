@@ -4,8 +4,8 @@ import type { TemporalSnapshotRow } from "../types.js";
 interface TemporalSnapshotFilters {
   years?: number[];
   disease_key?: number;
-  global_health_area?: string;
-  product_key?: number;
+  global_health_areas?: string[];
+  product_keys?: number[];
   candidate_type?: string;
 }
 
@@ -16,12 +16,6 @@ const SCALAR_FILTER_MAP: Array<{
   join?: string;
 }> = [
   { key: "disease_key", condition: "f.disease_key = ?" },
-  {
-    key: "global_health_area",
-    condition: "d.global_health_area = ?",
-    join: "JOIN dim_disease d ON f.disease_key = d.disease_key",
-  },
-  { key: "product_key", condition: "f.product_key = ?" },
   {
     key: "candidate_type",
     condition: "c.candidate_type = ?",
@@ -41,6 +35,19 @@ function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
     const placeholders = filters.years.map(() => "?").join(", ");
     conditions.push(`dt.year IN (${placeholders})`);
     params.push(...filters.years);
+  }
+
+  if (filters?.product_keys && filters.product_keys.length > 0) {
+    const placeholders = filters.product_keys.map(() => "?").join(", ");
+    conditions.push(`f.product_key IN (${placeholders})`);
+    params.push(...filters.product_keys);
+  }
+
+  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
+    joins.push("JOIN dim_disease d ON f.disease_key = d.disease_key");
+    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
+    conditions.push(`d.global_health_area IN (${placeholders})`);
+    params.push(...filters.global_health_areas);
   }
 
   for (const { key, condition, join } of SCALAR_FILTER_MAP) {

@@ -227,7 +227,7 @@ export const typeDefs = `#graphql
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], disease_key: Int, global_health_area: String, product_key: Int, candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], disease_key: Int, global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
 
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!

@@ -55,16 +55,16 @@ export const resolvers = {
       args: {
         years?: number[];
         disease_key?: number;
-        global_health_area?: string;
-        product_key?: number;
+        global_health_areas?: string[];
+        product_keys?: number[];
         candidate_type?: string;
       },
     ) =>
       getTemporalSnapshots({
         years: args.years,
         disease_key: args.disease_key,
-        global_health_area: args.global_health_area,
-        product_key: args.product_key,
+        global_health_areas: args.global_health_areas,
+        product_keys: args.product_keys,
         candidate_type: args.candidate_type,
       }),
 
