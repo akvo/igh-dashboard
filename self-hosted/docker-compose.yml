@@ -1,20 +1,20 @@
 ---
 services:
 
-  frontend:
-    build: ../frontend
-    container_name: frontend
-    env_file: ./.env
-    restart: unless-stopped
+  mainnetwork:
+    image: alpine:3.20.0
+    container_name: mainnetwork
+    command: ["tail", "-f", "/dev/null"]
+    ports:
+      - ${APP_PORT:-80}:80
+      - ${APP_SSL_PORT:-443}:443
 
   traefik:
     image: traefik:v3.3
     container_name: traefik
     env_file: "./.env"
     restart: unless-stopped
-    ports:
-      - 80:80
-      - 443:443
+    network_mode: service:mainnetwork
     environment:
       - TRAEFIK_PROVIDERS_FILE_FILENAME=/traefik-config/dynamic.yml
       - TRAEFIK_PROVIDERS_FILE_WATCH=true
@@ -34,7 +34,32 @@ services:
       - "./generate_dynamic_config.sh:/generate_dynamic_config.sh:ro"
       - "/traefik-config"
     depends_on:
-      - frontend
+      - mainnetwork
+
+  backend:
+    build: ../backend
+    container_name: backend
+    env_file: "./.env"
+    restart: unless-stopped
+    network_mode: service:mainnetwork
+    environment:
+      - DATABASE_PATH=/app/data/star_schema.db
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - mainnetwork
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        - NEXT_PUBLIC_GRAPHQL_ENDPOINT=${NEXT_PUBLIC_GRAPHQL_ENDPOINT}
+    container_name: frontend
+    env_file: "./.env"
+    restart: unless-stopped
+    network_mode: service:mainnetwork
+    depends_on:
+      - backend
 
 volumes:
   traefik-certificates:
