@@ -11,10 +11,10 @@ export const GET_PORTFOLIO_KPIS = gql`
   }
 `;
 
-// Bubble Chart - Scale of Innovation
+// Bubble Chart - Scale of R&D by global health area
 export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
-  query BubbleChart {
-    globalHealthAreaSummaries {
+  query BubbleChart($candidateTypes: [String!]) {
+    globalHealthAreaSummaries(candidate_types: $candidateTypes) {
       global_health_area
       candidateCount
       diseaseCount

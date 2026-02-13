@@ -21,7 +21,8 @@ export const resolvers = {
     portfolioKPIs: () => getPortfolioKPIs(),
 
     // Bubble chart
-    globalHealthAreaSummaries: () => getGlobalHealthAreaSummaries(),
+    globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
+      getGlobalHealthAreaSummaries({ candidate_types: args.candidate_types }),
 
     // Stacked bar chart
     phaseDistribution: (

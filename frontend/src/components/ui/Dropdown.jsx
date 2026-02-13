@@ -217,20 +217,22 @@ const Dropdown = ({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      {label && (
+      {label && !compact && (
         <span className="text-sm text-gray-500 font-normal">{label}</span>
       )}
       <button
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between w-full text-sm font-normal text-black cursor-pointer text-left transition-colors
-          ${compact ? 'px-3 py-2 h-[36px]' : 'px-4 py-2.5 h-[44px]'}
-          ${isOpen ? 'bg-white border-2 border-orange-500' : 'bg-gray-100'}`}
+        className={`flex items-center justify-between text-sm font-normal text-black cursor-pointer text-left transition-colors
+          ${compact ? 'gap-2 px-3 h-9 w-[240px]' : 'w-full px-4 py-2.5 h-[44px]'}
+          ${isOpen ? 'bg-white border-2 border-orange-500' : 'bg-[#F2F2F4]'}`}
       >
-        <span className="flex items-center overflow-hidden min-w-0">{getDisplayValue()}</span>
-        <div className="flex items-center gap-2">
-          {showClearText && multiSelect && selectedValues.length > 0 && (
+        <span className="flex items-center overflow-hidden min-w-0">
+          {getDisplayValue()}
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {!compact && showClearText && multiSelect && selectedValues.length > 0 && (
             <span
               onClick={handleClear}
               className="text-orange-500 text-sm font-medium cursor-pointer hover:underline"
@@ -238,7 +240,7 @@ const Dropdown = ({
               Clear
             </span>
           )}
-          <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </button>
       {menu}

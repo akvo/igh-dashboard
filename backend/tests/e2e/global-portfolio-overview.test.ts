@@ -96,6 +96,115 @@ describe("Bubble Chart", () => {
       expect(summary.candidateCount).toBeGreaterThan(0);
     });
   });
+
+  it("filters by candidate_types=['Candidate']", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Candidate"] },
+    );
+
+    expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
+    const filteredTotal = data.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+  });
+
+  it("filters by candidate_types=['Product']", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Product"] },
+    );
+
+    expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
+    const filteredTotal = data.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+  });
+
+  it("both types combined closely matches unfiltered baseline", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data: bothData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Candidate", "Product"] },
+    );
+
+    // Both types should cover the vast majority of unfiltered candidates.
+    // The unfiltered query doesn't join dim_candidate_core, so candidates
+    // with NULL candidate_type are included there but excluded when filtering.
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const bothTotal = bothData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+
+    expect(bothData.globalHealthAreaSummaries.length).toBe(
+      allData.globalHealthAreaSummaries.length,
+    );
+    expect(bothTotal).toBeLessThanOrEqual(unfilteredTotal);
+    expect(bothTotal).toBeGreaterThan(unfilteredTotal * 0.95);
+  });
 });
 
 describe("Geographic Map", () => {
@@ -266,10 +375,7 @@ describe("Phase Distribution — candidate_type filter", () => {
 
     expect(data.phaseDistribution.length).toBeGreaterThan(0);
     const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
-    const unfilteredTotal = allData.phaseDistribution.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const unfilteredTotal = allData.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
   });
 });

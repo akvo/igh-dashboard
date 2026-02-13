@@ -215,7 +215,7 @@ export const typeDefs = `#graphql
     portfolioKPIs: PortfolioKPIs!
 
     # Bubble chart
-    globalHealthAreaSummaries: [GlobalHealthAreaSummary!]!
+    globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
 
     # Stacked bar chart
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!

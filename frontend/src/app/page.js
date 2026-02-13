@@ -24,6 +24,12 @@ import {
   useProducts,
 } from '@/graphql/hooks';
 
+// Candidate type options for bubble chart filter
+const candidateTypeOptions = [
+  { label: 'Candidates', value: 'Candidate' },
+  { label: 'Products', value: 'Product' },
+];
+
 // R&D stage options for filtering
 const rdStageOptions = [
   'Pre-clinical',
@@ -47,6 +53,7 @@ const stageToPhaseMap = {
 export default function Home() {
   const [product, setProduct] = useState([]);
   const [rdStage, setRdStage] = useState([]);
+  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useState(['Candidate', 'Product']);
   const [mapTab, setMapTab] = useState('trials');
   const [chartViewTab, setChartViewTab] = useState('visual');
 
@@ -54,7 +61,9 @@ export default function Home() {
   const worldMapRef = useRef(null);
 
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries();
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
+    bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
+  );
   const { products, loading: productsLoading } = useProducts();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
@@ -172,17 +181,25 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Scale of innovation efforts across health pipelines
+                    Scale of R&D by global health area
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Click on tabular view to see a list of diseases with amount
-                    of candidates and products
+                    Candidates in development / Approved products
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Dropdown
+                    label="Product"
+                    value={bubbleCandidateTypes}
+                    onChange={setBubbleCandidateTypes}
+                    placeholder="All"
+                    options={candidateTypeOptions}
+                    multiSelect={true}
+                    compact={true}
+                  />
                   <ChartMenu
-                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-innovation')}
-                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-innovation')}
+                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-rd')}
+                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-rd')}
                   />
                   <TabSwitcher
                     activeTab={chartViewTab}

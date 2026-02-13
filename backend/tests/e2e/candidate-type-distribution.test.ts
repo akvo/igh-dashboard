@@ -60,10 +60,9 @@ function assertStructuralInvariants(rows: CandidateTypeDistributionRow[], label:
     ).toContain(row.candidate_type);
 
     expect(row.candidateCount, `${label}: candidateCount must be positive`).toBeGreaterThan(0);
-    expect(
-      Number.isInteger(row.candidateCount),
-      `${label}: candidateCount must be integer`,
-    ).toBe(true);
+    expect(Number.isInteger(row.candidateCount), `${label}: candidateCount must be integer`).toBe(
+      true,
+    );
 
     expect(
       typeof row.global_health_area === "string" && row.global_health_area.length > 0,
@@ -161,7 +160,9 @@ describe("Baseline (no filters)", () => {
   it("has both Candidate and Product rows per area", () => {
     const areas = [...new Set(baselineRows.map((r) => r.global_health_area))];
     for (const area of areas) {
-      const types = baselineRows.filter((r) => r.global_health_area === area).map((r) => r.candidate_type);
+      const types = baselineRows
+        .filter((r) => r.global_health_area === area)
+        .map((r) => r.candidate_type);
       expect(types, `area "${area}" should have both types`).toContain("Candidate");
       expect(types, `area "${area}" should have both types`).toContain("Product");
     }
