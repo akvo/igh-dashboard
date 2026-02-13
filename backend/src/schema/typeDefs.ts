@@ -155,6 +155,12 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type CandidateTypeDistributionRow {
+    global_health_area: String!
+    candidate_type: String!
+    candidateCount: Int!
+  }
+
   type GeographicDistributionRow {
     country_key: Int!
     country_name: String!
@@ -213,6 +219,9 @@ export const typeDefs = `#graphql
 
     # Stacked bar chart
     phaseDistribution(global_health_area: String, product_key: Int, candidate_type: String): [PhaseDistributionRow!]!
+
+    # Portfolio overview - candidate type distribution
+    candidateTypeDistribution(product_key: Int, phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!

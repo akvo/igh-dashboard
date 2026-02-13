@@ -10,6 +10,11 @@ export {
   phaseNameToKey,
 } from './phaseDistribution';
 export {
+  transformCandidateTypeDistribution,
+  extractCandidateTypes,
+  groupByHealthArea as groupByHealthAreaCandidateType,
+} from './candidateTypeDistribution';
+export {
   transformGeographicDistribution,
   transformToMapData,
 } from './geographicDistribution';

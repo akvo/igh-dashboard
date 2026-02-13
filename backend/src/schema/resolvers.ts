@@ -4,6 +4,7 @@ import type { DimCandidateCore, CandidateFilter } from "../db/types.js";
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
 import { getPhaseDistribution } from "../db/queries/phaseDistribution.js";
+import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistribution.js";
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
@@ -31,6 +32,16 @@ export const resolvers = {
         global_health_area: args.global_health_area,
         product_key: args.product_key,
         candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio overview - candidate type distribution
+    candidateTypeDistribution: (
+      _: unknown,
+      args: { product_key?: number; phase_names?: string[] },
+    ) =>
+      getCandidateTypeDistribution({
+        product_key: args.product_key,
+        phase_names: args.phase_names,
       }),
 
     // Map

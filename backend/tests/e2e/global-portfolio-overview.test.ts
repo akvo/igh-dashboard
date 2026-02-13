@@ -9,6 +9,7 @@ import type {
   GlobalHealthAreaSummary,
   GeographicDistributionRow,
   PhaseDistributionRow,
+  CandidateTypeDistributionRow,
   Product,
 } from "../helpers/types.js";
 
@@ -267,6 +268,84 @@ describe("Phase Distribution — candidate_type filter", () => {
     expect(data.phaseDistribution.length).toBeGreaterThan(0);
     const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     const unfilteredTotal = allData.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+  });
+});
+
+describe("Candidate Type Distribution", () => {
+  it("returns data grouped by health area and candidate type", async () => {
+    const { data } = await query<{
+      candidateTypeDistribution: CandidateTypeDistributionRow[];
+    }>(`{
+      candidateTypeDistribution {
+        global_health_area
+        candidate_type
+        candidateCount
+      }
+    }`);
+
+    expect(data.candidateTypeDistribution.length).toBeGreaterThan(0);
+    data.candidateTypeDistribution.forEach((row) => {
+      expect(["Candidate", "Product"]).toContain(row.candidate_type);
+      expect(row.candidateCount).toBeGreaterThan(0);
+    });
+  });
+
+  it("filters by product_key", async () => {
+    const { data: lookupData } = await query<{
+      products: Array<{ product_key: number }>;
+    }>(`{ products { product_key } }`);
+
+    expect(lookupData.products.length).toBeGreaterThan(0);
+    const productKey = lookupData.products[0].product_key;
+
+    const { data } = await query<{
+      candidateTypeDistribution: CandidateTypeDistributionRow[];
+    }>(
+      `query ($productKey: Int) {
+        candidateTypeDistribution(product_key: $productKey) {
+          global_health_area
+          candidate_type
+          candidateCount
+        }
+      }`,
+      { productKey },
+    );
+
+    expect(Array.isArray(data.candidateTypeDistribution)).toBe(true);
+  });
+
+  it("filters by phase_names", async () => {
+    const { data: allData } = await query<{
+      candidateTypeDistribution: CandidateTypeDistributionRow[];
+    }>(`{
+      candidateTypeDistribution {
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      candidateTypeDistribution: CandidateTypeDistributionRow[];
+    }>(
+      `query ($phaseNames: [String!]) {
+        candidateTypeDistribution(phase_names: $phaseNames) {
+          global_health_area
+          candidate_type
+          candidateCount
+        }
+      }`,
+      { phaseNames: ["Phase I", "Phase II"] },
+    );
+
+    expect(data.candidateTypeDistribution.length).toBeGreaterThan(0);
+    const filteredTotal = data.candidateTypeDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const unfilteredTotal = allData.candidateTypeDistribution.reduce(
       (sum, r) => sum + r.candidateCount,
       0,
     );

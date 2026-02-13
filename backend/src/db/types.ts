@@ -184,6 +184,12 @@ export interface PhaseDistributionRow {
   candidateCount: number;
 }
 
+export interface CandidateTypeDistributionRow {
+  global_health_area: string;
+  candidate_type: string;
+  candidateCount: number;
+}
+
 export interface GeographicDistributionRow {
   country_key: number;
   country_name: string;

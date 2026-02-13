@@ -18,20 +18,13 @@ import {
 import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
-  usePhaseDistribution,
+  useCandidateTypeDistribution,
   useGeographicDistribution,
   useTemporalSnapshots,
   useProducts,
 } from '@/graphql/hooks';
 
-// Map display names to API names for health areas
-const healthAreaDisplayToApi = {
-  'Neglected diseases': 'Neglected disease',
-  "Women's health": 'Sexual & reproductive health',
-  'Emerging infectious diseases': 'Emerging infectious disease',
-};
-
-// R&D stage options for filtering (these map to phase labels)
+// R&D stage options for filtering
 const rdStageOptions = [
   'Pre-clinical',
   'Phase 1',
@@ -41,8 +34,17 @@ const rdStageOptions = [
   'Approved',
 ];
 
+// Map R&D stage display names to actual DB phase_name values
+const stageToPhaseMap = {
+  'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
+  'Phase 1': ['Phase I'],
+  'Phase 2': ['Phase II'],
+  'Phase 3': ['Phase III'],
+  'Phase 4': ['Phase IV'],
+  'Approved': ['Regulatory filing', 'PQ listing and regulatory approval'],
+};
+
 export default function Home() {
-  const [healthArea, setHealthArea] = useState([]);
   const [product, setProduct] = useState([]);
   const [rdStage, setRdStage] = useState([]);
   const [mapTab, setMapTab] = useState('trials');
@@ -59,59 +61,24 @@ export default function Home() {
   );
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
 
-  // Convert filter selections to API params
-  const selectedHealthAreaApi = healthArea.length > 0 ? healthAreaDisplayToApi[healthArea[0]] : null;
   const selectedProductKey = product.length > 0 ? product[0] : null;
 
-  // Phase distribution with filters
-  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistribution(
-    selectedHealthAreaApi,
+  // Convert R&D stage selections to phase names for server-side filtering
+  const selectedPhaseNames = useMemo(() => {
+    if (rdStage.length === 0) return null;
+    return rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
+  }, [rdStage]);
+
+  // Candidate type distribution with filters
+  const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     selectedProductKey,
-    'Candidate'
+    selectedPhaseNames,
   );
 
   // Product options for dropdown (from API)
   const productOptions = useMemo(() =>
     products.map(p => ({ label: p.product_name, value: p.product_key })),
     [products]
-  );
-
-  // Filter phases client-side based on R&D stage selection
-  const filteredPortfolioPhases = useMemo(() => {
-    if (rdStage.length === 0) return portfolioPhases;
-
-    // Map R&D stage display names to phase labels
-    const stageToPhaseMap = {
-      'Pre-clinical': ['Discovery', 'Preclinical', 'Screening'],
-      'Phase 1': ['Phase I'],
-      'Phase 2': ['Phase II'],
-      'Phase 3': ['Phase III'],
-      'Phase 4': ['Phase IV'],
-      'Approved': ['PQ/Approval', 'Reg Filing'],
-    };
-
-    const allowedLabels = rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
-    return portfolioPhases.filter(phase => allowedLabels.includes(phase.label));
-  }, [portfolioPhases, rdStage]);
-
-  // Filter chart data to only include selected phases
-  const filteredPortfolioChartData = useMemo(() => {
-    if (rdStage.length === 0) return portfolioChartData;
-
-    const allowedKeys = filteredPortfolioPhases.map(p => p.key);
-    return portfolioChartData.map(row => {
-      const filtered = { category: row.category };
-      allowedKeys.forEach(key => {
-        if (row[key] !== undefined) filtered[key] = row[key];
-      });
-      return filtered;
-    });
-  }, [portfolioChartData, filteredPortfolioPhases, rdStage]);
-
-  // Health area options derived from API data
-  const healthAreaOptions = useMemo(() =>
-    (gqlBubbleData || []).map(item => item.name),
-    [gqlBubbleData]
   );
 
   // Download CSV function
@@ -342,7 +309,7 @@ export default function Home() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Portfolio overview by Global Health Area
+                Portfolio overview by global health area
               </h3>
               <a
                 href="/portfolio"
@@ -352,27 +319,17 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-              A breakdown of the global pipeline for each global health area.
-              The illustration shows the distribution of R&D activities across
-              clinical stages, from pre clinical through to approved products.
-              The graph is segmented by global health area. The separate
-              clinical stages can be turned on and off by clicking on the
-              legend.
+              A cross-section of the R&D pipeline by global health area and
+              development stage. Each horizontal bar represents a global health
+              area, with colour-coded segments showing the number of candidates
+              and approved products. Use the filters above to focus on specific
+              product types or R&D stage, and click items in the legend to turn
+              individual stages on or off to compare how pipelines are
+              distributed across the development lifecycle.
             </p>
 
             {/* Filters */}
             <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
-                <Dropdown
-                  label="Global health area"
-                  value={healthArea}
-                  onChange={setHealthArea}
-                  placeholder="All"
-                  options={healthAreaOptions}
-                  multiSelect={true}
-                  showClearText={true}
-                />
-              </div>
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
                   label="Product"
@@ -398,7 +355,6 @@ export default function Home() {
               </div>
               <button
                 onClick={() => {
-                  setHealthArea([]);
                   setProduct([]);
                   setRdStage([]);
                 }}
@@ -415,11 +371,12 @@ export default function Home() {
               </div>
             ) : (
               <StackedBarChart
-                data={filteredPortfolioChartData}
-                phases={filteredPortfolioPhases}
+                data={portfolioChartData}
+                phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Amount of Candidates"
+                xAxisLabel="Amount of candidates/products"
+                yAxisWidth={200}
                 showFilters={true}
               />
             )}

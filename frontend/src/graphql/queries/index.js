@@ -35,6 +35,17 @@ export const GET_PHASE_DISTRIBUTION = gql`
   }
 `;
 
+// Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
+export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
+  query CandidateTypeDistribution($productKey: Int, $phaseNames: [String!]) {
+    candidateTypeDistribution(product_key: $productKey, phase_names: $phaseNames) {
+      global_health_area
+      candidate_type
+      candidateCount
+    }
+  }
+`;
+
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
   query GeographicMap($scope: String!) {
