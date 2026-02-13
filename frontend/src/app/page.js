@@ -61,8 +61,6 @@ export default function Home() {
   );
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
 
-  const selectedProductKey = product.length > 0 ? product[0] : null;
-
   // Convert R&D stage selections to phase names for server-side filtering
   const selectedPhaseNames = useMemo(() => {
     if (rdStage.length === 0) return null;
@@ -71,7 +69,7 @@ export default function Home() {
 
   // Candidate type distribution with filters
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    selectedProductKey,
+    product,
     selectedPhaseNames,
   );
 
@@ -419,25 +417,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Priority Alignment - Data not available from API */}
-          <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-black mb-1">
-                  Priority Alignment
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Compare WHO priorities with pipeline
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <p className="text-gray-400 mb-2">Data not available from API</p>
-                <p className="text-xs text-gray-300">Priority alignment data is not yet supported by the backend</p>
-              </div>
-            </div>
-          </div>
 
           {/* Reports and Insights */}
           <div className="bg-black rounded-2xl p-5 sm:p-8 lg:p-10 mb-10">

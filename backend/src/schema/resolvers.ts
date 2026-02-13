@@ -26,21 +26,21 @@ export const resolvers = {
     // Stacked bar chart
     phaseDistribution: (
       _: unknown,
-      args: { global_health_area?: string; product_key?: number; candidate_type?: string },
+      args: { global_health_area?: string; product_keys?: number[]; candidate_type?: string },
     ) =>
       getPhaseDistribution({
         global_health_area: args.global_health_area,
-        product_key: args.product_key,
+        product_keys: args.product_keys,
         candidate_type: args.candidate_type,
       }),
 
     // Portfolio overview - candidate type distribution
     candidateTypeDistribution: (
       _: unknown,
-      args: { product_key?: number; phase_names?: string[] },
+      args: { product_keys?: number[]; phase_names?: string[] },
     ) =>
       getCandidateTypeDistribution({
-        product_key: args.product_key,
+        product_keys: args.product_keys,
         phase_names: args.phase_names,
       }),
 

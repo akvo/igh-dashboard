@@ -217,26 +217,26 @@ describe("Phase Distribution — filters", () => {
     expect(data.products[0].product_key).toBeDefined();
   });
 
-  it("filters by product_key", async () => {
+  it("filters by product_keys", async () => {
     const { data: lookupData } = await query<{
       products: Array<{ product_key: number }>;
     }>(`{ products { product_key } }`);
 
     expect(lookupData.products.length).toBeGreaterThan(0);
-    const productKey = lookupData.products[0].product_key;
+    const productKeys = [lookupData.products[0].product_key];
 
     const { data } = await query<{
       phaseDistribution: PhaseDistributionRow[];
     }>(
-      `query ($productKey: Int) {
-        phaseDistribution(product_key: $productKey) {
+      `query ($productKeys: [Int!]) {
+        phaseDistribution(product_keys: $productKeys) {
           global_health_area
           phase_name
           sort_order
           candidateCount
         }
       }`,
-      { productKey },
+      { productKeys },
     );
 
     expect(Array.isArray(data.phaseDistribution)).toBe(true);

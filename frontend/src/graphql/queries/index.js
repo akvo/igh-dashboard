@@ -25,8 +25,8 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
 
 // Phase Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_PHASE_DISTRIBUTION = gql`
-  query PhaseDistribution($globalHealthArea: String, $productKey: Int, $candidateType: String) {
-    phaseDistribution(global_health_area: $globalHealthArea, product_key: $productKey, candidate_type: $candidateType) {
+  query PhaseDistribution($globalHealthArea: String, $productKeys: [Int!], $candidateType: String) {
+    phaseDistribution(global_health_area: $globalHealthArea, product_keys: $productKeys, candidate_type: $candidateType) {
       global_health_area
       phase_name
       sort_order
@@ -37,8 +37,8 @@ export const GET_PHASE_DISTRIBUTION = gql`
 
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
-  query CandidateTypeDistribution($productKey: Int, $phaseNames: [String!]) {
-    candidateTypeDistribution(product_key: $productKey, phase_names: $phaseNames) {
+  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {
+    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
       global_health_area
       candidate_type
       candidateCount

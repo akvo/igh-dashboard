@@ -5,14 +5,14 @@ import { GET_CANDIDATE_TYPE_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformCandidateTypeDistribution } from '@/lib/transformations';
 
-export function useCandidateTypeDistribution(productKey, phaseNames) {
+export function useCandidateTypeDistribution(productKeys, phaseNames) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('candidateTypeDistribution', { productKey, phaseNames });
+  const cacheKey = getCacheKey('candidateTypeDistribution', { productKeys, phaseNames });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_CANDIDATE_TYPE_DISTRIBUTION, {
     variables: {
-      productKey: productKey || undefined,
+      productKeys: productKeys && productKeys.length > 0 ? productKeys : undefined,
       phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
     },
     skip: !!cachedData,

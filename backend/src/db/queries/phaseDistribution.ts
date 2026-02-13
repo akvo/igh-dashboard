@@ -3,7 +3,7 @@ import type { PhaseDistributionRow } from "../types.js";
 
 interface PhaseDistributionFilters {
   global_health_area?: string;
-  product_key?: number;
+  product_keys?: number[];
   candidate_type?: string;
 }
 
@@ -32,9 +32,10 @@ export function getPhaseDistribution(filters?: PhaseDistributionFilters): PhaseD
     params.push(filters.global_health_area);
   }
 
-  if (filters?.product_key) {
-    conditions.push("f.product_key = ?");
-    params.push(filters.product_key);
+  if (filters?.product_keys && filters.product_keys.length > 0) {
+    const placeholders = filters.product_keys.map(() => "?").join(", ");
+    conditions.push(`f.product_key IN (${placeholders})`);
+    params.push(...filters.product_keys);
   }
 
   if (filters?.candidate_type) {

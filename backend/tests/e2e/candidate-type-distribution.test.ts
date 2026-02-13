@@ -31,13 +31,13 @@ const ALL_STAGE_NAMES = Object.keys(STAGE_TO_PHASE_MAP);
 // ---------------------------------------------------------------------------
 
 async function queryDistribution(
-  variables: { productKey?: number; phaseNames?: string[] } = {},
+  variables: { productKeys?: number[]; phaseNames?: string[] } = {},
 ): Promise<CandidateTypeDistributionRow[]> {
   const { data } = await query<{
     candidateTypeDistribution: CandidateTypeDistributionRow[];
   }>(
-    `query ($productKey: Int, $phaseNames: [String!]) {
-      candidateTypeDistribution(product_key: $productKey, phase_names: $phaseNames) {
+    `query ($productKeys: [Int!], $phaseNames: [String!]) {
+      candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
         global_health_area
         candidate_type
         candidateCount
@@ -216,7 +216,7 @@ describe("Product filter", () => {
     expect(samples.length).toBeGreaterThan(0);
 
     for (const { label, product } of samples) {
-      const rows = await queryDistribution({ productKey: product.product_key });
+      const rows = await queryDistribution({ productKeys: [product.product_key] });
       const tag = `product=${product.product_name} (key=${product.product_key}, ${label})`;
 
       if (rows.length > 0) {
@@ -232,6 +232,34 @@ describe("Product filter", () => {
         console.log(`[${tag}] returned empty result`);
       }
     }
+  });
+
+  it("multiple product_keys returns union (sum ≤ baseline, ≥ either individual)", async () => {
+    if (products.length < 2) return;
+
+    const p1 = products[0];
+    const p2 = products[Math.floor(products.length / 2)];
+    if (p1.product_key === p2.product_key) return;
+
+    const rows1 = await queryDistribution({ productKeys: [p1.product_key] });
+    const rows2 = await queryDistribution({ productKeys: [p2.product_key] });
+    const rowsBoth = await queryDistribution({ productKeys: [p1.product_key, p2.product_key] });
+
+    const total1 = sumCounts(rows1);
+    const total2 = sumCounts(rows2);
+    const totalBoth = sumCounts(rowsBoth);
+    const baselineTotal = sumCounts(baselineRows);
+
+    assertStructuralInvariants(rowsBoth, "multi-product");
+    assertFilterReducesOrMaintainsCounts(rowsBoth, baselineRows, "multi-product");
+
+    expect(totalBoth, "multi ≤ baseline").toBeLessThanOrEqual(baselineTotal);
+    expect(totalBoth, "multi ≥ first individual").toBeGreaterThanOrEqual(total1);
+    expect(totalBoth, "multi ≥ second individual").toBeGreaterThanOrEqual(total2);
+
+    console.log(
+      `[multi-product] p1=${p1.product_name}(${total1}), p2=${p2.product_name}(${total2}), both=${totalBoth}, baseline=${baselineTotal}`,
+    );
   });
 });
 
@@ -301,7 +329,7 @@ describe("Combined product + phase", () => {
       for (const stage of stageSubset) {
         const phaseNames = STAGE_TO_PHASE_MAP[stage];
         const rows = await queryDistribution({
-          productKey: product.product_key,
+          productKeys: [product.product_key],
           phaseNames,
         });
         const tag = `product=${product.product_name}+stage=${stage}`;
@@ -339,8 +367,8 @@ describe("Monotonicity + edge cases", () => {
     console.log(`[monotonicity] Phase I only: ${total1}, Phase I+II: ${total12}`);
   });
 
-  it("non-existent product_key returns empty array", async () => {
-    const rows = await queryDistribution({ productKey: -999 });
+  it("non-existent product_keys returns empty array", async () => {
+    const rows = await queryDistribution({ productKeys: [-999] });
     expect(rows).toEqual([]);
   });
 

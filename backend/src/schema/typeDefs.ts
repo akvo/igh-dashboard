@@ -218,10 +218,10 @@ export const typeDefs = `#graphql
     globalHealthAreaSummaries: [GlobalHealthAreaSummary!]!
 
     # Stacked bar chart
-    phaseDistribution(global_health_area: String, product_key: Int, candidate_type: String): [PhaseDistributionRow!]!
+    phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!
 
     # Portfolio overview - candidate type distribution
-    candidateTypeDistribution(product_key: Int, phase_names: [String!]): [CandidateTypeDistributionRow!]!
+    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!

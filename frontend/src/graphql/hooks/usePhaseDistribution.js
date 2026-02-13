@@ -5,15 +5,15 @@ import { GET_PHASE_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformPhaseDistribution } from '@/lib/transformations';
 
-export function usePhaseDistribution(globalHealthArea, productKey, candidateType) {
+export function usePhaseDistribution(globalHealthArea, productKeys, candidateType) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('phaseDistribution', { globalHealthArea, productKey, candidateType });
+  const cacheKey = getCacheKey('phaseDistribution', { globalHealthArea, productKeys, candidateType });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PHASE_DISTRIBUTION, {
     variables: {
       globalHealthArea: globalHealthArea || undefined,
-      productKey: productKey || undefined,
+      productKeys: productKeys && productKeys.length > 0 ? productKeys : undefined,
       candidateType: candidateType || undefined,
     },
     skip: !!cachedData,

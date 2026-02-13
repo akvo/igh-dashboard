@@ -2,7 +2,7 @@ import { getDatabase } from "../connection.js";
 import type { CandidateTypeDistributionRow } from "../types.js";
 
 interface CandidateTypeDistributionFilters {
-  product_key?: number;
+  product_keys?: number[];
   phase_names?: string[];
 }
 
@@ -27,9 +27,10 @@ export function getCandidateTypeDistribution(
   ];
   const params: (string | number)[] = [];
 
-  if (filters?.product_key) {
-    conditions.push("f.product_key = ?");
-    params.push(filters.product_key);
+  if (filters?.product_keys && filters.product_keys.length > 0) {
+    const placeholders = filters.product_keys.map(() => "?").join(", ");
+    conditions.push(`f.product_key IN (${placeholders})`);
+    params.push(...filters.product_keys);
   }
 
   if (filters?.phase_names && filters.phase_names.length > 0) {
