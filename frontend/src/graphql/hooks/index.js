@@ -5,3 +5,4 @@ export { useCandidateTypeDistribution } from './useCandidateTypeDistribution';
 export { useGeographicDistribution } from './useGeographicDistribution';
 export { useTemporalSnapshots } from './useTemporalSnapshots';
 export { useProducts } from './useProducts';
+export { useAvailableYears } from './useAvailableYears';

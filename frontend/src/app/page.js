@@ -22,6 +22,7 @@ import {
   useGeographicDistribution,
   useTemporalSnapshots,
   useProducts,
+  useAvailableYears,
 } from '@/graphql/hooks';
 
 // Candidate type options for bubble chart filter
@@ -74,11 +75,12 @@ export default function Home() {
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
   );
   const { products, loading: productsLoading } = useProducts();
+  const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
-    [2023, 2024],
+    availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
     crossProduct.length > 0 ? crossProduct : null,
   );
@@ -453,7 +455,7 @@ export default function Home() {
               </button>
             </div>
 
-            {temporalLoading ? (
+            {temporalLoading || yearsLoading ? (
               <div className="h-[220px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>

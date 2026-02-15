@@ -23,6 +23,21 @@ const SCALAR_FILTER_MAP: Array<{
   },
 ];
 
+// Maps array filter keys to their SQL column and optional JOIN clause
+const ARRAY_FILTER_MAP: Array<{
+  key: keyof TemporalSnapshotFilters;
+  column: string;
+  join?: string;
+}> = [
+  { key: "years", column: "dt.year" },
+  { key: "product_keys", column: "f.product_key" },
+  {
+    key: "global_health_areas",
+    column: "d.global_health_area",
+    join: "JOIN dim_disease d ON f.disease_key = d.disease_key",
+  },
+];
+
 function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
   const joins = [
     "JOIN dim_date dt ON f.date_key = dt.date_key",
@@ -31,23 +46,14 @@ function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
   const conditions = ["f.is_active_flag = 1", "dt.year IS NOT NULL", "p.phase_name IS NOT NULL"];
   const params: (number | string)[] = [];
 
-  if (filters?.years && filters.years.length > 0) {
-    const placeholders = filters.years.map(() => "?").join(", ");
-    conditions.push(`dt.year IN (${placeholders})`);
-    params.push(...filters.years);
-  }
-
-  if (filters?.product_keys && filters.product_keys.length > 0) {
-    const placeholders = filters.product_keys.map(() => "?").join(", ");
-    conditions.push(`f.product_key IN (${placeholders})`);
-    params.push(...filters.product_keys);
-  }
-
-  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
-    joins.push("JOIN dim_disease d ON f.disease_key = d.disease_key");
-    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filters.global_health_areas);
+  for (const { key, column, join } of ARRAY_FILTER_MAP) {
+    const values = filters?.[key] as (number | string)[] | undefined;
+    if (values && values.length > 0) {
+      if (join) joins.push(join);
+      const placeholders = values.map(() => "?").join(", ");
+      conditions.push(`${column} IN (${placeholders})`);
+      params.push(...values);
+    }
   }
 
   for (const { key, condition, join } of SCALAR_FILTER_MAP) {
