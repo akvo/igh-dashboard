@@ -10,8 +10,6 @@ http:
       rule: "Host(\`${WEBDOMAIN}\`)"
       service: frontend-service
       entrypoints: web
-      middlewares:
-        - redirect-to-https
 
     frontend-service-router-443:
       entrypoints:
@@ -21,17 +19,37 @@ http:
       tls:
         certResolver: myresolver
 
-  middlewares:
-    redirect-to-https:
-      redirectScheme:
-        scheme: "https"
-        permanent: true
+    api-service-router-80:
+      rule: "Host(\`${WEBDOMAIN}\`) && PathPrefix(\`/api\`)"
+      service: api-service
+      entrypoints: web
+      middlewares:
+        - strip-api-prefix
 
+    api-service-router-443:
+      entrypoints:
+        - websecure
+      rule: "Host(\`${WEBDOMAIN}\`) && PathPrefix(\`/api\`)"
+      service: api-service
+      middlewares:
+        - strip-api-prefix
+      tls:
+        certResolver: myresolver
+
+  middlewares:
+    strip-api-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api"
 
   services:
     frontend-service:
       loadBalancer:
         servers:
-          - url: "http://frontend:3000"
+          - url: "http://localhost:3000"
+    api-service:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:4000"
 
 EOF
