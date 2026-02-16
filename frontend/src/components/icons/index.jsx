@@ -72,4 +72,7 @@ export {
   Share2 as ShareIcon,
   MoreHorizontal as MoreHorizontalIcon,
   MoreVertical as MoreVerticalIcon,
+  Sparkles as SparklesIcon,
+  Upload as UploadIcon,
+  CloudDownload as CloudDownloadIcon,
 } from 'lucide-react';
