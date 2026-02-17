@@ -15,15 +15,19 @@ import {
 
 export default function CrossPipelineAnalytics() {
   const [healthArea, setHealthArea] = useState('');
-  const [disease, setDisease] = useState('');
+  const [selectedDiseaseKey, setSelectedDiseaseKey] = useState(null);
   const [product, setProduct] = useState('');
 
-  // Fetch data from API
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots();
+  // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+
+  // Fetch chart data with disease filter
+  // NOTE: Backend currently only supports disease_key filter for temporalSnapshots
+  // TODO: Add backend support for global_health_area and product_key filters
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedDiseaseKey);
 
   // Build phase selection state from API phases
   const [selectedPhases, setSelectedPhases] = useState([]);
@@ -49,10 +53,25 @@ export default function CrossPipelineAnalytics() {
     [healthAreas]
   );
 
+  // Disease options with key-value pairs for filtering
   const diseaseOptions = useMemo(() =>
-    (diseasesList || []).map(d => d.name).filter(Boolean),
+    (diseasesList || [])
+      .filter(d => d.name)
+      .map(d => ({ value: d.key, label: d.name })),
     [diseasesList]
   );
+
+  // Handle disease selection - extract key for API filtering
+  const handleDiseaseChange = (value) => {
+    setSelectedDiseaseKey(value || null);
+  };
+
+  // Get selected disease label for dropdown display
+  const selectedDiseaseName = useMemo(() => {
+    if (!selectedDiseaseKey) return '';
+    const disease = diseaseOptions.find(d => d.value === selectedDiseaseKey);
+    return disease?.label || '';
+  }, [selectedDiseaseKey, diseaseOptions]);
 
   const productOptions = useMemo(() =>
     (productsList || []).map(p => p.product_name),
@@ -100,7 +119,7 @@ export default function CrossPipelineAnalytics() {
 
   const handleResetFilters = () => {
     setHealthArea('');
-    setDisease('');
+    setSelectedDiseaseKey(null);
     setProduct('');
     // Reset phases to all selected
     setSelectedPhases(phases.map(p => p.key));
@@ -198,8 +217,8 @@ export default function CrossPipelineAnalytics() {
               <div className="min-w-[180px]">
                 <Dropdown
                   label="Diseases"
-                  value={disease}
-                  onChange={setDisease}
+                  value={selectedDiseaseKey}
+                  onChange={handleDiseaseChange}
                   placeholder="All"
                   options={diseaseOptions}
                   compact={true}

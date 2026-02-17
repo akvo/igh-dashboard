@@ -5,17 +5,23 @@ import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformTemporalSnapshots } from '@/lib/transformations';
 
-export function useTemporalSnapshots(years) {
+export function useTemporalSnapshots(years, diseaseKey) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('temporalSnapshots', { years });
-  const cachedData = actions.getCachedData(cacheKey);
 
-  const { data, loading, error } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
-    variables: { years: years?.length > 0 ? years : undefined },
+  // Only use cache when no filters are applied
+  const hasFilters = (years?.length > 0) || diseaseKey;
+  const cacheKey = getCacheKey('temporalSnapshots', { years, diseaseKey });
+  const cachedData = hasFilters ? null : actions.getCachedData(cacheKey);
+
+  const { data, loading, error, refetch } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
+    variables: {
+      years: years?.length > 0 ? years : undefined,
+      diseaseKey: diseaseKey || undefined,
+    },
     skip: !!cachedData,
-    fetchPolicy: 'network-only',
+    fetchPolicy: hasFilters ? 'network-only' : 'cache-first',
     onCompleted: (result) => {
-      if (result?.temporalSnapshots) {
+      if (result?.temporalSnapshots && !hasFilters) {
         actions.setCache(cacheKey, result.temporalSnapshots);
       }
     },
@@ -31,5 +37,6 @@ export function useTemporalSnapshots(years) {
     error,
     raw: rawData,
     usingCache: !!cachedData,
+    refetch,
   };
 }
