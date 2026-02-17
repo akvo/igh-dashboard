@@ -94,3 +94,13 @@ export const GET_LOCATION_SCOPES = gql`
     locationScopes
   }
 `;
+
+// Get all diseases
+export const GET_DISEASES = gql`
+  query GetDiseases {
+    diseases {
+      disease_key
+      disease_name
+    }
+  }
+`;
