@@ -34,6 +34,20 @@ npm install
 npm run dev
 ```
 
+## Running all checks
+
+Run frontend tests, backend tests, and all backend linting and type checking with a single command from the project root:
+
+```bash
+npm run check:all
+```
+
+This runs the following in sequence, stopping on the first failure:
+
+1. Frontend unit tests (Vitest)
+2. Backend unit tests (Vitest)
+3. Backend type checking, linting, and formatting verification (tsc, ESLint, Prettier)
+
 ## Services
 
 | Service  | URL                    | Description             |

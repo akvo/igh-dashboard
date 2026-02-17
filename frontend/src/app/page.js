@@ -18,20 +18,20 @@ import {
 import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
-  usePhaseDistribution,
+  useCandidateTypeDistribution,
   useGeographicDistribution,
   useTemporalSnapshots,
   useProducts,
+  useAvailableYears,
 } from '@/graphql/hooks';
 
-// Map display names to API names for health areas
-const healthAreaDisplayToApi = {
-  'Neglected diseases': 'Neglected disease',
-  "Women's health": 'Sexual & reproductive health',
-  'Emerging infectious diseases': 'Emerging infectious disease',
-};
+// Candidate type options for bubble chart filter
+const candidateTypeOptions = [
+  { label: 'Candidates', value: 'Candidate' },
+  { label: 'Products', value: 'Product' },
+];
 
-// R&D stage options for filtering (these map to phase labels)
+// R&D stage options for filtering
 const rdStageOptions = [
   'Pre-clinical',
   'Phase 1',
@@ -41,76 +41,66 @@ const rdStageOptions = [
   'Approved',
 ];
 
+// Global health area options for cross-pipeline filter
+const globalHealthAreaOptions = [
+  { label: 'Neglected diseases', value: 'Neglected disease' },
+  { label: "Women's health", value: 'Sexual & reproductive health' },
+  { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
+];
+
+// Map R&D stage display names to actual DB phase_name values
+const stageToPhaseMap = {
+  'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
+  'Phase 1': ['Phase I'],
+  'Phase 2': ['Phase II'],
+  'Phase 3': ['Phase III'],
+  'Phase 4': ['Phase IV'],
+  'Approved': ['Regulatory filing', 'PQ listing and regulatory approval'],
+};
+
 export default function Home() {
-  const [healthArea, setHealthArea] = useState([]);
   const [product, setProduct] = useState([]);
   const [rdStage, setRdStage] = useState([]);
+  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useState(['Candidate', 'Product']);
   const [mapTab, setMapTab] = useState('trials');
   const [chartViewTab, setChartViewTab] = useState('visual');
+  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useState([]);
+  const [crossProduct, setCrossProduct] = useState([]);
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
 
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries();
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
+    bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
+  );
   const { products, loading: productsLoading } = useProducts();
+  const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
-  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots([2023, 2024]);
+  const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
+    availableYears,
+    crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
+    crossProduct.length > 0 ? crossProduct : null,
+  );
 
-  // Convert filter selections to API params
-  const selectedHealthAreaApi = healthArea.length > 0 ? healthAreaDisplayToApi[healthArea[0]] : null;
-  const selectedProductKey = product.length > 0 ? product[0] : null;
+  // Convert R&D stage selections to phase names for server-side filtering
+  const selectedPhaseNames = useMemo(() => {
+    if (rdStage.length === 0) return null;
+    return rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
+  }, [rdStage]);
 
-  // Phase distribution with filters
-  const { chartData: portfolioChartData, phases: portfolioPhases, loading: portfolioLoading } = usePhaseDistribution(
-    selectedHealthAreaApi,
-    selectedProductKey
+  // Candidate type distribution with filters
+  const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
+    product,
+    selectedPhaseNames,
   );
 
   // Product options for dropdown (from API)
   const productOptions = useMemo(() =>
     products.map(p => ({ label: p.product_name, value: p.product_key })),
     [products]
-  );
-
-  // Filter phases client-side based on R&D stage selection
-  const filteredPortfolioPhases = useMemo(() => {
-    if (rdStage.length === 0) return portfolioPhases;
-
-    // Map R&D stage display names to phase labels
-    const stageToPhaseMap = {
-      'Pre-clinical': ['Discovery', 'Preclinical', 'Screening'],
-      'Phase 1': ['Phase I'],
-      'Phase 2': ['Phase II'],
-      'Phase 3': ['Phase III'],
-      'Phase 4': ['Phase IV'],
-      'Approved': ['PQ/Approval', 'Reg Filing'],
-    };
-
-    const allowedLabels = rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
-    return portfolioPhases.filter(phase => allowedLabels.includes(phase.label));
-  }, [portfolioPhases, rdStage]);
-
-  // Filter chart data to only include selected phases
-  const filteredPortfolioChartData = useMemo(() => {
-    if (rdStage.length === 0) return portfolioChartData;
-
-    const allowedKeys = filteredPortfolioPhases.map(p => p.key);
-    return portfolioChartData.map(row => {
-      const filtered = { category: row.category };
-      allowedKeys.forEach(key => {
-        if (row[key] !== undefined) filtered[key] = row[key];
-      });
-      return filtered;
-    });
-  }, [portfolioChartData, filteredPortfolioPhases, rdStage]);
-
-  // Health area options derived from API data
-  const healthAreaOptions = useMemo(() =>
-    (gqlBubbleData || []).map(item => item.name),
-    [gqlBubbleData]
   );
 
   // Download CSV function
@@ -158,11 +148,10 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
-                Global portfolio overview
+                From Discovery to Approval: Mapping the Global Health R&D Pipeline
               </h1>
               <p className="text-sm text-gray-500">
-                Lorem ipsum dolor sit amet consectetur. Lectus urna netus nunc
-                magna rhoncus porttitor.
+                An end-to-end interactive view of global health R&D pipeline, from investigational candidates to approved products reaching people in need.
               </p>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
@@ -206,17 +195,25 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Scale of innovation efforts across health pipelines
+                    Scale of R&D by global health area
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Click on tabular view to see a list of diseases with amount
-                    of candidates and products
+                    Toggle views: Candidates in development | Approved products
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Dropdown
+                    label="Product"
+                    value={bubbleCandidateTypes}
+                    onChange={setBubbleCandidateTypes}
+                    placeholder="All"
+                    options={candidateTypeOptions}
+                    multiSelect={true}
+                    compact={true}
+                  />
                   <ChartMenu
-                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-innovation')}
-                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-innovation')}
+                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-rd')}
+                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-rd')}
                   />
                   <TabSwitcher
                     activeTab={chartViewTab}
@@ -288,10 +285,7 @@ export default function Home() {
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                An overview of R&D volume categorized by global health area.
-                This bubble chart visualizes the relative scale of investment
-                and activity across Neglected Diseases, Women&apos;s Health, and
-                Emerging Infectious Diseases.
+                This bubble chart shows the relative scale of product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the toggle to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
               </p>
             </div>
 
@@ -300,11 +294,10 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Geographic distribution research
+                    Geographic Distribution of Clinical Trials and Developers
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Number of IGH pipeline products approved across countries
-                    (2025)
+                    A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based.
                   </p>
                 </div>
                 <ChartMenu
@@ -329,10 +322,7 @@ export default function Home() {
                 <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                A global heat map illustrating the concentration of R&D pipeline
-                activity and product approvals. This map identifies regional
-                hubs of innovation and highlights areas with the highest density
-                of clinical progress.
+                A global heat map illustrating where R&D activity is concentrated across countries. Use the toggle to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
               </p>
             </div>
           </div>
@@ -341,7 +331,7 @@ export default function Home() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Portfolio overview by Global Health Area
+                Portfolio overview by global health area
               </h3>
               <a
                 href="/portfolio"
@@ -351,27 +341,11 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-              A breakdown of the global pipeline for each global health area.
-              The illustration shows the distribution of R&D activities across
-              clinical stages, from pre clinical through to approved products.
-              The graph is segmented by global health area. The separate
-              clinical stages can be turned on and off by clicking on the
-              legend.
+                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters above to focus on specific product types or R&D stage, and click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
 
             {/* Filters */}
             <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
-                <Dropdown
-                  label="Global health area"
-                  value={healthArea}
-                  onChange={setHealthArea}
-                  placeholder="All"
-                  options={healthAreaOptions}
-                  multiSelect={true}
-                  showClearText={true}
-                />
-              </div>
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
                   label="Product"
@@ -397,7 +371,6 @@ export default function Home() {
               </div>
               <button
                 onClick={() => {
-                  setHealthArea([]);
                   setProduct([]);
                   setRdStage([]);
                 }}
@@ -414,11 +387,12 @@ export default function Home() {
               </div>
             ) : (
               <StackedBarChart
-                data={filteredPortfolioChartData}
-                phases={filteredPortfolioPhases}
+                data={portfolioChartData}
+                phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Amount of Candidates"
+                xAxisLabel="Amount of candidates/products"
+                yAxisWidth={200}
                 showFilters={true}
               />
             )}
@@ -445,7 +419,43 @@ export default function Home() {
               comparison of a pipeline over time, or between two or more
               diseases.
             </p>
-            {temporalLoading ? (
+
+            {/* Filters */}
+            <div className="flex flex-wrap items-end gap-4 mb-5">
+              <div className="flex-1 min-w-[180px]">
+                <Dropdown
+                  label="Global health area"
+                  value={crossGlobalHealthArea}
+                  onChange={setCrossGlobalHealthArea}
+                  placeholder="All"
+                  options={globalHealthAreaOptions}
+                  multiSelect={true}
+                  showClearText={true}
+                />
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <Dropdown
+                  label="Product"
+                  value={crossProduct}
+                  onChange={setCrossProduct}
+                  placeholder="All"
+                  options={productOptions}
+                  multiSelect={true}
+                  showClearText={true}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCrossGlobalHealthArea([]);
+                  setCrossProduct([]);
+                }}
+                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+              >
+                Reset filters
+              </button>
+            </div>
+
+            {temporalLoading || yearsLoading ? (
               <div className="h-[220px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>
@@ -461,25 +471,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Priority Alignment - Data not available from API */}
-          <div className="mb-6 bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-              <div>
-                <h3 className="text-lg sm:text-xl font-bold text-black mb-1">
-                  Priority Alignment
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Compare WHO priorities with pipeline
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
-              <div className="text-center">
-                <p className="text-gray-400 mb-2">Data not available from API</p>
-                <p className="text-xs text-gray-300">Priority alignment data is not yet supported by the backend</p>
-              </div>
-            </div>
-          </div>
 
           {/* Reports and Insights */}
           <div className="bg-black rounded-2xl p-5 sm:p-8 lg:p-10 mb-10">

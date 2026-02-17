@@ -65,38 +65,63 @@ describe("Candidates — health area and disease filters", () => {
       }
     }`);
 
-    const { data: filteredData } = await query<{ candidates: CandidateConnection }>(`{
+    const { data: filteredData } = await query<{
+      candidates: {
+        totalCount: number;
+        nodes: Array<{ candidate_key: number; disease: { global_health_area: string } | null }>;
+      };
+    }>(`{
       candidates(filter: { global_health_area: "Neglected disease" }) {
         totalCount
         nodes {
           candidate_key
+          disease { global_health_area }
         }
       }
     }`);
 
     expect(filteredData.candidates.totalCount).toBeGreaterThan(0);
     expect(filteredData.candidates.totalCount).toBeLessThan(allData.candidates.totalCount);
+    filteredData.candidates.nodes.forEach((node) => {
+      expect(node.disease?.global_health_area).toBe("Neglected disease");
+    });
   });
 
   it("filters by disease_key", async () => {
     const { data: lookupData } = await query<{
-      diseases: Array<{ disease_key: number }>;
-    }>(`{ diseases { disease_key } }`);
+      candidates: { nodes: Array<{ disease: { disease_key: number } | null }> };
+    }>(`{
+      candidates(limit: 10) {
+        nodes { disease { disease_key } }
+      }
+    }`);
 
-    expect(lookupData.diseases.length).toBeGreaterThan(0);
-    const diseaseKey = lookupData.diseases[0].disease_key;
+    const candidateWithDisease = lookupData.candidates.nodes.find((n) => n.disease !== null);
+    expect(candidateWithDisease).toBeDefined();
+    const diseaseKey = candidateWithDisease!.disease!.disease_key;
 
-    const { data } = await query<{ candidates: CandidateConnection }>(
+    const { data } = await query<{
+      candidates: {
+        totalCount: number;
+        nodes: Array<{ candidate_key: number; disease: { disease_key: number } | null }>;
+      };
+    }>(
       `query ($filter: CandidateFilter) {
         candidates(filter: $filter) {
           totalCount
-          nodes { candidate_key }
+          nodes {
+            candidate_key
+            disease { disease_key }
+          }
         }
       }`,
       { filter: { disease_key: diseaseKey } },
     );
 
-    expect(data.candidates.totalCount).toBeGreaterThanOrEqual(0);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    data.candidates.nodes.forEach((node) => {
+      expect(node.disease?.disease_key).toBe(diseaseKey);
+    });
   });
 });
 
@@ -109,17 +134,28 @@ describe("Candidates — phase and product filters", () => {
     expect(lookupData.phases.length).toBeGreaterThan(0);
     const phaseKey = lookupData.phases[0].phase_key;
 
-    const { data } = await query<{ candidates: CandidateConnection }>(
+    const { data } = await query<{
+      candidates: {
+        totalCount: number;
+        nodes: Array<{ candidate_key: number; phase: { phase_key: number } | null }>;
+      };
+    }>(
       `query ($filter: CandidateFilter) {
         candidates(filter: $filter) {
           totalCount
-          nodes { candidate_key }
+          nodes {
+            candidate_key
+            phase { phase_key }
+          }
         }
       }`,
       { filter: { phase_key: phaseKey } },
     );
 
-    expect(data.candidates.totalCount).toBeGreaterThanOrEqual(0);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    data.candidates.nodes.forEach((node) => {
+      expect(node.phase?.phase_key).toBe(phaseKey);
+    });
   });
 
   it("filters by product_key", async () => {
@@ -130,22 +166,39 @@ describe("Candidates — phase and product filters", () => {
     expect(lookupData.products.length).toBeGreaterThan(0);
     const productKey = lookupData.products[0].product_key;
 
-    const { data } = await query<{ candidates: CandidateConnection }>(
+    const { data } = await query<{
+      candidates: {
+        totalCount: number;
+        nodes: Array<{ candidate_key: number; product: { product_key: number } | null }>;
+      };
+    }>(
       `query ($filter: CandidateFilter) {
         candidates(filter: $filter) {
           totalCount
-          nodes { candidate_key }
+          nodes {
+            candidate_key
+            product { product_key }
+          }
         }
       }`,
       { filter: { product_key: productKey } },
     );
 
-    expect(data.candidates.totalCount).toBeGreaterThanOrEqual(0);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    data.candidates.nodes.forEach((node) => {
+      expect(node.product?.product_key).toBe(productKey);
+    });
   });
 });
 
 describe("Candidates — year and status filters", () => {
   it("filters by year", async () => {
+    const { data: allData } = await query<{ candidates: CandidateConnection }>(`{
+      candidates {
+        totalCount
+      }
+    }`);
+
     const { data: yearData } = await query<{ availableYears: number[] }>(`{
       availableYears
     }`);
@@ -163,7 +216,8 @@ describe("Candidates — year and status filters", () => {
       { filter: { year } },
     );
 
-    expect(data.candidates.totalCount).toBeGreaterThanOrEqual(0);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    expect(data.candidates.totalCount).toBeLessThan(allData.candidates.totalCount);
   });
 
   it("filters by is_active", async () => {
@@ -177,7 +231,7 @@ describe("Candidates — year and status filters", () => {
       { filter: { is_active: true } },
     );
 
-    expect(data.candidates.totalCount).toBeGreaterThanOrEqual(0);
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
   });
 });
 

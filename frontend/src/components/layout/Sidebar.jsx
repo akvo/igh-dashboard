@@ -23,17 +23,8 @@ const defaultMenuItems = [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
       { id: 'portfolio-analysis', label: 'Portfolio Analysis', icon: ChartIcon, href: '/portfolio-analysis' },
       { id: 'cross-pipeline-analytics', label: 'Cross-Pipeline Analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
-      { id: 'who-priority', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority' },
-      { id: 'ai-search', label: 'AI Data Search', icon: BoltIcon, href: '/ai-search' },
     ],
-  },
-  {
-    section: 'OTHER',
-    items: [
-      { id: 'case-studies', label: 'Case studies', icon: GridIcon, href: '/case-studies' },
-      { id: 'methodology', label: 'Methodology', icon: FileIcon, href: '/methodology' },
-    ],
-  },
+  }
 ];
 
 export default function Sidebar({
@@ -60,7 +51,7 @@ export default function Sidebar({
         isExpanded ? 'w-64' : 'w-16'
       }`}
     >
-      {/* Search */}
+      {/* Search
       {showSearch && (
         <div className="p-3">
           {isExpanded ? (
@@ -81,6 +72,7 @@ export default function Sidebar({
           )}
         </div>
       )}
+ */}
 
       {/* Menu */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">

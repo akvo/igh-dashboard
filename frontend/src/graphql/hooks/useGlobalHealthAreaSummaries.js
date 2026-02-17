@@ -2,21 +2,23 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_GLOBAL_HEALTH_AREA_SUMMARIES } from '../queries';
-import { useDashboardStore } from '@/store';
+import { useDashboardStore, getCacheKey } from '@/store';
 import { transformGlobalHealthAreaSummaries } from '@/lib/transformations';
 
-const CACHE_KEY = 'globalHealthAreaSummaries';
-
-export function useGlobalHealthAreaSummaries() {
+export function useGlobalHealthAreaSummaries(candidateTypes) {
   const { actions } = useDashboardStore();
-  const cachedData = actions.getCachedData(CACHE_KEY);
+  const cacheKey = getCacheKey('globalHealthAreaSummaries', { candidateTypes });
+  const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_GLOBAL_HEALTH_AREA_SUMMARIES, {
+    variables: {
+      candidateTypes: candidateTypes && candidateTypes.length > 0 ? candidateTypes : undefined,
+    },
     skip: !!cachedData,
     fetchPolicy: 'network-only',
     onCompleted: (result) => {
       if (result?.globalHealthAreaSummaries) {
-        actions.setCache(CACHE_KEY, result.globalHealthAreaSummaries);
+        actions.setCache(cacheKey, result.globalHealthAreaSummaries);
       }
     },
   });

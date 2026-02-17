@@ -24,7 +24,7 @@ describe("KPI Cards", () => {
 
     expect(data.portfolioKPIs.totalDiseases).toBeGreaterThan(0);
     expect(data.portfolioKPIs.totalCandidates).toBeGreaterThan(0);
-    expect(data.portfolioKPIs.approvedProducts).toBeGreaterThanOrEqual(0);
+    expect(data.portfolioKPIs.approvedProducts).toBeGreaterThan(0);
   });
 
   it("returns integer values for all KPIs", async () => {
@@ -96,6 +96,117 @@ describe("Bubble Chart", () => {
       expect(summary.candidateCount).toBeGreaterThan(0);
     });
   });
+
+  it("filters by candidate_types=['Candidate']", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Candidate"] },
+    );
+
+    expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
+    const filteredTotal = data.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+  });
+
+  it("filters by candidate_types=['Product']", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Product"] },
+    );
+
+    expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
+    const filteredTotal = data.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+  });
+
+  it("both types combined closely matches unfiltered baseline", async () => {
+    const { data: allData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(`{
+      globalHealthAreaSummaries {
+        global_health_area
+        candidateCount
+      }
+    }`);
+
+    const { data: bothData } = await query<{
+      globalHealthAreaSummaries: GlobalHealthAreaSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          candidateCount
+        }
+      }`,
+      { candidateTypes: ["Candidate", "Product"] },
+    );
+
+    // Both types should cover the vast majority of unfiltered candidates.
+    // The unfiltered query doesn't join dim_candidate_core, so candidates
+    // with NULL candidate_type are included there but excluded when filtering.
+    const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    const bothTotal = bothData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+
+    expect(bothData.globalHealthAreaSummaries.length).toBe(
+      allData.globalHealthAreaSummaries.length,
+    );
+    expect(bothTotal).toBeLessThanOrEqual(unfilteredTotal);
+    expect(bothTotal).toBeGreaterThan(unfilteredTotal * 0.95);
+  });
 });
 
 describe("Geographic Map", () => {
@@ -107,12 +218,16 @@ describe("Geographic Map", () => {
         country_key
         country_name
         iso_code
+        location_scope
         candidateCount
       }
     }`);
 
     expect(data.geographicDistribution.length).toBeGreaterThan(0);
     expect(data.geographicDistribution[0].country_name).toBeDefined();
+    data.geographicDistribution.forEach((row) => {
+      expect(row.location_scope).toBe("Trial Location");
+    });
   });
 
   it("returns countries for Developer Location tab", async () => {
@@ -123,11 +238,15 @@ describe("Geographic Map", () => {
         country_key
         country_name
         iso_code
+        location_scope
         candidateCount
       }
     }`);
 
     expect(data.geographicDistribution.length).toBeGreaterThan(0);
+    data.geographicDistribution.forEach((row) => {
+      expect(row.location_scope).toBe("Developer Location");
+    });
   });
 
   it("includes ISO codes for map rendering", async () => {
@@ -217,29 +336,76 @@ describe("Phase Distribution — filters", () => {
     expect(data.products[0].product_key).toBeDefined();
   });
 
-  it("filters by product_key", async () => {
+  it("filters by product_keys", async () => {
+    const { data: baselineData } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution {
+        candidateCount
+      }
+    }`);
+
+    const unfilteredTotal = baselineData.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+
     const { data: lookupData } = await query<{
       products: Array<{ product_key: number }>;
     }>(`{ products { product_key } }`);
 
     expect(lookupData.products.length).toBeGreaterThan(0);
-    const productKey = lookupData.products[0].product_key;
+    const productKeys = [lookupData.products[0].product_key];
 
     const { data } = await query<{
       phaseDistribution: PhaseDistributionRow[];
     }>(
-      `query ($productKey: Int) {
-        phaseDistribution(product_key: $productKey) {
+      `query ($productKeys: [Int!]) {
+        phaseDistribution(product_keys: $productKeys) {
           global_health_area
           phase_name
           sort_order
           candidateCount
         }
       }`,
-      { productKey },
+      { productKeys },
     );
 
-    expect(Array.isArray(data.phaseDistribution)).toBe(true);
+    const filteredTotal = data.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+  });
+});
+
+describe("Phase Distribution — candidate_type filter", () => {
+  it("filters by candidate_type", async () => {
+    const { data: allData } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution {
+        candidateCount
+      }
+    }`);
+
+    const { data } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution(candidate_type: "Candidate") {
+        global_health_area
+        phase_name
+        sort_order
+        candidateCount
+      }
+    }`);
+
+    expect(data.phaseDistribution.length).toBeGreaterThan(0);
+    const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
+    const unfilteredTotal = allData.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
 });
 

@@ -11,10 +11,10 @@ export const GET_PORTFOLIO_KPIS = gql`
   }
 `;
 
-// Bubble Chart - Scale of Innovation
+// Bubble Chart - Scale of R&D by global health area
 export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
-  query BubbleChart {
-    globalHealthAreaSummaries {
+  query BubbleChart($candidateTypes: [String!]) {
+    globalHealthAreaSummaries(candidate_types: $candidateTypes) {
       global_health_area
       candidateCount
       diseaseCount
@@ -25,11 +25,22 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
 
 // Phase Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_PHASE_DISTRIBUTION = gql`
-  query PhaseDistribution($globalHealthArea: String, $productKey: Int) {
-    phaseDistribution(global_health_area: $globalHealthArea, product_key: $productKey) {
+  query PhaseDistribution($globalHealthArea: String, $productKeys: [Int!], $candidateType: String) {
+    phaseDistribution(global_health_area: $globalHealthArea, product_keys: $productKeys, candidate_type: $candidateType) {
       global_health_area
       phase_name
       sort_order
+      candidateCount
+    }
+  }
+`;
+
+// Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
+export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
+  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {
+    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+      global_health_area
+      candidate_type
       candidateCount
     }
   }
@@ -49,8 +60,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!]) {
-    temporalSnapshots(years: $years) {
+  query TemporalAnalysis($years: [Int!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
+    temporalSnapshots(years: $years, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
       year
       phase_name
       sort_order
