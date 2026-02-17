@@ -4,6 +4,7 @@ import type { DimCandidateCore, CandidateFilter } from "../db/types.js";
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
 import { getPhaseDistribution } from "../db/queries/phaseDistribution.js";
+import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistribution.js";
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
@@ -20,13 +21,28 @@ export const resolvers = {
     portfolioKPIs: () => getPortfolioKPIs(),
 
     // Bubble chart
-    globalHealthAreaSummaries: () => getGlobalHealthAreaSummaries(),
+    globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
+      getGlobalHealthAreaSummaries({ candidate_types: args.candidate_types }),
 
     // Stacked bar chart
-    phaseDistribution: (_: unknown, args: { global_health_area?: string; product_key?: number }) =>
+    phaseDistribution: (
+      _: unknown,
+      args: { global_health_area?: string; product_keys?: number[]; candidate_type?: string },
+    ) =>
       getPhaseDistribution({
         global_health_area: args.global_health_area,
-        product_key: args.product_key,
+        product_keys: args.product_keys,
+        candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio overview - candidate type distribution
+    candidateTypeDistribution: (
+      _: unknown,
+      args: { product_keys?: number[]; phase_names?: string[] },
+    ) =>
+      getCandidateTypeDistribution({
+        product_keys: args.product_keys,
+        phase_names: args.phase_names,
       }),
 
     // Map
@@ -34,10 +50,22 @@ export const resolvers = {
       getGeographicDistribution(args.location_scope),
 
     // Cross-pipeline temporal
-    temporalSnapshots: (_: unknown, args: { years?: number[]; disease_key?: number }) =>
+    temporalSnapshots: (
+      _: unknown,
+      args: {
+        years?: number[];
+        disease_key?: number;
+        global_health_areas?: string[];
+        product_keys?: number[];
+        candidate_type?: string;
+      },
+    ) =>
       getTemporalSnapshots({
         years: args.years,
         disease_key: args.disease_key,
+        global_health_areas: args.global_health_areas,
+        product_keys: args.product_keys,
+        candidate_type: args.candidate_type,
       }),
 
     // Lists with pagination

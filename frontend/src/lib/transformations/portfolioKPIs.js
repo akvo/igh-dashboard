@@ -14,23 +14,20 @@ export function transformPortfolioKPIs(data) {
   return [
     {
       id: 'diseases',
-      title: 'Number of diseases',
+      title: 'Diseases covered',
       value: data.totalDiseases,
-      description: 'Total number of diseases',
-      buttonText: 'Explore pipeline for diseases',
+      buttonText: 'See full list of diseases',
     },
     {
       id: 'candidates',
-      title: 'Total number of candidates',
+      title: 'Candidates in development',
       value: data.totalCandidates,
-      description: 'Total number of candidates.',
       buttonText: 'Explore candidates',
     },
     {
       id: 'approved',
-      title: 'Approved products',
+      title: 'Approved health products',
       value: data.approvedProducts,
-      description: 'Total number of approved products.',
       buttonText: 'Explore approved products',
     },
   ];

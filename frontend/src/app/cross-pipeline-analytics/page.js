@@ -14,9 +14,8 @@ import {
 } from '@/graphql/hooks';
 
 export default function CrossPipelineAnalytics() {
-  const [healthArea, setHealthArea] = useState('');
-  const [selectedDiseaseKey, setSelectedDiseaseKey] = useState(null);
-  const [product, setProduct] = useState('');
+  const [selectedHealthArea, setSelectedHealthArea] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
@@ -24,10 +23,12 @@ export default function CrossPipelineAnalytics() {
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
 
-  // Fetch chart data with disease filter
-  // NOTE: Backend currently only supports disease_key filter for temporalSnapshots
-  // TODO: Add backend support for global_health_area and product_key filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedDiseaseKey);
+  // Build filter arrays for API
+  const selectedHealthAreas = selectedHealthArea ? [selectedHealthArea] : null;
+  const selectedProductKeys = selectedProduct ? [parseInt(selectedProduct)] : null;
+
+  // Fetch chart data with filters
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys);
 
   // Build phase selection state from API phases
   const [selectedPhases, setSelectedPhases] = useState([]);
@@ -53,7 +54,7 @@ export default function CrossPipelineAnalytics() {
     [healthAreas]
   );
 
-  // Disease options with key-value pairs for filtering
+  // Disease options for multi-variable section
   const diseaseOptions = useMemo(() =>
     (diseasesList || [])
       .filter(d => d.name)
@@ -61,20 +62,9 @@ export default function CrossPipelineAnalytics() {
     [diseasesList]
   );
 
-  // Handle disease selection - extract key for API filtering
-  const handleDiseaseChange = (value) => {
-    setSelectedDiseaseKey(value || null);
-  };
-
-  // Get selected disease label for dropdown display
-  const selectedDiseaseName = useMemo(() => {
-    if (!selectedDiseaseKey) return '';
-    const disease = diseaseOptions.find(d => d.value === selectedDiseaseKey);
-    return disease?.label || '';
-  }, [selectedDiseaseKey, diseaseOptions]);
-
+  // Product options with key-value pairs for filtering
   const productOptions = useMemo(() =>
-    (productsList || []).map(p => p.product_name),
+    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
     [productsList]
   );
 
@@ -118,9 +108,8 @@ export default function CrossPipelineAnalytics() {
   };
 
   const handleResetFilters = () => {
-    setHealthArea('');
-    setSelectedDiseaseKey(null);
-    setProduct('');
+    setSelectedHealthArea('');
+    setSelectedProduct('');
     // Reset phases to all selected
     setSelectedPhases(phases.map(p => p.key));
   };
@@ -207,8 +196,8 @@ export default function CrossPipelineAnalytics() {
               <div className="min-w-[180px]">
                 <Dropdown
                   label="Global health area"
-                  value={healthArea}
-                  onChange={setHealthArea}
+                  value={selectedHealthArea}
+                  onChange={setSelectedHealthArea}
                   placeholder="All"
                   options={healthAreaOptions}
                   compact={true}
@@ -216,19 +205,9 @@ export default function CrossPipelineAnalytics() {
               </div>
               <div className="min-w-[180px]">
                 <Dropdown
-                  label="Diseases"
-                  value={selectedDiseaseKey}
-                  onChange={handleDiseaseChange}
-                  placeholder="All"
-                  options={diseaseOptions}
-                  compact={true}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <Dropdown
                   label="Product"
-                  value={product}
-                  onChange={setProduct}
+                  value={selectedProduct}
+                  onChange={setSelectedProduct}
                   placeholder="All"
                   options={productOptions}
                   compact={true}

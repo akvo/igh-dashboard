@@ -45,6 +45,11 @@ export async function query<T = unknown>(
   );
 
   if (response.body.kind === "single") {
+    if (response.body.singleResult.errors?.length) {
+      throw new Error(
+        `GraphQL errors:\n${response.body.singleResult.errors.map((e) => e.message).join("\n")}`,
+      );
+    }
     return {
       data: response.body.singleResult.data as T,
       errors: response.body.singleResult.errors as Array<{ message: string }> | undefined,
