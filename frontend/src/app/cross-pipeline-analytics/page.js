@@ -15,6 +15,7 @@ import {
 
 export default function CrossPipelineAnalytics() {
   const [selectedHealthArea, setSelectedHealthArea] = useState('');
+  const [selectedDisease, setSelectedDisease] = useState('');
   const [selectedProduct, setSelectedProduct] = useState('');
 
   // Fetch filter options first
@@ -109,6 +110,7 @@ export default function CrossPipelineAnalytics() {
 
   const handleResetFilters = () => {
     setSelectedHealthArea('');
+    setSelectedDisease('');
     setSelectedProduct('');
     // Reset phases to all selected
     setSelectedPhases(phases.map(p => p.key));
@@ -200,6 +202,16 @@ export default function CrossPipelineAnalytics() {
                   onChange={setSelectedHealthArea}
                   placeholder="All"
                   options={healthAreaOptions}
+                  compact={true}
+                />
+              </div>
+              <div className="min-w-[180px]">
+                <Dropdown
+                  label="Diseases"
+                  value={selectedDisease}
+                  onChange={setSelectedDisease}
+                  placeholder="All"
+                  options={diseaseOptions}
                   compact={true}
                 />
               </div>
