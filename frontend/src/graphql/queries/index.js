@@ -105,3 +105,10 @@ export const GET_LOCATION_SCOPES = gql`
     locationScopes
   }
 `;
+
+// Get last sync date
+export const GET_LAST_SYNC_DATE = gql`
+  query GetLastSyncDate {
+    lastSyncDate
+  }
+`;

@@ -242,5 +242,6 @@ export const typeDefs = `#graphql
     countries: [DimGeography!]!
     availableYears: [Int!]!
     locationScopes: [String!]!
+    lastSyncDate: String
   }
 `;

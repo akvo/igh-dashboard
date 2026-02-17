@@ -9,6 +9,7 @@ import { getGeographicDistribution, getLocationScopes } from "../db/queries/geog
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
+import { getLastSyncDate } from "../db/queries/metadata.js";
 
 // Context type for resolvers
 interface Context {
@@ -83,6 +84,7 @@ export const resolvers = {
     countries: () => getCountries(),
     availableYears: () => getAvailableYears(),
     locationScopes: () => getLocationScopes(),
+    lastSyncDate: () => getLastSyncDate(),
   },
 
   // Resolve nested relationships on DimCandidateCore

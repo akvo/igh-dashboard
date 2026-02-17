@@ -23,6 +23,7 @@ import {
   useTemporalSnapshots,
   useProducts,
   useAvailableYears,
+  useLastSyncDate,
 } from '@/graphql/hooks';
 
 // Candidate type options for bubble chart filter
@@ -70,6 +71,7 @@ export default function Home() {
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
 
+  const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
   const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
@@ -157,7 +159,19 @@ export default function Home() {
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
               <ClockIcon className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-gray-500">
-                Last updated on <strong className="text-black">12.04.24</strong>
+                {syncDateLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : lastSyncDate ? (
+                  <>Last updated on <strong className="text-black">
+                    {new Date(lastSyncDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </strong></>
+                ) : (
+                  'Last updated date unavailable'
+                )}
               </span>
             </div>
           </div>
