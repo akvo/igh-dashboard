@@ -128,7 +128,8 @@ describe("Bubble Chart", () => {
       (sum, r) => sum + r.candidateCount,
       0,
     );
-    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
 
   it("filters by candidate_types=['Product']", async () => {
@@ -162,7 +163,8 @@ describe("Bubble Chart", () => {
       (sum, r) => sum + r.candidateCount,
       0,
     );
-    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
 
   it("both types combined closely matches unfiltered baseline", async () => {
@@ -216,12 +218,16 @@ describe("Geographic Map", () => {
         country_key
         country_name
         iso_code
+        location_scope
         candidateCount
       }
     }`);
 
     expect(data.geographicDistribution.length).toBeGreaterThan(0);
     expect(data.geographicDistribution[0].country_name).toBeDefined();
+    data.geographicDistribution.forEach((row) => {
+      expect(row.location_scope).toBe("Trial Location");
+    });
   });
 
   it("returns countries for Developer Location tab", async () => {
@@ -232,11 +238,15 @@ describe("Geographic Map", () => {
         country_key
         country_name
         iso_code
+        location_scope
         candidateCount
       }
     }`);
 
     expect(data.geographicDistribution.length).toBeGreaterThan(0);
+    data.geographicDistribution.forEach((row) => {
+      expect(row.location_scope).toBe("Developer Location");
+    });
   });
 
   it("includes ISO codes for map rendering", async () => {
@@ -327,6 +337,19 @@ describe("Phase Distribution — filters", () => {
   });
 
   it("filters by product_keys", async () => {
+    const { data: baselineData } = await query<{
+      phaseDistribution: PhaseDistributionRow[];
+    }>(`{
+      phaseDistribution {
+        candidateCount
+      }
+    }`);
+
+    const unfilteredTotal = baselineData.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+
     const { data: lookupData } = await query<{
       products: Array<{ product_key: number }>;
     }>(`{ products { product_key } }`);
@@ -348,7 +371,12 @@ describe("Phase Distribution — filters", () => {
       { productKeys },
     );
 
-    expect(Array.isArray(data.phaseDistribution)).toBe(true);
+    const filteredTotal = data.phaseDistribution.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
 });
 
@@ -376,7 +404,8 @@ describe("Phase Distribution — candidate_type filter", () => {
     expect(data.phaseDistribution.length).toBeGreaterThan(0);
     const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     const unfilteredTotal = allData.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
-    expect(filteredTotal).toBeLessThanOrEqual(unfilteredTotal);
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
 });
 
