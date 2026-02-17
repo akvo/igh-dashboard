@@ -8,7 +8,6 @@ import { transformTemporalSnapshots } from '@/lib/transformations';
 export function useTemporalSnapshots(years, globalHealthAreas, productKeys) {
   const { actions } = useDashboardStore();
 
-  // Only use cache when no filters are applied
   const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0);
   const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys });
   const cachedData = hasFilters ? null : actions.getCachedData(cacheKey);
