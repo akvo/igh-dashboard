@@ -203,7 +203,6 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Dropdown
-                    label="Product"
                     value={bubbleCandidateTypes}
                     onChange={setBubbleCandidateTypes}
                     placeholder="All"
