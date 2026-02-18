@@ -106,6 +106,16 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Product Distribution - Portfolio Analysis (Donut Chart)
+export const GET_PRODUCT_DISTRIBUTION = gql`
+  query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
+    productDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+      product_name
+      candidateCount
+    }
+  }
+`;
+
 // Product Phase Distribution - Portfolio Analysis (Stacked Bar by Product)
 export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
   query ProductPhaseDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {

@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -31,6 +31,7 @@ export default function PortfolioAnalysis() {
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
+  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -65,27 +66,10 @@ export default function PortfolioAnalysis() {
   // Dummy data for clinical trials (not in current API)
   const ongoingTrials = 42;
 
-  // Dummy data for Product types donut chart
-  const productTypesData = [
-    { name: 'Vaccines', value: 120 },
-    { name: 'Drugs', value: 85 },
-    { name: 'Diagnostics', value: 95 },
-    { name: 'Biologics', value: 60 },
-    { name: 'VCP', value: 45 },
-    { name: 'Dietary supplement', value: 30 },
-    { name: 'Microbicides', value: 55 },
-    { name: 'Microbial interventions', value: 25 },
-  ];
-
+  // Donut chart colors (enough for typical product count)
   const productTypeColors = [
-    '#fe7449', // Vaccines - orange
-    '#a78bfa', // Drugs - purple
-    '#f9a78d', // Diagnostics - peach
-    '#ddd6fe', // Biologics - light purple
-    '#f0b456', // VCP - gold
-    '#54a5c4', // Dietary supplement - teal
-    '#8c4028', // Microbicides - brown
-    '#e3d6c1', // Microbial interventions - beige
+    '#fe7449', '#a78bfa', '#f9a78d', '#ddd6fe',
+    '#f0b456', '#54a5c4', '#8c4028', '#e3d6c1',
   ];
 
   // Dummy data for candidates table

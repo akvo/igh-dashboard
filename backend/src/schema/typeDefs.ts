@@ -162,6 +162,11 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ProductDistributionRow {
+    product_name: String!
+    candidateCount: Int!
+  }
+
   type CandidateTypeDistributionRow {
     global_health_area: String!
     candidate_type: String!
@@ -241,6 +246,9 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - product distribution (donut chart)
+    productDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductDistributionRow!]!
 
     # Portfolio analysis - product phase distribution
     productPhaseDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductPhaseDistributionRow!]!

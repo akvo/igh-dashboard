@@ -227,6 +227,11 @@ export interface ProductPhaseDistributionRow {
   candidateCount: number;
 }
 
+export interface ProductDistributionRow {
+  product_name: string;
+  candidateCount: number;
+}
+
 // =============================================================================
 // Extended types for resolved relations
 // =============================================================================
