@@ -243,6 +243,32 @@ export interface ClinicalTrialStats {
   ageGroupDistribution: AgeGroupDistributionRow[];
 }
 
+export interface ClinicalTrialNode {
+  trial_id: number;
+  vin_clinicaltrialid: string | null;
+  trial_name: string | null;
+  trial_title: string | null;
+  trial_phase: string | null;
+  status: string | null;
+  candidate_name: string | null;
+  disease_name: string | null;
+  product_name: string | null;
+  start_date: string | null;
+}
+
+export interface ClinicalTrialFilter {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  product_names?: string[];
+  status?: string;
+}
+
+export interface ClinicalTrialConnection {
+  nodes: ClinicalTrialNode[];
+  totalCount: number;
+  hasNextPage: boolean;
+}
+
 export interface ApprovalStatusRow {
   approval_status: string;
   candidateCount: number;

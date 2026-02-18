@@ -12,6 +12,7 @@ import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribut
 import { getProductDistribution } from "../db/queries/productDistribution.js";
 import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
+import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
 
 // Context type for resolvers
@@ -79,6 +80,13 @@ export const resolvers = {
     // Detail
     candidate: (_: unknown, args: { candidate_key: number }) =>
       getCandidateByKey(args.candidate_key),
+
+    // Portfolio analysis - clinical trials list (paginated)
+    clinicalTrials: (
+      _: unknown,
+      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; status?: string }; limit?: number; offset?: number },
+    ) =>
+      getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (

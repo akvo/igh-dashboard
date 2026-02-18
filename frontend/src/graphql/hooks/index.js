@@ -11,3 +11,4 @@ export { useProductPhaseDistribution } from './useProductPhaseDistribution';
 export { useProductDistribution } from './useProductDistribution';
 export { useRegulatoryDistribution } from './useRegulatoryDistribution';
 export { useClinicalTrialStats } from './useClinicalTrialStats';
+export { useClinicalTrials } from './useClinicalTrials';

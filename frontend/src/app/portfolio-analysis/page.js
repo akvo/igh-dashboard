@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -16,6 +16,7 @@ export default function PortfolioAnalysis() {
   const [portfolioTab, setPortfolioTab] = useState('candidates');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [trialsPage, setTrialsPage] = useState(1);
   const [extractTab, setExtractTab] = useState('candidates-approved');
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
@@ -34,6 +35,12 @@ export default function PortfolioAnalysis() {
   const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
   const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
   const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
+  const trialsPerPage = 10;
+  const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
+    { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product },
+    trialsPerPage,
+    (trialsPage - 1) * trialsPerPage,
+  );
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -172,15 +179,6 @@ export default function PortfolioAnalysis() {
     { name: 'Therapeutic - natural/botanical', discovery: 12, preClinical: 42, phase1: 0, phase2: 0, phase3: 0, approved: 0 },
   ];
 
-  // Dummy data for clinical trials table
-  const clinicalTrialsTableData = [
-    { name: 'NCT06558643', title: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of MMV371 LAI i...', phase: 'Pre clinical', candidate: 'MMV371', disease: 'Malaria', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558644', title: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditions', phase: 'Phase 2', candidate: 'MMV372', disease: 'Dengue', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558645', title: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', phase: 'Pre clinical', candidate: 'MMV373', disease: 'Tuberculosis', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558646', title: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', phase: 'Approved', candidate: 'MMV374', disease: 'HIV/AIDS', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558647', title: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', phase: 'Phase 1', candidate: 'MMV375', disease: 'COVID-19', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558648', title: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', phase: 'Phase 1', candidate: 'MMV376', disease: 'Hepatitis', product: 'Drugs', startDate: '2024-09' },
-  ];
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -1066,22 +1064,22 @@ export default function PortfolioAnalysis() {
                         </tr>
                       </thead>
                       <tbody>
-                        {clinicalTrialsTableData.map((item, index) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.name}</td>
+                        {clinicalTrialsTableData.map((item) => (
+                          <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.vin_clinicaltrialid}</td>
                             <td className="py-4 px-4">
-                              <div className="text-sm font-medium text-black max-w-[300px]">{item.title}</div>
+                              <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
                             <td className="py-4 px-4">
-                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.phase)}`}>
-                                {item.phase}
+                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
+                                {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.startDate}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.start_date}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1089,42 +1087,56 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Pagination */}
-                  <div className="flex items-center justify-between px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                        <ChevronLeftIcon className="w-5 h-5" />
-                      </button>
-                      {[1, 2, 3, 4, 5].map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 text-sm rounded ${
-                            currentPage === page
-                              ? 'bg-orange-500 text-white'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                      <span className="text-gray-400">...</span>
-                      <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                        <ChevronRightIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      Results per page:
-                      <Dropdown
-                        value={[]}
-                        onChange={() => {}}
-                        placeholder="6"
-                        options={['6', '12', '24', '48']}
-                        compact={true}
-                        className="w-20"
-                      />
-                    </div>
-                  </div>
+                  {(() => {
+                    const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
+                    const maxVisible = 5;
+                    const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                    return (
+                      <div className="flex items-center justify-between px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
+                            disabled={trialsPage <= 1}
+                            onClick={() => setTrialsPage(p => Math.max(1, p - 1))}
+                          >
+                            <ChevronLeftIcon className="w-5 h-5" />
+                          </button>
+                          {pages.map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => setTrialsPage(page)}
+                              className={`w-8 h-8 text-sm rounded ${
+                                trialsPage === page
+                                  ? 'bg-orange-500 text-white'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                          {totalPages > maxVisible && (
+                            <>
+                              <span className="text-gray-400">...</span>
+                              <button
+                                onClick={() => setTrialsPage(totalPages)}
+                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                              >
+                                {totalPages}
+                              </button>
+                            </>
+                          )}
+                          <button
+                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
+                            disabled={!trialsHasNextPage}
+                            onClick={() => setTrialsPage(p => p + 1)}
+                          >
+                            <ChevronRightIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <span className="text-sm text-gray-500">{trialsTotalCount} results</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </>
             )}

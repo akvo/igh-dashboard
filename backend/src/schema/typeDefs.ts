@@ -229,6 +229,25 @@ export const typeDefs = `#graphql
     hasNextPage: Boolean!
   }
 
+  type ClinicalTrialNode {
+    trial_id: Int!
+    vin_clinicaltrialid: String
+    trial_name: String
+    trial_title: String
+    trial_phase: String
+    status: String
+    candidate_name: String
+    disease_name: String
+    product_name: String
+    start_date: String
+  }
+
+  type ClinicalTrialConnection {
+    nodes: [ClinicalTrialNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
   type CandidateGeography {
     country_key: Int!
     country_name: String
@@ -239,6 +258,13 @@ export const typeDefs = `#graphql
   # =============================================================================
   # INPUT TYPES
   # =============================================================================
+
+  input ClinicalTrialFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    product_names: [String!]
+    status: String
+  }
 
   input CandidateFilter {
     global_health_area: String
@@ -277,6 +303,9 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - clinical trials list (paginated)
+    clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
 
     # Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): ClinicalTrialStats!

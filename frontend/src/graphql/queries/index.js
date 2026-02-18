@@ -106,6 +106,28 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Clinical Trials List - Portfolio Analysis (Trials tab, paginated)
+export const GET_CLINICAL_TRIALS = gql`
+  query ClinicalTrials($filter: ClinicalTrialFilter, $limit: Int, $offset: Int) {
+    clinicalTrials(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        trial_id
+        vin_clinicaltrialid
+        trial_name
+        trial_title
+        trial_phase
+        status
+        candidate_name
+        disease_name
+        product_name
+        start_date
+      }
+      totalCount
+      hasNextPage
+    }
+  }
+`;
+
 // Clinical Trial Stats - Portfolio Analysis (Trials tab)
 export const GET_CLINICAL_TRIAL_STATS = gql`
   query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
