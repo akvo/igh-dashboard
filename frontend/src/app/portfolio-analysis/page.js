@@ -30,7 +30,7 @@ export default function PortfolioAnalysis() {
   const [extractRdStage, setExtractRdStage] = useState('');
 
   // Fetch data from API
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();

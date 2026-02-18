@@ -2,8 +2,8 @@ import { gql } from '@apollo/client/core';
 
 // KPI Cards Query
 export const GET_PORTFOLIO_KPIS = gql`
-  query KPICards {
-    portfolioKPIs {
+  query KPICards($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    portfolioKPIs(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
       totalDiseases
       totalCandidates
       approvedProducts

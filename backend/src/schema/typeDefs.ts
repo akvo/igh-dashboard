@@ -310,7 +310,7 @@ export const typeDefs = `#graphql
 
   type Query {
     # KPIs (3 homepage cards)
-    portfolioKPIs: PortfolioKPIs!
+    portfolioKPIs(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): PortfolioKPIs!
 
     # Bubble chart
     globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
