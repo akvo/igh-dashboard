@@ -106,6 +106,31 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Portfolio Candidates - Portfolio Analysis (Candidates/Approved/Extract tabs, paginated)
+export const GET_PORTFOLIO_CANDIDATES = gql`
+  query PortfolioCandidates($filter: PortfolioCandidateFilter, $limit: Int, $offset: Int) {
+    portfolioCandidates(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        candidate_key
+        candidate_name
+        candidate_type
+        alternative_names
+        current_rd_stage
+        countries_approved_count
+        countries_approved_agg
+        global_health_area
+        disease_name
+        product_name
+        phase_name
+        approval_status
+        who_prequalification
+      }
+      totalCount
+      hasNextPage
+    }
+  }
+`;
+
 // Clinical Trials List - Portfolio Analysis (Trials tab, paginated)
 export const GET_CLINICAL_TRIALS = gql`
   query ClinicalTrials($filter: ClinicalTrialFilter, $limit: Int, $offset: Int) {

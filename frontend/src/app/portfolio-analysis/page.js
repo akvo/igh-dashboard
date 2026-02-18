@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -17,6 +17,9 @@ export default function PortfolioAnalysis() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [trialsPage, setTrialsPage] = useState(1);
+  const [candidatesPage, setCandidatesPage] = useState(1);
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [extractPage, setExtractPage] = useState(1);
   const [extractTab, setExtractTab] = useState('candidates-approved');
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
@@ -35,6 +38,17 @@ export default function PortfolioAnalysis() {
   const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
   const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
   const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
+  const itemsPerPage = 10;
+  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
+  const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Candidate' }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
+  );
+  const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
+  );
+  const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
+    globalFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+  );
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
     { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product },
@@ -80,14 +94,6 @@ export default function PortfolioAnalysis() {
   ];
 
   // Dummy data for candidates table
-  const candidatesData = [
-    { name: 'DPP Fever Panel II Asia IgM', gha: 'Emerging infectious disease', disease: 'Zika', product: 'Diagnostics', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'TRURAPID MPXV Ag Test', gha: 'Emerging infectious disease', disease: 'Dengue', product: 'Drugs', rdStage: 'Phase 2', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'NABIT Mpox Test', gha: 'Emerging infectious disease', disease: 'Tuberculosis', product: 'Drugs', rdStage: 'Discovery', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Moxidectin - Onchocerciasis', gha: 'Emerging infectious disease', disease: 'Malaria', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', gha: 'Emerging infectious disease', disease: 'COVID-19', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', gha: 'Emerging infectious disease', disease: 'Hepatitis', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-  ];
 
   const getRdStageStyle = (stage) => {
     switch (stage) {
@@ -100,15 +106,6 @@ export default function PortfolioAnalysis() {
     }
   };
 
-  // Dummy data for approved products table
-  const approvedProductsData = [
-    { name: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of...', disease: 'Malaria', product: 'Drugs', ageSpecific: 'No data available', researchStatus: 'Approved', whoPrequal: 'yes', countries: 0 },
-    { name: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditio...', disease: 'Dengue', product: 'Drugs', ageSpecific: '18+', researchStatus: 'Phase 2', whoPrequal: 'no', countries: 1 },
-    { name: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', disease: 'Tuberculosis', product: 'Drugs', ageSpecific: '6+', researchStatus: 'Phase 1', whoPrequal: 'yes', countries: 2 },
-    { name: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', disease: 'HIV/AIDS', product: 'Drugs', ageSpecific: '12+', researchStatus: 'Pre clinical', whoPrequal: 'no', countries: 3 },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', disease: 'COVID-19', product: 'Drugs', ageSpecific: '3+', researchStatus: 'Discovery', whoPrequal: 'yes', countries: 4 },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown', whoPrequal: 'no', countries: 5 },
-  ];
 
 
   const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
@@ -157,15 +154,6 @@ export default function PortfolioAnalysis() {
     setExtractRdStage('');
   };
 
-  // Dummy data for extract table
-  const extractTableData = [
-    { name: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of...', disease: 'Malaria', product: 'Drugs', ageSpecific: 'No data available', researchStatus: 'Approved' },
-    { name: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditio...', disease: 'Dengue', product: 'Drugs', ageSpecific: '18+', researchStatus: 'Phase 2' },
-    { name: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', disease: 'Tuberculosis', product: 'Drugs', ageSpecific: '6+', researchStatus: 'Phase 1' },
-    { name: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', disease: 'HIV/AIDS', product: 'Drugs', ageSpecific: '12+', researchStatus: 'Pre clinical' },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', disease: 'COVID-19', product: 'Drugs', ageSpecific: '3+', researchStatus: 'Discovery' },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown' },
-  ];
 
   // R&D stage options
   const rdStageOptions = ['Discovery', 'Pre clinical', 'Phase 1', 'Phase 2', 'Phase 3', 'Approved'];
@@ -590,18 +578,18 @@ export default function PortfolioAnalysis() {
                               </tr>
                             </thead>
                             <tbody>
-                              {extractTableData.map((item, index) => (
-                                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                              {extractTableData.map((item) => (
+                                <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="py-4 px-4">
-                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.name}</div>
+                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.ageSpecific}</td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                                  <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
                                   <td className="py-4 px-4">
-                                    <span className={`px-2 py-1 text-xs ${getRdStageStyle(item.researchStatus)}`}>
-                                      {item.researchStatus}
+                                    <span className={`px-2 py-1 text-xs ${getRdStageStyle(item.phase_name)}`}>
+                                      {item.phase_name}
                                     </span>
                                   </td>
                                 </tr>
@@ -611,42 +599,24 @@ export default function PortfolioAnalysis() {
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-                          <div className="flex items-center gap-2">
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                              <ChevronLeftIcon className="w-5 h-5" />
-                            </button>
-                            {[1, 2, 3, 4, 5].map((page) => (
-                              <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`w-8 h-8 text-sm rounded ${
-                                  currentPage === page
-                                    ? 'bg-orange-500 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                            <span className="text-gray-400">...</span>
-                            <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                              <ChevronRightIcon className="w-5 h-5" />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            Results per page:
-                            <Dropdown
-                              value={[]}
-                              onChange={() => {}}
-                              placeholder="6"
-                              options={['6', '12', '24', '48']}
-                              compact={true}
-                              className="w-20"
-                            />
-                          </div>
-                        </div>
+                        {(() => {
+                          const totalPages = Math.ceil(extractTotalCount / itemsPerPage);
+                          const maxVisible = 5;
+                          const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                          return (
+                            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
+                              <div className="flex items-center gap-2">
+                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={extractPage <= 1} onClick={() => setExtractPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                                {pages.map((page) => (
+                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                                ))}
+                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!extractHasNext} onClick={() => setExtractPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                              </div>
+                              <span className="text-sm text-gray-500">{extractTotalCount} results</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -735,22 +705,22 @@ export default function PortfolioAnalysis() {
                       </tr>
                     </thead>
                     <tbody>
-                      {candidatesData.map((candidate, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      {candidatesData.map((candidate) => (
+                        <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black">{candidate.name}</div>
+                            <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.gha}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product_name}</td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.rdStage)}`}>
-                              {candidate.rdStage}
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
+                              {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.altNames}</td>
-                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.approved}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.alternative_names}</td>
+                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.countries_approved_agg}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -758,42 +728,24 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between mt-6">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    {[1, 2, 3, 4, 5].map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 text-sm rounded ${
-                          currentPage === page
-                            ? 'bg-orange-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <span className="text-gray-400">...</span>
-                    <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    Results per page:
-                    <Dropdown
-                      value={[]}
-                      onChange={() => {}}
-                      placeholder="6"
-                      options={['6', '12', '24', '48']}
-                      compact={true}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const totalPages = Math.ceil(candidatesTotalCount / itemsPerPage);
+                  const maxVisible = 5;
+                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                  return (
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={candidatesPage <= 1} onClick={() => setCandidatesPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                        {pages.map((page) => (
+                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                        ))}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!candidatesHasNext} onClick={() => setCandidatesPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                      </div>
+                      <span className="text-sm text-gray-500">{candidatesTotalCount} results</span>
+                    </div>
+                  );
+                })()}
               </>
             )}
 
@@ -892,26 +844,26 @@ export default function PortfolioAnalysis() {
                       </tr>
                     </thead>
                     <tbody>
-                      {approvedProductsData.map((item, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      {approvedProductsData.map((item) => (
+                        <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black max-w-[250px]">{item.name}</div>
+                            <div className="text-sm font-medium text-black max-w-[250px]">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.ageSpecific}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.researchStatus)}`}>
-                              {item.researchStatus}
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
+                              {item.approval_status}
                             </span>
                           </td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${item.whoPrequal === 'yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {item.whoPrequal}
+                            <span className={`px-2 py-1 text-xs rounded ${item.who_prequalification === 'Yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
+                              {item.who_prequalification}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries_approved_count}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -919,42 +871,24 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    {[1, 2, 3, 4, 5].map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 text-sm rounded ${
-                          currentPage === page
-                            ? 'bg-orange-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <span className="text-gray-400">...</span>
-                    <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    Results per page:
-                    <Dropdown
-                      value={[]}
-                      onChange={() => {}}
-                      placeholder="6"
-                      options={['6', '12', '24', '48']}
-                      compact={true}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const totalPages = Math.ceil(approvedTotalCount / itemsPerPage);
+                  const maxVisible = 5;
+                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                  return (
+                    <div className="flex items-center justify-between px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={approvedPage <= 1} onClick={() => setApprovedPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                        {pages.map((page) => (
+                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                        ))}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!approvedHasNext} onClick={() => setApprovedPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                      </div>
+                      <span className="text-sm text-gray-500">{approvedTotalCount} results</span>
+                    </div>
+                  );
+                })()}
                 </div>
               </>
             )}

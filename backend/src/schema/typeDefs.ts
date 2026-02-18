@@ -229,6 +229,28 @@ export const typeDefs = `#graphql
     hasNextPage: Boolean!
   }
 
+  type PortfolioCandidateNode {
+    candidate_key: Int!
+    candidate_name: String
+    candidate_type: String
+    alternative_names: String
+    current_rd_stage: String
+    countries_approved_count: Int
+    countries_approved_agg: String
+    global_health_area: String
+    disease_name: String
+    product_name: String
+    phase_name: String
+    approval_status: String
+    who_prequalification: String
+  }
+
+  type PortfolioCandidateConnection {
+    nodes: [PortfolioCandidateNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
   type ClinicalTrialNode {
     trial_id: Int!
     vin_clinicaltrialid: String
@@ -258,6 +280,13 @@ export const typeDefs = `#graphql
   # =============================================================================
   # INPUT TYPES
   # =============================================================================
+
+  input PortfolioCandidateFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    product_names: [String!]
+    candidate_type: String
+  }
 
   input ClinicalTrialFilter {
     global_health_areas: [String!]
@@ -303,6 +332,9 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - candidates list (paginated with flattened dimensions)
+    portfolioCandidates(filter: PortfolioCandidateFilter, limit: Int, offset: Int): PortfolioCandidateConnection!
 
     # Portfolio analysis - clinical trials list (paginated)
     clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
