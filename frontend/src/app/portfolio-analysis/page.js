@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -30,6 +30,7 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution();
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -63,25 +64,6 @@ export default function PortfolioAnalysis() {
 
   // Dummy data for clinical trials (not in current API)
   const ongoingTrials = 42;
-
-  // Dummy data for Global pipeline overview chart
-  const pipelinePhases = [
-    { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-    { key: 'preClinical', label: 'Pre-clinical', color: '#fe7449' },
-    { key: 'phase1', label: 'Phase 1', color: '#f9a78d' },
-    { key: 'phase2', label: 'Phase 2', color: '#ddd6fe' },
-    { key: 'phase3', label: 'Phase 3', color: '#a78bfa' },
-    { key: 'approved', label: 'Approved', color: '#f0b456' },
-  ];
-
-  const pipelineData = [
-    { category: 'Diagnostics', discovery: 30, preClinical: 45, phase1: 60, phase2: 80, phase3: 50, approved: 40 },
-    { category: 'Vaccines', discovery: 40, preClinical: 55, phase1: 70, phase2: 90, phase3: 60, approved: 50 },
-    { category: 'Drugs', discovery: 25, preClinical: 35, phase1: 40, phase2: 30, phase3: 20, approved: 15 },
-    { category: 'Microbicides', discovery: 35, preClinical: 50, phase1: 65, phase2: 85, phase3: 70, approved: 45 },
-    { category: 'Biologics', discovery: 45, preClinical: 60, phase1: 75, phase2: 95, phase3: 65, approved: 55 },
-    { category: 'VCP', discovery: 20, preClinical: 30, phase1: 45, phase2: 55, phase3: 35, approved: 25 },
-  ];
 
   // Dummy data for Product types donut chart
   const productTypesData = [

@@ -220,6 +220,13 @@ export interface CandidateFilter {
   is_active?: boolean;
 }
 
+export interface ProductPhaseDistributionRow {
+  product_name: string;
+  phase_name: string;
+  sort_order: number;
+  candidateCount: number;
+}
+
 // =============================================================================
 // Extended types for resolved relations
 // =============================================================================

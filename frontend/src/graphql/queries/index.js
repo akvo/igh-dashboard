@@ -106,6 +106,18 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Product Phase Distribution - Portfolio Analysis (Stacked Bar by Product)
+export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
+  query ProductPhaseDistribution($globalHealthArea: String, $diseaseKey: Int, $candidateType: String) {
+    productPhaseDistribution(global_health_area: $globalHealthArea, disease_key: $diseaseKey, candidate_type: $candidateType) {
+      product_name
+      phase_name
+      sort_order
+      candidateCount
+    }
+  }
+`;
+
 // Get all diseases
 export const GET_DISEASES = gql`
   query GetDiseases {

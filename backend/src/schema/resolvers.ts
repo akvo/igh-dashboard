@@ -8,6 +8,7 @@ import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistrib
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
+import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
 
 // Context type for resolvers
@@ -75,6 +76,17 @@ export const resolvers = {
     // Detail
     candidate: (_: unknown, args: { candidate_key: number }) =>
       getCandidateByKey(args.candidate_key),
+
+    // Portfolio analysis - product phase distribution
+    productPhaseDistribution: (
+      _: unknown,
+      args: { global_health_area?: string; disease_key?: number; candidate_type?: string },
+    ) =>
+      getProductPhaseDistribution({
+        global_health_area: args.global_health_area,
+        disease_key: args.disease_key,
+        candidate_type: args.candidate_type,
+      }),
 
     // Filter dropdowns
     diseases: () => getDiseases(),

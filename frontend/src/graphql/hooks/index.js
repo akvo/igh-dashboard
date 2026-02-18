@@ -7,3 +7,4 @@ export { useTemporalSnapshots } from './useTemporalSnapshots';
 export { useProducts } from './useProducts';
 export { useAvailableYears } from './useAvailableYears';
 export { useDiseases } from './useDiseases';
+export { useProductPhaseDistribution } from './useProductPhaseDistribution';
