@@ -80,11 +80,12 @@ export const resolvers = {
     // Portfolio analysis - product phase distribution
     productPhaseDistribution: (
       _: unknown,
-      args: { global_health_area?: string; disease_key?: number; candidate_type?: string },
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
     ) =>
       getProductPhaseDistribution({
-        global_health_area: args.global_health_area,
-        disease_key: args.disease_key,
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
         candidate_type: args.candidate_type,
       }),
 

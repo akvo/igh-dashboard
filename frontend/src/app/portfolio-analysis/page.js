@@ -30,7 +30,7 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
-  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution();
+  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>

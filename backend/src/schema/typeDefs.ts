@@ -243,7 +243,7 @@ export const typeDefs = `#graphql
     candidate(candidate_key: Int!): DimCandidateCore
 
     # Portfolio analysis - product phase distribution
-    productPhaseDistribution(global_health_area: String, disease_key: Int, candidate_type: String): [ProductPhaseDistributionRow!]!
+    productPhaseDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductPhaseDistributionRow!]!
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!
