@@ -121,3 +121,14 @@ export const GET_DISEASES = gql`
     }
   }
 `;
+
+// Get all phases
+export const GET_PHASES = gql`
+  query GetPhases {
+    phases {
+      phase_key
+      phase_name
+      sort_order
+    }
+  }
+`;

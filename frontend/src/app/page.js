@@ -24,22 +24,14 @@ import {
   useProducts,
   useAvailableYears,
   useLastSyncDate,
+  usePhases,
 } from '@/graphql/hooks';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
   { label: 'Candidates', value: 'Candidate' },
   { label: 'Products', value: 'Product' },
-];
-
-// R&D stage options for filtering
-const rdStageOptions = [
-  'Pre-clinical',
-  'Phase 1',
-  'Phase 2',
-  'Phase 3',
-  'Phase 4',
-  'Approved',
 ];
 
 // Global health area options for cross-pipeline filter
@@ -48,16 +40,6 @@ const globalHealthAreaOptions = [
   { label: "Women's health", value: 'Sexual & reproductive health' },
   { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
 ];
-
-// Map R&D stage display names to actual DB phase_name values
-const stageToPhaseMap = {
-  'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
-  'Phase 1': ['Phase I'],
-  'Phase 2': ['Phase II'],
-  'Phase 3': ['Phase III'],
-  'Phase 4': ['Phase IV'],
-  'Approved': ['Regulatory filing', 'PQ listing and regulatory approval'],
-};
 
 export default function Home() {
   const [product, setProduct] = useState([]);
@@ -77,6 +59,7 @@ export default function Home() {
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
   );
   const { products, loading: productsLoading } = useProducts();
+  const { phases, loading: phasesLoading } = usePhases();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
@@ -87,16 +70,19 @@ export default function Home() {
     crossProduct.length > 0 ? crossProduct : null,
   );
 
-  // Convert R&D stage selections to phase names for server-side filtering
-  const selectedPhaseNames = useMemo(() => {
-    if (rdStage.length === 0) return null;
-    return rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
-  }, [rdStage]);
+  // R&D stage dropdown options from DB phases
+  const rdStageOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
 
   // Candidate type distribution with filters
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     product,
-    selectedPhaseNames,
+    rdStage.length > 0 ? rdStage : null,
   );
 
   // Product options for dropdown (from API)
@@ -394,7 +380,7 @@ export default function Home() {
             </div>
 
             {/* Chart */}
-            {portfolioLoading || productsLoading ? (
+            {portfolioLoading || productsLoading || phasesLoading ? (
               <div className="h-[250px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>

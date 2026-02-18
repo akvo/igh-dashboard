@@ -8,3 +8,4 @@ export { useProducts } from './useProducts';
 export { useAvailableYears } from './useAvailableYears';
 export { useLastSyncDate } from './useLastSyncDate';
 export { useDiseases } from './useDiseases';
+export { usePhases } from './usePhases';
