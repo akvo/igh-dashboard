@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -29,6 +29,7 @@ export default function PortfolioAnalysis() {
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
+  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -42,15 +43,11 @@ export default function PortfolioAnalysis() {
     [productsList]
   );
 
-  // Dummy diseases for now (backend has this endpoint)
-  const diseaseOptions = [
-    'Malaria',
-    'Tuberculosis',
-    'HIV/AIDS',
-    'COVID-19',
-    'Dengue',
-    'Zika',
-  ];
+  // Disease options from API
+  const diseaseOptions = useMemo(() =>
+    (diseasesList || []).map(d => d.disease_name).filter(Boolean),
+    [diseasesList]
+  );
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -322,6 +319,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={diseaseOptions}
                     multiSelect={true}
+                    loading={diseasesLoading}
                   />
                 </div>
                 <div className="min-w-[220px]">

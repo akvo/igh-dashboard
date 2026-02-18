@@ -112,6 +112,7 @@ export const GET_DISEASES = gql`
     diseases {
       disease_key
       disease_name
+      global_health_area
     }
   }
 `;
