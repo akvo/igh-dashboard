@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -32,6 +32,7 @@ export default function PortfolioAnalysis() {
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -103,21 +104,6 @@ export default function PortfolioAnalysis() {
     { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown', whoPrequal: 'no', countries: 5 },
   ];
 
-  // Dummy data for approval status chart
-  const approvalStatusData = [
-    { name: 'Approved', value: 170 },
-    { name: 'Used off-label', value: 25 },
-    { name: 'Withdraw', value: 95 },
-    { name: 'Emergency Use', value: 65 },
-    { name: 'Review', value: 75 },
-    { name: 'Unknown', value: 55 },
-  ];
-
-  // Dummy data for WHO prequalification donut
-  const whoPrequalData = [
-    { name: 'Yes', value: 65 },
-    { name: 'No', value: 35 },
-  ];
 
   // Dummy data for age groups in clinical trials
   const ageGroupsData = [

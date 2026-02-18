@@ -9,3 +9,4 @@ export { useAvailableYears } from './useAvailableYears';
 export { useDiseases } from './useDiseases';
 export { useProductPhaseDistribution } from './useProductPhaseDistribution';
 export { useProductDistribution } from './useProductDistribution';
+export { useRegulatoryDistribution } from './useRegulatoryDistribution';

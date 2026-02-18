@@ -167,6 +167,21 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ApprovalStatusRow {
+    approval_status: String!
+    candidateCount: Int!
+  }
+
+  type WHOPrequalRow {
+    who_prequalification: String!
+    candidateCount: Int!
+  }
+
+  type RegulatoryDistribution {
+    approvalStatus: [ApprovalStatusRow!]!
+    whoPrequalification: [WHOPrequalRow!]!
+  }
+
   type CandidateTypeDistributionRow {
     global_health_area: String!
     candidate_type: String!
@@ -246,6 +261,9 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - regulatory distribution (approved products tab)
+    regulatoryDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): RegulatoryDistribution!
 
     # Portfolio analysis - product distribution (donut chart)
     productDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductDistributionRow!]!

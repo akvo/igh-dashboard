@@ -10,6 +10,7 @@ import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
 import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
 import { getProductDistribution } from "../db/queries/productDistribution.js";
+import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
 
 // Context type for resolvers
@@ -77,6 +78,17 @@ export const resolvers = {
     // Detail
     candidate: (_: unknown, args: { candidate_key: number }) =>
       getCandidateByKey(args.candidate_key),
+
+    // Portfolio analysis - regulatory distribution (approved products tab)
+    regulatoryDistribution: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getRegulatoryDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
 
     // Portfolio analysis - product distribution (donut chart)
     productDistribution: (

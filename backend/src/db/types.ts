@@ -227,6 +227,21 @@ export interface ProductPhaseDistributionRow {
   candidateCount: number;
 }
 
+export interface ApprovalStatusRow {
+  approval_status: string;
+  candidateCount: number;
+}
+
+export interface WHOPrequalRow {
+  who_prequalification: string;
+  candidateCount: number;
+}
+
+export interface RegulatoryDistribution {
+  approvalStatus: ApprovalStatusRow[];
+  whoPrequalification: WHOPrequalRow[];
+}
+
 export interface ProductDistributionRow {
   product_name: string;
   candidateCount: number;

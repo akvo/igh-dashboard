@@ -106,6 +106,22 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Regulatory Distribution - Portfolio Analysis (Approved Products tab)
+export const GET_REGULATORY_DISTRIBUTION = gql`
+  query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    regulatoryDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+      approvalStatus {
+        approval_status
+        candidateCount
+      }
+      whoPrequalification {
+        who_prequalification
+        candidateCount
+      }
+    }
+  }
+`;
+
 // Product Distribution - Portfolio Analysis (Donut Chart)
 export const GET_PRODUCT_DISTRIBUTION = gql`
   query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
