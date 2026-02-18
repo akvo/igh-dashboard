@@ -217,7 +217,7 @@ const Dropdown = ({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      {label && !compact && (
+      {label && (
         <span className="text-sm text-gray-500 font-normal">{label}</span>
       )}
       <button

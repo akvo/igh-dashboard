@@ -7,19 +7,21 @@ import { transformTemporalSnapshots } from '@/lib/transformations';
 
 export function useTemporalSnapshots(years, globalHealthAreas, productKeys) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys });
-  const cachedData = actions.getCachedData(cacheKey);
 
-  const { data, loading, error } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
+  const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0);
+  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys });
+  const cachedData = hasFilters ? null : actions.getCachedData(cacheKey);
+
+  const { data, loading, error, refetch } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
     variables: {
       years: years?.length > 0 ? years : undefined,
-      globalHealthAreas: globalHealthAreas && globalHealthAreas.length > 0 ? globalHealthAreas : undefined,
-      productKeys: productKeys && productKeys.length > 0 ? productKeys : undefined,
+      globalHealthAreas: globalHealthAreas?.length > 0 ? globalHealthAreas : undefined,
+      productKeys: productKeys?.length > 0 ? productKeys : undefined,
     },
     skip: !!cachedData,
-    fetchPolicy: 'network-only',
+    fetchPolicy: hasFilters ? 'network-only' : 'cache-first',
     onCompleted: (result) => {
-      if (result?.temporalSnapshots) {
+      if (result?.temporalSnapshots && !hasFilters) {
         actions.setCache(cacheKey, result.temporalSnapshots);
       }
     },
@@ -35,5 +37,6 @@ export function useTemporalSnapshots(years, globalHealthAreas, productKeys) {
     error,
     raw: rawData,
     usingCache: !!cachedData,
+    refetch,
   };
 }
