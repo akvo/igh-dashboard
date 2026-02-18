@@ -1,18 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu, Table } from '@/components/ui';
 import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
+import {
+  useTemporalSnapshots,
+  useAvailableYears,
+  useGlobalHealthAreaSummaries,
+  useProducts,
+  useDiseases,
+} from '@/graphql/hooks';
 
 export default function CrossPipelineAnalytics() {
-  const [healthArea, setHealthArea] = useState('');
-  const [disease, setDisease] = useState('');
-  const [product, setProduct] = useState('');
-  const [selectedPhases, setSelectedPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
+  const [selectedHealthArea, setSelectedHealthArea] = useState('');
+  const [selectedDisease, setSelectedDisease] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState('');
 
-  // Multi-variable section state
+  // Fetch filter options first
+  const { years: availableYears, loading: yearsLoading } = useAvailableYears();
+  const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
+  const { products: productsList, loading: productsLoading } = useProducts();
+  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+
+  // Build filter arrays for API
+  const selectedHealthAreas = selectedHealthArea ? [selectedHealthArea] : null;
+  const selectedProductKeys = selectedProduct ? [parseInt(selectedProduct)] : null;
+
+  // Fetch chart data with filters
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys);
+
+  // Build phase selection state from API phases
+  const [selectedPhases, setSelectedPhases] = useState([]);
+
+  // Initialize selected phases when API data loads
+  useMemo(() => {
+    if (apiPhases.length > 0 && selectedPhases.length === 0) {
+      setSelectedPhases(apiPhases.map(p => p.key));
+    }
+  }, [apiPhases]);
+
+  // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
   const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
   const [compareYear, setCompareYear] = useState('2019');
   const [compareSeveralDiseases, setCompareSeveralDiseases] = useState(true);
@@ -20,13 +49,51 @@ export default function CrossPipelineAnalytics() {
   const [comparedTo, setComparedTo] = useState('2024');
   const [multiVarPhases, setMultiVarPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
 
-  // Options
-  const healthAreaOptions = ['Neglected diseases', 'Emerging infectious disease', 'HIV/AIDS', 'Malaria', 'Tuberculosis'];
-  const diseaseOptions = ['Malaria', 'HIV', 'Dengue', 'Tuberculosis', 'COVID-19', 'Zika'];
-  const productOptions = ['Drugs', 'Vaccines', 'Diagnostics', 'Biologics', 'VCP'];
-  const yearOptions = ['2019', '2022', '2023', '2024'];
+  // Build options from API data
+  const healthAreaOptions = useMemo(() =>
+    (healthAreas || []).map(item => item.name),
+    [healthAreas]
+  );
 
-  const phases = [
+  // Disease options for multi-variable section
+  const diseaseOptions = useMemo(() =>
+    (diseasesList || [])
+      .filter(d => d.name)
+      .map(d => ({ value: d.key, label: d.name })),
+    [diseasesList]
+  );
+
+  // Product options with key-value pairs for filtering
+  const productOptions = useMemo(() =>
+    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
+    [productsList]
+  );
+
+  const yearOptions = useMemo(() =>
+    (availableYears || []).map(y => String(y)),
+    [availableYears]
+  );
+
+  // Use API phases with consistent colors
+  const phases = useMemo(() => {
+    if (apiPhases.length > 0) {
+      return apiPhases;
+    }
+    // Fallback while loading
+    return [
+      { key: 'discovery', label: 'Discovery', color: '#8c4028' },
+      { key: 'pre_clinical', label: 'Pre-clinical', color: '#fe7449' },
+      { key: 'phase_1', label: 'Phase 1', color: '#f9a78d' },
+      { key: 'phase_2', label: 'Phase 2', color: '#ddd6fe' },
+      { key: 'phase_3', label: 'Phase 3', color: '#a78bfa' },
+      { key: 'approved', label: 'Approved', color: '#f0b456' },
+    ];
+  }, [apiPhases]);
+
+  const productTabs = ['All', 'Vaccines', 'Devices', 'Drugs', 'Diagnostics', 'Biologics', 'Dietary supplements', 'VCP', 'Microbicides'];
+
+  // Hardcoded phases for multi-variable section (OUT OF SCOPE - design WIP)
+  const multiVarPhasesConfig = [
     { id: 'discovery', label: 'Discovery', color: '#8c4028' },
     { id: 'preClinical', label: 'Pre-clinical', color: '#fe7449' },
     { id: 'phase1', label: 'Phase 1', color: '#f9a78d' },
@@ -35,27 +102,22 @@ export default function CrossPipelineAnalytics() {
     { id: 'approved', label: 'Approved', color: '#f0b456' },
   ];
 
-  const productTabs = ['All', 'Vaccines', 'Devices', 'Drugs', 'Diagnostics', 'Biologics', 'Dietary supplements', 'VCP', 'Microbicides'];
-
-  // Dummy data for cross-pipeline chart (years on Y-axis)
-  const crossPipelineData = [
-    { category: '2019', discovery: 40, preClinical: 55, phase1: 45, phase2: 50, phase3: 40, approved: 70 },
-    { category: '2022', discovery: 25, preClinical: 30, phase1: 20, phase2: 25, phase3: 15, approved: 10 },
-    { category: '2023', discovery: 50, preClinical: 65, phase1: 55, phase2: 60, phase3: 50, approved: 80 },
-    { category: '2024', discovery: 30, preClinical: 40, phase1: 35, phase2: 30, phase3: 25, approved: 20 },
-  ];
-
-  const handlePhaseToggle = (phaseId) => {
+  const handlePhaseToggle = (phaseKey) => {
     setSelectedPhases((prev) =>
-      prev.includes(phaseId) ? prev.filter((id) => id !== phaseId) : [...prev, phaseId]
+      prev.includes(phaseKey) ? prev.filter((key) => key !== phaseKey) : [...prev, phaseKey]
     );
   };
 
   const handleResetFilters = () => {
-    setHealthArea('');
-    setDisease('');
-    setProduct('');
+    setSelectedHealthArea('');
+    setSelectedDisease('');
+    setSelectedProduct('');
+    // Reset phases to all selected
+    setSelectedPhases(phases.map(p => p.key));
   };
+
+  // Loading state
+  const isLoading = temporalLoading || yearsLoading;
 
   const handleClearCompare = () => {
     setCompareDisease([]);
@@ -136,8 +198,8 @@ export default function CrossPipelineAnalytics() {
               <div className="min-w-[180px]">
                 <Dropdown
                   label="Global health area"
-                  value={healthArea}
-                  onChange={setHealthArea}
+                  value={selectedHealthArea}
+                  onChange={setSelectedHealthArea}
                   placeholder="All"
                   options={healthAreaOptions}
                   compact={true}
@@ -146,8 +208,8 @@ export default function CrossPipelineAnalytics() {
               <div className="min-w-[180px]">
                 <Dropdown
                   label="Diseases"
-                  value={disease}
-                  onChange={setDisease}
+                  value={selectedDisease}
+                  onChange={setSelectedDisease}
                   placeholder="All"
                   options={diseaseOptions}
                   compact={true}
@@ -156,8 +218,8 @@ export default function CrossPipelineAnalytics() {
               <div className="min-w-[180px]">
                 <Dropdown
                   label="Product"
-                  value={product}
-                  onChange={setProduct}
+                  value={selectedProduct}
+                  onChange={setSelectedProduct}
                   placeholder="All"
                   options={productOptions}
                   compact={true}
@@ -173,21 +235,21 @@ export default function CrossPipelineAnalytics() {
             </div>
 
             {/* Phase checkboxes */}
-            <div className="flex items-center gap-6 py-4">
+            <div className="flex items-center gap-6 py-4 flex-wrap">
               {phases.map((phase) => (
-                <label key={phase.id} className="flex items-center gap-2 cursor-pointer">
+                <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
                   <span
-                    onClick={() => handlePhaseToggle(phase.id)}
+                    onClick={() => handlePhaseToggle(phase.key)}
                     className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.id)
+                      selectedPhases.includes(phase.key)
                         ? 'border-transparent'
                         : 'border-gray-300 bg-white'
                     }`}
                     style={{
-                      backgroundColor: selectedPhases.includes(phase.id) ? phase.color : undefined,
+                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
                     }}
                   >
-                    {selectedPhases.includes(phase.id) && (
+                    {selectedPhases.includes(phase.key) && (
                       <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
                         <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -200,15 +262,21 @@ export default function CrossPipelineAnalytics() {
 
             {/* Chart */}
             <div className="mt-4">
-              <StackedBarChart
-                data={crossPipelineData}
-                phases={phases.filter((p) => selectedPhases.includes(p.id)).map((p) => ({ key: p.id, label: p.label, color: p.color }))}
-                layout="vertical"
-                height={280}
-                xAxisLabel="Amount"
-                yAxisLabel="Years"
-                showFilters={false}
-              />
+              {isLoading ? (
+                <div className="h-[280px] flex items-center justify-center">
+                  <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                </div>
+              ) : (
+                <StackedBarChart
+                  data={chartData}
+                  phases={phases.filter((p) => selectedPhases.includes(p.key))}
+                  layout="vertical"
+                  height={280}
+                  xAxisLabel="Amount"
+                  yAxisLabel="Years"
+                  showFilters={false}
+                />
+              )}
             </div>
 
             {/* Last data update footer */}
@@ -346,7 +414,7 @@ export default function CrossPipelineAnalytics() {
 
                 {/* Phase checkboxes */}
                 <div className="flex items-center gap-6 py-4 border-t border-gray-200">
-                  {phases.map((phase) => (
+                  {multiVarPhasesConfig.map((phase) => (
                     <label key={phase.id} className="flex items-center gap-2 cursor-pointer">
                       <span
                         onClick={() => handleMultiVarPhaseToggle(phase.id)}
@@ -374,7 +442,7 @@ export default function CrossPipelineAnalytics() {
                 <div className="mt-4 mb-8">
                   <StackedBarChart
                     data={multiVarChartData}
-                    phases={phases.filter((p) => multiVarPhases.includes(p.id)).map((p) => ({ key: p.id, label: p.label, color: p.color }))}
+                    phases={multiVarPhasesConfig.filter((p) => multiVarPhases.includes(p.id)).map((p) => ({ key: p.id, label: p.label, color: p.color }))}
                     layout="vertical"
                     height={200}
                     xAxisLabel="Amount of Candidates/Products"

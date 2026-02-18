@@ -112,3 +112,12 @@ export const GET_LAST_SYNC_DATE = gql`
     lastSyncDate
   }
 `;
+// Get all diseases
+export const GET_DISEASES = gql`
+  query GetDiseases {
+    diseases {
+      disease_key
+      disease_name
+    }
+  }
+`;
