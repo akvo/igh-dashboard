@@ -167,6 +167,22 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ClinicalTrialStatusRow {
+    status: String!
+    trialCount: Int!
+  }
+
+  type AgeGroupDistributionRow {
+    age_group_name: String!
+    candidateCount: Int!
+  }
+
+  type ClinicalTrialStats {
+    totalTrials: Int!
+    statusDistribution: [ClinicalTrialStatusRow!]!
+    ageGroupDistribution: [AgeGroupDistributionRow!]!
+  }
+
   type ApprovalStatusRow {
     approval_status: String!
     candidateCount: Int!
@@ -261,6 +277,9 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - clinical trial stats (trials tab)
+    clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): ClinicalTrialStats!
 
     # Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): RegulatoryDistribution!

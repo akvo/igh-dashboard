@@ -227,6 +227,22 @@ export interface ProductPhaseDistributionRow {
   candidateCount: number;
 }
 
+export interface ClinicalTrialStatusRow {
+  status: string;
+  trialCount: number;
+}
+
+export interface AgeGroupDistributionRow {
+  age_group_name: string;
+  candidateCount: number;
+}
+
+export interface ClinicalTrialStats {
+  totalTrials: number;
+  statusDistribution: ClinicalTrialStatusRow[];
+  ageGroupDistribution: AgeGroupDistributionRow[];
+}
+
 export interface ApprovalStatusRow {
   approval_status: string;
   candidateCount: number;

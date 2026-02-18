@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -33,6 +33,7 @@ export default function PortfolioAnalysis() {
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
   const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -64,8 +65,6 @@ export default function PortfolioAnalysis() {
   const activeCandidates = kpis?.find(k => k.id === 'candidates')?.value || 0;
   const approvedProducts = kpis?.find(k => k.id === 'approved')?.value || 0;
 
-  // Dummy data for clinical trials (not in current API)
-  const ongoingTrials = 42;
 
   // Donut chart colors (enough for typical product count)
   const productTypeColors = [
@@ -105,27 +104,7 @@ export default function PortfolioAnalysis() {
   ];
 
 
-  // Dummy data for age groups in clinical trials
-  const ageGroupsData = [
-    { name: 'Neonates', value: 15 },
-    { name: 'Infants', value: 25 },
-    { name: 'Children', value: 35 },
-    { name: 'Adolescents', value: 20 },
-    { name: 'Young adults (18-45)', value: 30 },
-    { name: 'Older adults (45+)', value: 25 },
-  ];
-
   const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
-
-  // Dummy data for clinical trial status
-  const trialStatusData = [
-    { name: 'Terminated', value: 2 },
-    { name: 'Active', value: 5 },
-    { name: 'Completed', value: 4 },
-    { name: 'Suspended', value: 3 },
-    { name: 'Withdrawn', value: 1 },
-    { name: 'Unknown', value: 4 },
-  ];
 
   // Dummy map data for clinical trials
   const clinicalTrialsMapData = {

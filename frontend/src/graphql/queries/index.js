@@ -106,6 +106,23 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Clinical Trial Stats - Portfolio Analysis (Trials tab)
+export const GET_CLINICAL_TRIAL_STATS = gql`
+  query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    clinicalTrialStats(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+      totalTrials
+      statusDistribution {
+        status
+        trialCount
+      }
+      ageGroupDistribution {
+        age_group_name
+        candidateCount
+      }
+    }
+  }
+`;
+
 // Regulatory Distribution - Portfolio Analysis (Approved Products tab)
 export const GET_REGULATORY_DISTRIBUTION = gql`
   query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
