@@ -43,9 +43,9 @@ export default function PortfolioAnalysis() {
     [productsList]
   );
 
-  // Disease options from API
+  // Disease options from API (deduplicated)
   const diseaseOptions = useMemo(() =>
-    (diseasesList || []).map(d => d.disease_name).filter(Boolean),
+    [...new Set((diseasesList || []).map(d => d.disease_name).filter(Boolean))],
     [diseasesList]
   );
 
