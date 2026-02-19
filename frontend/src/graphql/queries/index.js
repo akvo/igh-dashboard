@@ -114,13 +114,18 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         candidate_key
         candidate_name
         candidate_type
+        vin_candidateid
         alternative_names
         current_rd_stage
         countries_approved_count
         countries_approved_agg
+        indication
+        target
         global_health_area
         disease_name
+        secondary_disease_name
         product_name
+        sub_product_name
         phase_name
         approval_status
         who_prequalification

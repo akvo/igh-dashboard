@@ -273,16 +273,21 @@ export interface PortfolioCandidateNode {
   candidate_key: number;
   candidate_name: string | null;
   candidate_type: string | null;
+  vin_candidateid: string | null;
   alternative_names: string | null;
   current_rd_stage: string | null;
   countries_approved_count: number | null;
   countries_approved_agg: string | null;
   global_health_area: string | null;
   disease_name: string | null;
+  secondary_disease_name: string | null;
   product_name: string | null;
+  sub_product_name: string | null;
   phase_name: string | null;
   approval_status: string | null;
   who_prequalification: string | null;
+  indication: string | null;
+  target: string | null;
 }
 
 export interface PortfolioCandidateFilter {
@@ -290,6 +295,8 @@ export interface PortfolioCandidateFilter {
   disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
+  phase_names?: string[];
+  search?: string;
 }
 
 export interface PortfolioCandidateConnection {

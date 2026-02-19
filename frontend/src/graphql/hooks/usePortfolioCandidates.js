@@ -11,6 +11,8 @@ export function usePortfolioCandidates(filter, limit = 20, offset = 0) {
         disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
         product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
         candidate_type: filter?.candidateType || undefined,
+        phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
+        search: filter?.search || undefined,
       },
       limit,
       offset,

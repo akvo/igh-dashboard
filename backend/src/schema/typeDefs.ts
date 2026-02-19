@@ -233,13 +233,18 @@ export const typeDefs = `#graphql
     candidate_key: Int!
     candidate_name: String
     candidate_type: String
+    vin_candidateid: String
     alternative_names: String
     current_rd_stage: String
     countries_approved_count: Int
     countries_approved_agg: String
+    indication: String
+    target: String
     global_health_area: String
     disease_name: String
+    secondary_disease_name: String
     product_name: String
+    sub_product_name: String
     phase_name: String
     approval_status: String
     who_prequalification: String
@@ -286,6 +291,8 @@ export const typeDefs = `#graphql
     disease_names: [String!]
     product_names: [String!]
     candidate_type: String
+    phase_names: [String!]
+    search: String
   }
 
   input ClinicalTrialFilter {

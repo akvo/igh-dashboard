@@ -46,8 +46,15 @@ export default function PortfolioAnalysis() {
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
+  const extractFilter = {
+    globalHealthAreas: extractHealthArea ? [extractHealthArea] : undefined,
+    diseaseNames: extractDisease ? [extractDisease] : undefined,
+    productNames: extractProduct ? [extractProduct] : undefined,
+    phaseNames: extractRdStage ? [extractRdStage] : undefined,
+    search: extractSearchQuery || undefined,
+  };
   const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
-    globalFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    extractFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
   );
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
@@ -117,17 +124,20 @@ export default function PortfolioAnalysis() {
 
   // Available columns for Extract custom details
   const availableColumns = [
-    { id: 'type', label: 'Type' },
-    { id: 'ighId', label: 'IGH ID' },
-    { id: 'altNames', label: 'Alternative names' },
-    { id: 'gha', label: 'Global health area' },
-    { id: 'primaryDisease', label: 'Primary disease' },
-    { id: 'secondaryDisease', label: 'Secondary disease' },
-    { id: 'product', label: 'Product' },
-    { id: 'subProduct', label: 'Sub product' },
-    { id: 'indication', label: 'Indication' },
-    { id: 'target', label: 'Target' },
+    { id: 'type', label: 'Type', accessor: 'candidate_type' },
+    { id: 'ighId', label: 'IGH ID', accessor: 'vin_candidateid' },
+    { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names' },
+    { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
+    { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
+    { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
+    { id: 'product', label: 'Product', accessor: 'product_name' },
+    { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
+    { id: 'indication', label: 'Indication', accessor: 'indication' },
+    { id: 'target', label: 'Target', accessor: 'target' },
   ];
+
+  // Columns currently active based on user selection
+  const activeExtractColumns = availableColumns.filter((col) => selectedColumns.includes(col.id));
 
   const filteredColumns = availableColumns.filter((col) =>
     col.label.toLowerCase().includes(columnSearchQuery.toLowerCase())
@@ -152,6 +162,8 @@ export default function PortfolioAnalysis() {
     setExtractDisease('');
     setExtractProduct('');
     setExtractRdStage('');
+    setExtractSearchQuery('');
+    setExtractPage(1);
   };
 
 
@@ -437,7 +449,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Global health area"
                         value={extractHealthArea}
-                        onChange={setExtractHealthArea}
+                        onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
                         options={healthAreaOptions}
                         compact={true}
@@ -447,7 +459,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Diseases"
                         value={extractDisease}
-                        onChange={setExtractDisease}
+                        onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
                         placeholder="All"
                         options={diseaseOptions}
                         compact={true}
@@ -457,9 +469,9 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Product"
                         value={extractProduct}
-                        onChange={setExtractProduct}
+                        onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={['Drugs', 'Vaccines', 'Diagnostics', 'Biologics']}
+                        options={productOptions}
                         compact={true}
                       />
                     </div>
@@ -467,7 +479,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="R&D stage"
                         value={extractRdStage}
-                        onChange={setExtractRdStage}
+                        onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
                         placeholder="All"
                         options={rdStageOptions}
                         compact={true}
@@ -571,27 +583,21 @@ export default function PortfolioAnalysis() {
                             <thead>
                               <tr className="border-b border-gray-200">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Age specific</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Research status</th>
+                                {activeExtractColumns.map((col) => (
+                                  <th key={col.id} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{col.label}</th>
+                                ))}
                               </tr>
                             </thead>
                             <tbody>
                               {extractTableData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="py-4 px-4">
-                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name}</div>
+                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
-                                  <td className="py-4 px-4">
-                                    <span className={`px-2 py-1 text-xs ${getRdStageStyle(item.phase_name)}`}>
-                                      {item.phase_name}
-                                    </span>
-                                  </td>
+                                  {activeExtractColumns.map((col) => (
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600">{item[col.accessor]}</td>
+                                  ))}
                                 </tr>
                               ))}
                             </tbody>
