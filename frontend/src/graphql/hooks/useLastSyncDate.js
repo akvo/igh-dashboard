@@ -11,20 +11,20 @@ export function useLastSyncDate() {
   const cachedData = actions.getCachedData(CACHE_KEY);
 
   const { data, loading, error } = useQuery(GET_LAST_SYNC_DATE, {
-    skip: cachedData !== undefined,
+    skip: !!cachedData,
     fetchPolicy: 'network-only',
     onCompleted: (result) => {
-      if (result?.lastSyncDate !== undefined) {
+      if (result?.lastSyncDate) {
         actions.setCache(CACHE_KEY, result.lastSyncDate);
       }
     },
   });
 
-  const rawDate = cachedData ?? data?.lastSyncDate ?? null;
+  const rawDate = cachedData || data?.lastSyncDate || null;
 
   return {
     lastSyncDate: rawDate,
-    loading: loading && cachedData === undefined,
+    loading: loading && !cachedData,
     error,
   };
 }

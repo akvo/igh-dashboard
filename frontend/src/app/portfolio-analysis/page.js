@@ -373,11 +373,6 @@ export default function PortfolioAnalysis() {
                   showFilters={true}
                 />
 
-                {/* Last data update footer */}
-                <div className="mt-4 bg-orange-50 px-4 py-3 flex items-center justify-center gap-2">
-                  <InfoIcon className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm text-gray-700">Last data update: <strong>12 Jan 2025</strong></span>
-                </div>
               </div>
 
               {/* Product types - takes 1 column */}
