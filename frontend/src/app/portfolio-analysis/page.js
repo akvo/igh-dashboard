@@ -129,16 +129,24 @@ export default function PortfolioAnalysis() {
 
   // Available columns for Extract custom details
   const availableColumns = [
-    { id: 'type', label: 'Type', accessor: 'candidate_type' },
-    { id: 'ighId', label: 'IGH ID', accessor: 'candidateid' },
-    { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names' },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
-    { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
+    { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name' },
-    { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
+    { id: 'rdStage', label: 'R&D Stage', accessor: 'current_rd_stage' },
+    { id: 'developers', label: 'Developers', accessor: 'developers_agg' },
     { id: 'indication', label: 'Indication', accessor: 'indication' },
+    { id: 'indicationType', label: 'Indication type', accessor: 'indication_type' },
+    { id: 'facilityLevel', label: 'Health care facility level', accessor: 'healthcare_facility_level' },
     { id: 'target', label: 'Target', accessor: 'target' },
+    { id: 'moa', label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+    { id: 'techType', label: 'Technology type', accessor: 'technology_type' },
+    { id: 'testFormat', label: 'Test format', accessor: 'test_format' },
+    { id: 'preclinicalStatus', label: 'Preclinical results status', accessor: 'preclinical_results_status' },
+    { id: 'preclinicalType', label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
+    { id: 'preclinicalSource', label: 'Preclinical results source', accessor: 'preclinical_results_source' },
+    { id: 'keyFeatures', label: 'Key features & challenges', accessor: 'key_features' },
+    { id: 'recentUpdates', label: 'Recent updates', accessor: 'recent_updates' },
   ];
 
   // Columns currently active based on user selection

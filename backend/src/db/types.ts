@@ -78,6 +78,13 @@ export interface DimCandidateCore {
   countries_approved_agg: string | null;
   candidate_type: string | null;
   indication: string | null;
+  indication_type: string | null;
+  healthcare_facility_level: string | null;
+  preclinical_results_status: string | null;
+  type_of_preclinical_results: string | null;
+  preclinical_results_source: string | null;
+  recent_updates: string | null;
+  test_format: string | null;
 }
 
 export interface DimCandidateTech {
@@ -288,6 +295,17 @@ export interface PortfolioCandidateNode {
   who_prequalification: string | null;
   indication: string | null;
   target: string | null;
+  developers_agg: string | null;
+  mechanism_of_action: string | null;
+  key_features: string | null;
+  technology_type: string | null;
+  indication_type: string | null;
+  healthcare_facility_level: string | null;
+  preclinical_results_status: string | null;
+  type_of_preclinical_results: string | null;
+  preclinical_results_source: string | null;
+  recent_updates: string | null;
+  test_format: string | null;
 }
 
 export interface PortfolioCandidateFilter {

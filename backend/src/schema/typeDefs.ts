@@ -97,6 +97,13 @@ export const typeDefs = `#graphql
     countries_approved_agg: String
     candidate_type: String
     indication: String
+    indication_type: String
+    healthcare_facility_level: String
+    preclinical_results_status: String
+    type_of_preclinical_results: String
+    preclinical_results_source: String
+    recent_updates: String
+    test_format: String
 
     # Resolved via joins
     disease: DimDisease
@@ -247,6 +254,17 @@ export const typeDefs = `#graphql
     countries_approved_agg: String
     indication: String
     target: String
+    developers_agg: String
+    mechanism_of_action: String
+    key_features: String
+    technology_type: String
+    indication_type: String
+    healthcare_facility_level: String
+    preclinical_results_status: String
+    type_of_preclinical_results: String
+    preclinical_results_source: String
+    recent_updates: String
+    test_format: String
     global_health_area: String
     disease_name: String
     secondary_disease_name: String
