@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -63,6 +63,20 @@ export default function StackedBarChart({
   const [visiblePhases, setVisiblePhases] = useState(
     phases.reduce((acc, phase) => ({ ...acc, [phase.key]: true }), {})
   );
+
+  useEffect(() => {
+    if (phases.length > 0) {
+      setVisiblePhases(prev => {
+        const next = { ...prev };
+        phases.forEach(phase => {
+          if (!(phase.key in next)) {
+            next[phase.key] = true;
+          }
+        });
+        return next;
+      });
+    }
+  }, [phases]);
 
   const togglePhase = (phaseKey) => {
     setVisiblePhases((prev) => ({

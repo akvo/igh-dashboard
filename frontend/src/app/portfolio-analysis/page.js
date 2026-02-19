@@ -5,7 +5,8 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -34,14 +35,16 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
-  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
+  const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
+  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product, candidateTypeForApi);
   const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
   const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
   const itemsPerPage = 10;
   const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Candidate' }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
+    { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
@@ -66,7 +69,7 @@ export default function PortfolioAnalysis() {
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => item.name),
+    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
     [healthAreas]
   );
 
@@ -78,7 +81,7 @@ export default function PortfolioAnalysis() {
 
   // Disease options from API (deduplicated)
   const diseaseOptions = useMemo(() =>
-    [...new Set((diseasesList || []).map(d => d.disease_name).filter(Boolean))],
+    [...new Set((diseasesList || []).map(d => d.name).filter(Boolean))],
     [diseasesList]
   );
 
@@ -164,8 +167,14 @@ export default function PortfolioAnalysis() {
   };
 
 
-  // R&D stage options
-  const rdStageOptions = ['Discovery', 'Pre clinical', 'Phase 1', 'Phase 2', 'Phase 3', 'Approved'];
+  // R&D stage options from DB phases
+  const rdStageOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
 
   // Dummy data for technology types table
   const technologyTypesData = [
@@ -214,13 +223,6 @@ export default function PortfolioAnalysis() {
                 activeTab={activeTab}
                 onChange={setActiveTab}
               />
-              <a
-                href="#"
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 px-4 py-2"
-              >
-                <BoltIcon className="w-4 h-4" />
-                Try AI page for Pipeline statistic <span className="text-orange-500 ml-1">*beta*</span>
-              </a>
             </div>
 
             {/* Filters for Explore tab */}
@@ -375,7 +377,10 @@ export default function PortfolioAnalysis() {
                       value={productTypeFilter}
                       onChange={setProductTypeFilter}
                       placeholder="All"
-                      options={['Candidates', 'Products']}
+                      options={[
+                        { label: 'Candidates', value: 'Candidate' },
+                        { label: 'Products', value: 'Product' },
+                      ]}
                       multiSelect={true}
                       compact={true}
                       className="w-32"
@@ -393,9 +398,9 @@ export default function PortfolioAnalysis() {
                 <DonutChart
                   data={productTypesData}
                   colors={productTypeColors}
-                  height={280}
-                  innerRadius={70}
-                  outerRadius={110}
+                  height={350}
+                  innerRadius={55}
+                  outerRadius={140}
                   showLegend={true}
                   legendPosition="top"
                 />
@@ -667,7 +672,7 @@ export default function PortfolioAnalysis() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <h4 className="text-xl font-bold text-black leading-none">Selected candidates</h4>
-                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">240 candidates</span>
+                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount} candidates</span>
                   </div>
                   <div className="flex items-center gap-3 h-[36px]">
                     <div className="relative">
@@ -676,7 +681,7 @@ export default function PortfolioAnalysis() {
                         type="text"
                         placeholder="Search item"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCandidatesPage(1); }}
                         className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -688,7 +693,7 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 <p className="text-sm text-gray-500 mb-6">
-                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis. 
+                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
 
                 {/* Table */}
@@ -812,7 +817,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Selected products</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">240 candidates</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount} products</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
@@ -896,7 +901,7 @@ export default function PortfolioAnalysis() {
             {portfolioTab === 'trials' && (
               <>
               <p className="text-sm text-gray-500 mb-6">
-                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison. 
+                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -965,7 +970,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <h4 className="text-xl font-bold text-black leading-none">Selected clinical trials</h4>
-                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">128 Trials</span>
+                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount} Trials</span>
                       </div>
                       <div className="flex items-center gap-3 h-[36px]">
                         <div className="relative">
@@ -1103,7 +1108,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file. 
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file.
                   </p>
                 </div>
 

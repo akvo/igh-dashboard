@@ -227,7 +227,7 @@ const Dropdown = ({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center justify-between text-sm font-normal text-black cursor-pointer text-left transition-colors
-          ${compact ? 'gap-2 px-3 h-9 w-[240px]' : 'w-full px-4 py-2.5 h-[44px]'}
+          ${compact ? 'gap-2 px-3 h-9 w-[240px] max-w-full' : 'w-full px-4 py-2.5 h-[44px]'}
           ${isOpen ? 'bg-white border-2 border-orange-500' : 'bg-[#F2F2F4]'}`}
       >
         <span className="flex items-center overflow-hidden min-w-0">
