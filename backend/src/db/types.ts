@@ -16,8 +16,9 @@ export interface DimProduct {
 
 export interface DimDisease {
   disease_key: number;
-  vin_diseaseid: string | null;
+  diseaseid: string | null;
   disease_name: string | null;
+  disease_group_name: string | null;
   global_health_area: string | null;
   disease_type: string | null;
 }
@@ -46,7 +47,7 @@ export interface DimOrganization {
 
 export interface DimPriority {
   priority_key: number;
-  vin_rdpriorityid: string | null;
+  rdpriorityid: string | null;
   priority_name: string | null;
   indication: string | null;
   intended_use: string | null;
@@ -62,7 +63,7 @@ export interface DimDate {
 
 export interface DimCandidateCore {
   candidate_key: number;
-  vin_candidateid: string | null;
+  candidateid: string | null;
   candidate_name: string | null;
   vin_candidate_code: string | null;
   developers_agg: string | null;
@@ -128,7 +129,7 @@ export interface FactClinicalTrialEvent {
   trial_phase: string | null;
   enrollment_count: number | null;
   status: string | null;
-  vin_clinicaltrialid: string | null;
+  clinicaltrialid: string | null;
   disease_key: number | null;
   product_key: number | null;
   trial_name: string | null;

@@ -13,7 +13,7 @@ const { DimCandidateCore: candidateResolvers } = resolvers;
 function makeParent(overrides?: Partial<DimCandidateCore>): DimCandidateCore {
   return {
     candidate_key: 1,
-    vin_candidateid: null,
+    candidateid: null,
     candidate_name: "Test",
     vin_candidate_code: null,
     developers_agg: null,
@@ -46,6 +46,7 @@ describe("disease resolver", () => {
     const disease = {
       disease_key: 10,
       disease_name: "Malaria",
+      disease_group_name: "Malaria",
       global_health_area: "Neglected disease",
     };
     const ctx = makeContext({

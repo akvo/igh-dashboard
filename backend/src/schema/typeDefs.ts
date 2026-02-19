@@ -12,8 +12,9 @@ export const typeDefs = `#graphql
 
   type DimDisease {
     disease_key: Int!
-    vin_diseaseid: String
+    diseaseid: String
     disease_name: String
+    disease_group_name: String
     global_health_area: String
     disease_type: String
   }
@@ -42,7 +43,7 @@ export const typeDefs = `#graphql
 
   type DimPriority {
     priority_key: Int!
-    vin_rdpriorityid: String
+    rdpriorityid: String
     priority_name: String
     indication: String
     intended_use: String
@@ -82,7 +83,7 @@ export const typeDefs = `#graphql
 
   type DimCandidateCore {
     candidate_key: Int!
-    vin_candidateid: String
+    candidateid: String
     candidate_name: String
     vin_candidate_code: String
     developers_agg: String
@@ -119,7 +120,7 @@ export const typeDefs = `#graphql
     trial_phase: String
     enrollment_count: Int
     status: String
-    vin_clinicaltrialid: String
+    clinicaltrialid: String
     disease_key: Int
     product_key: Int
     trial_name: String
@@ -332,7 +333,7 @@ export const typeDefs = `#graphql
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], disease_key: Int, global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
 
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!
@@ -365,5 +366,6 @@ export const typeDefs = `#graphql
     countries: [DimGeography!]!
     availableYears: [Int!]!
     locationScopes: [String!]!
+    lastSyncDate: String
   }
 `;

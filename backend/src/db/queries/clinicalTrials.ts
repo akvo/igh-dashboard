@@ -1,9 +1,6 @@
 import { getDatabase } from "../connection.js";
-import type {
-  ClinicalTrialNode,
-  ClinicalTrialFilter,
-  ClinicalTrialConnection,
-} from "../types.js";
+import type { ClinicalTrialNode, ClinicalTrialFilter, ClinicalTrialConnection } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
@@ -17,31 +14,16 @@ function buildWhere(filter?: ClinicalTrialFilter) {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
-  if (filter?.global_health_areas && filter.global_health_areas.length > 0) {
-    const placeholders = filter.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filter.global_health_areas);
-  }
-
-  if (filter?.disease_names && filter.disease_names.length > 0) {
-    const placeholders = filter.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
-    params.push(...filter.disease_names);
-  }
-
-  if (filter?.product_names && filter.product_names.length > 0) {
-    const placeholders = filter.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filter.product_names);
-  }
+  addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
+  addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
 
   if (filter?.status) {
     conditions.push("t.status = ?");
     params.push(filter.status);
   }
 
-  const whereClause =
-    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   return { joins, whereClause, params };
 }
@@ -76,7 +58,7 @@ export function getClinicalTrials(
       t.trial_phase,
       t.status,
       c.candidate_name,
-      d.disease_name,
+      d.disease_group_name AS disease_name,
       pr.product_name,
       dt.full_date as start_date
     FROM fact_clinical_trial_event t
@@ -85,9 +67,7 @@ export function getClinicalTrials(
     ORDER BY t.trial_id DESC
     LIMIT ? OFFSET ?
   `;
-  const nodes = db
-    .prepare(dataSql)
-    .all(...params, limit, offset) as ClinicalTrialNode[];
+  const nodes = db.prepare(dataSql).all(...params, limit, offset) as ClinicalTrialNode[];
 
   return {
     nodes,

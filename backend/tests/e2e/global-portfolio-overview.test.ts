@@ -371,10 +371,7 @@ describe("Phase Distribution — filters", () => {
       { productKeys },
     );
 
-    const filteredTotal = data.phaseDistribution.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
@@ -410,18 +407,19 @@ describe("Phase Distribution — candidate_type filter", () => {
 });
 
 describe("Lookup Queries", () => {
-  it("diseases returns non-empty array", async () => {
+  it("diseases returns non-empty array of disease group names", async () => {
     const { data } = await query<{
-      diseases: Array<{ disease_key: number; disease_name: string | null }>;
+      diseases: Array<{ disease_group_name: string | null; global_health_area: string | null }>;
     }>(`{
       diseases {
-        disease_key
-        disease_name
+        disease_group_name
+        global_health_area
       }
     }`);
 
     expect(data.diseases.length).toBeGreaterThan(0);
-    expect(data.diseases[0].disease_key).toBeDefined();
+    expect(data.diseases[0].disease_group_name).toBeDefined();
+    expect(typeof data.diseases[0].disease_group_name).toBe("string");
   });
 
   it("phases returns non-empty array", async () => {

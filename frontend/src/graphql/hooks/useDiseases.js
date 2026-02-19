@@ -21,10 +21,9 @@ export function useDiseases() {
 
   const rawData = cachedData || data?.diseases || [];
 
-  // Transform to simple array of disease names for dropdowns
+  // Transform to simple array of disease group names for dropdowns
   const diseases = rawData.map(d => ({
-    key: d.disease_key,
-    name: d.disease_name,
+    name: d.disease_group_name,
   }));
 
   return {

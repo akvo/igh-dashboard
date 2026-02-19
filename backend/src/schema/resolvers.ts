@@ -15,6 +15,7 @@ import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
+import { getLastSyncDate } from "../db/queries/metadata.js";
 
 // Context type for resolvers
 interface Context {
@@ -68,7 +69,7 @@ export const resolvers = {
       _: unknown,
       args: {
         years?: number[];
-        disease_key?: number;
+        disease_group_names?: string[];
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
@@ -76,7 +77,7 @@ export const resolvers = {
     ) =>
       getTemporalSnapshots({
         years: args.years,
-        disease_key: args.disease_key,
+        disease_group_names: args.disease_group_names,
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
@@ -93,16 +94,32 @@ export const resolvers = {
     // Portfolio analysis - candidates list (paginated)
     portfolioCandidates: (
       _: unknown,
-      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string }; limit?: number; offset?: number },
-    ) =>
-      getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          candidate_type?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trials list (paginated)
     clinicalTrials: (
       _: unknown,
-      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; status?: string }; limit?: number; offset?: number },
-    ) =>
-      getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          status?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (
@@ -129,7 +146,12 @@ export const resolvers = {
     // Portfolio analysis - product distribution (donut chart)
     productDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
     ) =>
       getProductDistribution({
         global_health_areas: args.global_health_areas,
@@ -141,7 +163,12 @@ export const resolvers = {
     // Portfolio analysis - product phase distribution
     productPhaseDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
     ) =>
       getProductPhaseDistribution({
         global_health_areas: args.global_health_areas,
@@ -157,6 +184,7 @@ export const resolvers = {
     countries: () => getCountries(),
     availableYears: () => getAvailableYears(),
     locationScopes: () => getLocationScopes(),
+    lastSyncDate: () => getLastSyncDate(),
   },
 
   // Resolve nested relationships on DimCandidateCore

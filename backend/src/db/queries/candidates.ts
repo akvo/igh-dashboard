@@ -69,7 +69,7 @@ export function getCandidates(
   const dataSql = `
     SELECT DISTINCT
       c.candidate_key,
-      c.vin_candidateid,
+      c.candidateid,
       c.candidate_name,
       c.vin_candidate_code,
       c.developers_agg,
@@ -113,7 +113,7 @@ export function getCandidateByKey(candidate_key: number): DimCandidateCore | nul
       `
     SELECT
       candidate_key,
-      vin_candidateid,
+      candidateid,
       candidate_name,
       vin_candidate_code,
       developers_agg,

@@ -79,8 +79,9 @@ const Dropdown = ({
               className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-orange-50 text-orange-600 rounded-full whitespace-nowrap"
             >
               {item.label}
-              <button
-                type="button"
+              <span
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (onChange) onChange(selectedValues.filter((v) => v !== item.value));
@@ -90,7 +91,7 @@ const Dropdown = ({
                 <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
                   <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
-              </button>
+              </span>
             </span>
           ))}
           {count > 2 && (
@@ -110,8 +111,9 @@ const Dropdown = ({
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-orange-50 text-orange-600 rounded-full whitespace-nowrap">
         {selectedLabel}
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={0}
           onClick={(e) => {
             e.stopPropagation();
             if (onChange) onChange('');
@@ -121,7 +123,7 @@ const Dropdown = ({
           <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
             <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
-        </button>
+        </span>
       </span>
     );
   };

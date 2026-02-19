@@ -4,6 +4,7 @@ import type {
   PortfolioCandidateFilter,
   PortfolioCandidateConnection,
 } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
@@ -11,33 +12,14 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1"];
   const params: (string | number)[] = [];
 
-  if (filter?.global_health_areas && filter.global_health_areas.length > 0) {
-    const placeholders = filter.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filter.global_health_areas);
-  }
-
-  if (filter?.disease_names && filter.disease_names.length > 0) {
-    const placeholders = filter.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
-    params.push(...filter.disease_names);
-  }
-
-  if (filter?.product_names && filter.product_names.length > 0) {
-    const placeholders = filter.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filter.product_names);
-  }
+  addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
+  addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
+  addArrayCondition(filter?.phase_names, "p.phase_name", conditions, params);
 
   if (filter?.candidate_type) {
     conditions.push("c.candidate_type = ?");
     params.push(filter.candidate_type);
-  }
-
-  if (filter?.phase_names && filter.phase_names.length > 0) {
-    const placeholders = filter.phase_names.map(() => "?").join(", ");
-    conditions.push(`p.phase_name IN (${placeholders})`);
-    params.push(...filter.phase_names);
   }
 
   if (filter?.search) {
@@ -61,6 +43,7 @@ const JOINS = `
 /**
  * Get candidates with flattened dimension data for portfolio tables.
  */
+// eslint-disable-next-line max-lines-per-function -- single query builder with count + data
 export function getPortfolioCandidates(
   filter?: PortfolioCandidateFilter,
   limit = 20,
@@ -93,8 +76,8 @@ export function getPortfolioCandidates(
         c.indication,
         c.target,
         d.global_health_area,
-        d.disease_name,
-        sd.disease_name AS secondary_disease_name,
+        d.disease_group_name AS disease_name,
+        sd.disease_group_name AS secondary_disease_name,
         pr.product_name,
         sp.product_name AS sub_product_name,
         p.phase_name,
@@ -119,9 +102,7 @@ export function getPortfolioCandidates(
     ORDER BY candidate_name
     LIMIT ? OFFSET ?
   `;
-  const nodes = db
-    .prepare(dataSql)
-    .all(...params, limit, offset) as PortfolioCandidateNode[];
+  const nodes = db.prepare(dataSql).all(...params, limit, offset) as PortfolioCandidateNode[];
 
   return {
     nodes,

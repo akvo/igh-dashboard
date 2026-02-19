@@ -23,7 +23,10 @@ import {
   useTemporalSnapshots,
   useProducts,
   useAvailableYears,
+  useLastSyncDate,
+  usePhases,
 } from '@/graphql/hooks';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -31,32 +34,12 @@ const candidateTypeOptions = [
   { label: 'Products', value: 'Product' },
 ];
 
-// R&D stage options for filtering
-const rdStageOptions = [
-  'Pre-clinical',
-  'Phase 1',
-  'Phase 2',
-  'Phase 3',
-  'Phase 4',
-  'Approved',
-];
-
 // Global health area options for cross-pipeline filter
 const globalHealthAreaOptions = [
   { label: 'Neglected diseases', value: 'Neglected disease' },
-  { label: "Women's health", value: 'Sexual & reproductive health' },
+  { label: "Women's health", value: 'Womens Health' },
   { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
 ];
-
-// Map R&D stage display names to actual DB phase_name values
-const stageToPhaseMap = {
-  'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
-  'Phase 1': ['Phase I'],
-  'Phase 2': ['Phase II'],
-  'Phase 3': ['Phase III'],
-  'Phase 4': ['Phase IV'],
-  'Approved': ['Regulatory filing', 'PQ listing and regulatory approval'],
-};
 
 export default function Home() {
   const [product, setProduct] = useState([]);
@@ -70,11 +53,13 @@ export default function Home() {
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
 
+  const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
   const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
   );
   const { products, loading: productsLoading } = useProducts();
+  const { phases, loading: phasesLoading } = usePhases();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
@@ -85,16 +70,19 @@ export default function Home() {
     crossProduct.length > 0 ? crossProduct : null,
   );
 
-  // Convert R&D stage selections to phase names for server-side filtering
-  const selectedPhaseNames = useMemo(() => {
-    if (rdStage.length === 0) return null;
-    return rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
-  }, [rdStage]);
+  // R&D stage dropdown options from DB phases
+  const rdStageOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
 
   // Candidate type distribution with filters
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     product,
-    selectedPhaseNames,
+    rdStage.length > 0 ? rdStage : null,
   );
 
   // Product options for dropdown (from API)
@@ -157,7 +145,19 @@ export default function Home() {
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
               <ClockIcon className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-gray-500">
-                Last updated on <strong className="text-black">12.04.24</strong>
+                {syncDateLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : lastSyncDate ? (
+                  <>Last updated on <strong className="text-black">
+                    {new Date(lastSyncDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </strong></>
+                ) : (
+                  'Last updated date unavailable'
+                )}
               </span>
             </div>
           </div>
@@ -380,7 +380,7 @@ export default function Home() {
             </div>
 
             {/* Chart */}
-            {portfolioLoading || productsLoading ? (
+            {portfolioLoading || productsLoading || phasesLoading ? (
               <div className="h-[250px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>

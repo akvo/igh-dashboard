@@ -14,9 +14,9 @@ import {
 } from '@/graphql/hooks';
 
 export default function CrossPipelineAnalytics() {
-  const [selectedHealthArea, setSelectedHealthArea] = useState('');
-  const [selectedDisease, setSelectedDisease] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedHealthArea, setSelectedHealthArea] = useState([]);
+  const [selectedDisease, setSelectedDisease] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState([]);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
@@ -25,11 +25,12 @@ export default function CrossPipelineAnalytics() {
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
 
   // Build filter arrays for API
-  const selectedHealthAreas = selectedHealthArea ? [selectedHealthArea] : null;
-  const selectedProductKeys = selectedProduct ? [parseInt(selectedProduct)] : null;
+  const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
+  const selectedProductKeys = selectedProduct.length > 0 ? selectedProduct.map(v => parseInt(v)) : null;
+  const selectedDiseaseGroupNames = selectedDisease.length > 0 ? selectedDisease : null;
 
   // Fetch chart data with filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys);
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
   // Build phase selection state from API phases
   const [selectedPhases, setSelectedPhases] = useState([]);
@@ -51,7 +52,7 @@ export default function CrossPipelineAnalytics() {
 
   // Build options from API data
   const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => item.name),
+    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
     [healthAreas]
   );
 
@@ -59,7 +60,7 @@ export default function CrossPipelineAnalytics() {
   const diseaseOptions = useMemo(() =>
     (diseasesList || [])
       .filter(d => d.name)
-      .map(d => ({ value: d.key, label: d.name })),
+      .map(d => ({ value: d.name, label: d.name })),
     [diseasesList]
   );
 
@@ -109,9 +110,9 @@ export default function CrossPipelineAnalytics() {
   };
 
   const handleResetFilters = () => {
-    setSelectedHealthArea('');
-    setSelectedDisease('');
-    setSelectedProduct('');
+    setSelectedHealthArea([]);
+    setSelectedDisease([]);
+    setSelectedProduct([]);
     // Reset phases to all selected
     setSelectedPhases(phases.map(p => p.key));
   };
@@ -202,6 +203,7 @@ export default function CrossPipelineAnalytics() {
                   onChange={setSelectedHealthArea}
                   placeholder="All"
                   options={healthAreaOptions}
+                  multiSelect={true}
                   compact={true}
                 />
               </div>
@@ -212,6 +214,7 @@ export default function CrossPipelineAnalytics() {
                   onChange={setSelectedDisease}
                   placeholder="All"
                   options={diseaseOptions}
+                  multiSelect={true}
                   compact={true}
                 />
               </div>
@@ -222,6 +225,7 @@ export default function CrossPipelineAnalytics() {
                   onChange={setSelectedProduct}
                   placeholder="All"
                   options={productOptions}
+                  multiSelect={true}
                   compact={true}
                 />
               </div>

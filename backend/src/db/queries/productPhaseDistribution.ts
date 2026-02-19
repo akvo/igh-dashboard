@@ -1,5 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { ProductPhaseDistributionRow } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 interface ProductPhaseDistributionFilters {
   global_health_areas?: string[];
@@ -28,36 +29,19 @@ export function getProductPhaseDistribution(
   ];
   const params: (string | number)[] = [];
 
-  const needsDiseaseJoin =
-    (filters?.global_health_areas && filters.global_health_areas.length > 0) ||
-    (filters?.disease_names && filters.disease_names.length > 0);
-
-  if (needsDiseaseJoin) {
-    joins.push("JOIN dim_disease d ON f.disease_key = d.disease_key");
-  }
-
-  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
-    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filters.global_health_areas);
-  }
-
-  if (filters?.disease_names && filters.disease_names.length > 0) {
-    const placeholders = filters.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
-    params.push(...filters.disease_names);
-  }
-
-  if (filters?.product_names && filters.product_names.length > 0) {
-    const placeholders = filters.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filters.product_names);
-  }
+  const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params);
 
   if (filters?.candidate_type) {
-    joins.push(
-      "JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key",
-    );
+    joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");
     conditions.push("c.candidate_type = ?");
     params.push(filters.candidate_type);
   }

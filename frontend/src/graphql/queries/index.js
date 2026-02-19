@@ -60,8 +60,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
-    temporalSnapshots(years: $years, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
+  query TemporalAnalysis($years: [Int!], $diseaseGroupNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
+    temporalSnapshots(years: $years, disease_group_names: $diseaseGroupNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
       year
       phase_name
       sort_order
@@ -106,6 +106,12 @@ export const GET_LOCATION_SCOPES = gql`
   }
 `;
 
+// Get last sync date
+export const GET_LAST_SYNC_DATE = gql`
+  query GetLastSyncDate {
+    lastSyncDate
+  }
+`;
 // Portfolio Candidates - Portfolio Analysis (Candidates/Approved/Extract tabs, paginated)
 export const GET_PORTFOLIO_CANDIDATES = gql`
   query PortfolioCandidates($filter: PortfolioCandidateFilter, $limit: Int, $offset: Int) {
@@ -213,13 +219,23 @@ export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
   }
 `;
 
-// Get all diseases
+// Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {
     diseases {
-      disease_key
-      disease_name
+      disease_group_name
       global_health_area
+    }
+  }
+`;
+
+// Get all phases
+export const GET_PHASES = gql`
+  query GetPhases {
+    phases {
+      phase_key
+      phase_name
+      sort_order
     }
   }
 `;

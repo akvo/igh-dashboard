@@ -72,7 +72,7 @@ describe("Temporal Analysis", () => {
 });
 
 describe("Temporal Analysis — disease filter", () => {
-  it("filters by disease_key", async () => {
+  it("filters by disease_group_names", async () => {
     const { data: baselineData } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(`{
@@ -90,35 +90,27 @@ describe("Temporal Analysis — disease filter", () => {
     );
 
     const { data: lookupData } = await query<{
-      candidates: { nodes: Array<{ disease: { disease_key: number } | null }> };
-    }>(`{
-      candidates(limit: 10) {
-        nodes { disease { disease_key } }
-      }
-    }`);
+      diseases: Array<{ disease_group_name: string }>;
+    }>(`{ diseases { disease_group_name } }`);
 
-    const candidateWithDisease = lookupData.candidates.nodes.find((n) => n.disease !== null);
-    expect(candidateWithDisease).toBeDefined();
-    const diseaseKey = candidateWithDisease!.disease!.disease_key;
+    expect(lookupData.diseases.length).toBeGreaterThan(0);
+    const diseaseGroupName = lookupData.diseases[0].disease_group_name;
 
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(
-      `query ($diseaseKey: Int) {
-        temporalSnapshots(disease_key: $diseaseKey) {
+      `query ($diseaseGroupNames: [String!]) {
+        temporalSnapshots(disease_group_names: $diseaseGroupNames) {
           year
           phase_name
           sort_order
           candidateCount
         }
       }`,
-      { diseaseKey },
+      { diseaseGroupNames: [diseaseGroupName] },
     );
 
-    const filteredTotal = data.temporalSnapshots.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
@@ -156,10 +148,7 @@ describe("Temporal Analysis — global_health_area filter", () => {
       { globalHealthAreas: ["Neglected disease"] },
     );
 
-    const filteredTotal = data.temporalSnapshots.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
@@ -204,10 +193,7 @@ describe("Temporal Analysis — product_key filter", () => {
       { productKeys: [productKey] },
     );
 
-    const filteredTotal = data.temporalSnapshots.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
@@ -242,10 +228,7 @@ describe("Temporal Analysis — candidate_type filter", () => {
       }
     }`);
 
-    const filteredTotal = data.temporalSnapshots.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
