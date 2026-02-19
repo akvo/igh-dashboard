@@ -36,7 +36,7 @@ describe('globalHealthAreaSummaries transformations', () => {
     it('maps health area names to display names', () => {
       const rawData = [
         { global_health_area: 'Neglected disease', candidateCount: 100, diseaseCount: 10, productCount: 1 },
-        { global_health_area: 'Sexual & reproductive health', candidateCount: 200, diseaseCount: 20, productCount: 2 },
+        { global_health_area: 'Womens Health', candidateCount: 200, diseaseCount: 20, productCount: 2 },
         { global_health_area: 'Emerging infectious disease', candidateCount: 300, diseaseCount: 30, productCount: 3 },
       ];
 

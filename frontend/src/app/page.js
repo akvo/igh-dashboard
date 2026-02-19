@@ -37,7 +37,7 @@ const candidateTypeOptions = [
 // Global health area options for cross-pipeline filter
 const globalHealthAreaOptions = [
   { label: 'Neglected diseases', value: 'Neglected disease' },
-  { label: "Women's health", value: 'Sexual & reproductive health' },
+  { label: "Women's health", value: 'Womens Health' },
   { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
 ];
 

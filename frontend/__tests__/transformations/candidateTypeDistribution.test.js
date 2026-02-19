@@ -11,8 +11,8 @@ describe('candidateTypeDistribution transformations', () => {
     { global_health_area: 'Neglected disease', candidate_type: 'Product', candidateCount: 30 },
     { global_health_area: 'Emerging infectious disease', candidate_type: 'Candidate', candidateCount: 200 },
     { global_health_area: 'Emerging infectious disease', candidate_type: 'Product', candidateCount: 80 },
-    { global_health_area: 'Sexual & reproductive health', candidate_type: 'Candidate', candidateCount: 150 },
-    { global_health_area: 'Sexual & reproductive health', candidate_type: 'Product', candidateCount: 60 },
+    { global_health_area: 'Womens Health', candidate_type: 'Candidate', candidateCount: 150 },
+    { global_health_area: 'Womens Health', candidate_type: 'Product', candidateCount: 60 },
   ];
 
   describe('extractCandidateTypes', () => {
@@ -62,7 +62,7 @@ describe('candidateTypeDistribution transformations', () => {
       expect(categories).toContain("Women's health");
       expect(categories).toContain('Emerging infectious diseases');
       expect(categories).not.toContain('Neglected disease');
-      expect(categories).not.toContain('Sexual & reproductive health');
+      expect(categories).not.toContain('Womens Health');
     });
   });
 

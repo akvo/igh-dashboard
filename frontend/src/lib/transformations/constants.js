@@ -59,7 +59,7 @@ export const SIMPLIFIED_PHASE_NAMES = {
 // Health area display name mapping
 export const HEALTH_AREA_DISPLAY_NAMES = {
   'Neglected disease': 'Neglected diseases',
-  'Sexual & reproductive health': "Women's health",
+  'Womens Health': "Women's health",
   'Emerging infectious disease': 'Emerging infectious diseases',
 };
 

@@ -52,7 +52,7 @@ export default function CrossPipelineAnalytics() {
 
   // Build options from API data
   const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => item.name),
+    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
     [healthAreas]
   );
 
