@@ -316,7 +316,7 @@ export default function PortfolioAnalysis() {
                 </div>
                 <div className="min-w-[220px]">
                   <Dropdown
-                    label="Diseases"
+                    label="Disease"
                     value={disease}
                     onChange={setDisease}
                     placeholder="All"
@@ -389,19 +389,19 @@ export default function PortfolioAnalysis() {
                 ) : (
                   <>
                     <StatCard
-                      title="Pipeline"
+                      title="Candidates in development"
                       value={activeCandidates}
                       description="Active candidates"
                       tooltip="Number of candidates currently in active development"
                     />
                     <StatCard
-                      title="Pipeline"
+                      title="Linked clinical trials"
                       value={ongoingTrials}
                       description="Ongoing clinical trials"
                       tooltip="Number of clinical trials currently in progress"
                     />
                     <StatCard
-                      title="Pipeline"
+                      title="Approved health products"
                       value={approvedProducts}
                       description="Approved products"
                       tooltip="Number of products that have received approval"
@@ -422,9 +422,7 @@ export default function PortfolioAnalysis() {
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 mb-6">
-                  A cross-section of the pipeline by product type. Each horizontal bar represents a product type. The color coded
-                  segments indicate the amount of candidates currently in each stage of development. The global health area, disease and
-                  product filter can by used, to zoom in to the specified part of the pipeline.
+               A global overview of the R&D pipeline by product type and development stage. Each horizontal bar represents a product type, with colour‑coded segments showing how many candidates and approved products sit at each stage of the R&D lifecycle, from discovery and pre‑clinical through clinical phases to approval. Use the filters above to narrow the view by global health area, disease, or product type, and click items in the legend to toggle individual stages on or off and compare where activity is concentrated across the pipeline.
                 </p>
 
                 <StackedBarChart
@@ -465,7 +463,7 @@ export default function PortfolioAnalysis() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-6">
-                  Show overview of the amount of candidates or approved products per product type.
+                  A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both.
                 </p>
 
                 <DonutChart
@@ -530,7 +528,7 @@ export default function PortfolioAnalysis() {
                     </div>
                     <div className="min-w-[180px]">
                       <Dropdown
-                        label="Diseases"
+                        label="Disease"
                         value={extractDisease}
                         onChange={setExtractDisease}
                         placeholder="All"
@@ -739,7 +737,7 @@ export default function PortfolioAnalysis() {
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-6">
-              Switch between the tabs below to deep-dive into active candidates, the approved products, the clinical trials or the technology type within your selection of the pipeline.
+              The aggregated portfolio lets you deepdive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
             </p>
 
             {/* Tabs */}
@@ -790,7 +788,7 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 <p className="text-sm text-gray-500 mb-6">
-                  This matrix grid shows the technology types for which candidates are being developed against the R&D stages. It provides an overview of the portfolio's progress for each technology type. The numbers insight each cell indicate the total candidates matching the technology and the phase.
+                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis. 
                 </p>
 
                 {/* Table */}
@@ -874,7 +872,7 @@ export default function PortfolioAnalysis() {
             {portfolioTab === 'approved' && (
               <>
                 <p className="text-sm text-gray-500 mb-6">
-                  This section provides a comprehensive overview of products that have successfully transitioned from the development pipeline to regulatory approval. Use the data below to track the availability of approved products across your selected health areas, disease and product type.
+                  This view includes summary charts showing approval status, approving authorities, and WHO prequalification, alongside a searchable table of approved products based on current filters. The table provides product‑level details such as name, indication, approval status, approving authorities, WHO prequalification status, and other key attributes.
                 </p>
 
                 {/* Three chart cards */}
@@ -887,7 +885,7 @@ export default function PortfolioAnalysis() {
                     </div>
                     <BarChart data={approvalStatusData} height={200} />
                     <p className="text-xs text-gray-500 mt-4">
-                      A detailed look at the approving authorities and what type of approval they have given to the products.
+                      This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
                     </p>
                   </div>
 
@@ -901,7 +899,7 @@ export default function PortfolioAnalysis() {
                       Grouped bar chart placeholder
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
-                      A detailed look at the approving authorities and what type of approval they have given to the products.
+                      The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
                     </p>
                   </div>
 
@@ -921,7 +919,7 @@ export default function PortfolioAnalysis() {
                       legendPosition="bottom"
                     />
                     <p className="text-xs text-gray-500 mt-4">
-                      A comparison of approved products that have a WHO prequalification. The WHO prequalification is a "gold standard" for products intended for use in low and middle-income countries.
+                      A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low and middle-income countries.
                     </p>
                   </div>
                 </div>
@@ -1033,6 +1031,9 @@ export default function PortfolioAnalysis() {
             )}
             {portfolioTab === 'trials' && (
               <>
+              <p className="text-sm text-gray-500 mb-6">
+                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison. 
+                </p>
                 {/* Two chart cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                   {/* Age groups in clinical trials */}
@@ -1053,7 +1054,7 @@ export default function PortfolioAnalysis() {
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
-                      An overview of the demographics currently represented in clinical research. Each segment represents a different age group.
+                      Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
                     </p>
                   </div>
 
@@ -1067,7 +1068,7 @@ export default function PortfolioAnalysis() {
                       <BarChart data={trialStatusData} height={280} />
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
-                      The chart categorizes the clinical trials into six states: active, completed, terminated, suspended, withdrawn and unknown.
+                      The clinical trial status chart shows the number of studies at each stage, from ongoing to completed, providing a quick view of overall trial progress across the portfolio.
                     </p>
                   </div>
                 </div>
@@ -1089,7 +1090,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
-                    The map shows the spatial distribution of where clinical trials are physically located across the globe. Darker shades indicate countries with a higher concentration of active trials, highlighting global research hubs and potential gaps in testing location.
+                    The spatial heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
                   </p>
                   <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
                 </div>
@@ -1118,7 +1119,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">
-                      Detailed information on all clinical trials currently meeting the filter criteria.
+                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using a text search box and (filtered results) can be exported as a .csv file.
                     </p>
                   </div>
 
@@ -1224,7 +1225,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    This matrix grid shows the technology types for which candidates are being developed against the R&D stages. It provides an overview of the portfolio's progress for each technology type. The numbers insight each cell indicate the total candidates matching the technology and the phase.
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file. 
                   </p>
                 </div>
 

@@ -284,7 +284,7 @@ export default function Home() {
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                This bubble chart shows the relative scale of product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the toggle to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
+                This bubble chart shows the relative scale of product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the dropwdown menu to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
               </p>
             </div>
 
@@ -321,7 +321,7 @@ export default function Home() {
                 <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                A global heat map illustrating where R&D activity is concentrated across countries. Use the toggle to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
+                The global heat map illustrating where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
               </p>
             </div>
           </div>
@@ -411,12 +411,7 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-              This visualization tracks the evolution of the global pipeline
-              over time. It is showing how candidates have successfully
-              progressed through clinical phases toward market readiness. In the
-              make custom comparison page, it is possible to set up your own
-              comparison of a pipeline over time, or between two or more
-              diseases.
+            A high-level view of how the global R&D pipeline evolves over time across development stages. this chart shows changes in the number of candidates in early development, late development and approved products across IGH its review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progrssing through the R&D lifecycle over time.
             </p>
 
             {/* Filters */}
