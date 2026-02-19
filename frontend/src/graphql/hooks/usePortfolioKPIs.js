@@ -2,21 +2,25 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_PORTFOLIO_KPIS } from '../queries';
-import { useDashboardStore } from '@/store';
+import { useDashboardStore, getCacheKey } from '@/store';
 import { transformPortfolioKPIs } from '@/lib/transformations';
 
-const CACHE_KEY = 'portfolioKPIs';
-
-export function usePortfolioKPIs() {
+export function usePortfolioKPIs(globalHealthAreas, diseaseNames, productNames) {
   const { actions } = useDashboardStore();
-  const cachedData = actions.getCachedData(CACHE_KEY);
+  const cacheKey = getCacheKey('portfolioKPIs', { globalHealthAreas, diseaseNames, productNames });
+  const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PORTFOLIO_KPIS, {
+    variables: {
+      globalHealthAreas: globalHealthAreas?.length > 0 ? globalHealthAreas : undefined,
+      diseaseNames: diseaseNames?.length > 0 ? diseaseNames : undefined,
+      productNames: productNames?.length > 0 ? productNames : undefined,
+    },
     skip: !!cachedData,
     fetchPolicy: 'network-only',
     onCompleted: (result) => {
       if (result?.portfolioKPIs) {
-        actions.setCache(CACHE_KEY, result.portfolioKPIs);
+        actions.setCache(cacheKey, result.portfolioKPIs);
       }
     },
   });

@@ -15,6 +15,10 @@ export {
   groupByHealthArea as groupByHealthAreaCandidateType,
 } from './candidateTypeDistribution';
 export {
+  transformProductPhaseDistribution,
+  groupByProductName,
+} from './productPhaseDistribution';
+export {
   transformGeographicDistribution,
   transformToMapData,
 } from './geographicDistribution';

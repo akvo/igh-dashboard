@@ -155,6 +155,49 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ProductPhaseDistributionRow {
+    product_name: String!
+    phase_name: String!
+    sort_order: Int!
+    candidateCount: Int!
+  }
+
+  type ProductDistributionRow {
+    product_name: String!
+    candidateCount: Int!
+  }
+
+  type ClinicalTrialStatusRow {
+    status: String!
+    trialCount: Int!
+  }
+
+  type AgeGroupDistributionRow {
+    age_group_name: String!
+    candidateCount: Int!
+  }
+
+  type ClinicalTrialStats {
+    totalTrials: Int!
+    statusDistribution: [ClinicalTrialStatusRow!]!
+    ageGroupDistribution: [AgeGroupDistributionRow!]!
+  }
+
+  type ApprovalStatusRow {
+    approval_status: String!
+    candidateCount: Int!
+  }
+
+  type WHOPrequalRow {
+    who_prequalification: String!
+    candidateCount: Int!
+  }
+
+  type RegulatoryDistribution {
+    approvalStatus: [ApprovalStatusRow!]!
+    whoPrequalification: [WHOPrequalRow!]!
+  }
+
   type CandidateTypeDistributionRow {
     global_health_area: String!
     candidate_type: String!
@@ -186,6 +229,52 @@ export const typeDefs = `#graphql
     hasNextPage: Boolean!
   }
 
+  type PortfolioCandidateNode {
+    candidate_key: Int!
+    candidate_name: String
+    candidate_type: String
+    vin_candidateid: String
+    alternative_names: String
+    current_rd_stage: String
+    countries_approved_count: Int
+    countries_approved_agg: String
+    indication: String
+    target: String
+    global_health_area: String
+    disease_name: String
+    secondary_disease_name: String
+    product_name: String
+    sub_product_name: String
+    phase_name: String
+    approval_status: String
+    who_prequalification: String
+  }
+
+  type PortfolioCandidateConnection {
+    nodes: [PortfolioCandidateNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
+  type ClinicalTrialNode {
+    trial_id: Int!
+    vin_clinicaltrialid: String
+    trial_name: String
+    trial_title: String
+    trial_phase: String
+    status: String
+    candidate_name: String
+    disease_name: String
+    product_name: String
+    start_date: String
+  }
+
+  type ClinicalTrialConnection {
+    nodes: [ClinicalTrialNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
   type CandidateGeography {
     country_key: Int!
     country_name: String
@@ -196,6 +285,22 @@ export const typeDefs = `#graphql
   # =============================================================================
   # INPUT TYPES
   # =============================================================================
+
+  input PortfolioCandidateFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    product_names: [String!]
+    candidate_type: String
+    phase_names: [String!]
+    search: String
+  }
+
+  input ClinicalTrialFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    product_names: [String!]
+    status: String
+  }
 
   input CandidateFilter {
     global_health_area: String
@@ -212,7 +317,7 @@ export const typeDefs = `#graphql
 
   type Query {
     # KPIs (3 homepage cards)
-    portfolioKPIs: PortfolioKPIs!
+    portfolioKPIs(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): PortfolioKPIs!
 
     # Bubble chart
     globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
@@ -234,6 +339,24 @@ export const typeDefs = `#graphql
 
     # Detail
     candidate(candidate_key: Int!): DimCandidateCore
+
+    # Portfolio analysis - candidates list (paginated with flattened dimensions)
+    portfolioCandidates(filter: PortfolioCandidateFilter, limit: Int, offset: Int): PortfolioCandidateConnection!
+
+    # Portfolio analysis - clinical trials list (paginated)
+    clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
+
+    # Portfolio analysis - clinical trial stats (trials tab)
+    clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): ClinicalTrialStats!
+
+    # Portfolio analysis - regulatory distribution (approved products tab)
+    regulatoryDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): RegulatoryDistribution!
+
+    # Portfolio analysis - product distribution (donut chart)
+    productDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductDistributionRow!]!
+
+    # Portfolio analysis - product phase distribution
+    productPhaseDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductPhaseDistributionRow!]!
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!
