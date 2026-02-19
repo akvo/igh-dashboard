@@ -30,7 +30,7 @@ export const PHASE_COLORS = {
 // Simplified phase names for display (ordered by sort_order)
 export const SIMPLIFIED_PHASE_NAMES = {
   'Discovery': 'Discovery',
-  'Discovery and preclinical': 'Disc & Preclin',
+  'Discovery and preclinical': 'Discovery and preclinical',
   'Primary and secondary screening and optimisation': 'Screening',
   'Preclinical': 'Preclinical',
   'Development': 'Development',
@@ -48,7 +48,7 @@ export const SIMPLIFIED_PHASE_NAMES = {
   'PQ listing and regulatory approval': 'PQ/Approval',
   'Approved': 'Approved',
   'Phase IV': 'Phase IV',
-  'Post-marketing surveillance': 'Post-Market Surv',
+  'Post-marketing surveillance': 'Post-Market Surveillance',
   'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'Post-Market Safety',
   'Human safety & efficacy': 'Safety/Efficacy',
   'Operational research for diagnostics': 'Ops Research',
