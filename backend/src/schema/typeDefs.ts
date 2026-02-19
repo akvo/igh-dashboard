@@ -42,7 +42,7 @@ export const typeDefs = `#graphql
 
   type DimPriority {
     priority_key: Int!
-    vin_rdpriorityid: String
+    rdpriorityid: String
     priority_name: String
     indication: String
     intended_use: String
@@ -82,7 +82,7 @@ export const typeDefs = `#graphql
 
   type DimCandidateCore {
     candidate_key: Int!
-    vin_candidateid: String
+    candidateid: String
     candidate_name: String
     vin_candidate_code: String
     developers_agg: String
@@ -119,7 +119,7 @@ export const typeDefs = `#graphql
     trial_phase: String
     enrollment_count: Int
     status: String
-    vin_clinicaltrialid: String
+    clinicaltrialid: String
     disease_key: Int
     product_key: Int
     trial_name: String

@@ -51,7 +51,7 @@ export interface Product {
 export interface CandidateNode {
   candidate_key: number;
   candidate_name: string | null;
-  vin_candidateid: string | null;
+  candidateid: string | null;
   vin_candidate_code: string | null;
   developers_agg: string | null;
 }

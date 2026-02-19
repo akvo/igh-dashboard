@@ -167,7 +167,7 @@ export function getPrioritiesByCandidateKey(candidate_key: number): DimPriority[
   return db
     .prepare(
       `
-    SELECT p.priority_key, p.vin_rdpriorityid, p.priority_name, p.indication, p.intended_use
+    SELECT p.priority_key, p.rdpriorityid, p.priority_name, p.indication, p.intended_use
     FROM dim_priority p
     JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
     WHERE bp.candidate_key = ?

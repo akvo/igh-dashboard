@@ -13,7 +13,7 @@ const { DimCandidateCore: candidateResolvers } = resolvers;
 function makeParent(overrides?: Partial<DimCandidateCore>): DimCandidateCore {
   return {
     candidate_key: 1,
-    vin_candidateid: null,
+    candidateid: null,
     candidate_name: "Test",
     vin_candidate_code: null,
     developers_agg: null,

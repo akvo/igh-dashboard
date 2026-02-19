@@ -371,10 +371,7 @@ describe("Phase Distribution — filters", () => {
       { productKeys },
     );
 
-    const filteredTotal = data.phaseDistribution.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });

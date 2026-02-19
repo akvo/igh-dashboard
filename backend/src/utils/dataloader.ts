@@ -107,7 +107,7 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT bp.candidate_key, p.priority_key, p.vin_rdpriorityid, p.priority_name, p.indication, p.intended_use, p.disease_key
+          SELECT bp.candidate_key, p.priority_key, p.rdpriorityid, p.priority_name, p.indication, p.intended_use, p.disease_key
           FROM dim_priority p
           JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
           WHERE bp.candidate_key IN (${placeholders})
@@ -121,7 +121,7 @@ export function createLoaders() {
         const existing = map.get(row.candidate_key) || [];
         existing.push({
           priority_key: row.priority_key,
-          vin_rdpriorityid: row.vin_rdpriorityid,
+          rdpriorityid: row.rdpriorityid,
           priority_name: row.priority_name,
           indication: row.indication,
           intended_use: row.intended_use,
@@ -175,7 +175,7 @@ export function createLoaders() {
           .prepare(
             `
           SELECT trial_id, candidate_key, start_date_key, trial_phase, enrollment_count, status,
-                 vin_clinicaltrialid, disease_key, product_key, trial_name, trial_title,
+                 clinicaltrialid, disease_key, product_key, trial_name, trial_title,
                  sponsor, locations, age_groups, study_type, source_text
           FROM fact_clinical_trial_event
           WHERE candidate_key IN (${placeholders})
