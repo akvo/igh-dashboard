@@ -1,9 +1,6 @@
 import { getDatabase } from "../connection.js";
-import type {
-  ApprovalStatusRow,
-  WHOPrequalRow,
-  RegulatoryDistribution,
-} from "../types.js";
+import type { ApprovalStatusRow, WHOPrequalRow, RegulatoryDistribution } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 interface RegulatoryDistributionFilters {
   global_health_areas?: string[];
@@ -11,42 +8,28 @@ interface RegulatoryDistributionFilters {
   product_names?: string[];
 }
 
+const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
+
 /**
  * Build shared joins/conditions for regulatory queries.
  */
 function buildFilterClauses(filters?: RegulatoryDistributionFilters) {
-  const joins = [
-    "JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key",
-  ];
+  const joins = ["JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key"];
   const conditions = ["f.is_active_flag = 1"];
   const params: (string | number)[] = [];
 
-  const needsDiseaseJoin =
-    (filters?.global_health_areas && filters.global_health_areas.length > 0) ||
-    (filters?.disease_names && filters.disease_names.length > 0);
+  const diseaseCtx = { joins, join: DISEASE_JOIN };
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
 
-  if (needsDiseaseJoin) {
-    joins.push("JOIN dim_disease d ON f.disease_key = d.disease_key");
-  }
-
-  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
-    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filters.global_health_areas);
-  }
-
-  if (filters?.disease_names && filters.disease_names.length > 0) {
-    const placeholders = filters.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_group_name IN (${placeholders})`);
-    params.push(...filters.disease_names);
-  }
-
-  if (filters?.product_names && filters.product_names.length > 0) {
-    joins.push("JOIN dim_product pr ON f.product_key = pr.product_key");
-    const placeholders = filters.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filters.product_names);
-  }
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
 
   return { joins, conditions, params };
 }
@@ -75,9 +58,7 @@ export function getRegulatoryDistribution(
     ORDER BY candidateCount DESC
   `;
 
-  const approvalStatus = db
-    .prepare(approvalSql)
-    .all(...as.params) as ApprovalStatusRow[];
+  const approvalStatus = db.prepare(approvalSql).all(...as.params) as ApprovalStatusRow[];
 
   // WHO prequalification distribution
   const wq = buildFilterClauses(filters);
@@ -94,9 +75,7 @@ export function getRegulatoryDistribution(
     ORDER BY candidateCount DESC
   `;
 
-  const whoPrequalification = db
-    .prepare(whoSql)
-    .all(...wq.params) as WHOPrequalRow[];
+  const whoPrequalification = db.prepare(whoSql).all(...wq.params) as WHOPrequalRow[];
 
   return { approvalStatus, whoPrequalification };
 }

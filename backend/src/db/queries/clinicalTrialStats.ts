@@ -4,12 +4,15 @@ import type {
   AgeGroupDistributionRow,
   ClinicalTrialStats,
 } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 interface ClinicalTrialStatsFilters {
   global_health_areas?: string[];
   disease_names?: string[];
   product_names?: string[];
 }
+
+const DISEASE_JOIN = "JOIN dim_disease d ON t.disease_key = d.disease_key";
 
 /**
  * Build shared joins/conditions for clinical trial queries.
@@ -19,32 +22,18 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
-  const needsDiseaseJoin =
-    (filters?.global_health_areas && filters.global_health_areas.length > 0) ||
-    (filters?.disease_names && filters.disease_names.length > 0);
+  const diseaseCtx = { joins, join: DISEASE_JOIN };
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
 
-  if (needsDiseaseJoin) {
-    joins.push("JOIN dim_disease d ON t.disease_key = d.disease_key");
-  }
-
-  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
-    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filters.global_health_areas);
-  }
-
-  if (filters?.disease_names && filters.disease_names.length > 0) {
-    const placeholders = filters.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_group_name IN (${placeholders})`);
-    params.push(...filters.disease_names);
-  }
-
-  if (filters?.product_names && filters.product_names.length > 0) {
-    joins.push("JOIN dim_product pr ON t.product_key = pr.product_key");
-    const placeholders = filters.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filters.product_names);
-  }
+  const productCtx = { joins, join: "JOIN dim_product pr ON t.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
 
   return { joins, conditions, params };
 }
@@ -53,9 +42,7 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
  * Get clinical trial statistics for the trials tab.
  * Returns total trial count, status distribution, and age group distribution.
  */
-export function getClinicalTrialStats(
-  filters?: ClinicalTrialStatsFilters,
-): ClinicalTrialStats {
+export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): ClinicalTrialStats {
   const db = getDatabase();
 
   // Total trials count
@@ -83,9 +70,7 @@ export function getClinicalTrialStats(
     GROUP BY t.status
     ORDER BY trialCount DESC
   `;
-  const statusDistribution = db
-    .prepare(statusSql)
-    .all(...sc.params) as ClinicalTrialStatusRow[];
+  const statusDistribution = db.prepare(statusSql).all(...sc.params) as ClinicalTrialStatusRow[];
 
   // Age group distribution (via bridge_candidate_age_group + dim_age_group)
   const ac = buildFilterClauses(filters);
@@ -105,9 +90,7 @@ export function getClinicalTrialStats(
     GROUP BY ag.age_group_name
     ORDER BY candidateCount DESC
   `;
-  const ageGroupDistribution = db
-    .prepare(ageSql)
-    .all(...ac.params) as AgeGroupDistributionRow[];
+  const ageGroupDistribution = db.prepare(ageSql).all(...ac.params) as AgeGroupDistributionRow[];
 
   return {
     totalTrials: total.count,

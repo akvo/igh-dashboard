@@ -1,5 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { PortfolioKPIs } from "../types.js";
+import { addArrayCondition } from "./filterUtils.js";
 
 interface KPIFilters {
   global_health_areas?: string[];
@@ -7,40 +8,28 @@ interface KPIFilters {
   product_names?: string[];
 }
 
+const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
+
 /**
  * Build shared filter joins and conditions for KPI queries.
  */
 function buildKPIFilter(filters?: KPIFilters) {
   const joins: string[] = [];
   const conditions: string[] = ["f.is_active_flag = 1"];
-  const params: string[] = [];
+  const params: (string | number)[] = [];
 
-  const needsDiseaseJoin =
-    (filters?.global_health_areas && filters.global_health_areas.length > 0) ||
-    (filters?.disease_names && filters.disease_names.length > 0);
+  const diseaseCtx = { joins, join: DISEASE_JOIN };
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
 
-  if (needsDiseaseJoin) {
-    joins.push("JOIN dim_disease d ON f.disease_key = d.disease_key");
-  }
-
-  if (filters?.global_health_areas && filters.global_health_areas.length > 0) {
-    const placeholders = filters.global_health_areas.map(() => "?").join(", ");
-    conditions.push(`d.global_health_area IN (${placeholders})`);
-    params.push(...filters.global_health_areas);
-  }
-
-  if (filters?.disease_names && filters.disease_names.length > 0) {
-    const placeholders = filters.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_group_name IN (${placeholders})`);
-    params.push(...filters.disease_names);
-  }
-
-  if (filters?.product_names && filters.product_names.length > 0) {
-    joins.push("JOIN dim_product pr ON f.product_key = pr.product_key");
-    const placeholders = filters.product_names.map(() => "?").join(", ");
-    conditions.push(`pr.product_name IN (${placeholders})`);
-    params.push(...filters.product_names);
-  }
+  const productJoin = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productJoin);
 
   return { joins, conditions, params };
 }
@@ -51,13 +40,15 @@ function buildKPIFilter(filters?: KPIFilters) {
  */
 export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
   const db = getDatabase();
-  const { joins: baseJoins, conditions: baseConditions, params: baseParams } = buildKPIFilter(filters);
+  const {
+    joins: baseJoins,
+    conditions: baseConditions,
+    params: baseParams,
+  } = buildKPIFilter(filters);
 
   // KPI Card: "Number of diseases"
   const needsDiseaseJoinForCount = !baseJoins.some((j) => j.includes("dim_disease"));
-  const diseaseJoins = needsDiseaseJoinForCount
-    ? [...baseJoins, "JOIN dim_disease d ON f.disease_key = d.disease_key"]
-    : baseJoins;
+  const diseaseJoins = needsDiseaseJoinForCount ? [...baseJoins, DISEASE_JOIN] : baseJoins;
 
   const diseases = db
     .prepare(
@@ -69,7 +60,10 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
     .get(...baseParams) as { count: number };
 
   // KPI Card: "Total candidates"
-  const candidateJoins = [...baseJoins, "JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key"];
+  const candidateJoins = [
+    ...baseJoins,
+    "JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key",
+  ];
   const candidateConditions = [...baseConditions, "c.candidate_type = 'Candidate'"];
 
   const candidates = db

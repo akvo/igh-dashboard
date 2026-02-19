@@ -94,16 +94,32 @@ export const resolvers = {
     // Portfolio analysis - candidates list (paginated)
     portfolioCandidates: (
       _: unknown,
-      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string }; limit?: number; offset?: number },
-    ) =>
-      getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          candidate_type?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trials list (paginated)
     clinicalTrials: (
       _: unknown,
-      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; status?: string }; limit?: number; offset?: number },
-    ) =>
-      getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          status?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (
@@ -130,7 +146,12 @@ export const resolvers = {
     // Portfolio analysis - product distribution (donut chart)
     productDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
     ) =>
       getProductDistribution({
         global_health_areas: args.global_health_areas,
@@ -142,7 +163,12 @@ export const resolvers = {
     // Portfolio analysis - product phase distribution
     productPhaseDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
     ) =>
       getProductPhaseDistribution({
         global_health_areas: args.global_health_areas,
