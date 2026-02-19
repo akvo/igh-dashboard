@@ -314,7 +314,7 @@ export default function Home() {
                     onChange={setMapTab}
                     tabs={[
                       { label: 'Location of clinical trials', value: 'trials' },
-                      { label: 'Location of development', value: 'development' },
+                      { label: 'Location of developers', value: 'development' },
                     ]}
                   />
                 </div>
