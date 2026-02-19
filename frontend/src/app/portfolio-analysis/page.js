@@ -125,7 +125,7 @@ export default function PortfolioAnalysis() {
   // Available columns for Extract custom details
   const availableColumns = [
     { id: 'type', label: 'Type', accessor: 'candidate_type' },
-    { id: 'ighId', label: 'IGH ID', accessor: 'vin_candidateid' },
+    { id: 'ighId', label: 'IGH ID', accessor: 'candidateid' },
     { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names' },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
     { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
@@ -1009,7 +1009,7 @@ export default function PortfolioAnalysis() {
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.vin_clinicaltrialid}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.clinicaltrialid}</td>
                             <td className="py-4 px-4">
                               <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>

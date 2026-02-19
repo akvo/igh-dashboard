@@ -120,7 +120,7 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         candidate_key
         candidate_name
         candidate_type
-        vin_candidateid
+        candidateid
         alternative_names
         current_rd_stage
         countries_approved_count
@@ -148,7 +148,7 @@ export const GET_CLINICAL_TRIALS = gql`
     clinicalTrials(filter: $filter, limit: $limit, offset: $offset) {
       nodes {
         trial_id
-        vin_clinicaltrialid
+        clinicaltrialid
         trial_name
         trial_title
         trial_phase

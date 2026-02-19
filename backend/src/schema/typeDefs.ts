@@ -68,12 +68,10 @@ export const typeDefs = `#graphql
   type DimCandidateRegulatory {
     regulatory_key: Int!
     approval_status: String
-    sra_approval_flag: Int
     fda_approval_date: String
     who_prequal_date: String
     who_prequalification: String
     nra_approval_status: String
-    nra_approval_date: String
   }
 
   type DimDeveloper {
@@ -234,7 +232,7 @@ export const typeDefs = `#graphql
     candidate_key: Int!
     candidate_name: String
     candidate_type: String
-    vin_candidateid: String
+    candidateid: String
     alternative_names: String
     current_rd_stage: String
     countries_approved_count: Int
@@ -259,7 +257,7 @@ export const typeDefs = `#graphql
 
   type ClinicalTrialNode {
     trial_id: Int!
-    vin_clinicaltrialid: String
+    clinicaltrialid: String
     trial_name: String
     trial_title: String
     trial_phase: String

@@ -91,12 +91,10 @@ export interface DimCandidateTech {
 export interface DimCandidateRegulatory {
   regulatory_key: number;
   approval_status: string | null;
-  sra_approval_flag: number | null;
   fda_approval_date: string | null;
   who_prequal_date: string | null;
   who_prequalification: string | null;
   nra_approval_status: string | null;
-  nra_approval_date: string | null;
 }
 
 export interface DimDeveloper {
@@ -246,7 +244,7 @@ export interface ClinicalTrialStats {
 
 export interface ClinicalTrialNode {
   trial_id: number;
-  vin_clinicaltrialid: string | null;
+  clinicaltrialid: string | null;
   trial_name: string | null;
   trial_title: string | null;
   trial_phase: string | null;
@@ -274,7 +272,7 @@ export interface PortfolioCandidateNode {
   candidate_key: number;
   candidate_name: string | null;
   candidate_type: string | null;
-  vin_candidateid: string | null;
+  candidateid: string | null;
   alternative_names: string | null;
   current_rd_stage: string | null;
   countries_approved_count: number | null;

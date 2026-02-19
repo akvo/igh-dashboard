@@ -68,7 +68,7 @@ export function getPortfolioCandidates(
         c.candidate_key,
         c.candidate_name,
         c.candidate_type,
-        c.vin_candidateid,
+        c.candidateid,
         c.alternative_names,
         c.current_rd_stage,
         c.countries_approved_count,
@@ -91,7 +91,7 @@ export function getPortfolioCandidates(
       ${JOINS}
       ${whereClause}
     )
-    SELECT candidate_key, candidate_name, candidate_type, vin_candidateid,
+    SELECT candidate_key, candidate_name, candidate_type, candidateid,
            alternative_names, current_rd_stage, countries_approved_count,
            countries_approved_agg, indication, target,
            global_health_area, disease_name, secondary_disease_name,
