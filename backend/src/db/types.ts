@@ -220,6 +220,111 @@ export interface CandidateFilter {
   is_active?: boolean;
 }
 
+export interface ProductPhaseDistributionRow {
+  product_name: string;
+  phase_name: string;
+  sort_order: number;
+  candidateCount: number;
+}
+
+export interface ClinicalTrialStatusRow {
+  status: string;
+  trialCount: number;
+}
+
+export interface AgeGroupDistributionRow {
+  age_group_name: string;
+  candidateCount: number;
+}
+
+export interface ClinicalTrialStats {
+  totalTrials: number;
+  statusDistribution: ClinicalTrialStatusRow[];
+  ageGroupDistribution: AgeGroupDistributionRow[];
+}
+
+export interface ClinicalTrialNode {
+  trial_id: number;
+  vin_clinicaltrialid: string | null;
+  trial_name: string | null;
+  trial_title: string | null;
+  trial_phase: string | null;
+  status: string | null;
+  candidate_name: string | null;
+  disease_name: string | null;
+  product_name: string | null;
+  start_date: string | null;
+}
+
+export interface ClinicalTrialFilter {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  product_names?: string[];
+  status?: string;
+}
+
+export interface ClinicalTrialConnection {
+  nodes: ClinicalTrialNode[];
+  totalCount: number;
+  hasNextPage: boolean;
+}
+
+export interface PortfolioCandidateNode {
+  candidate_key: number;
+  candidate_name: string | null;
+  candidate_type: string | null;
+  vin_candidateid: string | null;
+  alternative_names: string | null;
+  current_rd_stage: string | null;
+  countries_approved_count: number | null;
+  countries_approved_agg: string | null;
+  global_health_area: string | null;
+  disease_name: string | null;
+  secondary_disease_name: string | null;
+  product_name: string | null;
+  sub_product_name: string | null;
+  phase_name: string | null;
+  approval_status: string | null;
+  who_prequalification: string | null;
+  indication: string | null;
+  target: string | null;
+}
+
+export interface PortfolioCandidateFilter {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  product_names?: string[];
+  candidate_type?: string;
+  phase_names?: string[];
+  search?: string;
+}
+
+export interface PortfolioCandidateConnection {
+  nodes: PortfolioCandidateNode[];
+  totalCount: number;
+  hasNextPage: boolean;
+}
+
+export interface ApprovalStatusRow {
+  approval_status: string;
+  candidateCount: number;
+}
+
+export interface WHOPrequalRow {
+  who_prequalification: string;
+  candidateCount: number;
+}
+
+export interface RegulatoryDistribution {
+  approvalStatus: ApprovalStatusRow[];
+  whoPrequalification: WHOPrequalRow[];
+}
+
+export interface ProductDistributionRow {
+  product_name: string;
+  candidateCount: number;
+}
+
 // =============================================================================
 // Extended types for resolved relations
 // =============================================================================

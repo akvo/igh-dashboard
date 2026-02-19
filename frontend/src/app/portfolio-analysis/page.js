@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -16,6 +16,10 @@ export default function PortfolioAnalysis() {
   const [portfolioTab, setPortfolioTab] = useState('candidates');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [trialsPage, setTrialsPage] = useState(1);
+  const [candidatesPage, setCandidatesPage] = useState(1);
+  const [approvedPage, setApprovedPage] = useState(1);
+  const [extractPage, setExtractPage] = useState(1);
   const [extractTab, setExtractTab] = useState('candidates-approved');
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
@@ -26,9 +30,39 @@ export default function PortfolioAnalysis() {
   const [extractRdStage, setExtractRdStage] = useState('');
 
   // Fetch data from API
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
+  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
+  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
+  const itemsPerPage = 10;
+  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
+  const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Candidate' }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
+  );
+  const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
+  );
+  const extractFilter = {
+    globalHealthAreas: extractHealthArea ? [extractHealthArea] : undefined,
+    diseaseNames: extractDisease ? [extractDisease] : undefined,
+    productNames: extractProduct ? [extractProduct] : undefined,
+    phaseNames: extractRdStage ? [extractRdStage] : undefined,
+    search: extractSearchQuery || undefined,
+  };
+  const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
+    extractFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+  );
+  const trialsPerPage = 10;
+  const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
+    { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product },
+    trialsPerPage,
+    (trialsPage - 1) * trialsPerPage,
+  );
+  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location');
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -42,15 +76,11 @@ export default function PortfolioAnalysis() {
     [productsList]
   );
 
-  // Dummy diseases for now (backend has this endpoint)
-  const diseaseOptions = [
-    'Malaria',
-    'Tuberculosis',
-    'HIV/AIDS',
-    'COVID-19',
-    'Dengue',
-    'Zika',
-  ];
+  // Disease options from API (deduplicated)
+  const diseaseOptions = useMemo(() =>
+    [...new Set((diseasesList || []).map(d => d.disease_name).filter(Boolean))],
+    [diseasesList]
+  );
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -64,60 +94,14 @@ export default function PortfolioAnalysis() {
   const activeCandidates = kpis?.find(k => k.id === 'candidates')?.value || 0;
   const approvedProducts = kpis?.find(k => k.id === 'approved')?.value || 0;
 
-  // Dummy data for clinical trials (not in current API)
-  const ongoingTrials = 42;
 
-  // Dummy data for Global pipeline overview chart
-  const pipelinePhases = [
-    { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-    { key: 'preClinical', label: 'Pre-clinical', color: '#fe7449' },
-    { key: 'phase1', label: 'Phase 1', color: '#f9a78d' },
-    { key: 'phase2', label: 'Phase 2', color: '#ddd6fe' },
-    { key: 'phase3', label: 'Phase 3', color: '#a78bfa' },
-    { key: 'approved', label: 'Approved', color: '#f0b456' },
-  ];
-
-  const pipelineData = [
-    { category: 'Diagnostics', discovery: 30, preClinical: 45, phase1: 60, phase2: 80, phase3: 50, approved: 40 },
-    { category: 'Vaccines', discovery: 40, preClinical: 55, phase1: 70, phase2: 90, phase3: 60, approved: 50 },
-    { category: 'Drugs', discovery: 25, preClinical: 35, phase1: 40, phase2: 30, phase3: 20, approved: 15 },
-    { category: 'Microbicides', discovery: 35, preClinical: 50, phase1: 65, phase2: 85, phase3: 70, approved: 45 },
-    { category: 'Biologics', discovery: 45, preClinical: 60, phase1: 75, phase2: 95, phase3: 65, approved: 55 },
-    { category: 'VCP', discovery: 20, preClinical: 30, phase1: 45, phase2: 55, phase3: 35, approved: 25 },
-  ];
-
-  // Dummy data for Product types donut chart
-  const productTypesData = [
-    { name: 'Vaccines', value: 120 },
-    { name: 'Drugs', value: 85 },
-    { name: 'Diagnostics', value: 95 },
-    { name: 'Biologics', value: 60 },
-    { name: 'VCP', value: 45 },
-    { name: 'Dietary supplement', value: 30 },
-    { name: 'Microbicides', value: 55 },
-    { name: 'Microbial interventions', value: 25 },
-  ];
-
+  // Donut chart colors (enough for typical product count)
   const productTypeColors = [
-    '#fe7449', // Vaccines - orange
-    '#a78bfa', // Drugs - purple
-    '#f9a78d', // Diagnostics - peach
-    '#ddd6fe', // Biologics - light purple
-    '#f0b456', // VCP - gold
-    '#54a5c4', // Dietary supplement - teal
-    '#8c4028', // Microbicides - brown
-    '#e3d6c1', // Microbial interventions - beige
+    '#fe7449', '#a78bfa', '#f9a78d', '#ddd6fe',
+    '#f0b456', '#54a5c4', '#8c4028', '#e3d6c1',
   ];
 
   // Dummy data for candidates table
-  const candidatesData = [
-    { name: 'DPP Fever Panel II Asia IgM', gha: 'Emerging infectious disease', disease: 'Zika', product: 'Diagnostics', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'TRURAPID MPXV Ag Test', gha: 'Emerging infectious disease', disease: 'Dengue', product: 'Drugs', rdStage: 'Phase 2', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'NABIT Mpox Test', gha: 'Emerging infectious disease', disease: 'Tuberculosis', product: 'Drugs', rdStage: 'Discovery', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Moxidectin - Onchocerciasis', gha: 'Emerging infectious disease', disease: 'Malaria', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', gha: 'Emerging infectious disease', disease: 'COVID-19', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', gha: 'Emerging infectious disease', disease: 'Hepatitis', product: 'Drugs', rdStage: 'Unknown', altNames: 'Unknown', approved: 'It is a rapid multiplex detection of IgM...' },
-  ];
 
   const getRdStageStyle = (stage) => {
     switch (stage) {
@@ -130,72 +114,27 @@ export default function PortfolioAnalysis() {
     }
   };
 
-  // Dummy data for approved products table
-  const approvedProductsData = [
-    { name: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of...', disease: 'Malaria', product: 'Drugs', ageSpecific: 'No data available', researchStatus: 'Approved', whoPrequal: 'yes', countries: 0 },
-    { name: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditio...', disease: 'Dengue', product: 'Drugs', ageSpecific: '18+', researchStatus: 'Phase 2', whoPrequal: 'no', countries: 1 },
-    { name: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', disease: 'Tuberculosis', product: 'Drugs', ageSpecific: '6+', researchStatus: 'Phase 1', whoPrequal: 'yes', countries: 2 },
-    { name: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', disease: 'HIV/AIDS', product: 'Drugs', ageSpecific: '12+', researchStatus: 'Pre clinical', whoPrequal: 'no', countries: 3 },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', disease: 'COVID-19', product: 'Drugs', ageSpecific: '3+', researchStatus: 'Discovery', whoPrequal: 'yes', countries: 4 },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown', whoPrequal: 'no', countries: 5 },
-  ];
 
-  // Dummy data for approval status chart
-  const approvalStatusData = [
-    { name: 'Approved', value: 170 },
-    { name: 'Used off-label', value: 25 },
-    { name: 'Withdraw', value: 95 },
-    { name: 'Emergency Use', value: 65 },
-    { name: 'Review', value: 75 },
-    { name: 'Unknown', value: 55 },
-  ];
-
-  // Dummy data for WHO prequalification donut
-  const whoPrequalData = [
-    { name: 'Yes', value: 65 },
-    { name: 'No', value: 35 },
-  ];
-
-  // Dummy data for age groups in clinical trials
-  const ageGroupsData = [
-    { name: 'Neonates', value: 15 },
-    { name: 'Infants', value: 25 },
-    { name: 'Children', value: 35 },
-    { name: 'Adolescents', value: 20 },
-    { name: 'Young adults (18-45)', value: 30 },
-    { name: 'Older adults (45+)', value: 25 },
-  ];
 
   const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
 
-  // Dummy data for clinical trial status
-  const trialStatusData = [
-    { name: 'Terminated', value: 2 },
-    { name: 'Active', value: 5 },
-    { name: 'Completed', value: 4 },
-    { name: 'Suspended', value: 3 },
-    { name: 'Withdrawn', value: 1 },
-    { name: 'Unknown', value: 4 },
-  ];
-
-  // Dummy map data for clinical trials
-  const clinicalTrialsMapData = {
-    US: 150, BR: 80, CN: 120, IN: 90, RU: 60, AU: 40, ZA: 30, NG: 25, KE: 20, EG: 15,
-  };
 
   // Available columns for Extract custom details
   const availableColumns = [
-    { id: 'type', label: 'Type' },
-    { id: 'ighId', label: 'IGH ID' },
-    { id: 'altNames', label: 'Alternative names' },
-    { id: 'gha', label: 'Global health area' },
-    { id: 'primaryDisease', label: 'Primary disease' },
-    { id: 'secondaryDisease', label: 'Secondary disease' },
-    { id: 'product', label: 'Product' },
-    { id: 'subProduct', label: 'Sub product' },
-    { id: 'indication', label: 'Indication' },
-    { id: 'target', label: 'Target' },
+    { id: 'type', label: 'Type', accessor: 'candidate_type' },
+    { id: 'ighId', label: 'IGH ID', accessor: 'vin_candidateid' },
+    { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names' },
+    { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
+    { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
+    { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
+    { id: 'product', label: 'Product', accessor: 'product_name' },
+    { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
+    { id: 'indication', label: 'Indication', accessor: 'indication' },
+    { id: 'target', label: 'Target', accessor: 'target' },
   ];
+
+  // Columns currently active based on user selection
+  const activeExtractColumns = availableColumns.filter((col) => selectedColumns.includes(col.id));
 
   const filteredColumns = availableColumns.filter((col) =>
     col.label.toLowerCase().includes(columnSearchQuery.toLowerCase())
@@ -220,17 +159,10 @@ export default function PortfolioAnalysis() {
     setExtractDisease('');
     setExtractProduct('');
     setExtractRdStage('');
+    setExtractSearchQuery('');
+    setExtractPage(1);
   };
 
-  // Dummy data for extract table
-  const extractTableData = [
-    { name: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of...', disease: 'Malaria', product: 'Drugs', ageSpecific: 'No data available', researchStatus: 'Approved' },
-    { name: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditio...', disease: 'Dengue', product: 'Drugs', ageSpecific: '18+', researchStatus: 'Phase 2' },
-    { name: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', disease: 'Tuberculosis', product: 'Drugs', ageSpecific: '6+', researchStatus: 'Phase 1' },
-    { name: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', disease: 'HIV/AIDS', product: 'Drugs', ageSpecific: '12+', researchStatus: 'Pre clinical' },
-    { name: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', disease: 'COVID-19', product: 'Drugs', ageSpecific: '3+', researchStatus: 'Discovery' },
-    { name: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', disease: 'Hepatitis', product: 'Drugs', ageSpecific: 'All Ages', researchStatus: 'Unknown' },
-  ];
 
   // R&D stage options
   const rdStageOptions = ['Discovery', 'Pre clinical', 'Phase 1', 'Phase 2', 'Phase 3', 'Approved'];
@@ -244,15 +176,6 @@ export default function PortfolioAnalysis() {
     { name: 'Therapeutic - natural/botanical', discovery: 12, preClinical: 42, phase1: 0, phase2: 0, phase3: 0, approved: 0 },
   ];
 
-  // Dummy data for clinical trials table
-  const clinicalTrialsTableData = [
-    { name: 'NCT06558643', title: 'Single Ascending Dose Study to Assess the Safety, Tolerability and Pharmacokinetics of MMV371 LAI i...', phase: 'Pre clinical', candidate: 'MMV371', disease: 'Malaria', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558644', title: 'Phase 2 Clinical Trial to Evaluate the Efficacy of MMV371 LAI in Patients with Chronic Conditions', phase: 'Phase 2', candidate: 'MMV372', disease: 'Dengue', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558645', title: 'Long-Term Safety Study of MMV371 LAI in Pediatric Participants', phase: 'Pre clinical', candidate: 'MMV373', disease: 'Tuberculosis', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558646', title: 'MMV371 LAI Dosing Regimen Study for Optimal Therapeutic Outcomes', phase: 'Approved', candidate: 'MMV374', disease: 'HIV/AIDS', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558647', title: 'Comparative Study of MMV371 LAI and Existing Treatments for Efficacy', phase: 'Phase 1', candidate: 'MMV375', disease: 'COVID-19', product: 'Drugs', startDate: '2024-08' },
-    { name: 'NCT06558648', title: 'Post-Marketing Surveillance of MMV371 LAI in Diverse Populations', phase: 'Phase 1', candidate: 'MMV376', disease: 'Hepatitis', product: 'Drugs', startDate: '2024-09' },
-  ];
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -322,6 +245,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={diseaseOptions}
                     multiSelect={true}
+                    loading={diseasesLoading}
                   />
                 </div>
                 <div className="min-w-[220px]">
@@ -522,7 +446,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Global health area"
                         value={extractHealthArea}
-                        onChange={setExtractHealthArea}
+                        onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
                         options={healthAreaOptions}
                         compact={true}
@@ -532,7 +456,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Diseases"
                         value={extractDisease}
-                        onChange={setExtractDisease}
+                        onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
                         placeholder="All"
                         options={diseaseOptions}
                         compact={true}
@@ -542,9 +466,9 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="Product"
                         value={extractProduct}
-                        onChange={setExtractProduct}
+                        onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={['Drugs', 'Vaccines', 'Diagnostics', 'Biologics']}
+                        options={productOptions}
                         compact={true}
                       />
                     </div>
@@ -552,7 +476,7 @@ export default function PortfolioAnalysis() {
                       <Dropdown
                         label="R&D stage"
                         value={extractRdStage}
-                        onChange={setExtractRdStage}
+                        onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
                         placeholder="All"
                         options={rdStageOptions}
                         compact={true}
@@ -656,27 +580,21 @@ export default function PortfolioAnalysis() {
                             <thead>
                               <tr className="border-b border-gray-200">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Age specific</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Research status</th>
+                                {activeExtractColumns.map((col) => (
+                                  <th key={col.id} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{col.label}</th>
+                                ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {extractTableData.map((item, index) => (
-                                <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                              {extractTableData.map((item) => (
+                                <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="py-4 px-4">
-                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.name}</div>
+                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                                  <td className="py-4 px-4 text-sm text-gray-600">{item.ageSpecific}</td>
-                                  <td className="py-4 px-4">
-                                    <span className={`px-2 py-1 text-xs ${getRdStageStyle(item.researchStatus)}`}>
-                                      {item.researchStatus}
-                                    </span>
-                                  </td>
+                                  {activeExtractColumns.map((col) => (
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600">{item[col.accessor]}</td>
+                                  ))}
                                 </tr>
                               ))}
                             </tbody>
@@ -684,42 +602,24 @@ export default function PortfolioAnalysis() {
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-                          <div className="flex items-center gap-2">
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                              <ChevronLeftIcon className="w-5 h-5" />
-                            </button>
-                            {[1, 2, 3, 4, 5].map((page) => (
-                              <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`w-8 h-8 text-sm rounded ${
-                                  currentPage === page
-                                    ? 'bg-orange-500 text-white'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                            <span className="text-gray-400">...</span>
-                            <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                            <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                              <ChevronRightIcon className="w-5 h-5" />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            Results per page:
-                            <Dropdown
-                              value={[]}
-                              onChange={() => {}}
-                              placeholder="6"
-                              options={['6', '12', '24', '48']}
-                              compact={true}
-                              className="w-20"
-                            />
-                          </div>
-                        </div>
+                        {(() => {
+                          const totalPages = Math.ceil(extractTotalCount / itemsPerPage);
+                          const maxVisible = 5;
+                          const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                          return (
+                            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
+                              <div className="flex items-center gap-2">
+                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={extractPage <= 1} onClick={() => setExtractPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                                {pages.map((page) => (
+                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                                ))}
+                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!extractHasNext} onClick={() => setExtractPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                              </div>
+                              <span className="text-sm text-gray-500">{extractTotalCount} results</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -808,22 +708,22 @@ export default function PortfolioAnalysis() {
                       </tr>
                     </thead>
                     <tbody>
-                      {candidatesData.map((candidate, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      {candidatesData.map((candidate) => (
+                        <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black">{candidate.name}</div>
+                            <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.gha}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product_name}</td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.rdStage)}`}>
-                              {candidate.rdStage}
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
+                              {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.altNames}</td>
-                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.approved}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.alternative_names}</td>
+                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.countries_approved_agg}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -831,42 +731,24 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between mt-6">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    {[1, 2, 3, 4, 5].map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 text-sm rounded ${
-                          currentPage === page
-                            ? 'bg-orange-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <span className="text-gray-400">...</span>
-                    <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    Results per page:
-                    <Dropdown
-                      value={[]}
-                      onChange={() => {}}
-                      placeholder="6"
-                      options={['6', '12', '24', '48']}
-                      compact={true}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const totalPages = Math.ceil(candidatesTotalCount / itemsPerPage);
+                  const maxVisible = 5;
+                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                  return (
+                    <div className="flex items-center justify-between mt-6">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={candidatesPage <= 1} onClick={() => setCandidatesPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                        {pages.map((page) => (
+                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                        ))}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!candidatesHasNext} onClick={() => setCandidatesPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                      </div>
+                      <span className="text-sm text-gray-500">{candidatesTotalCount} results</span>
+                    </div>
+                  );
+                })()}
               </>
             )}
 
@@ -965,26 +847,26 @@ export default function PortfolioAnalysis() {
                       </tr>
                     </thead>
                     <tbody>
-                      {approvedProductsData.map((item, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      {approvedProductsData.map((item) => (
+                        <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black max-w-[250px]">{item.name}</div>
+                            <div className="text-sm font-medium text-black max-w-[250px]">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.ageSpecific}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.researchStatus)}`}>
-                              {item.researchStatus}
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
+                              {item.approval_status}
                             </span>
                           </td>
                           <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${item.whoPrequal === 'yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {item.whoPrequal}
+                            <span className={`px-2 py-1 text-xs rounded ${item.who_prequalification === 'Yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
+                              {item.who_prequalification}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries_approved_count}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -992,42 +874,24 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    {[1, 2, 3, 4, 5].map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 text-sm rounded ${
-                          currentPage === page
-                            ? 'bg-orange-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <span className="text-gray-400">...</span>
-                    <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    Results per page:
-                    <Dropdown
-                      value={[]}
-                      onChange={() => {}}
-                      placeholder="6"
-                      options={['6', '12', '24', '48']}
-                      compact={true}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const totalPages = Math.ceil(approvedTotalCount / itemsPerPage);
+                  const maxVisible = 5;
+                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                  return (
+                    <div className="flex items-center justify-between px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={approvedPage <= 1} onClick={() => setApprovedPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
+                        {pages.map((page) => (
+                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                        ))}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!approvedHasNext} onClick={() => setApprovedPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
+                      </div>
+                      <span className="text-sm text-gray-500">{approvedTotalCount} results</span>
+                    </div>
+                  );
+                })()}
                 </div>
               </>
             )}
@@ -1137,22 +1001,22 @@ export default function PortfolioAnalysis() {
                         </tr>
                       </thead>
                       <tbody>
-                        {clinicalTrialsTableData.map((item, index) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.name}</td>
+                        {clinicalTrialsTableData.map((item) => (
+                          <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.vin_clinicaltrialid}</td>
                             <td className="py-4 px-4">
-                              <div className="text-sm font-medium text-black max-w-[300px]">{item.title}</div>
+                              <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
                             <td className="py-4 px-4">
-                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.phase)}`}>
-                                {item.phase}
+                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
+                                {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.product}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.startDate}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.start_date}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1160,42 +1024,56 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Pagination */}
-                  <div className="flex items-center justify-between px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                        <ChevronLeftIcon className="w-5 h-5" />
-                      </button>
-                      {[1, 2, 3, 4, 5].map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`w-8 h-8 text-sm rounded ${
-                            currentPage === page
-                              ? 'bg-orange-500 text-white'
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                      <span className="text-gray-400">...</span>
-                      <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                      <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                        <ChevronRightIcon className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      Results per page:
-                      <Dropdown
-                        value={[]}
-                        onChange={() => {}}
-                        placeholder="6"
-                        options={['6', '12', '24', '48']}
-                        compact={true}
-                        className="w-20"
-                      />
-                    </div>
-                  </div>
+                  {(() => {
+                    const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
+                    const maxVisible = 5;
+                    const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
+                    return (
+                      <div className="flex items-center justify-between px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
+                            disabled={trialsPage <= 1}
+                            onClick={() => setTrialsPage(p => Math.max(1, p - 1))}
+                          >
+                            <ChevronLeftIcon className="w-5 h-5" />
+                          </button>
+                          {pages.map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => setTrialsPage(page)}
+                              className={`w-8 h-8 text-sm rounded ${
+                                trialsPage === page
+                                  ? 'bg-orange-500 text-white'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                          {totalPages > maxVisible && (
+                            <>
+                              <span className="text-gray-400">...</span>
+                              <button
+                                onClick={() => setTrialsPage(totalPages)}
+                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                              >
+                                {totalPages}
+                              </button>
+                            </>
+                          )}
+                          <button
+                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
+                            disabled={!trialsHasNextPage}
+                            onClick={() => setTrialsPage(p => p + 1)}
+                          >
+                            <ChevronRightIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                        <span className="text-sm text-gray-500">{trialsTotalCount} results</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </>
             )}

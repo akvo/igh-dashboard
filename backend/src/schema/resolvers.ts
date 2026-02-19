@@ -8,6 +8,12 @@ import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistrib
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
+import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
+import { getProductDistribution } from "../db/queries/productDistribution.js";
+import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
+import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
+import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
+import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
 import { getLastSyncDate } from "../db/queries/metadata.js";
 
@@ -19,7 +25,15 @@ interface Context {
 export const resolvers = {
   Query: {
     // KPIs (3 homepage cards)
-    portfolioKPIs: () => getPortfolioKPIs(),
+    portfolioKPIs: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getPortfolioKPIs({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
 
     // Bubble chart
     globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
@@ -76,6 +90,66 @@ export const resolvers = {
     // Detail
     candidate: (_: unknown, args: { candidate_key: number }) =>
       getCandidateByKey(args.candidate_key),
+
+    // Portfolio analysis - candidates list (paginated)
+    portfolioCandidates: (
+      _: unknown,
+      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string }; limit?: number; offset?: number },
+    ) =>
+      getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Portfolio analysis - clinical trials list (paginated)
+    clinicalTrials: (
+      _: unknown,
+      args: { filter?: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; status?: string }; limit?: number; offset?: number },
+    ) =>
+      getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Portfolio analysis - clinical trial stats (trials tab)
+    clinicalTrialStats: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getClinicalTrialStats({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
+
+    // Portfolio analysis - regulatory distribution (approved products tab)
+    regulatoryDistribution: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getRegulatoryDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
+
+    // Portfolio analysis - product distribution (donut chart)
+    productDistribution: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+    ) =>
+      getProductDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio analysis - product phase distribution
+    productPhaseDistribution: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; candidate_type?: string },
+    ) =>
+      getProductPhaseDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
 
     // Filter dropdowns
     diseases: () => getDiseases(),

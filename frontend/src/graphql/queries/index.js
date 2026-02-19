@@ -2,8 +2,8 @@ import { gql } from '@apollo/client/core';
 
 // KPI Cards Query
 export const GET_PORTFOLIO_KPIS = gql`
-  query KPICards {
-    portfolioKPIs {
+  query KPICards($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    portfolioKPIs(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
       totalDiseases
       totalCandidates
       approvedProducts
@@ -112,12 +112,120 @@ export const GET_LAST_SYNC_DATE = gql`
     lastSyncDate
   }
 `;
+// Portfolio Candidates - Portfolio Analysis (Candidates/Approved/Extract tabs, paginated)
+export const GET_PORTFOLIO_CANDIDATES = gql`
+  query PortfolioCandidates($filter: PortfolioCandidateFilter, $limit: Int, $offset: Int) {
+    portfolioCandidates(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        candidate_key
+        candidate_name
+        candidate_type
+        vin_candidateid
+        alternative_names
+        current_rd_stage
+        countries_approved_count
+        countries_approved_agg
+        indication
+        target
+        global_health_area
+        disease_name
+        secondary_disease_name
+        product_name
+        sub_product_name
+        phase_name
+        approval_status
+        who_prequalification
+      }
+      totalCount
+      hasNextPage
+    }
+  }
+`;
+
+// Clinical Trials List - Portfolio Analysis (Trials tab, paginated)
+export const GET_CLINICAL_TRIALS = gql`
+  query ClinicalTrials($filter: ClinicalTrialFilter, $limit: Int, $offset: Int) {
+    clinicalTrials(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        trial_id
+        vin_clinicaltrialid
+        trial_name
+        trial_title
+        trial_phase
+        status
+        candidate_name
+        disease_name
+        product_name
+        start_date
+      }
+      totalCount
+      hasNextPage
+    }
+  }
+`;
+
+// Clinical Trial Stats - Portfolio Analysis (Trials tab)
+export const GET_CLINICAL_TRIAL_STATS = gql`
+  query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    clinicalTrialStats(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+      totalTrials
+      statusDistribution {
+        status
+        trialCount
+      }
+      ageGroupDistribution {
+        age_group_name
+        candidateCount
+      }
+    }
+  }
+`;
+
+// Regulatory Distribution - Portfolio Analysis (Approved Products tab)
+export const GET_REGULATORY_DISTRIBUTION = gql`
+  query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    regulatoryDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+      approvalStatus {
+        approval_status
+        candidateCount
+      }
+      whoPrequalification {
+        who_prequalification
+        candidateCount
+      }
+    }
+  }
+`;
+
+// Product Distribution - Portfolio Analysis (Donut Chart)
+export const GET_PRODUCT_DISTRIBUTION = gql`
+  query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
+    productDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+      product_name
+      candidateCount
+    }
+  }
+`;
+
+// Product Phase Distribution - Portfolio Analysis (Stacked Bar by Product)
+export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
+  query ProductPhaseDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
+    productPhaseDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+      product_name
+      phase_name
+      sort_order
+      candidateCount
+    }
+  }
+`;
+
 // Get all diseases
 export const GET_DISEASES = gql`
   query GetDiseases {
     diseases {
       disease_key
       disease_name
+      global_health_area
     }
   }
 `;
