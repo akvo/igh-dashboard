@@ -132,7 +132,7 @@ export default function StackedBarChart({
               <div className="relative">
                 <input
                   type="checkbox"
-                  checked={visiblePhases[phase.key]}
+                  checked={!!visiblePhases[phase.key]}
                   onChange={() => togglePhase(phase.key)}
                   className="sr-only"
                 />

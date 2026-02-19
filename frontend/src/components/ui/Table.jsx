@@ -275,6 +275,16 @@ export default function Table({
   );
 }
 
+// Lightweight wrapper for inline <table> elements that need horizontal scroll.
+// Use this instead of manually adding overflow-x-auto divs.
+export function ScrollableTable({ children, className = '', tableClassName = '' }) {
+  return (
+    <div className={`overflow-x-auto ${className}`}>
+      <table className={`w-full ${tableClassName}`}>{children}</table>
+    </div>
+  );
+}
+
 // Export sub-components
 Table.Chip = Chip;
 Table.ExploreLink = ExploreLink;

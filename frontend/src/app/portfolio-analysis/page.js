@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
@@ -578,7 +578,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Right: Data table or empty state */}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     {selectedColumns.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-32">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
@@ -591,8 +591,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     ) : (
                       <div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
+                        <ScrollableTable>
                             <thead>
                               <tr className="border-b border-gray-200">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -614,8 +613,7 @@ export default function PortfolioAnalysis() {
                                 </tr>
                               ))}
                             </tbody>
-                          </table>
-                        </div>
+                        </ScrollableTable>
 
                         {/* Pagination */}
                         {(() => {
@@ -710,8 +708,7 @@ export default function PortfolioAnalysis() {
                 </p>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -743,8 +740,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
 
                 {/* Pagination */}
                 {(() => {
@@ -855,8 +851,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -892,8 +887,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                  </ScrollableTable>
 
                 {/* Pagination */}
                 {(() => {
@@ -1012,8 +1006,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                  <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -1045,8 +1038,7 @@ export default function PortfolioAnalysis() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  </div>
+                  </ScrollableTable>
 
                   {/* Pagination */}
                   {(() => {
@@ -1132,8 +1124,7 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -1158,8 +1149,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between px-4 py-4">
