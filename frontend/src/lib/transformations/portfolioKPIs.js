@@ -23,12 +23,14 @@ export function transformPortfolioKPIs(data) {
       title: 'Candidates in development',
       value: data.totalCandidates,
       buttonText: 'Explore candidates',
+      buttonHref: '/portfolio-analysis',
     },
     {
       id: 'approved',
       title: 'Approved health products',
       value: data.approvedProducts,
       buttonText: 'Explore approved products',
+      buttonHref: '/portfolio-analysis',
     },
   ];
 }

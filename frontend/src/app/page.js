@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
 import {
   BubbleChart,
@@ -25,6 +25,7 @@ import {
   useAvailableYears,
   useLastSyncDate,
   usePhases,
+  useDiseases,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
@@ -49,6 +50,7 @@ export default function Home() {
   const [chartViewTab, setChartViewTab] = useState('visual');
   const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useState([]);
   const [crossProduct, setCrossProduct] = useState([]);
+  const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
@@ -60,6 +62,7 @@ export default function Home() {
   );
   const { products, loading: productsLoading } = useProducts();
   const { phases, loading: phasesLoading } = usePhases();
+  const { raw: diseasesRaw } = useDiseases();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
@@ -182,6 +185,8 @@ export default function Home() {
                   value={kpi.value}
                   description={kpi.description}
                   buttonText={kpi.buttonText}
+                  buttonHref={kpi.buttonHref}
+                  onButtonClick={kpi.id === 'diseases' ? () => setDiseasePanelOpen(true) : undefined}
                   tooltip={kpi.description}
                 />
               ))
@@ -331,7 +336,7 @@ export default function Home() {
                 Portfolio overview by global health area
               </h3>
               <a
-                href="/portfolio"
+                href="/portfolio-analysis"
                 className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
               >
                 Explore Portfolio Analysis
@@ -391,6 +396,7 @@ export default function Home() {
                 xAxisLabel="Amount of candidates/products"
                 yAxisWidth={200}
                 showFilters={true}
+                hideXAxisTicks={true}
               />
             )}
           </div>
@@ -402,7 +408,7 @@ export default function Home() {
                 Cross pipeline analytics
               </h3>
               <a
-                href="/cross-pipeline"
+                href="/cross-pipeline-analytics"
                 className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
               >
                 Make custom comparison
@@ -459,6 +465,7 @@ export default function Home() {
                 height={220}
                 xAxisLabel="Amount of Candidates"
                 showFilters={true}
+                hideXAxisTicks={true}
               />
             )}
           </div>
@@ -538,6 +545,12 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <DiseaseListPanel
+        isOpen={diseasePanelOpen}
+        onClose={() => setDiseasePanelOpen(false)}
+        diseases={diseasesRaw}
+      />
     </div>
   );
 }

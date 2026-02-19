@@ -7,3 +7,4 @@ export { default as TabSwitcher } from './TabSwitcher';
 export { default as Header } from './Header';
 export { default as TabNav } from './TabNav';
 export { default as ChartMenu } from './ChartMenu';
+export { default as DiseaseListPanel } from './DiseaseListPanel';

@@ -59,6 +59,7 @@ export default function StackedBarChart({
   height = 400,
   barRadius = 4,
   yAxisWidth = 65,
+  hideXAxisTicks = false,
 }) {
   const [visiblePhases, setVisiblePhases] = useState(
     phases.reduce((acc, phase) => ({ ...acc, [phase.key]: true }), {})
@@ -205,7 +206,7 @@ export default function StackedBarChart({
                   domain={[0, axisTicks[axisTicks.length - 1]]}
                   axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                   tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                  tick={hideXAxisTicks ? false : { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
                 />
                 <YAxis
                   type="category"
