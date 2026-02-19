@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
 export default function PortfolioAnalysis() {
@@ -71,6 +71,7 @@ export default function PortfolioAnalysis() {
     (trialsPage - 1) * trialsPerPage,
   );
   const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location');
+  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -189,15 +190,13 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
-  // Dummy data for technology types table
-  const technologyTypesData = [
-    { name: 'Immunoglobulin products - animal plasma/serum derived', discovery: 1, preClinical: 132, phase1: 1, phase2: 4, phase3: 1, approved: 0 },
-    { name: 'Therapeutic - synthetic', discovery: 12, preClinical: 37, phase1: 1, phase2: 1, phase3: 0, approved: 0 },
-    { name: 'Non-immunoglobulin products - animal/naturally derived; recombinant', discovery: 2, preClinical: 8, phase1: 0, phase2: 0, phase3: 0, approved: 0 },
-    { name: 'Immunoglobulin products - recombinant', discovery: 6, preClinical: 24, phase1: 0, phase2: 0, phase3: 0, approved: 0 },
-    { name: 'Therapeutic - natural/botanical', discovery: 12, preClinical: 42, phase1: 0, phase2: 0, phase3: 0, approved: 0 },
-  ];
-
+  // Client-side pagination for technology types table
+  const techItemsPerPage = 10;
+  const techTotalPages = Math.ceil(technologyTotalCount / techItemsPerPage);
+  const paginatedTechData = technologyTableData.slice(
+    (currentPage - 1) * techItemsPerPage,
+    currentPage * techItemsPerPage,
+  );
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -1101,7 +1100,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">12 Products</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTotalCount} types</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
@@ -1128,66 +1127,60 @@ export default function PortfolioAnalysis() {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Discovery</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Pre-clinical</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Phase 1</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Phase 2</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Phase 3</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Approved</th>
+                        {technologyPhases.map((phase) => (
+                          <th key={phase.key} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{phase.label}</th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {technologyTypesData.map((item, index) => (
+                      {paginatedTechData.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px]">{item.name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.discovery}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.preClinical}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.phase1}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.phase2}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.phase3}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.approved}</td>
+                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px]">{item.technology_type}</td>
+                          {technologyPhases.map((phase) => (
+                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600">{item[phase.key] || 0}</td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
                 </ScrollableTable>
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-4 py-4">
-                  <div className="flex items-center gap-2">
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronLeftIcon className="w-5 h-5" />
-                    </button>
-                    {[1, 2, 3, 4, 5].map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 text-sm rounded ${
-                          currentPage === page
-                            ? 'bg-orange-500 text-white'
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <span className="text-gray-400">...</span>
-                    <button className="w-8 h-8 text-sm text-gray-600 hover:bg-gray-100 rounded">10</button>
-                    <button className="p-2 text-gray-400 hover:bg-gray-100 rounded">
-                      <ChevronRightIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    Results per page:
-                    <Dropdown
-                      value={[]}
-                      onChange={() => {}}
-                      placeholder="6"
-                      options={['6', '12', '24', '48']}
-                      compact={true}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
+                {(() => {
+                  const maxVisible = 5;
+                  const pages = Array.from({ length: Math.min(maxVisible, techTotalPages) }, (_, i) => i + 1);
+                  return (
+                    <div className="flex items-center justify-between px-4 py-4">
+                      <div className="flex items-center gap-2">
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
+                          <ChevronLeftIcon className="w-5 h-5" />
+                        </button>
+                        {pages.map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-8 h-8 text-sm rounded ${
+                              currentPage === page
+                                ? 'bg-orange-500 text-white'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        {techTotalPages > maxVisible && (
+                          <>
+                            <span className="text-gray-400">...</span>
+                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
+                          </>
+                        )}
+                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage >= techTotalPages} onClick={() => setCurrentPage(p => p + 1)}>
+                          <ChevronRightIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <span className="text-sm text-gray-500">{technologyTotalCount} results</span>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

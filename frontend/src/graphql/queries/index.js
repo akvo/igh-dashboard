@@ -235,6 +235,18 @@ export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
   }
 `;
 
+// Technology Type Distribution - Portfolio Analysis (Technology tab)
+export const GET_TECHNOLOGY_TYPE_DISTRIBUTION = gql`
+  query TechnologyTypeDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
+    technologyTypeDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+      technology_type
+      phase_name
+      sort_order
+      candidateCount
+    }
+  }
+`;
+
 // Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {

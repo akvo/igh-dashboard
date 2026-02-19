@@ -19,6 +19,10 @@ export {
   groupByProductName,
 } from './productPhaseDistribution';
 export {
+  transformTechnologyTypeDistribution,
+  groupByTechnologyType,
+} from './technologyTypeDistribution';
+export {
   transformGeographicDistribution,
   transformToMapData,
 } from './geographicDistribution';
