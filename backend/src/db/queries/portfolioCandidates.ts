@@ -67,24 +67,36 @@ export function getPortfolioCandidates(
   const totalCount = countResult.total;
 
   const dataSql = `
-    SELECT DISTINCT
-      c.candidate_key,
-      c.candidate_name,
-      c.candidate_type,
-      c.alternative_names,
-      c.current_rd_stage,
-      c.countries_approved_count,
-      c.countries_approved_agg,
-      d.global_health_area,
-      d.disease_name,
-      pr.product_name,
-      p.phase_name,
-      r.approval_status,
-      r.who_prequalification
-    FROM dim_candidate_core c
-    ${JOINS}
-    ${whereClause}
-    ORDER BY c.candidate_name
+    WITH ranked AS (
+      SELECT
+        c.candidate_key,
+        c.candidate_name,
+        c.candidate_type,
+        c.alternative_names,
+        c.current_rd_stage,
+        c.countries_approved_count,
+        c.countries_approved_agg,
+        d.global_health_area,
+        d.disease_name,
+        pr.product_name,
+        p.phase_name,
+        r.approval_status,
+        r.who_prequalification,
+        ROW_NUMBER() OVER (
+          PARTITION BY c.candidate_key
+          ORDER BY COALESCE(p.sort_order, -1) DESC, f.snapshot_id DESC
+        ) as rn
+      FROM dim_candidate_core c
+      ${JOINS}
+      ${whereClause}
+    )
+    SELECT candidate_key, candidate_name, candidate_type, alternative_names,
+           current_rd_stage, countries_approved_count, countries_approved_agg,
+           global_health_area, disease_name, product_name, phase_name,
+           approval_status, who_prequalification
+    FROM ranked
+    WHERE rn = 1
+    ORDER BY candidate_name
     LIMIT ? OFFSET ?
   `;
   const nodes = db
