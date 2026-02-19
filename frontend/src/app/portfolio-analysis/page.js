@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -62,6 +62,7 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
+  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location');
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -117,10 +118,6 @@ export default function PortfolioAnalysis() {
 
   const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
 
-  // Dummy map data for clinical trials
-  const clinicalTrialsMapData = {
-    US: 150, BR: 80, CN: 120, IN: 90, RU: 60, AU: 40, ZA: 30, NG: 25, KE: 20, EG: 15,
-  };
 
   // Available columns for Extract custom details
   const availableColumns = [
