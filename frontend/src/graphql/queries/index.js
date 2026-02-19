@@ -193,6 +193,11 @@ export const GET_REGULATORY_DISTRIBUTION = gql`
         who_prequalification
         candidateCount
       }
+      approvingAuthorities {
+        authority_type
+        who_prequalified
+        no_who_listing
+      }
     }
   }
 `;

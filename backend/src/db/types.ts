@@ -95,6 +95,7 @@ export interface DimCandidateRegulatory {
   who_prequal_date: string | null;
   who_prequalification: string | null;
   nra_approval_status: string | null;
+  sra_approval_status: string | null;
 }
 
 export interface DimDeveloper {
@@ -314,9 +315,16 @@ export interface WHOPrequalRow {
   candidateCount: number;
 }
 
+export interface ApprovingAuthorityRow {
+  authority_type: string;
+  who_prequalified: number;
+  no_who_listing: number;
+}
+
 export interface RegulatoryDistribution {
   approvalStatus: ApprovalStatusRow[];
   whoPrequalification: WHOPrequalRow[];
+  approvingAuthorities: ApprovingAuthorityRow[];
 }
 
 export interface ProductDistributionRow {

@@ -1,5 +1,5 @@
 import { getDatabase } from "../connection.js";
-import type { ApprovalStatusRow, WHOPrequalRow, RegulatoryDistribution } from "../types.js";
+import type { ApprovalStatusRow, WHOPrequalRow, ApprovingAuthorityRow, RegulatoryDistribution } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
 
 interface RegulatoryDistributionFilters {
@@ -77,5 +77,36 @@ export function getRegulatoryDistribution(
 
   const whoPrequalification = db.prepare(whoSql).all(...wq.params) as WHOPrequalRow[];
 
-  return { approvalStatus, whoPrequalification };
+  // Approving authorities: SRA vs NRA split by WHO prequalification
+  const sra = buildFilterClauses(filters);
+  sra.conditions.push("r.sra_approval_status = 'Yes'");
+
+  const nra = buildFilterClauses(filters);
+  nra.conditions.push("r.nra_approval_status = 'Granted'");
+
+  const authoritySql = `
+    SELECT 'Stringent Regulatory Authority' as authority_type,
+      COUNT(DISTINCT CASE WHEN r.who_prequalification = 'Yes'
+        THEN f.candidate_key END) as who_prequalified,
+      COUNT(DISTINCT CASE WHEN COALESCE(r.who_prequalification, 'Unknown')
+        IN ('No', 'Unknown') THEN f.candidate_key END) as no_who_listing
+    FROM fact_pipeline_snapshot f
+    ${sra.joins.join("\n    ")}
+    WHERE ${sra.conditions.join("\n      AND ")}
+    UNION ALL
+    SELECT 'National Regulatory Authority' as authority_type,
+      COUNT(DISTINCT CASE WHEN r.who_prequalification = 'Yes'
+        THEN f.candidate_key END) as who_prequalified,
+      COUNT(DISTINCT CASE WHEN COALESCE(r.who_prequalification, 'Unknown')
+        IN ('No', 'Unknown') THEN f.candidate_key END) as no_who_listing
+    FROM fact_pipeline_snapshot f
+    ${nra.joins.join("\n    ")}
+    WHERE ${nra.conditions.join("\n      AND ")}
+  `;
+
+  const approvingAuthorities = db.prepare(authoritySql).all(
+    ...sra.params, ...nra.params,
+  ) as ApprovingAuthorityRow[];
+
+  return { approvalStatus, whoPrequalification, approvingAuthorities };
 }

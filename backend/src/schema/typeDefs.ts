@@ -72,6 +72,7 @@ export const typeDefs = `#graphql
     who_prequal_date: String
     who_prequalification: String
     nra_approval_status: String
+    sra_approval_status: String
   }
 
   type DimDeveloper {
@@ -192,9 +193,16 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ApprovingAuthorityRow {
+    authority_type: String!
+    who_prequalified: Int!
+    no_who_listing: Int!
+  }
+
   type RegulatoryDistribution {
     approvalStatus: [ApprovalStatusRow!]!
     whoPrequalification: [WHOPrequalRow!]!
+    approvingAuthorities: [ApprovingAuthorityRow!]!
   }
 
   type CandidateTypeDistributionRow {

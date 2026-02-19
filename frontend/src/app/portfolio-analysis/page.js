@@ -39,7 +39,12 @@ export default function PortfolioAnalysis() {
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
   const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product, candidateTypeForApi);
-  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+
+  const approvingAuthoritiesPhases = [
+    { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
+    { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
+  ];
   const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
   const itemsPerPage = 10;
   const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
@@ -782,9 +787,15 @@ export default function PortfolioAnalysis() {
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
                       <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="h-[200px] flex items-center justify-center text-gray-400">
-                      Grouped bar chart placeholder
-                    </div>
+                    <StackedBarChart
+                      data={approvingAuthoritiesData}
+                      phases={approvingAuthoritiesPhases}
+                      categoryKey="category"
+                      layout="horizontal"
+                      height={200}
+                      showFilters={true}
+                      barRadius={4}
+                    />
                     <p className="text-xs text-gray-500 mt-4">
                       The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
                     </p>
