@@ -35,7 +35,7 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
 
   if (filters?.disease_names && filters.disease_names.length > 0) {
     const placeholders = filters.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
+    conditions.push(`d.disease_group_name IN (${placeholders})`);
     params.push(...filters.disease_names);
   }
 

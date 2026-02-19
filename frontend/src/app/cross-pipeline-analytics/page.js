@@ -27,10 +27,10 @@ export default function CrossPipelineAnalytics() {
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
   const selectedProductKeys = selectedProduct.length > 0 ? selectedProduct.map(v => parseInt(v)) : null;
-  const selectedDiseaseKeys = selectedDisease.length > 0 ? selectedDisease.map(v => parseInt(v)) : null;
+  const selectedDiseaseGroupNames = selectedDisease.length > 0 ? selectedDisease : null;
 
   // Fetch chart data with filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseKeys);
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
   // Build phase selection state from API phases
   const [selectedPhases, setSelectedPhases] = useState([]);
@@ -60,7 +60,7 @@ export default function CrossPipelineAnalytics() {
   const diseaseOptions = useMemo(() =>
     (diseasesList || [])
       .filter(d => d.name)
-      .map(d => ({ value: d.key, label: d.name })),
+      .map(d => ({ value: d.name, label: d.name })),
     [diseasesList]
   );
 

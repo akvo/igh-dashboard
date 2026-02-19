@@ -18,6 +18,7 @@ export interface DimDisease {
   disease_key: number;
   diseaseid: string | null;
   disease_name: string | null;
+  disease_group_name: string | null;
   global_health_area: string | null;
   disease_type: string | null;
 }

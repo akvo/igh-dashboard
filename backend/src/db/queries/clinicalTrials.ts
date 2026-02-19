@@ -25,7 +25,7 @@ function buildWhere(filter?: ClinicalTrialFilter) {
 
   if (filter?.disease_names && filter.disease_names.length > 0) {
     const placeholders = filter.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
+    conditions.push(`d.disease_group_name IN (${placeholders})`);
     params.push(...filter.disease_names);
   }
 
@@ -76,7 +76,7 @@ export function getClinicalTrials(
       t.trial_phase,
       t.status,
       c.candidate_name,
-      d.disease_name,
+      d.disease_group_name AS disease_name,
       pr.product_name,
       dt.full_date as start_date
     FROM fact_clinical_trial_event t

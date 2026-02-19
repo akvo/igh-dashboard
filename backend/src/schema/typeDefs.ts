@@ -14,6 +14,7 @@ export const typeDefs = `#graphql
     disease_key: Int!
     diseaseid: String
     disease_name: String
+    disease_group_name: String
     global_health_area: String
     disease_type: String
   }
@@ -332,7 +333,7 @@ export const typeDefs = `#graphql
     geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], disease_keys: [Int!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
 
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!

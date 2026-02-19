@@ -72,7 +72,7 @@ describe("Temporal Analysis", () => {
 });
 
 describe("Temporal Analysis — disease filter", () => {
-  it("filters by disease_keys", async () => {
+  it("filters by disease_group_names", async () => {
     const { data: baselineData } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(`{
@@ -90,24 +90,24 @@ describe("Temporal Analysis — disease filter", () => {
     );
 
     const { data: lookupData } = await query<{
-      diseases: Array<{ disease_key: number }>;
-    }>(`{ diseases { disease_key } }`);
+      diseases: Array<{ disease_group_name: string }>;
+    }>(`{ diseases { disease_group_name } }`);
 
     expect(lookupData.diseases.length).toBeGreaterThan(0);
-    const diseaseKey = lookupData.diseases[0].disease_key;
+    const diseaseGroupName = lookupData.diseases[0].disease_group_name;
 
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(
-      `query ($diseaseKeys: [Int!]) {
-        temporalSnapshots(disease_keys: $diseaseKeys) {
+      `query ($diseaseGroupNames: [String!]) {
+        temporalSnapshots(disease_group_names: $diseaseGroupNames) {
           year
           phase_name
           sort_order
           candidateCount
         }
       }`,
-      { diseaseKeys: [diseaseKey] },
+      { diseaseGroupNames: [diseaseGroupName] },
     );
 
     const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);

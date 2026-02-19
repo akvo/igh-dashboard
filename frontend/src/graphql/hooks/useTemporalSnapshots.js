@@ -5,17 +5,17 @@ import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformTemporalSnapshots } from '@/lib/transformations';
 
-export function useTemporalSnapshots(years, globalHealthAreas, productKeys, diseaseKeys) {
+export function useTemporalSnapshots(years, globalHealthAreas, productKeys, diseaseGroupNames) {
   const { actions } = useDashboardStore();
 
-  const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0) || (diseaseKeys?.length > 0);
-  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys, diseaseKeys });
+  const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0) || (diseaseGroupNames?.length > 0);
+  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys, diseaseGroupNames });
   const cachedData = hasFilters ? null : actions.getCachedData(cacheKey);
 
   const { data, loading, error, refetch } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
     variables: {
       years: years?.length > 0 ? years : undefined,
-      diseaseKeys: diseaseKeys?.length > 0 ? diseaseKeys : undefined,
+      diseaseGroupNames: diseaseGroupNames?.length > 0 ? diseaseGroupNames : undefined,
       globalHealthAreas: globalHealthAreas?.length > 0 ? globalHealthAreas : undefined,
       productKeys: productKeys?.length > 0 ? productKeys : undefined,
     },

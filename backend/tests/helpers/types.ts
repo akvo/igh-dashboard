@@ -65,6 +65,7 @@ export interface CandidateConnection {
 export interface DimDisease {
   disease_key: number;
   disease_name: string | null;
+  disease_group_name: string | null;
   global_health_area: string | null;
 }
 

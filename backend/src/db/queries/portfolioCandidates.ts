@@ -19,7 +19,7 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
 
   if (filter?.disease_names && filter.disease_names.length > 0) {
     const placeholders = filter.disease_names.map(() => "?").join(", ");
-    conditions.push(`d.disease_name IN (${placeholders})`);
+    conditions.push(`d.disease_group_name IN (${placeholders})`);
     params.push(...filter.disease_names);
   }
 
@@ -93,8 +93,8 @@ export function getPortfolioCandidates(
         c.indication,
         c.target,
         d.global_health_area,
-        d.disease_name,
-        sd.disease_name AS secondary_disease_name,
+        d.disease_group_name AS disease_name,
+        sd.disease_group_name AS secondary_disease_name,
         pr.product_name,
         sp.product_name AS sub_product_name,
         p.phase_name,

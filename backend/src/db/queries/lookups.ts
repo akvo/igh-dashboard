@@ -11,22 +11,23 @@ import type {
 } from "../types.js";
 
 /**
- * Get diseases that have at least one candidate in the pipeline.
+ * Get diseases (grouped by disease_group_name) that have at least one candidate in the pipeline.
  */
-export function getDiseases(): DimDisease[] {
+export function getDiseases(): Pick<DimDisease, "disease_group_name" | "global_health_area">[] {
   const db = getDatabase();
 
   return db
     .prepare(
       `
-    SELECT DISTINCT d.disease_key, d.diseaseid, d.disease_name, d.global_health_area, d.disease_type
+    SELECT DISTINCT d.disease_group_name, d.global_health_area
     FROM dim_disease d
     JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
     WHERE f.is_active_flag = 1
-    ORDER BY d.disease_name
+      AND d.disease_group_name IS NOT NULL
+    ORDER BY d.disease_group_name
   `,
     )
-    .all() as DimDisease[];
+    .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
 }
 
 /**

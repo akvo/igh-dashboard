@@ -46,6 +46,7 @@ describe("disease resolver", () => {
     const disease = {
       disease_key: 10,
       disease_name: "Malaria",
+      disease_group_name: "Malaria",
       global_health_area: "Neglected disease",
     };
     const ctx = makeContext({

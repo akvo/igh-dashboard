@@ -60,8 +60,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!], $diseaseKeys: [Int!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
-    temporalSnapshots(years: $years, disease_keys: $diseaseKeys, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
+  query TemporalAnalysis($years: [Int!], $diseaseGroupNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
+    temporalSnapshots(years: $years, disease_group_names: $diseaseGroupNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
       year
       phase_name
       sort_order
@@ -219,12 +219,11 @@ export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
   }
 `;
 
-// Get all diseases
+// Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {
     diseases {
-      disease_key
-      disease_name
+      disease_group_name
       global_health_area
     }
   }
