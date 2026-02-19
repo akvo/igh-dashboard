@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, ChartMenu } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution } from '@/graphql/hooks';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -34,14 +35,21 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
-  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product);
-  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+  const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
+  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product, candidateTypeForApi);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+
+  const approvingAuthoritiesPhases = [
+    { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
+    { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
+  ];
   const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
   const itemsPerPage = 10;
   const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Candidate' }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
+    { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
@@ -66,7 +74,7 @@ export default function PortfolioAnalysis() {
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => item.name),
+    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
     [healthAreas]
   );
 
@@ -78,7 +86,7 @@ export default function PortfolioAnalysis() {
 
   // Disease options from API (deduplicated)
   const diseaseOptions = useMemo(() =>
-    [...new Set((diseasesList || []).map(d => d.disease_name).filter(Boolean))],
+    [...new Set((diseasesList || []).map(d => d.name).filter(Boolean))],
     [diseasesList]
   );
 
@@ -121,16 +129,24 @@ export default function PortfolioAnalysis() {
 
   // Available columns for Extract custom details
   const availableColumns = [
-    { id: 'type', label: 'Type', accessor: 'candidate_type' },
-    { id: 'ighId', label: 'IGH ID', accessor: 'vin_candidateid' },
-    { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names' },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
-    { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
+    { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name' },
-    { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
+    { id: 'rdStage', label: 'R&D Stage', accessor: 'current_rd_stage' },
+    { id: 'developers', label: 'Developers', accessor: 'developers_agg' },
     { id: 'indication', label: 'Indication', accessor: 'indication' },
+    { id: 'indicationType', label: 'Indication type', accessor: 'indication_type' },
+    { id: 'facilityLevel', label: 'Health care facility level', accessor: 'healthcare_facility_level' },
     { id: 'target', label: 'Target', accessor: 'target' },
+    { id: 'moa', label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+    { id: 'techType', label: 'Technology type', accessor: 'technology_type' },
+    { id: 'testFormat', label: 'Test format', accessor: 'test_format' },
+    { id: 'preclinicalStatus', label: 'Preclinical results status', accessor: 'preclinical_results_status' },
+    { id: 'preclinicalType', label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
+    { id: 'preclinicalSource', label: 'Preclinical results source', accessor: 'preclinical_results_source' },
+    { id: 'keyFeatures', label: 'Key features & challenges', accessor: 'key_features' },
+    { id: 'recentUpdates', label: 'Recent updates', accessor: 'recent_updates' },
   ];
 
   // Columns currently active based on user selection
@@ -164,8 +180,14 @@ export default function PortfolioAnalysis() {
   };
 
 
-  // R&D stage options
-  const rdStageOptions = ['Discovery', 'Pre clinical', 'Phase 1', 'Phase 2', 'Phase 3', 'Approved'];
+  // R&D stage options from DB phases
+  const rdStageOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
 
   // Dummy data for technology types table
   const technologyTypesData = [
@@ -214,13 +236,6 @@ export default function PortfolioAnalysis() {
                 activeTab={activeTab}
                 onChange={setActiveTab}
               />
-              <a
-                href="#"
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 border border-gray-300 px-4 py-2"
-              >
-                <BoltIcon className="w-4 h-4" />
-                Try AI page for Pipeline statistic <span className="text-orange-500 ml-1">*beta*</span>
-              </a>
             </div>
 
             {/* Filters for Explore tab */}
@@ -375,7 +390,10 @@ export default function PortfolioAnalysis() {
                       value={productTypeFilter}
                       onChange={setProductTypeFilter}
                       placeholder="All"
-                      options={['Candidates', 'Products']}
+                      options={[
+                        { label: 'Candidates', value: 'Candidate' },
+                        { label: 'Products', value: 'Product' },
+                      ]}
                       multiSelect={true}
                       compact={true}
                       className="w-32"
@@ -393,9 +411,9 @@ export default function PortfolioAnalysis() {
                 <DonutChart
                   data={productTypesData}
                   colors={productTypeColors}
-                  height={280}
-                  innerRadius={70}
-                  outerRadius={110}
+                  height={350}
+                  innerRadius={55}
+                  outerRadius={140}
                   showLegend={true}
                   legendPosition="top"
                 />
@@ -560,7 +578,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Right: Data table or empty state */}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     {selectedColumns.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-32">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
@@ -573,8 +591,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     ) : (
                       <div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
+                        <ScrollableTable>
                             <thead>
                               <tr className="border-b border-gray-200">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -596,8 +613,7 @@ export default function PortfolioAnalysis() {
                                 </tr>
                               ))}
                             </tbody>
-                          </table>
-                        </div>
+                        </ScrollableTable>
 
                         {/* Pagination */}
                         {(() => {
@@ -667,7 +683,7 @@ export default function PortfolioAnalysis() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <h4 className="text-xl font-bold text-black leading-none">Selected candidates</h4>
-                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">240 candidates</span>
+                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount} candidates</span>
                   </div>
                   <div className="flex items-center gap-3 h-[36px]">
                     <div className="relative">
@@ -676,7 +692,7 @@ export default function PortfolioAnalysis() {
                         type="text"
                         placeholder="Search item"
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCandidatesPage(1); }}
                         className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
@@ -688,12 +704,11 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 <p className="text-sm text-gray-500 mb-6">
-                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis. 
+                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -725,8 +740,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
 
                 {/* Pagination */}
                 {(() => {
@@ -777,9 +791,15 @@ export default function PortfolioAnalysis() {
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
                       <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="h-[200px] flex items-center justify-center text-gray-400">
-                      Grouped bar chart placeholder
-                    </div>
+                    <StackedBarChart
+                      data={approvingAuthoritiesData}
+                      phases={approvingAuthoritiesPhases}
+                      categoryKey="category"
+                      layout="horizontal"
+                      height={200}
+                      showFilters={true}
+                      barRadius={4}
+                    />
                     <p className="text-xs text-gray-500 mt-4">
                       The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
                     </p>
@@ -812,7 +832,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Selected products</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">240 candidates</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount} products</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
@@ -831,8 +851,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -868,8 +887,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                  </ScrollableTable>
 
                 {/* Pagination */}
                 {(() => {
@@ -896,7 +914,7 @@ export default function PortfolioAnalysis() {
             {portfolioTab === 'trials' && (
               <>
               <p className="text-sm text-gray-500 mb-6">
-                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison. 
+                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
@@ -965,7 +983,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <h4 className="text-xl font-bold text-black leading-none">Selected clinical trials</h4>
-                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">128 Trials</span>
+                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount} Trials</span>
                       </div>
                       <div className="flex items-center gap-3 h-[36px]">
                         <div className="relative">
@@ -988,8 +1006,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
+                  <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
                           <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -1004,7 +1021,7 @@ export default function PortfolioAnalysis() {
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.vin_clinicaltrialid}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.clinicaltrialid}</td>
                             <td className="py-4 px-4">
                               <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
@@ -1021,8 +1038,7 @@ export default function PortfolioAnalysis() {
                           </tr>
                         ))}
                       </tbody>
-                    </table>
-                  </div>
+                  </ScrollableTable>
 
                   {/* Pagination */}
                   {(() => {
@@ -1103,13 +1119,12 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file. 
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file.
                   </p>
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
@@ -1134,8 +1149,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between px-4 py-4">

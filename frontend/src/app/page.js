@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
 import {
   BubbleChart,
@@ -240,8 +240,7 @@ export default function Home() {
                   colors={['#fe7449', '#f9a78d', '#8c4028']}
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                <ScrollableTable tableClassName="border-collapse">
                     <thead>
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
@@ -279,8 +278,7 @@ export default function Home() {
                         );
                       })}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">

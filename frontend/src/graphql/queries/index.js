@@ -120,13 +120,24 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         candidate_key
         candidate_name
         candidate_type
-        vin_candidateid
+        candidateid
         alternative_names
         current_rd_stage
         countries_approved_count
         countries_approved_agg
         indication
         target
+        developers_agg
+        mechanism_of_action
+        key_features
+        technology_type
+        indication_type
+        healthcare_facility_level
+        preclinical_results_status
+        type_of_preclinical_results
+        preclinical_results_source
+        recent_updates
+        test_format
         global_health_area
         disease_name
         secondary_disease_name
@@ -148,7 +159,7 @@ export const GET_CLINICAL_TRIALS = gql`
     clinicalTrials(filter: $filter, limit: $limit, offset: $offset) {
       nodes {
         trial_id
-        vin_clinicaltrialid
+        clinicaltrialid
         trial_name
         trial_title
         trial_phase
@@ -192,6 +203,11 @@ export const GET_REGULATORY_DISTRIBUTION = gql`
       whoPrequalification {
         who_prequalification
         candidateCount
+      }
+      approvingAuthorities {
+        authority_type
+        who_prequalified
+        no_who_listing
       }
     }
   }

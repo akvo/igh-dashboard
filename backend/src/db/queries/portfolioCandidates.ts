@@ -38,6 +38,7 @@ const JOINS = `
     LEFT JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key
     LEFT JOIN dim_disease sd ON f.secondary_disease_key = sd.disease_key
     LEFT JOIN dim_product sp ON f.sub_product_key = sp.product_key
+    LEFT JOIN dim_candidate_tech t ON f.technology_key = t.technology_key
 `;
 
 /**
@@ -68,13 +69,24 @@ export function getPortfolioCandidates(
         c.candidate_key,
         c.candidate_name,
         c.candidate_type,
-        c.vin_candidateid,
+        c.candidateid,
         c.alternative_names,
         c.current_rd_stage,
         c.countries_approved_count,
         c.countries_approved_agg,
         c.indication,
         c.target,
+        c.developers_agg,
+        c.mechanism_of_action,
+        c.key_features,
+        c.indication_type,
+        c.healthcare_facility_level,
+        c.preclinical_results_status,
+        c.type_of_preclinical_results,
+        c.preclinical_results_source,
+        c.recent_updates,
+        c.test_format,
+        t.technology_type,
         d.global_health_area,
         d.disease_group_name AS disease_name,
         sd.disease_group_name AS secondary_disease_name,
@@ -91,9 +103,14 @@ export function getPortfolioCandidates(
       ${JOINS}
       ${whereClause}
     )
-    SELECT candidate_key, candidate_name, candidate_type, vin_candidateid,
+    SELECT candidate_key, candidate_name, candidate_type, candidateid,
            alternative_names, current_rd_stage, countries_approved_count,
            countries_approved_agg, indication, target,
+           developers_agg, mechanism_of_action, key_features,
+           indication_type, healthcare_facility_level,
+           preclinical_results_status, type_of_preclinical_results,
+           preclinical_results_source, recent_updates, test_format,
+           technology_type,
            global_health_area, disease_name, secondary_disease_name,
            product_name, sub_product_name, phase_name,
            approval_status, who_prequalification

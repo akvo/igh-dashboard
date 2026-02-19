@@ -43,9 +43,21 @@ export function useRegulatoryDistribution(globalHealthAreas, diseaseNames, produ
     [rawData?.whoPrequalification]
   );
 
+  const approvingAuthorities = useMemo(() =>
+    (rawData?.approvingAuthorities || []).map(row => ({
+      category: row.authority_type === 'Stringent Regulatory Authority'
+        ? 'Stringent\nRegulatory\nAuthority'
+        : 'National\nRegulatory\nAuthority',
+      who_prequalified: row.who_prequalified,
+      no_who_listing: row.no_who_listing,
+    })),
+    [rawData?.approvingAuthorities]
+  );
+
   return {
     approvalStatus,
     whoPrequalification,
+    approvingAuthorities,
     loading: loading && !cachedData,
     error,
     usingCache: !!cachedData,

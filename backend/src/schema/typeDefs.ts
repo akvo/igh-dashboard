@@ -68,12 +68,11 @@ export const typeDefs = `#graphql
   type DimCandidateRegulatory {
     regulatory_key: Int!
     approval_status: String
-    sra_approval_flag: Int
     fda_approval_date: String
     who_prequal_date: String
     who_prequalification: String
     nra_approval_status: String
-    nra_approval_date: String
+    sra_approval_status: String
   }
 
   type DimDeveloper {
@@ -98,6 +97,13 @@ export const typeDefs = `#graphql
     countries_approved_agg: String
     candidate_type: String
     indication: String
+    indication_type: String
+    healthcare_facility_level: String
+    preclinical_results_status: String
+    type_of_preclinical_results: String
+    preclinical_results_source: String
+    recent_updates: String
+    test_format: String
 
     # Resolved via joins
     disease: DimDisease
@@ -194,9 +200,16 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ApprovingAuthorityRow {
+    authority_type: String!
+    who_prequalified: Int!
+    no_who_listing: Int!
+  }
+
   type RegulatoryDistribution {
     approvalStatus: [ApprovalStatusRow!]!
     whoPrequalification: [WHOPrequalRow!]!
+    approvingAuthorities: [ApprovingAuthorityRow!]!
   }
 
   type CandidateTypeDistributionRow {
@@ -234,13 +247,24 @@ export const typeDefs = `#graphql
     candidate_key: Int!
     candidate_name: String
     candidate_type: String
-    vin_candidateid: String
+    candidateid: String
     alternative_names: String
     current_rd_stage: String
     countries_approved_count: Int
     countries_approved_agg: String
     indication: String
     target: String
+    developers_agg: String
+    mechanism_of_action: String
+    key_features: String
+    technology_type: String
+    indication_type: String
+    healthcare_facility_level: String
+    preclinical_results_status: String
+    type_of_preclinical_results: String
+    preclinical_results_source: String
+    recent_updates: String
+    test_format: String
     global_health_area: String
     disease_name: String
     secondary_disease_name: String
@@ -259,7 +283,7 @@ export const typeDefs = `#graphql
 
   type ClinicalTrialNode {
     trial_id: Int!
-    vin_clinicaltrialid: String
+    clinicaltrialid: String
     trial_name: String
     trial_title: String
     trial_phase: String

@@ -78,6 +78,13 @@ export interface DimCandidateCore {
   countries_approved_agg: string | null;
   candidate_type: string | null;
   indication: string | null;
+  indication_type: string | null;
+  healthcare_facility_level: string | null;
+  preclinical_results_status: string | null;
+  type_of_preclinical_results: string | null;
+  preclinical_results_source: string | null;
+  recent_updates: string | null;
+  test_format: string | null;
 }
 
 export interface DimCandidateTech {
@@ -91,12 +98,11 @@ export interface DimCandidateTech {
 export interface DimCandidateRegulatory {
   regulatory_key: number;
   approval_status: string | null;
-  sra_approval_flag: number | null;
   fda_approval_date: string | null;
   who_prequal_date: string | null;
   who_prequalification: string | null;
   nra_approval_status: string | null;
-  nra_approval_date: string | null;
+  sra_approval_status: string | null;
 }
 
 export interface DimDeveloper {
@@ -246,7 +252,7 @@ export interface ClinicalTrialStats {
 
 export interface ClinicalTrialNode {
   trial_id: number;
-  vin_clinicaltrialid: string | null;
+  clinicaltrialid: string | null;
   trial_name: string | null;
   trial_title: string | null;
   trial_phase: string | null;
@@ -274,7 +280,7 @@ export interface PortfolioCandidateNode {
   candidate_key: number;
   candidate_name: string | null;
   candidate_type: string | null;
-  vin_candidateid: string | null;
+  candidateid: string | null;
   alternative_names: string | null;
   current_rd_stage: string | null;
   countries_approved_count: number | null;
@@ -289,6 +295,17 @@ export interface PortfolioCandidateNode {
   who_prequalification: string | null;
   indication: string | null;
   target: string | null;
+  developers_agg: string | null;
+  mechanism_of_action: string | null;
+  key_features: string | null;
+  technology_type: string | null;
+  indication_type: string | null;
+  healthcare_facility_level: string | null;
+  preclinical_results_status: string | null;
+  type_of_preclinical_results: string | null;
+  preclinical_results_source: string | null;
+  recent_updates: string | null;
+  test_format: string | null;
 }
 
 export interface PortfolioCandidateFilter {
@@ -316,9 +333,16 @@ export interface WHOPrequalRow {
   candidateCount: number;
 }
 
+export interface ApprovingAuthorityRow {
+  authority_type: string;
+  who_prequalified: number;
+  no_who_listing: number;
+}
+
 export interface RegulatoryDistribution {
   approvalStatus: ApprovalStatusRow[];
   whoPrequalification: WHOPrequalRow[];
+  approvingAuthorities: ApprovingAuthorityRow[];
 }
 
 export interface ProductDistributionRow {

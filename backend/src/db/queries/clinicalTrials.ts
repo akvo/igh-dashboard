@@ -52,7 +52,7 @@ export function getClinicalTrials(
   const dataSql = `
     SELECT
       t.trial_id,
-      t.vin_clinicaltrialid,
+      t.clinicaltrialid,
       t.trial_name,
       t.trial_title,
       t.trial_phase,
