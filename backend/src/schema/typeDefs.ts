@@ -169,6 +169,13 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type TechnologyTypeDistributionRow {
+    technology_type: String!
+    phase_name: String!
+    sort_order: Int!
+    candidateCount: Int!
+  }
+
   type ProductDistributionRow {
     product_name: String!
     candidateCount: Int!
@@ -382,6 +389,9 @@ export const typeDefs = `#graphql
 
     # Portfolio analysis - product phase distribution
     productPhaseDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [ProductPhaseDistributionRow!]!
+
+    # Portfolio analysis - technology type distribution
+    technologyTypeDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String): [TechnologyTypeDistributionRow!]!
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!

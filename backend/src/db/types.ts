@@ -234,6 +234,13 @@ export interface ProductPhaseDistributionRow {
   candidateCount: number;
 }
 
+export interface TechnologyTypeDistributionRow {
+  technology_type: string;
+  phase_name: string;
+  sort_order: number;
+  candidateCount: number;
+}
+
 export interface ClinicalTrialStatusRow {
   status: string;
   trialCount: number;

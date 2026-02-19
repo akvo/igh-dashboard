@@ -9,6 +9,7 @@ import { getGeographicDistribution, getLocationScopes } from "../db/queries/geog
 import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
 import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
+import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";
 import { getProductDistribution } from "../db/queries/productDistribution.js";
 import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
@@ -171,6 +172,23 @@ export const resolvers = {
       },
     ) =>
       getProductPhaseDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio analysis - technology type distribution
+    technologyTypeDistribution: (
+      _: unknown,
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
+    ) =>
+      getTechnologyTypeDistribution({
         global_health_areas: args.global_health_areas,
         disease_names: args.disease_names,
         product_names: args.product_names,

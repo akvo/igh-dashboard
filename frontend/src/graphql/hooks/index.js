@@ -15,3 +15,4 @@ export { useRegulatoryDistribution } from './useRegulatoryDistribution';
 export { useClinicalTrialStats } from './useClinicalTrialStats';
 export { useClinicalTrials } from './useClinicalTrials';
 export { usePortfolioCandidates } from './usePortfolioCandidates';
+export { useTechnologyTypeDistribution } from './useTechnologyTypeDistribution';
