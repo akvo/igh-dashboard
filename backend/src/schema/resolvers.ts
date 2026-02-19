@@ -55,7 +55,7 @@ export const resolvers = {
       _: unknown,
       args: {
         years?: number[];
-        disease_key?: number;
+        disease_keys?: number[];
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
@@ -63,7 +63,7 @@ export const resolvers = {
     ) =>
       getTemporalSnapshots({
         years: args.years,
-        disease_key: args.disease_key,
+        disease_keys: args.disease_keys,
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,

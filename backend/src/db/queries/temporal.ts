@@ -3,7 +3,7 @@ import type { TemporalSnapshotRow } from "../types.js";
 
 interface TemporalSnapshotFilters {
   years?: number[];
-  disease_key?: number;
+  disease_keys?: number[];
   global_health_areas?: string[];
   product_keys?: number[];
   candidate_type?: string;
@@ -15,7 +15,6 @@ const SCALAR_FILTER_MAP: Array<{
   condition: string;
   join?: string;
 }> = [
-  { key: "disease_key", condition: "f.disease_key = ?" },
   {
     key: "candidate_type",
     condition: "c.candidate_type = ?",
@@ -30,6 +29,7 @@ const ARRAY_FILTER_MAP: Array<{
   join?: string;
 }> = [
   { key: "years", column: "dt.year" },
+  { key: "disease_keys", column: "f.disease_key" },
   { key: "product_keys", column: "f.product_key" },
   {
     key: "global_health_areas",

@@ -16,7 +16,7 @@ export interface DimProduct {
 
 export interface DimDisease {
   disease_key: number;
-  vin_diseaseid: string | null;
+  diseaseid: string | null;
   disease_name: string | null;
   global_health_area: string | null;
   disease_type: string | null;

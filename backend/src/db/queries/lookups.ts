@@ -11,7 +11,7 @@ import type {
 } from "../types.js";
 
 /**
- * Get all diseases for filter dropdown.
+ * Get diseases that have at least one candidate in the pipeline.
  */
 export function getDiseases(): DimDisease[] {
   const db = getDatabase();
@@ -19,9 +19,11 @@ export function getDiseases(): DimDisease[] {
   return db
     .prepare(
       `
-    SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
-    FROM dim_disease
-    ORDER BY disease_name
+    SELECT DISTINCT d.disease_key, d.diseaseid, d.disease_name, d.global_health_area, d.disease_type
+    FROM dim_disease d
+    JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
+    WHERE f.is_active_flag = 1
+    ORDER BY d.disease_name
   `,
     )
     .all() as DimDisease[];
@@ -36,7 +38,7 @@ export function getDiseaseByKey(disease_key: number): DimDisease | null {
   const disease = db
     .prepare(
       `
-    SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
+    SELECT disease_key, diseaseid, disease_name, global_health_area, disease_type
     FROM dim_disease
     WHERE disease_key = ?
   `,

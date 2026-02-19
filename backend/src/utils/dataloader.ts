@@ -25,7 +25,7 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
+          SELECT disease_key, diseaseid, disease_name, global_health_area, disease_type
           FROM dim_disease
           WHERE disease_key IN (${placeholders})
         `,
