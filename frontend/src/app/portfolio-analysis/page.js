@@ -637,12 +637,12 @@ export default function PortfolioAnalysis() {
                             <tbody>
                               {extractTableData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-4 px-4">
+                                  <td className="py-4 px-4 align-top">
                                     <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
                                   {activeExtractColumns.map((col) => (
-                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600">{item[col.accessor]}</td>
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top">{item[col.accessor]}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -769,32 +769,32 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {candidatesData.map((candidate) => (
                         <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 align-top">
                             <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product_name}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.secondary_disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.product_name}</td>
+                          <td className="py-4 px-4 align-top">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
                               {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.test_format}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.preclinical_results_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.type_of_preclinical_results}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.preclinical_results_source}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.recent_updates}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.test_format}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.preclinical_results_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.type_of_preclinical_results}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.preclinical_results_source}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.recent_updates}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -939,39 +939,39 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {approvedProductsData.map((item) => (
                         <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 align-top">
                             <div className="text-sm font-medium text-black">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.secondary_disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.product_name}</td>
+                          <td className="py-4 px-4 align-top">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.current_rd_stage)}`}>
                               {item.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.recent_updates}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.recent_updates}</td>
+                          <td className="py-4 px-4 align-top">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
                               {item.approval_status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.approving_authorities_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.nra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.sra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.ema_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.japanese_mhlw_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.us_fda_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.approving_authorities_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.nra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ema_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.japanese_mhlw_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.us_fda_approval_status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1117,26 +1117,26 @@ export default function PortfolioAnalysis() {
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.clinicaltrialid}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.trial_name || item.clinicaltrialid}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.candidate_name}</td>
+                            <td className="py-4 px-4 align-top">
                               <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.description}</td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.description}</td>
+                            <td className="py-4 px-4 align-top">
                               <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
                                 {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.status}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.locations}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.ct_results_status}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.start_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.end_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.sponsor}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.collaborator}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.source_text}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.locations}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ct_results_status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.start_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.end_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sponsor}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.collaborator}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.source_text}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1238,9 +1238,9 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {paginatedTechData.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px]">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px] align-top">{item.technology_type}</td>
                           {technologyPhases.map((phase) => (
-                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600">{item[phase.key] || 0}</td>
+                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600 align-top">{item[phase.key] || 0}</td>
                           ))}
                         </tr>
                       ))}
