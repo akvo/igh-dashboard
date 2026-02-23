@@ -103,6 +103,9 @@ export interface DimCandidateRegulatory {
   who_prequalification: string | null;
   nra_approval_status: string | null;
   sra_approval_status: string | null;
+  ema_approval_status: string | null;
+  japanese_mhlw_approval_status: string | null;
+  us_fda_approval_status: string | null;
 }
 
 export interface DimDeveloper {
@@ -268,6 +271,13 @@ export interface ClinicalTrialNode {
   disease_name: string | null;
   product_name: string | null;
   start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+  ct_results_status: string | null;
+  collaborator: string | null;
+  locations: string | null;
+  sponsor: string | null;
+  source_text: string | null;
 }
 
 export interface ClinicalTrialFilter {
@@ -313,6 +323,12 @@ export interface PortfolioCandidateNode {
   preclinical_results_source: string | null;
   recent_updates: string | null;
   test_format: string | null;
+  nra_approval_status: string | null;
+  sra_approval_status: string | null;
+  ema_approval_status: string | null;
+  japanese_mhlw_approval_status: string | null;
+  us_fda_approval_status: string | null;
+  approving_authorities_agg: string | null;
 }
 
 export interface PortfolioCandidateFilter {

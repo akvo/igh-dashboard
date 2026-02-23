@@ -12,6 +12,46 @@ import {
   Cell,
 } from 'recharts';
 
+// Word-wrap text into lines that fit within maxChars, truncating with "…"
+// on the last line if the full text exceeds the limit.
+function wrapLabel(text, maxChars) {
+  if (text.length <= maxChars) {
+    return text.split(/\s+/).reduce((lines, word) => {
+      const last = lines[lines.length - 1];
+      if (last && (last + ' ' + word).length <= maxChars) {
+        lines[lines.length - 1] = last + ' ' + word;
+      } else {
+        lines.push(word);
+      }
+      return lines;
+    }, []);
+  }
+
+  const words = text.split(/\s+/);
+  const lines = [];
+  let remaining = maxChars;
+
+  for (const word of words) {
+    const last = lines[lines.length - 1];
+    if (last && (last + ' ' + word).length <= Math.min(remaining, maxChars)) {
+      lines[lines.length - 1] = last + ' ' + word;
+      remaining -= word.length + 1;
+    } else if (remaining > 0) {
+      lines.push(word.length > remaining ? word.slice(0, remaining) + '…' : word);
+      remaining -= Math.min(word.length, remaining);
+    } else {
+      // Truncate the last line we added and stop.
+      const lastLine = lines[lines.length - 1];
+      if (lastLine && !lastLine.endsWith('…')) {
+        lines[lines.length - 1] = lastLine + '…';
+      }
+      break;
+    }
+  }
+
+  return lines;
+}
+
 const defaultColors = [
   '#fe7449', // Orange
   '#8c4028', // Dark brown
@@ -48,6 +88,7 @@ export default function BarChart({
   valueKey = 'value',
   barRadius = 4,
   barSize,
+  maxTickLength = 25,
 }) {
   const [visibleItems, setVisibleItems] = useState(
     data.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {})
@@ -140,100 +181,119 @@ export default function BarChart({
         </div>
       )}
 
-      <div className="relative" style={{ height }}>
+      <div className="flex" style={{ height }}>
         {yAxisLabel && (
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 -rotate-90 text-sm text-black-64 whitespace-nowrap"
-            style={{ transformOrigin: 'center' }}
-          >
-            {yAxisLabel}
-          </div>
-        )}
-
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartsBarChart
-            data={chartData}
-            layout={layout}
-            margin={{
-              top: 10,
-              right: 20,
-              left: isHorizontalBars ? 80 : 20,
-              bottom: xAxisLabel ? 40 : 20,
-            }}
-            barCategoryGap="20%"
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              horizontal={isHorizontalBars ? false : true}
-              vertical={isHorizontalBars ? true : false}
-              stroke="rgba(38, 38, 38, 0.12)"
-            />
-
-            {isHorizontalBars ? (
-              <>
-                <XAxis
-                  type="number"
-                  ticks={axisTicks}
-                  domain={[0, axisTicks[axisTicks.length - 1]]}
-                  axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey={nameKey}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 14 }}
-                  width={75}
-                />
-              </>
-            ) : (
-              <>
-                <XAxis
-                  type="category"
-                  dataKey={nameKey}
-                  axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
-                />
-                <YAxis
-                  type="number"
-                  ticks={axisTicks}
-                  domain={[0, axisTicks[axisTicks.length - 1]]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
-                />
-              </>
-            )}
-
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
-            />
-
-            <Bar
-              dataKey={valueKey}
-              radius={
-                isHorizontalBars
-                  ? [0, barRadius, barRadius, 0]
-                  : [barRadius, barRadius, 0, 0]
-              }
-              barSize={barSize}
+          <div className="flex items-center justify-center shrink-0" style={{ width: 24 }}>
+            <span
+              className="text-sm text-black-64 whitespace-nowrap"
+              style={{ transform: 'rotate(-90deg)' }}
             >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.fill} />
-              ))}
-            </Bar>
-          </RechartsBarChart>
-        </ResponsiveContainer>
-
-        {xAxisLabel && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
-            {xAxisLabel}
+              {yAxisLabel}
+            </span>
           </div>
         )}
+
+        <div className="relative flex-1 min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsBarChart
+              data={chartData}
+              layout={layout}
+              margin={{
+                top: 10,
+                right: 20,
+                left: isHorizontalBars ? 80 : 20,
+                bottom: xAxisLabel ? 40 : 20,
+              }}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={isHorizontalBars ? false : true}
+                vertical={isHorizontalBars ? true : false}
+                stroke="rgba(38, 38, 38, 0.12)"
+              />
+
+              {isHorizontalBars ? (
+                <>
+                  <XAxis
+                    type="number"
+                    ticks={axisTicks}
+                    domain={[0, axisTicks[axisTicks.length - 1]]}
+                    axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey={nameKey}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={({ x, y, payload }) => {
+                      const label = payload.value;
+                      const lines = wrapLabel(label, maxTickLength);
+                      const lineHeight = 16;
+                      const startY = y - ((lines.length - 1) * lineHeight) / 2;
+                      return (
+                        <text x={x} y={startY} textAnchor="end" fill="rgba(38, 38, 38, 0.88)" fontSize={14}>
+                          <title>{label}</title>
+                          {lines.map((line, i) => (
+                            <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight} dominantBaseline="central">
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      );
+                    }}
+                    width={75}
+                  />
+                </>
+              ) : (
+                <>
+                  <XAxis
+                    type="category"
+                    dataKey={nameKey}
+                    axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    type="number"
+                    ticks={axisTicks}
+                    domain={[0, axisTicks[axisTicks.length - 1]]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                  />
+                </>
+              )}
+
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
+              />
+
+              <Bar
+                dataKey={valueKey}
+                radius={
+                  isHorizontalBars
+                    ? [0, barRadius, barRadius, 0]
+                    : [barRadius, barRadius, 0, 0]
+                }
+                barSize={barSize}
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Bar>
+            </RechartsBarChart>
+          </ResponsiveContainer>
+
+          {xAxisLabel && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
+              {xAxisLabel}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

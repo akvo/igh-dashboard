@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
@@ -14,6 +14,7 @@ export default function PortfolioAnalysis() {
   const [disease, setDisease] = useState([]);
   const [product, setProduct] = useState([]);
   const [productTypeFilter, setProductTypeFilter] = useState([]);
+  const [geoTrialStatus, setGeoTrialStatus] = useState([]);
   const [portfolioTab, setPortfolioTab] = useState('candidates');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,16 +26,16 @@ export default function PortfolioAnalysis() {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [extractSearchQuery, setExtractSearchQuery] = useState('');
-  const [extractHealthArea, setExtractHealthArea] = useState('');
-  const [extractDisease, setExtractDisease] = useState('');
-  const [extractProduct, setExtractProduct] = useState('');
-  const [extractRdStage, setExtractRdStage] = useState('');
+  const [extractHealthArea, setExtractHealthArea] = useState([]);
+  const [extractDisease, setExtractDisease] = useState([]);
+  const [extractProduct, setExtractProduct] = useState([]);
+  const [extractRdStage, setExtractRdStage] = useState([]);
 
   // Fetch data from API
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -55,10 +56,10 @@ export default function PortfolioAnalysis() {
     { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
   const extractFilter = {
-    globalHealthAreas: extractHealthArea ? [extractHealthArea] : undefined,
-    diseaseNames: extractDisease ? [extractDisease] : undefined,
-    productNames: extractProduct ? [extractProduct] : undefined,
-    phaseNames: extractRdStage ? [extractRdStage] : undefined,
+    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
+    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
+    productNames: extractProduct.length > 0 ? extractProduct : undefined,
+    phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
   const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
@@ -70,7 +71,7 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location');
+  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
 
   // Health area options from API
@@ -85,11 +86,41 @@ export default function PortfolioAnalysis() {
     [productsList]
   );
 
-  // Disease options from API (deduplicated)
-  const diseaseOptions = useMemo(() =>
-    [...new Set((diseasesList || []).map(d => d.name).filter(Boolean))],
-    [diseasesList]
-  );
+  // Disease options from API, narrowed to the selected GHA(s) when present
+  const diseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = healthArea.length > 0
+      ? source.filter(d => healthArea.includes(d.global_health_area))
+      : source;
+    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+  }, [diseasesRaw, healthArea]);
+
+  // When the GHA filter narrows the disease list, remove any disease
+  // selections that are no longer valid options.
+  useEffect(() => {
+    if (disease.length > 0) {
+      const valid = disease.filter(d => diseaseOptions.includes(d));
+      if (valid.length !== disease.length) setDisease(valid);
+    }
+  }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Disease options for the Extract tab, cascading from extractHealthArea
+  // (independent of the Explore tab's healthArea filter).
+  const extractDiseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = extractHealthArea.length > 0
+      ? source.filter(d => extractHealthArea.includes(d.global_health_area))
+      : source;
+    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+  }, [diseasesRaw, extractHealthArea]);
+
+  // Prune extract disease selections that become invalid when GHA narrows.
+  useEffect(() => {
+    if (extractDisease.length > 0) {
+      const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
+      if (valid.length !== extractDisease.length) setExtractDisease(valid);
+    }
+  }, [extractDiseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -172,10 +203,10 @@ export default function PortfolioAnalysis() {
   };
 
   const handleResetExtractFilters = () => {
-    setExtractHealthArea('');
-    setExtractDisease('');
-    setExtractProduct('');
-    setExtractRdStage('');
+    setExtractHealthArea([]);
+    setExtractDisease([]);
+    setExtractProduct([]);
+    setExtractRdStage([]);
     setExtractSearchQuery('');
     setExtractPage(1);
   };
@@ -367,7 +398,7 @@ export default function PortfolioAnalysis() {
                   data={pipelineData}
                   phases={pipelinePhases}
                   layout="vertical"
-                  height={350}
+                  height={500}
                   xAxisLabel="Amount of Candidates/Products"
                   yAxisLabel="Product type"
                   showFilters={true}
@@ -389,6 +420,7 @@ export default function PortfolioAnalysis() {
                         { label: 'Products', value: 'Product' },
                       ]}
                       multiSelect={true}
+                      showAllOption={true}
                       compact={true}
                       className="w-32"
                     />
@@ -405,7 +437,7 @@ export default function PortfolioAnalysis() {
                 <DonutChart
                   data={productTypesData}
                   colors={productTypeColors}
-                  height={350}
+                  height={500}
                   innerRadius={55}
                   outerRadius={140}
                   showLegend={true}
@@ -459,6 +491,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
                         options={healthAreaOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -468,7 +502,9 @@ export default function PortfolioAnalysis() {
                         value={extractDisease}
                         onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={diseaseOptions}
+                        options={extractDiseaseOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -479,6 +515,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                         placeholder="All"
                         options={productOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -489,6 +527,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
                         placeholder="All"
                         options={rdStageOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -597,12 +637,12 @@ export default function PortfolioAnalysis() {
                             <tbody>
                               {extractTableData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-4 px-4">
+                                  <td className="py-4 px-4 align-top">
                                     <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
                                   {activeExtractColumns.map((col) => (
-                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600">{item[col.accessor]}</td>
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top">{item[col.accessor]}</td>
                                   ))}
                                 </tr>
                               ))}
@@ -705,32 +745,56 @@ export default function PortfolioAnalysis() {
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">GHA</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Current R&D Stage</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Alternative names</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Approved</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Test format</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Type of preclinical results</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results source</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
                       </tr>
                     </thead>
                     <tbody>
                       {candidatesData.map((candidate) => (
                         <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 align-top">
                             <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.product_name}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.secondary_disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.product_name}</td>
+                          <td className="py-4 px-4 align-top">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
                               {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.alternative_names}</td>
-                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.countries_approved_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.test_format}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.preclinical_results_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.type_of_preclinical_results}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.preclinical_results_source}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.recent_updates}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -848,36 +912,66 @@ export default function PortfolioAnalysis() {
                   <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Age specific</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Research status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">WHO prequalification</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]"># of countries with approval</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approving authority</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">National regulatory authority approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Stringent regulatory authority approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">EMA approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Japanese MHLW approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">US FDA approval status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {approvedProductsData.map((item) => (
                         <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black max-w-[250px]">{item.candidate_name}</div>
+                          <td className="py-4 px-4 align-top">
+                            <div className="text-sm font-medium text-black">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
-                          <td className="py-4 px-4">
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.global_health_area}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.secondary_disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.product_name}</td>
+                          <td className="py-4 px-4 align-top">
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.current_rd_stage)}`}>
+                              {item.current_rd_stage}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.recent_updates}</td>
+                          <td className="py-4 px-4 align-top">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
                               {item.approval_status}
                             </span>
                           </td>
-                          <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${item.who_prequalification === 'Yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {item.who_prequalification}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries_approved_count}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.approving_authorities_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.nra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ema_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.japanese_mhlw_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.us_fda_approval_status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -955,10 +1049,12 @@ export default function PortfolioAnalysis() {
                     <h4 className="text-lg font-bold text-black">Geographic distribution of clinical trials</h4>
                     <div className="flex items-center gap-2">
                       <Dropdown
-                        value={[]}
-                        onChange={() => {}}
+                        value={geoTrialStatus}
+                        onChange={setGeoTrialStatus}
                         placeholder="All"
-                        options={['All', 'Active', 'Completed', 'Terminated']}
+                        options={['Active', 'Completed', 'Terminated']}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                         className="w-32"
                       />
@@ -1003,32 +1099,44 @@ export default function PortfolioAnalysis() {
                   <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">CT title</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Phase</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Candidate</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Start date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT number</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Candidate / product name</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Title</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Description</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT phase</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Locations</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT results status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Start date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">End date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Sponsor</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Collaborator</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Source</th>
                         </tr>
                       </thead>
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.clinicaltrialid}</td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.trial_name || item.clinicaltrialid}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.candidate_name}</td>
+                            <td className="py-4 px-4 align-top">
                               <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.description}</td>
+                            <td className="py-4 px-4 align-top">
                               <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
                                 {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.start_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.locations}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ct_results_status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.start_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.end_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sponsor}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.collaborator}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.source_text}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1130,9 +1238,9 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {paginatedTechData.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px]">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px] align-top">{item.technology_type}</td>
                           {technologyPhases.map((phase) => (
-                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600">{item[phase.key] || 0}</td>
+                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600 align-top">{item[phase.key] || 0}</td>
                           ))}
                         </tr>
                       ))}

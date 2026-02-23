@@ -10,6 +10,7 @@ function buildWhere(filter?: ClinicalTrialFilter) {
     "LEFT JOIN dim_disease d ON t.disease_key = d.disease_key",
     "LEFT JOIN dim_product pr ON t.product_key = pr.product_key",
     "LEFT JOIN dim_date dt ON t.start_date_key = dt.date_key",
+    "LEFT JOIN dim_date dt2 ON t.end_date_key = dt2.date_key",
   ];
   const conditions: string[] = [];
   const params: (string | number)[] = [];
@@ -60,7 +61,14 @@ export function getClinicalTrials(
       c.candidate_name,
       d.disease_group_name AS disease_name,
       pr.product_name,
-      dt.full_date as start_date
+      dt.full_date as start_date,
+      dt2.full_date as end_date,
+      t.description,
+      t.ct_results_status,
+      t.collaborator,
+      t.locations,
+      t.sponsor,
+      t.source_text
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}

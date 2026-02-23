@@ -73,6 +73,9 @@ export const typeDefs = `#graphql
     who_prequalification: String
     nra_approval_status: String
     sra_approval_status: String
+    ema_approval_status: String
+    japanese_mhlw_approval_status: String
+    us_fda_approval_status: String
   }
 
   type DimDeveloper {
@@ -280,6 +283,12 @@ export const typeDefs = `#graphql
     phase_name: String
     approval_status: String
     who_prequalification: String
+    nra_approval_status: String
+    sra_approval_status: String
+    ema_approval_status: String
+    japanese_mhlw_approval_status: String
+    us_fda_approval_status: String
+    approving_authorities_agg: String
   }
 
   type PortfolioCandidateConnection {
@@ -299,6 +308,13 @@ export const typeDefs = `#graphql
     disease_name: String
     product_name: String
     start_date: String
+    end_date: String
+    description: String
+    ct_results_status: String
+    collaborator: String
+    locations: String
+    sponsor: String
+    source_text: String
   }
 
   type ClinicalTrialConnection {
@@ -361,7 +377,7 @@ export const typeDefs = `#graphql
     candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
-    geographicDistribution(location_scope: String!): [GeographicDistributionRow!]!
+    geographicDistribution(location_scope: String!, statuses: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
     temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!

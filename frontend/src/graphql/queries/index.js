@@ -48,8 +48,8 @@ export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
 
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
-  query GeographicMap($scope: String!) {
-    geographicDistribution(location_scope: $scope) {
+  query GeographicMap($scope: String!, $statuses: [String!]) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses) {
       country_key
       country_name
       iso_code
@@ -146,6 +146,12 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         phase_name
         approval_status
         who_prequalification
+        nra_approval_status
+        sra_approval_status
+        ema_approval_status
+        japanese_mhlw_approval_status
+        us_fda_approval_status
+        approving_authorities_agg
       }
       totalCount
       hasNextPage
@@ -168,6 +174,13 @@ export const GET_CLINICAL_TRIALS = gql`
         disease_name
         product_name
         start_date
+        end_date
+        description
+        ct_results_status
+        collaborator
+        locations
+        sponsor
+        source_text
       }
       totalCount
       hasNextPage

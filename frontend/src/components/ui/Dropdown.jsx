@@ -15,6 +15,7 @@ const Dropdown = ({
   showSearch = false,
   showClearText = false,
   compact = false,
+  showAllOption = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -180,6 +181,26 @@ const Dropdown = ({
             </div>
           )}
           <div className="overflow-y-auto max-h-56">
+            {showAllOption && multiSelect && (
+              <button
+                type="button"
+                onClick={() => { if (onChange) onChange([]); }}
+                className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left border-none cursor-pointer transition-colors
+                  ${selectedValues.length === 0 ? 'text-orange-500 bg-orange-50' : 'text-black bg-transparent hover:bg-gray-50'}
+                  border-b border-gray-100`}
+              >
+                <span className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
+                  selectedValues.length === 0 ? 'border-orange-500 bg-orange-500' : 'border-gray-300 bg-white'
+                }`}>
+                  {selectedValues.length === 0 && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </span>
+                All
+              </button>
+            )}
             {filteredOptions.map((option, index) => {
               const optValue = typeof option === 'object' ? option.value : option;
               const optLabel = typeof option === 'object' ? option.label : option;

@@ -11,6 +11,46 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
+// Word-wrap text into lines that fit within maxChars, truncating with "…"
+// on the last line if the full text exceeds the limit.
+function wrapLabel(text, maxChars) {
+  if (text.length <= maxChars) {
+    return text.split(/\s+/).reduce((lines, word) => {
+      const last = lines[lines.length - 1];
+      if (last && (last + ' ' + word).length <= maxChars) {
+        lines[lines.length - 1] = last + ' ' + word;
+      } else {
+        lines.push(word);
+      }
+      return lines;
+    }, []);
+  }
+
+  const words = text.split(/\s+/);
+  const lines = [];
+  let remaining = maxChars;
+
+  for (const word of words) {
+    const last = lines[lines.length - 1];
+    if (last && (last + ' ' + word).length <= Math.min(remaining, maxChars)) {
+      lines[lines.length - 1] = last + ' ' + word;
+      remaining -= word.length + 1;
+    } else if (remaining > 0) {
+      lines.push(word.length > remaining ? word.slice(0, remaining) + '…' : word);
+      remaining -= Math.min(word.length, remaining);
+    } else {
+      // Truncate the last line we added and stop.
+      const lastLine = lines[lines.length - 1];
+      if (lastLine && !lastLine.endsWith('…')) {
+        lines[lines.length - 1] = lastLine + '…';
+      }
+      break;
+    }
+  }
+
+  return lines;
+}
+
 const defaultPhases = [
   { key: 'preClinical', label: 'Pre-clinical trial', color: '#8c4028' },
   { key: 'phase1', label: 'Phase 1', color: '#fe7449' },
@@ -58,8 +98,9 @@ export default function StackedBarChart({
   showFilters = true,
   height = 400,
   barRadius = 4,
-  yAxisWidth = 65,
+  yAxisWidth = 120,
   hideXAxisTicks = false,
+  maxTickLength = 25,
 }) {
   const [visiblePhases, setVisiblePhases] = useState(
     phases.reduce((acc, phase) => ({ ...acc, [phase.key]: true }), {})
@@ -169,97 +210,116 @@ export default function StackedBarChart({
         </div>
       )}
 
-      <div className="relative" style={{ height }}>
+      <div className="flex" style={{ height }}>
         {yAxisLabel && (
-          <div
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 -rotate-90 text-sm text-black-64 whitespace-nowrap"
-            style={{ transformOrigin: 'center' }}
-          >
-            {yAxisLabel}
+          <div className="flex items-center justify-center shrink-0" style={{ width: 24 }}>
+            <span
+              className="text-sm text-black-64 whitespace-nowrap"
+              style={{ transform: 'rotate(-90deg)' }}
+            >
+              {yAxisLabel}
+            </span>
           </div>
         )}
 
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={data}
-            layout={layout}
-            margin={{
-              top: 10,
-              right: 10,
-              left: 5,
-              bottom: xAxisLabel ? 40 : 20,
-            }}
-            barCategoryGap="20%"
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              horizontal={!isHorizontalBars}
-              vertical={isHorizontalBars}
-              stroke="rgba(38, 38, 38, 0.12)"
-            />
-
-            {isHorizontalBars ? (
-              <>
-                <XAxis
-                  type="number"
-                  ticks={axisTicks}
-                  domain={[0, axisTicks[axisTicks.length - 1]]}
-                  axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
-                  tickLine={false}
-                  tick={hideXAxisTicks ? false : { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey={categoryKey}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
-                  width={yAxisWidth}
-                />
-              </>
-            ) : (
-              <>
-                <XAxis
-                  type="category"
-                  dataKey={categoryKey}
-                  axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
-                />
-                <YAxis
-                  type="number"
-                  ticks={axisTicks}
-                  domain={[0, axisTicks[axisTicks.length - 1]]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
-                />
-              </>
-            )}
-
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
-            />
-
-            {filteredPhases.map((phase, index) => (
-              <Bar
-                key={phase.key}
-                dataKey={phase.key}
-                name={phase.label}
-                stackId="stack"
-                fill={phase.color}
-                radius={getBarRadius(index)}
+        <div className="relative flex-1 min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={data}
+              layout={layout}
+              margin={{
+                top: 10,
+                right: 10,
+                left: 5,
+                bottom: xAxisLabel ? 40 : 20,
+              }}
+              barCategoryGap="20%"
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={!isHorizontalBars}
+                vertical={isHorizontalBars}
+                stroke="rgba(38, 38, 38, 0.12)"
               />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
 
-        {xAxisLabel && (
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
-            {xAxisLabel}
-          </div>
-        )}
+              {isHorizontalBars ? (
+                <>
+                  <XAxis
+                    type="number"
+                    ticks={axisTicks}
+                    domain={[0, axisTicks[axisTicks.length - 1]]}
+                    axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
+                    tickLine={false}
+                    tick={hideXAxisTicks ? false : { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey={categoryKey}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={({ x, y, payload }) => {
+                      const label = payload.value;
+                      const lines = wrapLabel(label, maxTickLength);
+                      const lineHeight = 14;
+                      const startY = y - ((lines.length - 1) * lineHeight) / 2;
+                      return (
+                        <text x={x} y={startY} textAnchor="end" fill="rgba(38, 38, 38, 0.88)" fontSize={12}>
+                          <title>{label}</title>
+                          {lines.map((line, i) => (
+                            <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight} dominantBaseline="central">
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      );
+                    }}
+                    width={yAxisWidth}
+                  />
+                </>
+              ) : (
+                <>
+                  <XAxis
+                    type="category"
+                    dataKey={categoryKey}
+                    axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                  />
+                  <YAxis
+                    type="number"
+                    ticks={axisTicks}
+                    domain={[0, axisTicks[axisTicks.length - 1]]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                  />
+                </>
+              )}
+
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
+              />
+
+              {filteredPhases.map((phase, index) => (
+                <Bar
+                  key={phase.key}
+                  dataKey={phase.key}
+                  name={phase.label}
+                  stackId="stack"
+                  fill={phase.color}
+                  radius={getBarRadius(index)}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+
+          {xAxisLabel && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
+              {xAxisLabel}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
