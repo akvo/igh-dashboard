@@ -271,6 +271,13 @@ export interface ClinicalTrialNode {
   disease_name: string | null;
   product_name: string | null;
   start_date: string | null;
+  end_date: string | null;
+  description: string | null;
+  ct_results_status: string | null;
+  collaborator: string | null;
+  locations: string | null;
+  sponsor: string | null;
+  source_text: string | null;
 }
 
 export interface ClinicalTrialFilter {

@@ -174,6 +174,13 @@ export const GET_CLINICAL_TRIALS = gql`
         disease_name
         product_name
         start_date
+        end_date
+        description
+        ct_results_status
+        collaborator
+        locations
+        sponsor
+        source_text
       }
       totalCount
       hasNextPage

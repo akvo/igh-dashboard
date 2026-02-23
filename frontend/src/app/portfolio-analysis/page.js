@@ -1057,32 +1057,44 @@ export default function PortfolioAnalysis() {
                   <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">CT title</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Phase</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Candidate</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Start date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT number</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Candidate / product name</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Title</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Description</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT phase</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Locations</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT results status</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Start date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">End date</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Sponsor</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Collaborator</th>
+                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Source</th>
                         </tr>
                       </thead>
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-4 px-4 text-sm text-gray-600">{item.trial_name || item.clinicaltrialid}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
                             <td className="py-4 px-4">
                               <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.description}</td>
                             <td className="py-4 px-4">
                               <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
                                 {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.candidate_name}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.locations}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.ct_results_status}</td>
                             <td className="py-4 px-4 text-sm text-gray-600">{item.start_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.end_date}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600">{item.sponsor}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.collaborator}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.source_text}</td>
                           </tr>
                         ))}
                       </tbody>

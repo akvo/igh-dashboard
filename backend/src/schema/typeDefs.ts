@@ -308,6 +308,13 @@ export const typeDefs = `#graphql
     disease_name: String
     product_name: String
     start_date: String
+    end_date: String
+    description: String
+    ct_results_status: String
+    collaborator: String
+    locations: String
+    sponsor: String
+    source_text: String
   }
 
   type ClinicalTrialConnection {
