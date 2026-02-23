@@ -48,8 +48,8 @@ export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
 
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
-  query GeographicMap($scope: String!) {
-    geographicDistribution(location_scope: $scope) {
+  query GeographicMap($scope: String!, $statuses: [String!]) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses) {
       country_key
       country_name
       iso_code

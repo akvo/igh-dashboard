@@ -62,8 +62,8 @@ export const resolvers = {
       }),
 
     // Map
-    geographicDistribution: (_: unknown, args: { location_scope: string }) =>
-      getGeographicDistribution(args.location_scope),
+    geographicDistribution: (_: unknown, args: { location_scope: string; statuses?: string[] }) =>
+      getGeographicDistribution(args.location_scope, args.statuses),
 
     // Cross-pipeline temporal
     temporalSnapshots: (
