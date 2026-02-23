@@ -14,6 +14,7 @@ export default function PortfolioAnalysis() {
   const [disease, setDisease] = useState([]);
   const [product, setProduct] = useState([]);
   const [productTypeFilter, setProductTypeFilter] = useState([]);
+  const [geoTrialStatus, setGeoTrialStatus] = useState([]);
   const [portfolioTab, setPortfolioTab] = useState('candidates');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -401,6 +402,7 @@ export default function PortfolioAnalysis() {
                         { label: 'Products', value: 'Product' },
                       ]}
                       multiSelect={true}
+                      showAllOption={true}
                       compact={true}
                       className="w-32"
                     />
@@ -1021,10 +1023,12 @@ export default function PortfolioAnalysis() {
                     <h4 className="text-lg font-bold text-black">Geographic distribution of clinical trials</h4>
                     <div className="flex items-center gap-2">
                       <Dropdown
-                        value={[]}
-                        onChange={() => {}}
+                        value={geoTrialStatus}
+                        onChange={setGeoTrialStatus}
                         placeholder="All"
-                        options={['All', 'Active', 'Completed', 'Terminated']}
+                        options={['Active', 'Completed', 'Terminated']}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                         className="w-32"
                       />
