@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
@@ -34,7 +34,7 @@ export default function PortfolioAnalysis() {
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -85,11 +85,23 @@ export default function PortfolioAnalysis() {
     [productsList]
   );
 
-  // Disease options from API (deduplicated)
-  const diseaseOptions = useMemo(() =>
-    [...new Set((diseasesList || []).map(d => d.name).filter(Boolean))],
-    [diseasesList]
-  );
+  // Disease options from API, narrowed to the selected GHA(s) when present
+  const diseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = healthArea.length > 0
+      ? source.filter(d => healthArea.includes(d.global_health_area))
+      : source;
+    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+  }, [diseasesRaw, healthArea]);
+
+  // When the GHA filter narrows the disease list, remove any disease
+  // selections that are no longer valid options.
+  useEffect(() => {
+    if (disease.length > 0) {
+      const valid = disease.filter(d => diseaseOptions.includes(d));
+      if (valid.length !== disease.length) setDisease(valid);
+    }
+  }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
