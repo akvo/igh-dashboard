@@ -705,13 +705,25 @@ export default function PortfolioAnalysis() {
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">GHA</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Current R&D Stage</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Alternative names</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Approved</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Test format</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Type of preclinical results</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results source</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -723,14 +735,26 @@ export default function PortfolioAnalysis() {
                           </td>
                           <td className="py-4 px-4 text-sm text-gray-600">{candidate.global_health_area}</td>
                           <td className="py-4 px-4 text-sm text-gray-600">{candidate.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.secondary_disease_name}</td>
                           <td className="py-4 px-4 text-sm text-gray-600">{candidate.product_name}</td>
                           <td className="py-4 px-4">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
                               {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.alternative_names}</td>
-                          <td className="py-4 px-4 text-sm text-gray-500 max-w-[200px] truncate">{candidate.countries_approved_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.test_format}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.preclinical_results_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{candidate.type_of_preclinical_results}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.preclinical_results_source}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{candidate.recent_updates}</td>
                         </tr>
                       ))}
                     </tbody>
