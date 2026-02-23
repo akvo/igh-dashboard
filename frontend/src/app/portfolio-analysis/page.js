@@ -380,7 +380,7 @@ export default function PortfolioAnalysis() {
                   data={pipelineData}
                   phases={pipelinePhases}
                   layout="vertical"
-                  height={350}
+                  height={500}
                   xAxisLabel="Amount of Candidates/Products"
                   yAxisLabel="Product type"
                   showFilters={true}
@@ -419,7 +419,7 @@ export default function PortfolioAnalysis() {
                 <DonutChart
                   data={productTypesData}
                   colors={productTypeColors}
-                  height={350}
+                  height={500}
                   innerRadius={55}
                   outerRadius={140}
                   showLegend={true}
