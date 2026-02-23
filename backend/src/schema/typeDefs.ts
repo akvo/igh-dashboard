@@ -73,6 +73,9 @@ export const typeDefs = `#graphql
     who_prequalification: String
     nra_approval_status: String
     sra_approval_status: String
+    ema_approval_status: String
+    japanese_mhlw_approval_status: String
+    us_fda_approval_status: String
   }
 
   type DimDeveloper {
@@ -280,6 +283,12 @@ export const typeDefs = `#graphql
     phase_name: String
     approval_status: String
     who_prequalification: String
+    nra_approval_status: String
+    sra_approval_status: String
+    ema_approval_status: String
+    japanese_mhlw_approval_status: String
+    us_fda_approval_status: String
+    approving_authorities_agg: String
   }
 
   type PortfolioCandidateConnection {

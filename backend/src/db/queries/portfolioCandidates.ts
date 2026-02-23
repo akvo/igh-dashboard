@@ -95,6 +95,15 @@ export function getPortfolioCandidates(
         p.phase_name,
         r.approval_status,
         r.who_prequalification,
+        r.nra_approval_status,
+        r.sra_approval_status,
+        r.ema_approval_status,
+        r.japanese_mhlw_approval_status,
+        r.us_fda_approval_status,
+        (SELECT GROUP_CONCAT(da.authority_name, '; ')
+         FROM bridge_candidate_approving_authority baa
+         JOIN dim_approving_authority da ON baa.authority_key = da.authority_key
+         WHERE baa.candidate_key = c.candidate_key) AS approving_authorities_agg,
         ROW_NUMBER() OVER (
           PARTITION BY c.candidate_key
           ORDER BY COALESCE(p.sort_order, -1) DESC, f.snapshot_id DESC
@@ -113,7 +122,10 @@ export function getPortfolioCandidates(
            technology_type,
            global_health_area, disease_name, secondary_disease_name,
            product_name, sub_product_name, phase_name,
-           approval_status, who_prequalification
+           approval_status, who_prequalification,
+           nra_approval_status, sra_approval_status,
+           ema_approval_status, japanese_mhlw_approval_status,
+           us_fda_approval_status, approving_authorities_agg
     FROM ranked
     WHERE rn = 1
     ORDER BY candidate_name

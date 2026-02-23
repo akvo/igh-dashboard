@@ -872,36 +872,66 @@ export default function PortfolioAnalysis() {
                   <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Age specific</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Research status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">WHO prequalification</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]"># of countries with approval</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approving authority</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">National regulatory authority approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Stringent regulatory authority approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">EMA approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Japanese MHLW approval status</th>
+                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">US FDA approval status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {approvedProductsData.map((item) => (
                         <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="text-sm font-medium text-black max-w-[250px]">{item.candidate_name}</div>
+                            <div className="text-sm font-medium text-black">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.global_health_area}</td>
                           <td className="py-4 px-4 text-sm text-gray-600">{item.disease_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.secondary_disease_name}</td>
                           <td className="py-4 px-4 text-sm text-gray-600">{item.product_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600">{item.current_rd_stage}</td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.current_rd_stage)}`}>
+                              {item.current_rd_stage}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.developers_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.indication}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.indication_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.healthcare_facility_level}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.target}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.mechanism_of_action}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.key_features}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.recent_updates}</td>
                           <td className="py-4 px-4">
                             <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
                               {item.approval_status}
                             </span>
                           </td>
-                          <td className="py-4 px-4">
-                            <span className={`px-2 py-1 text-xs rounded ${item.who_prequalification === 'Yes' ? 'bg-orange-50 text-orange-600' : 'bg-gray-100 text-gray-600'}`}>
-                              {item.who_prequalification}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 text-center">{item.countries_approved_count}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate">{item.approving_authorities_agg}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.nra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.sra_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.ema_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.japanese_mhlw_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600">{item.us_fda_approval_status}</td>
                         </tr>
                       ))}
                     </tbody>

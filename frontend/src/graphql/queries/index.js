@@ -146,6 +146,12 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         phase_name
         approval_status
         who_prequalification
+        nra_approval_status
+        sra_approval_status
+        ema_approval_status
+        japanese_mhlw_approval_status
+        us_fda_approval_status
+        approving_authorities_agg
       }
       totalCount
       hasNextPage
