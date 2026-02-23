@@ -26,10 +26,10 @@ export default function PortfolioAnalysis() {
   const [selectedColumns, setSelectedColumns] = useState([]);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [extractSearchQuery, setExtractSearchQuery] = useState('');
-  const [extractHealthArea, setExtractHealthArea] = useState('');
-  const [extractDisease, setExtractDisease] = useState('');
-  const [extractProduct, setExtractProduct] = useState('');
-  const [extractRdStage, setExtractRdStage] = useState('');
+  const [extractHealthArea, setExtractHealthArea] = useState([]);
+  const [extractDisease, setExtractDisease] = useState([]);
+  const [extractProduct, setExtractProduct] = useState([]);
+  const [extractRdStage, setExtractRdStage] = useState([]);
 
   // Fetch data from API
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
@@ -56,10 +56,10 @@ export default function PortfolioAnalysis() {
     { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
   const extractFilter = {
-    globalHealthAreas: extractHealthArea ? [extractHealthArea] : undefined,
-    diseaseNames: extractDisease ? [extractDisease] : undefined,
-    productNames: extractProduct ? [extractProduct] : undefined,
-    phaseNames: extractRdStage ? [extractRdStage] : undefined,
+    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
+    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
+    productNames: extractProduct.length > 0 ? extractProduct : undefined,
+    phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
   const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
@@ -103,6 +103,24 @@ export default function PortfolioAnalysis() {
       if (valid.length !== disease.length) setDisease(valid);
     }
   }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Disease options for the Extract tab, cascading from extractHealthArea
+  // (independent of the Explore tab's healthArea filter).
+  const extractDiseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = extractHealthArea.length > 0
+      ? source.filter(d => extractHealthArea.includes(d.global_health_area))
+      : source;
+    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+  }, [diseasesRaw, extractHealthArea]);
+
+  // Prune extract disease selections that become invalid when GHA narrows.
+  useEffect(() => {
+    if (extractDisease.length > 0) {
+      const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
+      if (valid.length !== extractDisease.length) setExtractDisease(valid);
+    }
+  }, [extractDiseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -185,10 +203,10 @@ export default function PortfolioAnalysis() {
   };
 
   const handleResetExtractFilters = () => {
-    setExtractHealthArea('');
-    setExtractDisease('');
-    setExtractProduct('');
-    setExtractRdStage('');
+    setExtractHealthArea([]);
+    setExtractDisease([]);
+    setExtractProduct([]);
+    setExtractRdStage([]);
     setExtractSearchQuery('');
     setExtractPage(1);
   };
@@ -473,6 +491,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
                         options={healthAreaOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -482,7 +502,9 @@ export default function PortfolioAnalysis() {
                         value={extractDisease}
                         onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={diseaseOptions}
+                        options={extractDiseaseOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -493,6 +515,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                         placeholder="All"
                         options={productOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
@@ -503,6 +527,8 @@ export default function PortfolioAnalysis() {
                         onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
                         placeholder="All"
                         options={rdStageOptions}
+                        multiSelect={true}
+                        showAllOption={true}
                         compact={true}
                       />
                     </div>
