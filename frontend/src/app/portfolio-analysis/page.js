@@ -82,7 +82,7 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
 
   // Health area options from API
@@ -1220,7 +1220,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Age groups in clinical trials</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Age group', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, ageGroupsData);
+                        downloadCSV(csv, 'age-groups-in-clinical-trials');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <div className="border-t border-gray-100 pt-4">
                       <DonutChart
@@ -1242,7 +1249,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Clinical trial status</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Trial status', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, trialStatusData);
+                        downloadCSV(csv, 'clinical-trial-status');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <div className="border-t border-gray-100 pt-4">
                       <BarChart data={trialStatusData} height={280} />
@@ -1268,7 +1282,15 @@ export default function PortfolioAnalysis() {
                         compact={true}
                         className="w-32"
                       />
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Country', accessor: 'country_name' },
+                          { label: 'ISO code', accessor: 'iso_code' },
+                          { label: 'Count', accessor: 'candidateCount' },
+                        ];
+                        const csv = buildCSV(columns, clinicalTrialsDistribution);
+                        downloadCSV(csv, 'geographic-distribution-clinical-trials');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
