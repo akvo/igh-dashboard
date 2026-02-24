@@ -597,7 +597,14 @@ export default function PortfolioAnalysis() {
                       className="w-32"
                     />
                     <ChartMenu
-                      onDownloadCSV={() => console.log('Download CSV')}
+                      onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Product type', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, productTypesData);
+                        downloadCSV(csv, 'product-types');
+                      }}
                       onDownloadPNG={() => console.log('Download PNG')}
                     />
                   </div>
