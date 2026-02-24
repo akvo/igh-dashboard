@@ -10,6 +10,7 @@ import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDisease
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
+import { fetchAllTrials } from '@/lib/fetchAllTrials';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -36,6 +37,7 @@ export default function PortfolioAnalysis() {
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const [approvedDownloading, setApprovedDownloading] = useState(false);
+  const [trialsDownloading, setTrialsDownloading] = useState(false);
 
   const apolloClient = useApolloClient();
 
@@ -299,6 +301,40 @@ export default function PortfolioAnalysis() {
       console.error('Approved products CSV download failed:', err);
     } finally {
       setApprovedDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product]);
+
+  // Download all clinical trials from the "Selected clinical trials" tab as CSV.
+  const handleTrialsDownloadCSV = useCallback(async () => {
+    setTrialsDownloading(true);
+    try {
+      const allRows = await fetchAllTrials(apolloClient, {
+        globalHealthAreas: healthArea,
+        diseaseNames: disease,
+        productNames: product,
+      });
+      const columns = [
+        { label: 'CT number', accessor: (row) => row.trial_name || row.clinicaltrialid },
+        { label: 'Candidate / product name', accessor: 'candidate_name' },
+        { label: 'Title', accessor: 'trial_title' },
+        { label: 'Description', accessor: 'description' },
+        { label: 'CT phase', accessor: 'trial_phase' },
+        { label: 'CT status', accessor: 'status' },
+        { label: 'Locations', accessor: 'locations' },
+        { label: 'CT results status', accessor: 'ct_results_status' },
+        { label: 'Start date', accessor: 'start_date' },
+        { label: 'End date', accessor: 'end_date' },
+        { label: 'Sponsor', accessor: 'sponsor' },
+        { label: 'Collaborator', accessor: 'collaborator' },
+        { label: 'Source', accessor: 'source_text' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-clinical-trials');
+    } catch (err) {
+      console.error('Clinical trials CSV download failed:', err);
+    } finally {
+      setTrialsDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apolloClient, healthArea, disease, product]);
@@ -1206,9 +1242,13 @@ export default function PortfolioAnalysis() {
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                        <button
+                          onClick={handleTrialsDownloadCSV}
+                          disabled={trialsDownloading}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        >
                           <CloudDownloadIcon className="w-4 h-4" />
-                          Download CSV
+                          {trialsDownloading ? 'Downloading...' : 'Download CSV'}
                         </button>
                       </div>
                     </div>
