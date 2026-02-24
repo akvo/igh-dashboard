@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useApolloClient } from '@apollo/client/react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
+import { fetchAllTrials } from '@/lib/fetchAllTrials';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -30,6 +34,13 @@ export default function PortfolioAnalysis() {
   const [extractDisease, setExtractDisease] = useState([]);
   const [extractProduct, setExtractProduct] = useState([]);
   const [extractRdStage, setExtractRdStage] = useState([]);
+  const [extractDownloading, setExtractDownloading] = useState(false);
+  const [candidatesDownloading, setCandidatesDownloading] = useState(false);
+  const [approvedDownloading, setApprovedDownloading] = useState(false);
+  const [trialsDownloading, setTrialsDownloading] = useState(false);
+  const [technologyDownloading, setTechnologyDownloading] = useState(false);
+
+  const apolloClient = useApolloClient();
 
   // Fetch data from API
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
@@ -71,7 +82,7 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
 
   // Health area options from API
@@ -211,6 +222,167 @@ export default function PortfolioAnalysis() {
     setExtractPage(1);
   };
 
+  // Download all filtered candidates from the "Selected candidates" tab as CSV.
+  // Batches through the paginated API so the export includes every matching
+  // row, not just the current page of 10.
+  const handleCandidatesDownloadCSV = useCallback(async () => {
+    setCandidatesDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Candidate',
+        search: searchQuery || undefined,
+      });
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        { label: 'GHA', accessor: 'global_health_area' },
+        { label: 'Disease', accessor: 'disease_name' },
+        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
+        { label: 'Product', accessor: 'product_name' },
+        { label: 'R&D stage', accessor: 'current_rd_stage' },
+        { label: 'Developers', accessor: 'developers_agg' },
+        { label: 'Indication', accessor: 'indication' },
+        { label: 'Indication type', accessor: 'indication_type' },
+        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
+        { label: 'Target', accessor: 'target' },
+        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+        { label: 'Technology type', accessor: 'technology_type' },
+        { label: 'Test format', accessor: 'test_format' },
+        { label: 'Preclinical results status', accessor: 'preclinical_results_status' },
+        { label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
+        { label: 'Preclinical results source', accessor: 'preclinical_results_source' },
+        { label: 'Key features and challenges', accessor: 'key_features' },
+        { label: 'Recent updates', accessor: 'recent_updates' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-candidates');
+    } catch (err) {
+      console.error('Candidates CSV download failed:', err);
+    } finally {
+      setCandidatesDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product, searchQuery]);
+
+  // Download all approved products from the "Selected products" tab as CSV.
+  const handleApprovedDownloadCSV = useCallback(async () => {
+    setApprovedDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Product',
+      });
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        { label: 'GHA', accessor: 'global_health_area' },
+        { label: 'Disease', accessor: 'disease_name' },
+        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
+        { label: 'Product', accessor: 'product_name' },
+        { label: 'R&D stage', accessor: 'current_rd_stage' },
+        { label: 'Developers', accessor: 'developers_agg' },
+        { label: 'Indication', accessor: 'indication' },
+        { label: 'Indication type', accessor: 'indication_type' },
+        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
+        { label: 'Target', accessor: 'target' },
+        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+        { label: 'Technology type', accessor: 'technology_type' },
+        { label: 'Key features and challenges', accessor: 'key_features' },
+        { label: 'Recent updates', accessor: 'recent_updates' },
+        { label: 'Approval status', accessor: 'approval_status' },
+        { label: 'Approving authority', accessor: 'approving_authorities_agg' },
+        { label: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
+        { label: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
+        { label: 'EMA approval status', accessor: 'ema_approval_status' },
+        { label: 'Japanese MHLW approval status', accessor: 'japanese_mhlw_approval_status' },
+        { label: 'US FDA approval status', accessor: 'us_fda_approval_status' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-products');
+    } catch (err) {
+      console.error('Approved products CSV download failed:', err);
+    } finally {
+      setApprovedDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product]);
+
+  // Download all clinical trials from the "Selected clinical trials" tab as CSV.
+  const handleTrialsDownloadCSV = useCallback(async () => {
+    setTrialsDownloading(true);
+    try {
+      const allRows = await fetchAllTrials(apolloClient, {
+        globalHealthAreas: healthArea,
+        diseaseNames: disease,
+        productNames: product,
+      });
+      const columns = [
+        { label: 'CT number', accessor: (row) => row.trial_name || row.clinicaltrialid },
+        { label: 'Candidate / product name', accessor: 'candidate_name' },
+        { label: 'Title', accessor: 'trial_title' },
+        { label: 'Description', accessor: 'description' },
+        { label: 'CT phase', accessor: 'trial_phase' },
+        { label: 'CT status', accessor: 'status' },
+        { label: 'Locations', accessor: 'locations' },
+        { label: 'CT results status', accessor: 'ct_results_status' },
+        { label: 'Start date', accessor: 'start_date' },
+        { label: 'End date', accessor: 'end_date' },
+        { label: 'Sponsor', accessor: 'sponsor' },
+        { label: 'Collaborator', accessor: 'collaborator' },
+        { label: 'Source', accessor: 'source_text' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-clinical-trials');
+    } catch (err) {
+      console.error('Clinical trials CSV download failed:', err);
+    } finally {
+      setTrialsDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product]);
+
+  // Download technology types table as CSV. All rows are already loaded
+  // client-side so no async fetching is needed — we just build from
+  // `technologyTableData` with its dynamic phase columns.
+  const handleTechnologyDownloadCSV = useCallback(() => {
+    setTechnologyDownloading(true);
+    try {
+      const columns = [
+        { label: 'Name', accessor: 'technology_type' },
+        ...technologyPhases.map((phase) => ({
+          label: phase.label,
+          accessor: phase.key,
+        })),
+      ];
+      const csv = buildCSV(columns, technologyTableData);
+      downloadCSV(csv, 'technology-types');
+    } catch (err) {
+      console.error('Technology types CSV download failed:', err);
+    } finally {
+      setTechnologyDownloading(false);
+    }
+  }, [technologyTableData, technologyPhases]);
+
+  // Fetch all filtered candidates and download as CSV.
+  // Batches through the paginated API (max 100 per request) so the
+  // export includes every matching row, not just the current page.
+  const handleExtractDownloadCSV = useCallback(async () => {
+    if (activeExtractColumns.length === 0) return;
+    setExtractDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, extractFilter);
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        ...activeExtractColumns.map((col) => ({ label: col.label, accessor: col.accessor })),
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'extract-custom-details');
+    } catch (err) {
+      console.error('Extract CSV download failed:', err);
+    } finally {
+      setExtractDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, selectedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -425,7 +597,14 @@ export default function PortfolioAnalysis() {
                       className="w-32"
                     />
                     <ChartMenu
-                      onDownloadCSV={() => console.log('Download CSV')}
+                      onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Product type', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, productTypesData);
+                        downloadCSV(csv, 'product-types');
+                      }}
                       onDownloadPNG={() => console.log('Download PNG')}
                     />
                   </div>
@@ -470,14 +649,15 @@ export default function PortfolioAnalysis() {
                       </div>
                       <button
                         className={`flex items-center gap-2 px-4 py-2 text-sm border ${
-                          selectedColumns.length > 0
+                          selectedColumns.length > 0 && !extractDownloading
                             ? 'text-gray-600 border-gray-300 hover:bg-gray-50'
                             : 'text-gray-400 border-gray-200 cursor-not-allowed'
                         }`}
-                        disabled={selectedColumns.length === 0}
+                        disabled={selectedColumns.length === 0 || extractDownloading}
+                        onClick={handleExtractDownloadCSV}
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {extractDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>
@@ -730,9 +910,13 @@ export default function PortfolioAnalysis() {
                         className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                    <button
+                      onClick={handleCandidatesDownloadCSV}
+                      disabled={candidatesDownloading}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                    >
                       <CloudDownloadIcon className="w-4 h-4" />
-                      Download CSV
+                      {candidatesDownloading ? 'Downloading...' : 'Download CSV'}
                     </button>
                   </div>
                 </div>
@@ -835,7 +1019,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approval status</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Approval status', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, approvalStatusData);
+                        downloadCSV(csv, 'approval-status');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <BarChart data={approvalStatusData} height={200} />
                     <p className="text-xs text-gray-500 mt-4">
@@ -847,7 +1038,15 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Authority type', accessor: (row) => row.category.replace(/\n/g, ' ') },
+                          { label: 'WHO prequalified', accessor: 'who_prequalified' },
+                          { label: 'No formal WHO listing', accessor: 'no_who_listing' },
+                        ];
+                        const csv = buildCSV(columns, approvingAuthoritiesData);
+                        downloadCSV(csv, 'approving-authorities');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <StackedBarChart
                       data={approvingAuthoritiesData}
@@ -867,7 +1066,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">WHO prequalification</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'WHO prequalification', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, whoPrequalData);
+                        downloadCSV(csv, 'who-prequalification');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <DonutChart
                       data={whoPrequalData}
@@ -901,9 +1107,13 @@ export default function PortfolioAnalysis() {
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                      <button
+                        onClick={handleApprovedDownloadCSV}
+                        disabled={approvedDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {approvedDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>
@@ -1010,7 +1220,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Age groups in clinical trials</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Age group', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, ageGroupsData);
+                        downloadCSV(csv, 'age-groups-in-clinical-trials');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <div className="border-t border-gray-100 pt-4">
                       <DonutChart
@@ -1032,7 +1249,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Clinical trial status</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Trial status', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, trialStatusData);
+                        downloadCSV(csv, 'clinical-trial-status');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <div className="border-t border-gray-100 pt-4">
                       <BarChart data={trialStatusData} height={280} />
@@ -1058,7 +1282,15 @@ export default function PortfolioAnalysis() {
                         compact={true}
                         className="w-32"
                       />
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Country', accessor: 'country_name' },
+                          { label: 'ISO code', accessor: 'iso_code' },
+                          { label: 'Count', accessor: 'candidateCount' },
+                        ];
+                        const csv = buildCSV(columns, clinicalTrialsDistribution);
+                        downloadCSV(csv, 'geographic-distribution-clinical-trials');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
@@ -1084,9 +1316,13 @@ export default function PortfolioAnalysis() {
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                        <button
+                          onClick={handleTrialsDownloadCSV}
+                          disabled={trialsDownloading}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        >
                           <CloudDownloadIcon className="w-4 h-4" />
-                          Download CSV
+                          {trialsDownloading ? 'Downloading...' : 'Download CSV'}
                         </button>
                       </div>
                     </div>
@@ -1214,9 +1450,13 @@ export default function PortfolioAnalysis() {
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                      <button
+                        onClick={handleTechnologyDownloadCSV}
+                        disabled={technologyDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {technologyDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>

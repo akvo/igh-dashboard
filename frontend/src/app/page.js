@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
@@ -64,7 +65,7 @@ export default function Home() {
   const { phases, loading: phasesLoading } = usePhases();
   const { raw: diseasesRaw } = useDiseases();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
-  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
+  const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
@@ -93,20 +94,6 @@ export default function Home() {
     products.map(p => ({ label: p.product_name, value: p.product_key })),
     [products]
   );
-
-  // Download CSV function
-  const downloadCSV = useCallback((data, filename) => {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).join(','));
-    const csv = [headers, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, []);
 
   // Download PNG function using html2canvas
   const downloadPNG = useCallback(async (ref, filename) => {
@@ -216,7 +203,16 @@ export default function Home() {
                     compact={true}
                   />
                   <ChartMenu
-                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-rd')}
+                    onDownloadCSV={() => {
+                      const columns = [
+                        { label: 'Global health area', accessor: 'name' },
+                        { label: 'Candidates', accessor: 'value' },
+                        { label: 'Diseases', accessor: 'diseaseCount' },
+                        { label: 'Products', accessor: 'productCount' },
+                      ];
+                      const csv = buildCSV(columns, gqlBubbleData);
+                      downloadCSVFile(csv, 'scale-of-rd');
+                    }}
                     onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-rd')}
                   />
                   <TabSwitcher
@@ -304,8 +300,13 @@ export default function Home() {
                 </div>
                 <ChartMenu
                   onDownloadCSV={() => {
-                    const mapDataArray = Object.entries(gqlMapData).map(([code, value]) => ({ countryCode: code, value }));
-                    downloadCSV(mapDataArray, 'geographic-distribution');
+                    const columns = [
+                      { label: 'Country', accessor: 'country_name' },
+                      { label: 'ISO code', accessor: 'iso_code' },
+                      { label: 'Count', accessor: 'candidateCount' },
+                    ];
+                    const csv = buildCSV(columns, gqlMapDistribution);
+                    downloadCSVFile(csv, 'geographic-distribution');
                   }}
                   onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
                 />
