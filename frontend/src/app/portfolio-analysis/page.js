@@ -35,6 +35,7 @@ export default function PortfolioAnalysis() {
   const [extractRdStage, setExtractRdStage] = useState([]);
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
+  const [approvedDownloading, setApprovedDownloading] = useState(false);
 
   const apolloClient = useApolloClient();
 
@@ -259,6 +260,48 @@ export default function PortfolioAnalysis() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apolloClient, healthArea, disease, product, searchQuery]);
+
+  // Download all approved products from the "Selected products" tab as CSV.
+  const handleApprovedDownloadCSV = useCallback(async () => {
+    setApprovedDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Product',
+      });
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        { label: 'GHA', accessor: 'global_health_area' },
+        { label: 'Disease', accessor: 'disease_name' },
+        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
+        { label: 'Product', accessor: 'product_name' },
+        { label: 'R&D stage', accessor: 'current_rd_stage' },
+        { label: 'Developers', accessor: 'developers_agg' },
+        { label: 'Indication', accessor: 'indication' },
+        { label: 'Indication type', accessor: 'indication_type' },
+        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
+        { label: 'Target', accessor: 'target' },
+        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+        { label: 'Technology type', accessor: 'technology_type' },
+        { label: 'Key features and challenges', accessor: 'key_features' },
+        { label: 'Recent updates', accessor: 'recent_updates' },
+        { label: 'Approval status', accessor: 'approval_status' },
+        { label: 'Approving authority', accessor: 'approving_authorities_agg' },
+        { label: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
+        { label: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
+        { label: 'EMA approval status', accessor: 'ema_approval_status' },
+        { label: 'Japanese MHLW approval status', accessor: 'japanese_mhlw_approval_status' },
+        { label: 'US FDA approval status', accessor: 'us_fda_approval_status' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-products');
+    } catch (err) {
+      console.error('Approved products CSV download failed:', err);
+    } finally {
+      setApprovedDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product]);
 
   // Fetch all filtered candidates and download as CSV.
   // Batches through the paginated API (max 100 per request) so the
@@ -976,9 +1019,13 @@ export default function PortfolioAnalysis() {
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                      <button
+                        onClick={handleApprovedDownloadCSV}
+                        disabled={approvedDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {approvedDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>
