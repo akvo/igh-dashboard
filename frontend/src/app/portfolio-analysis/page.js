@@ -34,6 +34,7 @@ export default function PortfolioAnalysis() {
   const [extractProduct, setExtractProduct] = useState([]);
   const [extractRdStage, setExtractRdStage] = useState([]);
   const [extractDownloading, setExtractDownloading] = useState(false);
+  const [candidatesDownloading, setCandidatesDownloading] = useState(false);
 
   const apolloClient = useApolloClient();
 
@@ -216,6 +217,48 @@ export default function PortfolioAnalysis() {
     setExtractSearchQuery('');
     setExtractPage(1);
   };
+
+  // Download all filtered candidates from the "Selected candidates" tab as CSV.
+  // Batches through the paginated API so the export includes every matching
+  // row, not just the current page of 10.
+  const handleCandidatesDownloadCSV = useCallback(async () => {
+    setCandidatesDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Candidate',
+        search: searchQuery || undefined,
+      });
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        { label: 'GHA', accessor: 'global_health_area' },
+        { label: 'Disease', accessor: 'disease_name' },
+        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
+        { label: 'Product', accessor: 'product_name' },
+        { label: 'R&D stage', accessor: 'current_rd_stage' },
+        { label: 'Developers', accessor: 'developers_agg' },
+        { label: 'Indication', accessor: 'indication' },
+        { label: 'Indication type', accessor: 'indication_type' },
+        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
+        { label: 'Target', accessor: 'target' },
+        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
+        { label: 'Technology type', accessor: 'technology_type' },
+        { label: 'Test format', accessor: 'test_format' },
+        { label: 'Preclinical results status', accessor: 'preclinical_results_status' },
+        { label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
+        { label: 'Preclinical results source', accessor: 'preclinical_results_source' },
+        { label: 'Key features and challenges', accessor: 'key_features' },
+        { label: 'Recent updates', accessor: 'recent_updates' },
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'selected-candidates');
+    } catch (err) {
+      console.error('Candidates CSV download failed:', err);
+    } finally {
+      setCandidatesDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, disease, product, searchQuery]);
 
   // Fetch all filtered candidates and download as CSV.
   // Batches through the paginated API (max 100 per request) so the
@@ -758,9 +801,13 @@ export default function PortfolioAnalysis() {
                         className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                    <button
+                      onClick={handleCandidatesDownloadCSV}
+                      disabled={candidatesDownloading}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                    >
                       <CloudDownloadIcon className="w-4 h-4" />
-                      Download CSV
+                      {candidatesDownloading ? 'Downloading...' : 'Download CSV'}
                     </button>
                   </div>
                 </div>
