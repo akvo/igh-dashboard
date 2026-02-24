@@ -38,6 +38,7 @@ export default function PortfolioAnalysis() {
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
+  const [technologyDownloading, setTechnologyDownloading] = useState(false);
 
   const apolloClient = useApolloClient();
 
@@ -338,6 +339,28 @@ export default function PortfolioAnalysis() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apolloClient, healthArea, disease, product]);
+
+  // Download technology types table as CSV. All rows are already loaded
+  // client-side so no async fetching is needed — we just build from
+  // `technologyTableData` with its dynamic phase columns.
+  const handleTechnologyDownloadCSV = useCallback(() => {
+    setTechnologyDownloading(true);
+    try {
+      const columns = [
+        { label: 'Name', accessor: 'technology_type' },
+        ...technologyPhases.map((phase) => ({
+          label: phase.label,
+          accessor: phase.key,
+        })),
+      ];
+      const csv = buildCSV(columns, technologyTableData);
+      downloadCSV(csv, 'technology-types');
+    } catch (err) {
+      console.error('Technology types CSV download failed:', err);
+    } finally {
+      setTechnologyDownloading(false);
+    }
+  }, [technologyTableData, technologyPhases]);
 
   // Fetch all filtered candidates and download as CSV.
   // Batches through the paginated API (max 100 per request) so the
@@ -1376,9 +1399,13 @@ export default function PortfolioAnalysis() {
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
-                      <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                      <button
+                        onClick={handleTechnologyDownloadCSV}
+                        disabled={technologyDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {technologyDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>
