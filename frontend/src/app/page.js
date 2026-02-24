@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { downloadDataAsCSV } from '@/lib/csv';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
@@ -94,18 +95,10 @@ export default function Home() {
     [products]
   );
 
-  // Download CSV function
+  // Download CSV: delegates to the shared utility which also handles
+  // RFC 4180 escaping (commas, quotes, newlines in cell values).
   const downloadCSV = useCallback((data, filename) => {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).join(','));
-    const csv = [headers, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadDataAsCSV(data, filename);
   }, []);
 
   // Download PNG function using html2canvas

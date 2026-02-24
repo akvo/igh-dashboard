@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useApolloClient } from '@apollo/client/react';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -30,6 +33,9 @@ export default function PortfolioAnalysis() {
   const [extractDisease, setExtractDisease] = useState([]);
   const [extractProduct, setExtractProduct] = useState([]);
   const [extractRdStage, setExtractRdStage] = useState([]);
+  const [extractDownloading, setExtractDownloading] = useState(false);
+
+  const apolloClient = useApolloClient();
 
   // Fetch data from API
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
@@ -211,6 +217,27 @@ export default function PortfolioAnalysis() {
     setExtractPage(1);
   };
 
+  // Fetch all filtered candidates and download as CSV.
+  // Batches through the paginated API (max 100 per request) so the
+  // export includes every matching row, not just the current page.
+  const handleExtractDownloadCSV = useCallback(async () => {
+    if (activeExtractColumns.length === 0) return;
+    setExtractDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, extractFilter);
+      const columns = [
+        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
+        ...activeExtractColumns.map((col) => ({ label: col.label, accessor: col.accessor })),
+      ];
+      const csv = buildCSV(columns, allRows);
+      downloadCSV(csv, 'extract-custom-details');
+    } catch (err) {
+      console.error('Extract CSV download failed:', err);
+    } finally {
+      setExtractDownloading(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, selectedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -470,14 +497,15 @@ export default function PortfolioAnalysis() {
                       </div>
                       <button
                         className={`flex items-center gap-2 px-4 py-2 text-sm border ${
-                          selectedColumns.length > 0
+                          selectedColumns.length > 0 && !extractDownloading
                             ? 'text-gray-600 border-gray-300 hover:bg-gray-50'
                             : 'text-gray-400 border-gray-200 cursor-not-allowed'
                         }`}
-                        disabled={selectedColumns.length === 0}
+                        disabled={selectedColumns.length === 0 || extractDownloading}
+                        onClick={handleExtractDownloadCSV}
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
-                        Download CSV
+                        {extractDownloading ? 'Downloading...' : 'Download CSV'}
                       </button>
                     </div>
                   </div>
