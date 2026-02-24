@@ -1019,7 +1019,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approval status</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Approval status', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, approvalStatusData);
+                        downloadCSV(csv, 'approval-status');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <BarChart data={approvalStatusData} height={200} />
                     <p className="text-xs text-gray-500 mt-4">
@@ -1031,7 +1038,15 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'Authority type', accessor: (row) => row.category.replace(/\n/g, ' ') },
+                          { label: 'WHO prequalified', accessor: 'who_prequalified' },
+                          { label: 'No formal WHO listing', accessor: 'no_who_listing' },
+                        ];
+                        const csv = buildCSV(columns, approvingAuthoritiesData);
+                        downloadCSV(csv, 'approving-authorities');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <StackedBarChart
                       data={approvingAuthoritiesData}
@@ -1051,7 +1066,14 @@ export default function PortfolioAnalysis() {
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">WHO prequalification</h4>
-                      <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                      <ChartMenu onDownloadCSV={() => {
+                        const columns = [
+                          { label: 'WHO prequalification', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ];
+                        const csv = buildCSV(columns, whoPrequalData);
+                        downloadCSV(csv, 'who-prequalification');
+                      }} onDownloadPNG={() => {}} />
                     </div>
                     <DonutChart
                       data={whoPrequalData}
