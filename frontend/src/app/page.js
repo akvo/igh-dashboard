@@ -28,7 +28,7 @@ import {
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
   { label: 'Candidates', value: 'Candidate' },
-  { label: 'Products', value: 'Product' },
+  { label: 'Approved products', value: 'Product' },
 ];
 
 // R&D stage options for filtering
@@ -347,7 +347,7 @@ export default function Home() {
             <div className="flex flex-wrap items-end gap-4 mb-5">
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
-                  label="Product"
+                  label="Product type"
                   value={product}
                   onChange={setProduct}
                   placeholder="All"
@@ -390,7 +390,7 @@ export default function Home() {
                 phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Number of candidates/products"
+                xAxisLabel="Number of candidates / approved products"
                 yAxisWidth={200}
                 showFilters={true}
               />
@@ -429,7 +429,7 @@ export default function Home() {
               </div>
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
-                  label="Product"
+                  label="Product type"
                   value={crossProduct}
                   onChange={setCrossProduct}
                   placeholder="All"
