@@ -78,7 +78,8 @@ export default function DonutChart({
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
-  const total = data.reduce((sum, item) => sum + item[valueKey], 0);
+  const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
+  const isEmpty = data.length === 0 || total === 0;
 
   const chartData = data.map((item, index) => ({
     ...item,
@@ -124,6 +125,43 @@ export default function DonutChart({
   );
 
   const isHorizontal = legendPosition === 'right' || legendPosition === 'left';
+
+  if (isEmpty) {
+    return (
+      <div className="w-full overflow-hidden">
+        <div
+          style={{ height }}
+          className="flex items-center justify-center"
+        >
+          <svg
+            width={outerRadius * 2 + 12}
+            height={outerRadius * 2 + 12}
+            viewBox={`0 0 ${outerRadius * 2 + 12} ${outerRadius * 2 + 12}`}
+          >
+            <circle
+              cx={outerRadius + 6}
+              cy={outerRadius + 6}
+              r={(innerRadius + outerRadius) / 2}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth={outerRadius - innerRadius}
+            />
+            <text
+              x={outerRadius + 6}
+              y={outerRadius + 6}
+              textAnchor="middle"
+              dominantBaseline="central"
+              className="text-sm"
+              fill="currentColor"
+              style={{ opacity: 0.48 }}
+            >
+              No data available
+            </text>
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
