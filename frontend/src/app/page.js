@@ -390,7 +390,7 @@ export default function Home() {
                 phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Amount of candidates/products"
+                xAxisLabel="Number of candidates/products"
                 yAxisWidth={200}
                 showFilters={true}
               />
@@ -459,7 +459,7 @@ export default function Home() {
                 phases={temporalPhases}
                 layout="vertical"
                 height={220}
-                xAxisLabel="Amount of Candidates"
+                xAxisLabel="Number of Candidates"
                 showFilters={true}
               />
             )}
