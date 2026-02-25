@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu, Table } from '@/components/ui';
 import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
@@ -22,7 +22,7 @@ export default function CrossPipelineAnalytics() {
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
@@ -56,13 +56,23 @@ export default function CrossPipelineAnalytics() {
     [healthAreas]
   );
 
-  // Disease options for multi-variable section
-  const diseaseOptions = useMemo(() =>
-    (diseasesList || [])
-      .filter(d => d.name)
-      .map(d => ({ value: d.name, label: d.name })),
-    [diseasesList]
-  );
+  // Disease options from API, narrowed to the selected GHA(s) when present
+  const diseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = selectedHealthArea.length > 0
+      ? source.filter(d => selectedHealthArea.includes(d.global_health_area))
+      : source;
+    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+  }, [diseasesRaw, selectedHealthArea]);
+
+  // When the GHA filter narrows the disease list, remove any disease
+  // selections that are no longer valid options.
+  useEffect(() => {
+    if (selectedDisease.length > 0) {
+      const valid = selectedDisease.filter(d => diseaseOptions.includes(d));
+      if (valid.length !== selectedDisease.length) setSelectedDisease(valid);
+    }
+  }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Product options with key-value pairs for filtering
   const productOptions = useMemo(() =>
@@ -196,7 +206,7 @@ export default function CrossPipelineAnalytics() {
 
             {/* Filters */}
             <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
-              <div className="min-w-[180px]">
+              <div className="min-w-[220px]">
                 <Dropdown
                   label="Global health area"
                   value={selectedHealthArea}
@@ -204,21 +214,23 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={healthAreaOptions}
                   multiSelect={true}
-                  compact={true}
+                  showAllOption={true}
+                  loading={healthAreasLoading}
                 />
               </div>
-              <div className="min-w-[180px]">
+              <div className="min-w-[220px]">
                 <Dropdown
-                  label="Diseases"
+                  label="Disease"
                   value={selectedDisease}
                   onChange={setSelectedDisease}
                   placeholder="All"
                   options={diseaseOptions}
                   multiSelect={true}
-                  compact={true}
+                  showAllOption={true}
+                  loading={diseasesLoading}
                 />
               </div>
-              <div className="min-w-[180px]">
+              <div className="min-w-[220px]">
                 <Dropdown
                   label="Product"
                   value={selectedProduct}
@@ -226,15 +238,17 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={productOptions}
                   multiSelect={true}
-                  compact={true}
+                  showAllOption={true}
+                  loading={productsLoading}
                 />
               </div>
               <div className="flex-1" />
               <button
                 onClick={handleResetFilters}
-                className="flex items-center gap-2 text-sm text-gray-400 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
+                className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
               >
-                Reset filters
+                Clear
+                <RefreshIcon className="w-4 h-4" />
               </button>
             </div>
 
