@@ -451,6 +451,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={healthAreaOptions}
                     multiSelect={true}
+                    showAllOption={true}
                     loading={healthAreasLoading}
                   />
                 </div>
@@ -462,6 +463,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={diseaseOptions}
                     multiSelect={true}
+                    showAllOption={true}
                     loading={diseasesLoading}
                   />
                 </div>
@@ -473,6 +475,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={productOptions}
                     multiSelect={true}
+                    showAllOption={true}
                     loading={productsLoading}
                   />
                 </div>
