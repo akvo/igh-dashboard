@@ -101,14 +101,21 @@ export default function StackedBarChart({
   yAxisWidth = 120,
   hideXAxisTicks = false,
   maxTickLength = 25,
+  // Controlled mode: parent manages phase visibility via URL state.
+  // When omitted, the component manages its own internal state.
+  visiblePhases: controlledVisiblePhases,
+  onVisiblePhasesChange,
 }) {
-  const [visiblePhases, setVisiblePhases] = useState(
+  const [internalVisiblePhases, setInternalVisiblePhases] = useState(
     phases.reduce((acc, phase) => ({ ...acc, [phase.key]: true }), {})
   );
 
+  const isControlled = controlledVisiblePhases !== undefined;
+  const visiblePhases = isControlled ? controlledVisiblePhases : internalVisiblePhases;
+
   useEffect(() => {
-    if (phases.length > 0) {
-      setVisiblePhases(prev => {
+    if (!isControlled && phases.length > 0) {
+      setInternalVisiblePhases(prev => {
         const next = { ...prev };
         phases.forEach(phase => {
           if (!(phase.key in next)) {
@@ -118,13 +125,15 @@ export default function StackedBarChart({
         return next;
       });
     }
-  }, [phases]);
+  }, [phases, isControlled]);
 
   const togglePhase = (phaseKey) => {
-    setVisiblePhases((prev) => ({
-      ...prev,
-      [phaseKey]: !prev[phaseKey],
-    }));
+    const next = { ...visiblePhases, [phaseKey]: !visiblePhases[phaseKey] };
+    if (isControlled && onVisiblePhasesChange) {
+      onVisiblePhasesChange(next);
+    } else {
+      setInternalVisiblePhases(next);
+    }
   };
 
   const filteredPhases = useMemo(

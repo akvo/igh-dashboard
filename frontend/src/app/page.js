@@ -53,6 +53,10 @@ export default function Home() {
   const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
   const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
   const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
+  // Hidden phase keys for the two StackedBarCharts. Storing hidden
+  // (not visible) keeps the URL short when most phases are shown.
+  const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
+  const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
 
   const bubbleChartRef = useRef(null);
@@ -98,6 +102,22 @@ export default function Home() {
     products.map(p => ({ label: p.product_name, value: String(p.product_key) })),
     [products]
   );
+
+  // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
+  const portfolioVisiblePhases = useMemo(() =>
+    portfolioSegments.reduce((acc, p) => ({ ...acc, [p.key]: !portfolioHiddenPhases.includes(p.key) }), {}),
+    [portfolioSegments, portfolioHiddenPhases]
+  );
+  const crossVisiblePhases = useMemo(() =>
+    temporalPhases.reduce((acc, p) => ({ ...acc, [p.key]: !crossHiddenPhases.includes(p.key) }), {}),
+    [temporalPhases, crossHiddenPhases]
+  );
+  const handlePortfolioVisiblePhasesChange = useCallback((next) => {
+    setPortfolioHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setPortfolioHiddenPhases]);
+  const handleCrossVisiblePhasesChange = useCallback((next) => {
+    setCrossHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setCrossHiddenPhases]);
 
   // Download PNG function using html2canvas
   const downloadPNG = useCallback(async (ref, filename) => {
@@ -402,6 +422,8 @@ export default function Home() {
                 yAxisWidth={200}
                 showFilters={true}
                 hideXAxisTicks={true}
+                visiblePhases={portfolioVisiblePhases}
+                onVisiblePhasesChange={handlePortfolioVisiblePhasesChange}
               />
             )}
           </div>
@@ -471,6 +493,8 @@ export default function Home() {
                 xAxisLabel="Amount of Candidates"
                 showFilters={true}
                 hideXAxisTicks={true}
+                visiblePhases={crossVisiblePhases}
+                onVisiblePhasesChange={handleCrossVisiblePhasesChange}
               />
             )}
           </div>
