@@ -34,17 +34,11 @@ export default function CrossPipelineAnalytics() {
   // Fetch chart data with filters
   const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
-  // Build phase selection state from API phases.
-  // When the URL has a `phases` key, those values take precedence
-  // over the auto-initialization from the API.
-  const [selectedPhases, setSelectedPhases] = useUrlState('phases', [], arraySerializer);
+  // Only unselected/hidden phase keys are stored in the URL so that
+  // the default state (all visible) produces a clean URL.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('phide', [], arraySerializer);
 
-  // Initialize selected phases when API data loads
-  useMemo(() => {
-    if (apiPhases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(apiPhases.map(p => p.key));
-    }
-  }, [apiPhases]);
+  const isPhaseVisible = (key) => !hiddenPhases.includes(key);
 
   // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
   const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
@@ -118,7 +112,7 @@ export default function CrossPipelineAnalytics() {
   ];
 
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases((prev) =>
+    setHiddenPhases((prev) =>
       prev.includes(phaseKey) ? prev.filter((key) => key !== phaseKey) : [...prev, phaseKey]
     );
   };
@@ -127,8 +121,8 @@ export default function CrossPipelineAnalytics() {
     setSelectedHealthArea([]);
     setSelectedDisease([]);
     setSelectedProduct([]);
-    // Reset phases to all selected
-    setSelectedPhases(phases.map(p => p.key));
+    // Reset phases to all visible
+    setHiddenPhases([]);
   };
 
   // Loading state
@@ -263,15 +257,15 @@ export default function CrossPipelineAnalytics() {
                   <span
                     onClick={() => handlePhaseToggle(phase.key)}
                     className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.key)
+                      isPhaseVisible(phase.key)
                         ? 'border-transparent'
                         : 'border-gray-300 bg-white'
                     }`}
                     style={{
-                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
+                      backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
                     }}
                   >
-                    {selectedPhases.includes(phase.key) && (
+                    {isPhaseVisible(phase.key) && (
                       <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
                         <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -291,7 +285,7 @@ export default function CrossPipelineAnalytics() {
               ) : (
                 <StackedBarChart
                   data={chartData}
-                  phases={phases.filter((p) => selectedPhases.includes(p.key))}
+                  phases={phases.filter((p) => isPhaseVisible(p.key))}
                   layout="vertical"
                   height={280}
                   xAxisLabel="Amount"
