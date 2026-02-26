@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
@@ -44,13 +46,13 @@ const globalHealthAreaOptions = [
 ];
 
 export default function Home() {
-  const [product, setProduct] = useState([]);
-  const [rdStage, setRdStage] = useState([]);
-  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useState(['Candidate', 'Product']);
-  const [mapTab, setMapTab] = useState('trials');
-  const [chartViewTab, setChartViewTab] = useState('visual');
-  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useState([]);
-  const [crossProduct, setCrossProduct] = useState([]);
+  const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [rdStage, setRdStage] = useUrlState('rdStage', [], arraySerializer);
+  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
+  const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
+  const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
+  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
+  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
 
   const bubbleChartRef = useRef(null);
@@ -71,7 +73,7 @@ export default function Home() {
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
-    crossProduct.length > 0 ? crossProduct : null,
+    crossProduct.length > 0 ? crossProduct.map(v => parseInt(v, 10)) : null,
   );
 
   // R&D stage dropdown options from DB phases
@@ -84,14 +86,16 @@ export default function Home() {
   );
 
   // Candidate type distribution with filters
+  // Product keys are strings in state (URL-safe), convert to integers for the API.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    product,
+    product.length > 0 ? product.map(v => parseInt(v, 10)) : product,
     rdStage.length > 0 ? rdStage : null,
   );
 
-  // Product options for dropdown (from API)
+  // Product options for dropdown (from API).
+  // Values are strings to stay consistent with URL serialization.
   const productOptions = useMemo(() =>
-    products.map(p => ({ label: p.product_name, value: p.product_key })),
+    products.map(p => ({ label: p.product_name, value: String(p.product_key) })),
     [products]
   );
 
