@@ -218,14 +218,14 @@ export default function Table({
 
   if (data.length === 0) {
     return (
-      <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+      <div className={`bg-white border border-gray-200 overflow-hidden ${className}`}>
         <EmptyState title={emptyState?.title} description={emptyState?.description} onClear={emptyState?.onClear} />
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-white border border-gray-200 overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -248,14 +248,19 @@ export default function Table({
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={`${onRowClick ? 'cursor-pointer' : 'cursor-default'} hover:bg-cream-200 transition-colors`}
               >
-                {columns.map((column) => (
-                  <td
-                    key={column.accessor}
-                    className="px-4 py-4 text-sm align-top border-b border-gray-200 text-black"
-                  >
-                    {renderCell(row, column)}
-                  </td>
-                ))}
+                {columns.map((column) => {
+                  const cellClass = typeof column.cellClassName === 'function'
+                    ? column.cellClassName(row[column.accessor], row)
+                    : (column.cellClassName || '');
+                  return (
+                    <td
+                      key={column.accessor}
+                      className={`px-4 py-4 text-sm align-top border-b border-gray-200 text-black ${cellClass}`}
+                    >
+                      {renderCell(row, column)}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
