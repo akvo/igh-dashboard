@@ -40,6 +40,8 @@ export default function CrossPipelineAnalytics() {
 
   const isPhaseVisible = (key) => !hiddenPhases.includes(key);
 
+  const [shareCopied, setShareCopied] = useState(false);
+
   // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
   const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
   const [compareYear, setCompareYear] = useState('2019');
@@ -179,8 +181,15 @@ export default function CrossPipelineAnalytics() {
                   The Cross-Pipeline Analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>

@@ -41,6 +41,7 @@ export default function PortfolioAnalysis() {
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
   const [technologyDownloading, setTechnologyDownloading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   // Hidden phase/item keys for charts with filters (empty = all visible).
   const [pipelineHiddenPhases, setPipelineHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [authHiddenPhases, setAuthHiddenPhases] = useUrlState('ahide', [], arraySerializer);
@@ -460,8 +461,15 @@ export default function PortfolioAnalysis() {
                   export your findings as a .csv file for further analysis.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
