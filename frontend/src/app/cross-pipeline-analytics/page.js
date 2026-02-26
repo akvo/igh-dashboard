@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu, Table } from '@/components/ui';
 import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
@@ -14,9 +16,9 @@ import {
 } from '@/graphql/hooks';
 
 export default function CrossPipelineAnalytics() {
-  const [selectedHealthArea, setSelectedHealthArea] = useState([]);
-  const [selectedDisease, setSelectedDisease] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState([]);
+  const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
+  const [selectedDisease, setSelectedDisease] = useUrlState('disease', [], arraySerializer);
+  const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
@@ -32,8 +34,10 @@ export default function CrossPipelineAnalytics() {
   // Fetch chart data with filters
   const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
-  // Build phase selection state from API phases
-  const [selectedPhases, setSelectedPhases] = useState([]);
+  // Build phase selection state from API phases.
+  // When the URL has a `phases` key, those values take precedence
+  // over the auto-initialization from the API.
+  const [selectedPhases, setSelectedPhases] = useUrlState('phases', [], arraySerializer);
 
   // Initialize selected phases when API data loads
   useMemo(() => {
