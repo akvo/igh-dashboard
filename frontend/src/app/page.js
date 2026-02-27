@@ -35,7 +35,7 @@ import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
   { label: 'Candidates', value: 'Candidate' },
-  { label: 'Products', value: 'Product' },
+  { label: 'Approved products', value: 'Product' },
 ];
 
 // Global health area options for cross-pipeline filter
@@ -375,7 +375,7 @@ export default function Home() {
             <div className="flex flex-wrap items-end gap-4 mb-5">
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
-                  label="Product"
+                  label="Product type"
                   value={product}
                   onChange={setProduct}
                   placeholder="All"
@@ -418,7 +418,7 @@ export default function Home() {
                 phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Amount of candidates/products"
+                xAxisLabel="Number of candidates / approved products"
                 yAxisWidth={200}
                 showFilters={true}
                 hideXAxisTicks={true}
@@ -460,7 +460,7 @@ export default function Home() {
               </div>
               <div className="flex-1 min-w-[180px]">
                 <Dropdown
-                  label="Product"
+                  label="Product type"
                   value={crossProduct}
                   onChange={setCrossProduct}
                   placeholder="All"
@@ -490,7 +490,7 @@ export default function Home() {
                 phases={temporalPhases}
                 layout="vertical"
                 height={220}
-                xAxisLabel="Amount of Candidates"
+                xAxisLabel="Number of Candidates"
                 showFilters={true}
                 hideXAxisTicks={true}
                 visiblePhases={crossVisiblePhases}
