@@ -72,3 +72,114 @@ export function transformTemporalSnapshots(data) {
     phases: extractPhases(data),
   };
 }
+
+/**
+ * Mapping of phase names to 3 aggregated R&D stage categories
+ */
+export const AGGREGATE_PHASE_MAPPING = {
+  'Discovery': 'earlyDevelopment',
+  'Discovery and preclinical': 'earlyDevelopment',
+  'Primary and secondary screening and optimisation': 'earlyDevelopment',
+  'Preclinical': 'earlyDevelopment',
+  'Development': 'earlyDevelopment',
+  'Early development': 'earlyDevelopment',
+  'Early development (concept and research)': 'earlyDevelopment',
+  'Early development (feasibility and planning)': 'earlyDevelopment',
+  'Phase I': 'earlyDevelopment',
+  'Phase II': 'lateDevelopment',
+  'Phase III': 'lateDevelopment',
+  'Clinical evaluation': 'lateDevelopment',
+  'Late development': 'lateDevelopment',
+  'Late development (design and development)': 'lateDevelopment',
+  'Late development (clinical validation and launch readiness)': 'lateDevelopment',
+  'Regulatory filing': 'lateDevelopment',
+  'PQ listing and regulatory approval': 'approved',
+  'Approved': 'approved',
+  'Phase IV': 'approved',
+  'Post-marketing surveillance': 'approved',
+  'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'approved',
+  'Human safety & efficacy': 'approved',
+  'Operational research for diagnostics': 'approved',
+};
+
+export const AGGREGATE_STAGE_LABELS = {
+  earlyDevelopment: 'Early development',
+  lateDevelopment: 'Late development',
+  approved: 'Approved products',
+};
+
+export const AGGREGATE_STAGE_COLORS = {
+  earlyDevelopment: '#E76A42',
+  lateDevelopment: '#F9A78D',
+  approved: '#C0A0E8',
+};
+
+/**
+ * Aggregate raw temporal data into 3 R&D stage categories per year
+ * @param {Array} rawData - Raw API response [{year, phase_name, sort_order, candidateCount}]
+ * @returns {Array} [{year: 2019, earlyDevelopment: 91, lateDevelopment: 73, approved: 12}, ...]
+ */
+export function aggregateTemporalPhases(rawData) {
+  if (!rawData || rawData.length === 0) return [];
+
+  const grouped = rawData.reduce((acc, row) => {
+    const yearKey = String(row.year);
+    if (!acc[yearKey]) {
+      acc[yearKey] = { year: parseInt(yearKey), earlyDevelopment: 0, lateDevelopment: 0, approved: 0 };
+    }
+    const stage = AGGREGATE_PHASE_MAPPING[row.phase_name];
+    if (stage) {
+      acc[yearKey][stage] += row.candidateCount;
+    }
+    return acc;
+  }, {});
+
+  return Object.values(grouped).sort((a, b) => a.year - b.year);
+}
+
+/**
+ * Compute growth table from aggregated temporal data
+ * Shows year-on-year change % and total growth from baseline
+ * @param {Array} aggregatedData - Output from aggregateTemporalPhases
+ * @returns {{ rows: Array, years: Array }}
+ */
+export function computeGrowthTable(aggregatedData) {
+  if (!aggregatedData || aggregatedData.length === 0) return { rows: [], years: [] };
+
+  const years = aggregatedData.map(d => d.year);
+  const stages = ['earlyDevelopment', 'lateDevelopment', 'approved'];
+  const baseline = aggregatedData[0];
+
+  const rows = stages.map(stage => {
+    const row = {
+      stage,
+      label: AGGREGATE_STAGE_LABELS[stage],
+      values: {},
+    };
+
+    aggregatedData.forEach((yearData, idx) => {
+      const value = yearData[stage];
+      const prev = idx > 0 ? aggregatedData[idx - 1][stage] : null;
+      const yoyChange = prev !== null && prev > 0
+        ? (((value - prev) / prev) * 100).toFixed(1)
+        : null;
+      const totalGrowth = baseline[stage] > 0
+        ? (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1)
+        : null;
+
+      row.values[yearData.year] = {
+        count: value,
+        yoyChange: idx > 0 ? yoyChange : null,
+        isBaseline: idx === 0,
+      };
+
+      if (idx === aggregatedData.length - 1) {
+        row.totalGrowth = totalGrowth;
+      }
+    });
+
+    return row;
+  });
+
+  return { rows, years };
+}

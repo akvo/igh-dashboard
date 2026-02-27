@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ChartMenu, Table } from '@/components/ui';
-import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
+import { Dropdown, ChartMenu } from '@/components/ui';
+import { UploadIcon, RefreshIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
 import {
   useTemporalSnapshots,
@@ -14,6 +14,7 @@ import {
   useProducts,
   useDiseases,
 } from '@/graphql/hooks';
+import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
   const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
@@ -24,7 +25,7 @@ export default function CrossPipelineAnalytics() {
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
@@ -41,14 +42,6 @@ export default function CrossPipelineAnalytics() {
   const isPhaseVisible = (key) => !hiddenPhases.includes(key);
 
   const [shareCopied, setShareCopied] = useState(false);
-
-  // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
-  const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
-  const [compareYear, setCompareYear] = useState('2019');
-  const [compareSeveralDiseases, setCompareSeveralDiseases] = useState(true);
-  const [selectedProductTab, setSelectedProductTab] = useState('drugs');
-  const [comparedTo, setComparedTo] = useState('2024');
-  const [multiVarPhases, setMultiVarPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
 
   // Build options from API data
   const healthAreaOptions = useMemo(() =>
@@ -80,11 +73,6 @@ export default function CrossPipelineAnalytics() {
     [productsList]
   );
 
-  const yearOptions = useMemo(() =>
-    (availableYears || []).map(y => String(y)),
-    [availableYears]
-  );
-
   // Use API phases with consistent colors
   const phases = useMemo(() => {
     if (apiPhases.length > 0) {
@@ -100,18 +88,6 @@ export default function CrossPipelineAnalytics() {
       { key: 'approved', label: 'Approved', color: '#f0b456' },
     ];
   }, [apiPhases]);
-
-  const productTabs = ['All', 'Vaccines', 'Devices', 'Drugs', 'Diagnostics', 'Biologics', 'Dietary supplements', 'VCP', 'Microbicides'];
-
-  // Hardcoded phases for multi-variable section (OUT OF SCOPE - design WIP)
-  const multiVarPhasesConfig = [
-    { id: 'discovery', label: 'Discovery', color: '#8c4028' },
-    { id: 'preClinical', label: 'Pre-clinical', color: '#fe7449' },
-    { id: 'phase1', label: 'Phase 1', color: '#f9a78d' },
-    { id: 'phase2', label: 'Phase 2', color: '#ddd6fe' },
-    { id: 'phase3', label: 'Phase 3', color: '#a78bfa' },
-    { id: 'approved', label: 'Approved', color: '#f0b456' },
-  ];
 
   const handlePhaseToggle = (phaseKey) => {
     setHiddenPhases((prev) =>
@@ -129,40 +105,6 @@ export default function CrossPipelineAnalytics() {
 
   // Loading state
   const isLoading = temporalLoading || yearsLoading;
-
-  const handleClearCompare = () => {
-    setCompareDisease([]);
-    setCompareYear('');
-  };
-
-  // Check if comparison is selected
-  const hasCompareSelection = compareDisease.length > 0 && compareYear;
-
-  // Dummy comparison data for stat cards
-  const comparisonStats = [
-    { disease: 'HIV', value: 3, change: 60 },
-    { disease: 'Malaria', value: 3, change: 40 },
-    { disease: 'Dengue', value: 0, change: 40 },
-  ];
-
-  // Dummy data for multi-variable chart
-  const multiVarChartData = [
-    { category: 'HIV', discovery: 35, preClinical: 45, phase1: 30, phase2: 25, phase3: 20, approved: 15 },
-    { category: 'Malaria', discovery: 45, preClinical: 55, phase1: 40, phase2: 35, phase3: 30, approved: 25 },
-    { category: 'Dengue', discovery: 15, preClinical: 20, phase1: 15, phase2: 10, phase3: 8, approved: 5 },
-  ];
-
-  // Dummy data for multi-variable table
-  const multiVarTableData = [
-    { disease: 'HIV', preClinical: 2, phase1: 0, phase2: 2, phase3: 1, phase4: 0, approved: 1 },
-    { disease: 'Malaria', preClinical: 0, phase1: 0, phase2: 0, phase3: 1, phase4: 0, approved: 1 },
-    { disease: 'Dengue', preClinical: 1, phase1: 2, phase2: 1, phase3: 1, phase4: 1, approved: 2 },
-  ];
-
-  const handleMultiVarPhaseToggle = (phaseId) => {
-    setMultiVarPhases((prev) =>
-      prev.includes(phaseId) ? prev.filter((id) => id !== phaseId) : [...prev, phaseId]
-    );};
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -306,6 +248,12 @@ export default function CrossPipelineAnalytics() {
 
           </div>
 
+          {/* Temporal trends & portfolio comparison */}
+          <TemporalTrendsSection
+            diseaseOptions={diseaseOptions}
+            productOptions={productOptions}
+            availableYears={availableYears}
+          />
 
           {/* G-FINDER promotional section */}
           <div className="relative bg-gray-900 overflow-hidden">

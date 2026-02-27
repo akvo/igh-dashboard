@@ -30,4 +30,9 @@ export {
   transformTemporalSnapshots,
   extractPhases as extractTemporalPhases,
   groupByYear,
+  AGGREGATE_PHASE_MAPPING,
+  AGGREGATE_STAGE_LABELS,
+  AGGREGATE_STAGE_COLORS,
+  aggregateTemporalPhases,
+  computeGrowthTable,
 } from './temporalSnapshots';
