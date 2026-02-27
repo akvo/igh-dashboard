@@ -89,16 +89,25 @@ export default function BarChart({
   barRadius = 4,
   barSize,
   maxTickLength = 25,
+  // Controlled mode: parent manages item visibility via URL state.
+  // When omitted, the component manages its own internal state.
+  visibleItems: controlledVisibleItems,
+  onVisibleItemsChange,
 }) {
-  const [visibleItems, setVisibleItems] = useState(
+  const [internalVisibleItems, setInternalVisibleItems] = useState(
     data.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {})
   );
 
+  const isControlled = controlledVisibleItems !== undefined;
+  const visibleItems = isControlled ? controlledVisibleItems : internalVisibleItems;
+
   const toggleItem = (name) => {
-    setVisibleItems((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+    const next = { ...visibleItems, [name]: !visibleItems[name] };
+    if (isControlled && onVisibleItemsChange) {
+      onVisibleItemsChange(next);
+    } else {
+      setInternalVisibleItems(next);
+    }
   };
 
   const chartData = useMemo(() => {

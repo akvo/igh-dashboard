@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useApolloClient } from '@apollo/client/react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
@@ -13,32 +15,38 @@ import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 
 export default function PortfolioAnalysis() {
-  const [activeTab, setActiveTab] = useState('explore');
-  const [healthArea, setHealthArea] = useState([]);
-  const [disease, setDisease] = useState([]);
-  const [product, setProduct] = useState([]);
-  const [productTypeFilter, setProductTypeFilter] = useState([]);
-  const [geoTrialStatus, setGeoTrialStatus] = useState([]);
-  const [portfolioTab, setPortfolioTab] = useState('candidates');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [trialsPage, setTrialsPage] = useState(1);
-  const [candidatesPage, setCandidatesPage] = useState(1);
-  const [approvedPage, setApprovedPage] = useState(1);
-  const [extractPage, setExtractPage] = useState(1);
-  const [extractTab, setExtractTab] = useState('candidates-approved');
-  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [activeTab, setActiveTab] = useUrlState('tab', 'explore', { ...stringSerializer, historyMode: 'push' });
+  const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
+  const [disease, setDisease] = useUrlState('disease', [], arraySerializer);
+  const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [productTypeFilter, setProductTypeFilter] = useUrlState('productType', [], arraySerializer);
+  const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
+  const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
+  const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
+  const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
+  const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
+  const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
+  const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
+  const [extractPage, setExtractPage] = useUrlState('extPage', 1, numberSerializer);
+  const [extractTab, setExtractTab] = useUrlState('extTab', 'candidates-approved', { ...stringSerializer, historyMode: 'push' });
+  const [selectedColumns, setSelectedColumns] = useUrlState('cols', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [extractSearchQuery, setExtractSearchQuery] = useState('');
-  const [extractHealthArea, setExtractHealthArea] = useState([]);
-  const [extractDisease, setExtractDisease] = useState([]);
-  const [extractProduct, setExtractProduct] = useState([]);
-  const [extractRdStage, setExtractRdStage] = useState([]);
+  const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
+  const [extractHealthArea, setExtractHealthArea] = useUrlState('extGha', [], arraySerializer);
+  const [extractDisease, setExtractDisease] = useUrlState('extDisease', [], arraySerializer);
+  const [extractProduct, setExtractProduct] = useUrlState('extProduct', [], arraySerializer);
+  const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
   const [technologyDownloading, setTechnologyDownloading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  // Hidden phase/item keys for charts with filters (empty = all visible).
+  const [pipelineHiddenPhases, setPipelineHiddenPhases] = useUrlState('phide', [], arraySerializer);
+  const [authHiddenPhases, setAuthHiddenPhases] = useUrlState('ahide', [], arraySerializer);
+  const [approvalHiddenItems, setApprovalHiddenItems] = useUrlState('apphide', [], arraySerializer);
+  const [trialStatusHiddenItems, setTrialStatusHiddenItems] = useUrlState('tshide', [], arraySerializer);
 
   const apolloClient = useApolloClient();
 
@@ -84,6 +92,37 @@ export default function PortfolioAnalysis() {
   );
   const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
+
+  // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
+  const pipelineVisiblePhases = useMemo(() =>
+    pipelinePhases.reduce((acc, p) => ({ ...acc, [p.key]: !pipelineHiddenPhases.includes(p.key) }), {}),
+    [pipelinePhases, pipelineHiddenPhases]
+  );
+  const authVisiblePhases = useMemo(() =>
+    approvingAuthoritiesPhases.reduce((acc, p) => ({ ...acc, [p.key]: !authHiddenPhases.includes(p.key) }), {}),
+    [approvingAuthoritiesPhases, authHiddenPhases]
+  );
+  const handlePipelineVisiblePhasesChange = useCallback((next) => {
+    setPipelineHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setPipelineHiddenPhases]);
+  const handleAuthVisiblePhasesChange = useCallback((next) => {
+    setAuthHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setAuthHiddenPhases]);
+  // BarChart visibility maps (keyed by item name).
+  const approvalVisibleItems = useMemo(() =>
+    (approvalStatusData || []).reduce((acc, d) => ({ ...acc, [d.name]: !approvalHiddenItems.includes(d.name) }), {}),
+    [approvalStatusData, approvalHiddenItems]
+  );
+  const trialStatusVisibleItems = useMemo(() =>
+    (trialStatusData || []).reduce((acc, d) => ({ ...acc, [d.name]: !trialStatusHiddenItems.includes(d.name) }), {}),
+    [trialStatusData, trialStatusHiddenItems]
+  );
+  const handleApprovalVisibleItemsChange = useCallback((next) => {
+    setApprovalHiddenItems(Object.keys(next).filter(k => !next[k]));
+  }, [setApprovalHiddenItems]);
+  const handleTrialStatusVisibleItemsChange = useCallback((next) => {
+    setTrialStatusHiddenItems(Object.keys(next).filter(k => !next[k]));
+  }, [setTrialStatusHiddenItems]);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -422,8 +461,15 @@ export default function PortfolioAnalysis() {
                   export your findings as a .csv file for further analysis.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
@@ -577,6 +623,8 @@ export default function PortfolioAnalysis() {
                   xAxisLabel="Amount of Candidates/Products"
                   yAxisLabel="Product type"
                   showFilters={true}
+                  visiblePhases={pipelineVisiblePhases}
+                  onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
                 />
 
               </div>
@@ -1031,7 +1079,12 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'approval-status');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <BarChart data={approvalStatusData} height={200} />
+                    <BarChart
+                      data={approvalStatusData}
+                      height={200}
+                      visibleItems={approvalVisibleItems}
+                      onVisibleItemsChange={handleApprovalVisibleItemsChange}
+                    />
                     <p className="text-xs text-gray-500 mt-4">
                       This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
                     </p>
@@ -1059,6 +1112,8 @@ export default function PortfolioAnalysis() {
                       height={200}
                       showFilters={true}
                       barRadius={4}
+                      visiblePhases={authVisiblePhases}
+                      onVisiblePhasesChange={handleAuthVisiblePhasesChange}
                     />
                     <p className="text-xs text-gray-500 mt-4">
                       The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
@@ -1262,7 +1317,12 @@ export default function PortfolioAnalysis() {
                       }} onDownloadPNG={() => {}} />
                     </div>
                     <div className="border-t border-gray-100 pt-4">
-                      <BarChart data={trialStatusData} height={280} />
+                      <BarChart
+                        data={trialStatusData}
+                        height={280}
+                        visibleItems={trialStatusVisibleItems}
+                        onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
+                      />
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
                       The clinical trial status chart shows the number of studies at each stage, from ongoing to completed, providing a quick view of overall trial progress across the portfolio.

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu, Table } from '@/components/ui';
 import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
@@ -14,9 +16,9 @@ import {
 } from '@/graphql/hooks';
 
 export default function CrossPipelineAnalytics() {
-  const [selectedHealthArea, setSelectedHealthArea] = useState([]);
-  const [selectedDisease, setSelectedDisease] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState([]);
+  const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
+  const [selectedDisease, setSelectedDisease] = useUrlState('disease', [], arraySerializer);
+  const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
@@ -32,15 +34,13 @@ export default function CrossPipelineAnalytics() {
   // Fetch chart data with filters
   const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
-  // Build phase selection state from API phases
-  const [selectedPhases, setSelectedPhases] = useState([]);
+  // Only unselected/hidden phase keys are stored in the URL so that
+  // the default state (all visible) produces a clean URL.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('phide', [], arraySerializer);
 
-  // Initialize selected phases when API data loads
-  useMemo(() => {
-    if (apiPhases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(apiPhases.map(p => p.key));
-    }
-  }, [apiPhases]);
+  const isPhaseVisible = (key) => !hiddenPhases.includes(key);
+
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
   const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
@@ -114,7 +114,7 @@ export default function CrossPipelineAnalytics() {
   ];
 
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases((prev) =>
+    setHiddenPhases((prev) =>
       prev.includes(phaseKey) ? prev.filter((key) => key !== phaseKey) : [...prev, phaseKey]
     );
   };
@@ -123,8 +123,8 @@ export default function CrossPipelineAnalytics() {
     setSelectedHealthArea([]);
     setSelectedDisease([]);
     setSelectedProduct([]);
-    // Reset phases to all selected
-    setSelectedPhases(phases.map(p => p.key));
+    // Reset phases to all visible
+    setHiddenPhases([]);
   };
 
   // Loading state
@@ -181,8 +181,15 @@ export default function CrossPipelineAnalytics() {
                   The Cross-Pipeline Analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
@@ -259,15 +266,15 @@ export default function CrossPipelineAnalytics() {
                   <span
                     onClick={() => handlePhaseToggle(phase.key)}
                     className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.key)
+                      isPhaseVisible(phase.key)
                         ? 'border-transparent'
                         : 'border-gray-300 bg-white'
                     }`}
                     style={{
-                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
+                      backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
                     }}
                   >
-                    {selectedPhases.includes(phase.key) && (
+                    {isPhaseVisible(phase.key) && (
                       <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
                         <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -287,7 +294,7 @@ export default function CrossPipelineAnalytics() {
               ) : (
                 <StackedBarChart
                   data={chartData}
-                  phases={phases.filter((p) => selectedPhases.includes(p.key))}
+                  phases={phases.filter((p) => isPhaseVisible(p.key))}
                   layout="vertical"
                   height={280}
                   xAxisLabel="Amount"
