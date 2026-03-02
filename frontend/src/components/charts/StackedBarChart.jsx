@@ -10,46 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-// Word-wrap text into lines that fit within maxChars, truncating with "…"
-// on the last line if the full text exceeds the limit.
-function wrapLabel(text, maxChars) {
-  if (text.length <= maxChars) {
-    return text.split(/\s+/).reduce((lines, word) => {
-      const last = lines[lines.length - 1];
-      if (last && (last + ' ' + word).length <= maxChars) {
-        lines[lines.length - 1] = last + ' ' + word;
-      } else {
-        lines.push(word);
-      }
-      return lines;
-    }, []);
-  }
-
-  const words = text.split(/\s+/);
-  const lines = [];
-  let remaining = maxChars;
-
-  for (const word of words) {
-    const last = lines[lines.length - 1];
-    if (last && (last + ' ' + word).length <= Math.min(remaining, maxChars)) {
-      lines[lines.length - 1] = last + ' ' + word;
-      remaining -= word.length + 1;
-    } else if (remaining > 0) {
-      lines.push(word.length > remaining ? word.slice(0, remaining) + '…' : word);
-      remaining -= Math.min(word.length, remaining);
-    } else {
-      // Truncate the last line we added and stop.
-      const lastLine = lines[lines.length - 1];
-      if (lastLine && !lastLine.endsWith('…')) {
-        lines[lines.length - 1] = lastLine + '…';
-      }
-      break;
-    }
-  }
-
-  return lines;
-}
+import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultPhases = [
   { key: 'preClinical', label: 'Pre-clinical trial', color: '#8c4028' },
@@ -100,7 +61,7 @@ export default function StackedBarChart({
   barRadius = 4,
   yAxisWidth = 120,
   hideXAxisTicks = false,
-  maxTickLength = 25,
+  maxTickChars = 25,
   // Controlled mode: parent manages phase visibility via URL state.
   // When omitted, the component manages its own internal state.
   visiblePhases: controlledVisiblePhases,
@@ -160,6 +121,11 @@ export default function StackedBarChart({
   }, [maxValue]);
 
   const isHorizontalBars = layout === 'vertical';
+
+  const hasLongLabels = useMemo(
+    () => data.some((item) => String(item[categoryKey] || '').replace(/\n/g, ' ').length > maxTickChars),
+    [data, categoryKey, maxTickChars]
+  );
 
   const getBarRadius = (index) => {
     const isLast = index === filteredPhases.length - 1;
@@ -268,7 +234,7 @@ export default function StackedBarChart({
                     tickLine={false}
                     tick={({ x, y, payload }) => {
                       const label = payload.value;
-                      const lines = wrapLabel(label, maxTickLength);
+                      const lines = wrapLabel(label, maxTickChars);
                       const lineHeight = 14;
                       const startY = y - ((lines.length - 1) * lineHeight) / 2;
                       return (
@@ -292,7 +258,27 @@ export default function StackedBarChart({
                     dataKey={categoryKey}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
-                    tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                    tick={hasLongLabels
+                      ? ({ x, y, payload }) => {
+                          const label = String(payload.value).replace(/\n/g, ' ');
+                          const display = label.length > maxTickChars ? label.slice(0, maxTickChars) + '…' : label;
+                          return (
+                            <text
+                              x={x}
+                              y={y + 8}
+                              textAnchor="end"
+                              fill="rgba(38, 38, 38, 0.88)"
+                              fontSize={12}
+                              transform={`rotate(-45, ${x}, ${y + 8})`}
+                            >
+                              <title>{label}</title>
+                              {display}
+                            </text>
+                          );
+                        }
+                      : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
+                    }
+                    height={hasLongLabels ? 80 : undefined}
                   />
                   <YAxis
                     type="number"

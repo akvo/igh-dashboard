@@ -144,9 +144,6 @@ export default function CrossPipelineAnalytics() {
               <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
               <div className="flex items-center gap-3">
                 <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
-                <button className="px-4 py-2 text-sm font-medium text-[#E76A42] border border-[#E76A42] hover:bg-orange-50">
-                  Make custom comparison
-                </button>
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-6">
