@@ -1112,6 +1112,7 @@ export default function PortfolioAnalysis() {
                       height={200}
                       showFilters={true}
                       barRadius={4}
+                      maxTickChars={15}
                       visiblePhases={authVisiblePhases}
                       onVisiblePhasesChange={handleAuthVisiblePhasesChange}
                     />
