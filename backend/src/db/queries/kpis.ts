@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { PortfolioKPIs } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface KPIFilters {
   global_health_areas?: string[];
@@ -15,7 +15,7 @@ const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
  */
 function buildKPIFilter(filters?: KPIFilters) {
   const joins: string[] = [];
-  const conditions: string[] = ["f.is_active_flag = 1"];
+  const conditions: string[] = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
   const diseaseCtx = { joins, join: DISEASE_JOIN };

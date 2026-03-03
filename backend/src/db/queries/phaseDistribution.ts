@@ -1,5 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { PhaseDistributionRow } from "../types.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 
 interface PhaseDistributionFilters {
   global_health_area?: string;
@@ -22,6 +23,7 @@ export function getPhaseDistribution(filters?: PhaseDistributionFilters): PhaseD
   ];
   const conditions = [
     "f.is_active_flag = 1",
+    PIPELINE_FILTER,
     "d.global_health_area IS NOT NULL",
     "p.phase_name IS NOT NULL",
   ];

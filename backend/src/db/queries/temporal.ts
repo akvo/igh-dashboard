@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { TemporalSnapshotRow } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TemporalSnapshotFilters {
   years?: number[];
@@ -17,7 +17,7 @@ function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
     "JOIN dim_date dt ON f.date_key = dt.date_key",
     "JOIN dim_phase p ON f.phase_key = p.phase_key",
   ];
-  const conditions = ["f.is_active_flag = 1", "dt.year IS NOT NULL", "p.phase_name IS NOT NULL"];
+  const conditions = [PIPELINE_FILTER, "dt.year IS NOT NULL", "p.phase_name IS NOT NULL"];
   const params: (number | string)[] = [];
 
   addArrayCondition(filters?.years, "dt.year", conditions, params);
@@ -83,7 +83,7 @@ export function getAvailableYears(): number[] {
     SELECT DISTINCT dt.year
     FROM fact_pipeline_snapshot f
     JOIN dim_date dt ON f.date_key = dt.date_key
-    WHERE f.is_active_flag = 1
+    WHERE f.include_in_pipeline = 1
       AND dt.year IS NOT NULL
     ORDER BY dt.year
   `,

@@ -1,6 +1,11 @@
 import { getDatabase } from "../connection.js";
-import type { ApprovalStatusRow, WHOPrequalRow, ApprovingAuthorityRow, RegulatoryDistribution } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import type {
+  ApprovalStatusRow,
+  WHOPrequalRow,
+  ApprovingAuthorityRow,
+  RegulatoryDistribution,
+} from "../types.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface RegulatoryDistributionFilters {
   global_health_areas?: string[];
@@ -15,7 +20,7 @@ const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
  */
 function buildFilterClauses(filters?: RegulatoryDistributionFilters) {
   const joins = ["JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key"];
-  const conditions = ["f.is_active_flag = 1"];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
   const diseaseCtx = { joins, join: DISEASE_JOIN };
@@ -104,9 +109,9 @@ export function getRegulatoryDistribution(
     WHERE ${nra.conditions.join("\n      AND ")}
   `;
 
-  const approvingAuthorities = db.prepare(authoritySql).all(
-    ...sra.params, ...nra.params,
-  ) as ApprovingAuthorityRow[];
+  const approvingAuthorities = db
+    .prepare(authoritySql)
+    .all(...sra.params, ...nra.params) as ApprovingAuthorityRow[];
 
   return { approvalStatus, whoPrequalification, approvingAuthorities };
 }

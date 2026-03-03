@@ -23,6 +23,7 @@ export function getDiseases(): Pick<DimDisease, "disease_group_name" | "global_h
     FROM dim_disease d
     JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
     WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
       AND d.disease_group_name IS NOT NULL
     ORDER BY d.disease_group_name
   `,
@@ -98,6 +99,7 @@ export function getProducts(): DimProduct[] {
     FROM dim_product p
     JOIN fact_pipeline_snapshot f ON p.product_key = f.product_key
     WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
     ORDER BY p.product_name
   `,
     )

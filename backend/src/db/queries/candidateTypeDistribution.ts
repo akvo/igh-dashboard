@@ -1,5 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { CandidateTypeDistributionRow } from "../types.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 
 interface CandidateTypeDistributionFilters {
   product_keys?: number[];
@@ -21,6 +22,7 @@ export function getCandidateTypeDistribution(
   ];
   const conditions = [
     "f.is_active_flag = 1",
+    PIPELINE_FILTER,
     "d.global_health_area IS NOT NULL",
     "c.candidate_type IS NOT NULL",
     "c.candidate_type IN ('Candidate', 'Product')",

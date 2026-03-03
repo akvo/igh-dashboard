@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { GeographicDistributionRow } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 /**
  * Get geographic distribution for map visualization.
@@ -23,6 +23,7 @@ export function getGeographicDistribution(
   const conditions: string[] = [
     "bg.location_scope = ?",
     "f.is_active_flag = 1",
+    PIPELINE_FILTER,
     "g.country_name IS NOT NULL",
   ];
   const params: (string | number)[] = [location_scope];
