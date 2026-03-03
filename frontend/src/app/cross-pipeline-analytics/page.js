@@ -80,12 +80,12 @@ export default function CrossPipelineAnalytics() {
     }
     // Fallback while loading
     return [
-      { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-      { key: 'pre_clinical', label: 'Pre-clinical', color: '#fe7449' },
-      { key: 'phase_1', label: 'Phase 1', color: '#f9a78d' },
-      { key: 'phase_2', label: 'Phase 2', color: '#ddd6fe' },
-      { key: 'phase_3', label: 'Phase 3', color: '#a78bfa' },
-      { key: 'approved', label: 'Approved', color: '#f0b456' },
+      { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+      { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449' },
+      { key: 'phase_1', label: 'Phase 1', color: '#F9A78D' },
+      { key: 'phase_2', label: 'Phase 2', color: '#B28FC9' },
+      { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE' },
+      { key: 'approved', label: 'Approved', color: '#F0B456' },
     ];
   }, [apiPhases]);
 

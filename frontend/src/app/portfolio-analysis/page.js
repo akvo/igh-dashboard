@@ -1082,6 +1082,8 @@ export default function PortfolioAnalysis() {
                     <BarChart
                       data={approvalStatusData}
                       height={200}
+                      xAxisLabel="Approval status"
+                      yAxisLabel="Number of products"
                       visibleItems={approvalVisibleItems}
                       onVisibleItemsChange={handleApprovalVisibleItemsChange}
                     />
@@ -1110,6 +1112,8 @@ export default function PortfolioAnalysis() {
                       categoryKey="category"
                       layout="horizontal"
                       height={200}
+                      xAxisLabel="Authority type"
+                      yAxisLabel="Number of products"
                       showFilters={true}
                       barRadius={4}
                       maxTickChars={15}
@@ -1321,6 +1325,8 @@ export default function PortfolioAnalysis() {
                       <BarChart
                         data={trialStatusData}
                         height={280}
+                        xAxisLabel="Trial status"
+                        yAxisLabel="Number of trials"
                         visibleItems={trialStatusVisibleItems}
                         onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
                       />

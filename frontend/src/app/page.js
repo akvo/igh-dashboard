@@ -198,18 +198,18 @@ export default function Home() {
                   buttonText={kpi.buttonText}
                   buttonHref={kpi.buttonHref}
                   onButtonClick={kpi.id === 'diseases' ? () => setDiseasePanelOpen(true) : undefined}
-                  tooltip={kpi.description}
+                  tooltip={kpi.tooltip}
                 />
               ))
             )}
           </div>
 
           {/* Bubble Chart + World Map */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 items-stretch">
             {/* Bubble Chart Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 flex flex-col">
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
                     Scale of R&D by global health area
                   </h3>
@@ -217,7 +217,7 @@ export default function Home() {
                     Toggle views: Candidates in development | Approved products
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <Dropdown
                     value={bubbleCandidateTypes}
                     onChange={setBubbleCandidateTypes}
@@ -249,7 +249,8 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <div ref={bubbleChartRef}>
+              <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+              <div ref={bubbleChartRef} className="flex-1">
               {bubbleLoading ? (
                 <div className="h-[320px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart...</div>
@@ -306,13 +307,13 @@ export default function Home() {
                 </ScrollableTable>
               )}
               </div>
-              <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500 mt-auto pt-4 border-t border-gray-200">
                 This bubble chart shows the relative scale of product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the dropwdown menu to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
               </p>
             </div>
 
             {/* World Map Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
@@ -335,7 +336,8 @@ export default function Home() {
                   onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
                 />
               </div>
-              <div ref={worldMapRef}>
+              <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+              <div ref={worldMapRef} className="flex-1">
                 <div className="mb-4">
                   <TabNav
                     activeTab={mapTab}
@@ -348,7 +350,7 @@ export default function Home() {
                 </div>
                 <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
-              <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500 mt-auto pt-4 border-t border-gray-200">
                 The global heat map illustrating where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
               </p>
             </div>
@@ -370,10 +372,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
                 A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters above to focus on specific product types or R&D stage, and click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
+            <div className="mb-5" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
             <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Product type"
                   value={product}
@@ -384,7 +387,7 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Select R&D stage"
                   value={rdStage}
@@ -396,12 +399,13 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
+              <div className="flex-1" />
               <button
                 onClick={() => {
                   setProduct([]);
                   setRdStage([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 cursor-pointer whitespace-nowrap font-medium"
               >
                 Reset filters
               </button>
@@ -419,7 +423,9 @@ export default function Home() {
                 layout="vertical"
                 height={250}
                 xAxisLabel="Number of candidates / approved products"
-                yAxisWidth={200}
+                yAxisLabel="Global health area"
+                yAxisWidth={220}
+                maxTickChars={40}
                 showFilters={true}
                 hideXAxisTicks={true}
                 visiblePhases={portfolioVisiblePhases}
@@ -444,10 +450,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
             A high-level view of how the global R&D pipeline evolves over time across development stages. this chart shows changes in the number of candidates in early development, late development and approved products across IGH its review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progrssing through the R&D lifecycle over time.
             </p>
+            <div className="mb-5" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
             <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Global health area"
                   value={crossGlobalHealthArea}
@@ -458,7 +465,7 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Product type"
                   value={crossProduct}
@@ -469,12 +476,13 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
+              <div className="flex-1" />
               <button
                 onClick={() => {
                   setCrossGlobalHealthArea([]);
                   setCrossProduct([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 cursor-pointer whitespace-nowrap font-medium"
               >
                 Reset filters
               </button>
@@ -491,6 +499,7 @@ export default function Home() {
                 layout="vertical"
                 height={220}
                 xAxisLabel="Number of Candidates"
+                yAxisLabel="Year"
                 showFilters={true}
                 hideXAxisTicks={true}
                 visiblePhases={crossVisiblePhases}
@@ -501,12 +510,12 @@ export default function Home() {
 
 
           {/* Reports and Insights */}
-          <div className="bg-black rounded-2xl p-5 sm:p-8 lg:p-10 mb-10">
+          <div className="bg-black p-5 sm:p-8 lg:p-10 mb-10" style={{ margin: '0 -40px' }}>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Reports and Insights
               </h2>
-              <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white/30 rounded-lg cursor-pointer">
+              <button className="px-5 py-2 text-sm font-medium text-white bg-white/10 border border-white/30 cursor-pointer hover:bg-white/20 transition-colors">
                 View all insights
               </button>
             </div>

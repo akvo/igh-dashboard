@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
 
 const defaultColors = [
-  '#f9a78d', // Peach/Neonates
-  '#8c4028', // Dark brown/Infants
-  '#fe7449', // Orange/Children
-  '#cbafde', // Light purple/Adolescents
-  '#e3d6c1', // Beige
-  '#f0b456', // Gold/Yellow
-  '#54a5c4', // Teal/Blue
-  '#a78bfa', // Purple
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#B08888', // Mauve
+  '#E3D6C1', // Beige
+  '#F9A78D', // Peach
+  '#CC9949', // Dark Gold
+  '#6AB085', // Green
+  '#54A5C4', // Blue
 ];
 
 const CustomTooltip = ({ active, payload }) => {

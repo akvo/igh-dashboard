@@ -14,14 +14,14 @@ import {
 import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultColors = [
-  '#fe7449', // Orange
-  '#8c4028', // Dark brown
-  '#f9a78d', // Peach
-  '#f0b456', // Gold
-  '#cbafde', // Light purple
-  '#a78bfa', // Purple
-  '#54a5c4', // Teal
-  '#8dd6a9', // Green
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#B08888', // Mauve
+  '#E3D6C1', // Beige
+  '#F9A78D', // Peach
+  '#CC9949', // Dark Gold
+  '#6AB085', // Green
+  '#54A5C4', // Blue
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {

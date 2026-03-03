@@ -13,20 +13,20 @@ import {
 } from '@/lib/transformations';
 
 const YEAR_COLORS = [
-  '#E76A42',
-  '#F9A78D',
-  '#C0A0E8',
-  '#8c4028',
-  '#fe7449',
-  '#b090e0',
+  '#AD5133',
+  '#F0B456',
+  '#54A5C4',
+  '#B28FC9',
+  '#6AB085',
+  '#CC9949',
 ];
 
 const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
 
 const STAGE_SERIES = [
-  { key: 'approved', label: 'Approved', color: '#C0A0E8' },
-  { key: 'lateDevelopment', label: 'Late development', color: '#F9A78D' },
-  { key: 'earlyDevelopment', label: 'Early development', color: '#E76A42' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
+  { key: 'lateDevelopment', label: 'Late development', color: '#B28FC9' },
+  { key: 'earlyDevelopment', label: 'Early development', color: '#FE7449' },
 ];
 
 // Dummy data for compare tab (placeholder until API is wired)
@@ -46,12 +46,12 @@ const DUMMY_COMPARE_CHART_DATA = [
 ];
 
 const DUMMY_COMPARE_PHASES = [
-  { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-  { key: 'preclinical', label: 'Pre-clinical', color: '#b45038' },
-  { key: 'phase_i', label: 'Phase 1', color: '#fe7449' },
-  { key: 'phase_ii', label: 'Phase 2', color: '#f9a78d' },
-  { key: 'phase_iii', label: 'Phase 3', color: '#ddd6fe' },
-  { key: 'approved', label: 'Approved', color: '#f0b456' },
+  { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+  { key: 'preclinical', label: 'Pre-clinical', color: '#FE7449' },
+  { key: 'phase_i', label: 'Phase 1', color: '#F9A78D' },
+  { key: 'phase_ii', label: 'Phase 2', color: '#B28FC9' },
+  { key: 'phase_iii', label: 'Phase 3', color: '#CBAFDE' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
 ];
 
 const DUMMY_COMPARE_TABLE = [

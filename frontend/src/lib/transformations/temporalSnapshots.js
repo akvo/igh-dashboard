@@ -79,6 +79,8 @@ export function transformTemporalSnapshots(data) {
 export const AGGREGATE_PHASE_MAPPING = {
   'Discovery': 'earlyDevelopment',
   'Discovery and preclinical': 'earlyDevelopment',
+  'Discovery & Preclinical': 'earlyDevelopment',
+  'Discovery & preclinical': 'earlyDevelopment',
   'Primary and secondary screening and optimisation': 'earlyDevelopment',
   'Preclinical': 'earlyDevelopment',
   'Development': 'earlyDevelopment',
@@ -109,9 +111,9 @@ export const AGGREGATE_STAGE_LABELS = {
 };
 
 export const AGGREGATE_STAGE_COLORS = {
-  earlyDevelopment: '#E76A42',
-  lateDevelopment: '#F9A78D',
-  approved: '#C0A0E8',
+  earlyDevelopment: '#FE7449',
+  lateDevelopment: '#B28FC9',
+  approved: '#F0B456',
 };
 
 /**
