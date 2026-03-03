@@ -3,12 +3,12 @@
 import { useState, useMemo } from 'react';
 
 const defaultColors = [
-  '#fe7449', // Orange
-  '#f9a78d', // Peach
-  '#8c4028', // Dark brown
-  '#f0b456', // Gold
-  '#cbafde', // Light purple
-  '#54a5c4', // Teal
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#AD5133', // Rust
+  '#54A5C4', // Blue
+  '#6AB085', // Green
+  '#B28FC9', // Violet
 ];
 
 export default function BubbleChart({

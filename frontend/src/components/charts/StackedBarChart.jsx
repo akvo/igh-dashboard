@@ -13,12 +13,12 @@ import {
 import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultPhases = [
-  { key: 'preClinical', label: 'Pre-clinical trial', color: '#8c4028' },
-  { key: 'phase1', label: 'Phase 1', color: '#fe7449' },
-  { key: 'phase2', label: 'Phase 2', color: '#fdba74' },
-  { key: 'phase3', label: 'Phase 3', color: '#ddd6fe' },
-  { key: 'phase4', label: 'Phase 4', color: '#a78bfa' },
-  { key: 'approved', label: 'Approved', color: '#f0b456' },
+  { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449' },
+  { key: 'phase1', label: 'Phase 1', color: '#F9A78D' },
+  { key: 'phase2', label: 'Phase 2', color: '#B28FC9' },
+  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {

@@ -7,12 +7,12 @@ import { feature } from 'topojson-client';
 const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
 const defaultColorScale = [
-  '#fff1ed',
-  '#ffd4c7',
-  '#f9a78d',
-  '#fe7449',
-  '#b45234',
-  '#8c4028',
+  '#FFDCD1',
+  '#F9A78D',
+  '#E3D6C1',
+  '#F0B456',
+  '#CC9949',
+  '#AD5133',
 ];
 
 export default function WorldMap({

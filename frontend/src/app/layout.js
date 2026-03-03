@@ -1,4 +1,5 @@
 import { Public_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
@@ -7,6 +8,21 @@ const publicSans = Public_Sans({
   variable: '--font-public-sans',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
+});
+
+const align = localFont({
+  src: [
+    {
+      path: '../../public/fonts/AlignUpright-VF.ttf',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/AlignItalic-VF.ttf',
+      style: 'italic',
+    },
+  ],
+  variable: '--font-align',
+  display: 'swap',
 });
 
 export const metadata = {
@@ -60,7 +76,7 @@ const navItems = [
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${publicSans.variable} antialiased`}>
+      <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
           <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
             <Header navItems={navItems} />

@@ -121,9 +121,8 @@
   /* ==========================================
      DATA VISUALIZATION - Chart Colors
      ========================================== */
-  /* Primary chart palette */
-  --color-chart-orange: #fe7449;
-  --color-chart-yellow: #f0b456;
+  /* Primary chart palette (brandbook Frame 3) */
+  --color-chart-gold: #F0B456;
   --color-chart-purple: #cbafde;
   --color-chart-brown: #b08888;
   --color-chart-beige: #e3d6c1;
@@ -148,12 +147,12 @@
   /* ==========================================
      R&D PHASE COLORS (for pipeline charts)
      ========================================== */
-  --color-phase-preclinical: #8c4028;
-  --color-phase-1: #fe7449;
-  --color-phase-2: #fdba74;
-  --color-phase-3: #ddd6fe;
-  --color-phase-4: #f0b456;
-  --color-phase-approved: #a78bfa;
+  --color-phase-discovery: #AD5133;
+  --color-phase-preclinical: #FE7449;
+  --color-phase-1: #F9A78D;
+  --color-phase-2: #B28FC9;
+  --color-phase-3: #CBAFDE;
+  --color-phase-approved: #F0B456;
 
   /* ==========================================
      SEMANTIC COLORS
@@ -219,6 +218,11 @@
   --color-chip-inactive-text: #262626;
 }
 
+/* Remove rounded corners from all containers and elements globally */
+*:not([class*="rounded-full"]) {
+  border-radius: 0 !important;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -226,22 +230,27 @@ body {
 }
 
 /* ==========================================
-   TYPOGRAPHY SCALE - Public Sans
-   Based on design system typography
+   TYPOGRAPHY SCALE
+   Headings use Align font, body uses Public Sans
    ========================================== */
 
-/* Display styles */
-.display-1 { font-size: 72px; line-height: 1.1; letter-spacing: -0.02em; }
-.display-2 { font-size: 60px; line-height: 1.1; letter-spacing: -0.02em; }
-.display-3 { font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; }
+/* Display styles — Align */
+.display-1 { font-family: var(--font-align), system-ui, sans-serif; font-size: 72px; line-height: 1.1; letter-spacing: -0.02em; }
+.display-2 { font-family: var(--font-align), system-ui, sans-serif; font-size: 60px; line-height: 1.1; letter-spacing: -0.02em; }
+.display-3 { font-family: var(--font-align), system-ui, sans-serif; font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; }
 
-/* Heading styles */
-.heading-1 { font-size: 40px; line-height: 1.2; letter-spacing: -0.01em; }
-.heading-2 { font-size: 36px; line-height: 1.2; letter-spacing: -0.01em; }
-.heading-3 { font-size: 32px; line-height: 1.25; }
-.heading-4 { font-size: 28px; line-height: 1.3; }
-.heading-5 { font-size: 24px; line-height: 1.35; }
-.heading-6 { font-size: 20px; line-height: 1.4; }
+/* Heading styles — Align */
+.heading-1 { font-family: var(--font-align), system-ui, sans-serif; font-size: 40px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-2 { font-family: var(--font-align), system-ui, sans-serif; font-size: 36px; line-height: 1.2; letter-spacing: -0.01em; }
+.heading-3 { font-family: var(--font-align), system-ui, sans-serif; font-size: 32px; line-height: 1.25; }
+.heading-4 { font-family: var(--font-align), system-ui, sans-serif; font-size: 28px; line-height: 1.3; }
+.heading-5 { font-family: var(--font-align), system-ui, sans-serif; font-size: 24px; line-height: 1.35; }
+.heading-6 { font-family: var(--font-align), system-ui, sans-serif; font-size: 20px; line-height: 1.4; }
+
+/* Apply Align to main page headings only */
+h1 {
+  font-family: var(--font-align), system-ui, sans-serif;
+}
 
 /* Title styles */
 .title-1 { font-size: 18px; line-height: 1.4; }
@@ -277,11 +286,11 @@ body {
    ========================================== */
 
 /* Phase badge colors */
+.badge-discovery { background-color: var(--color-phase-discovery); color: white; }
 .badge-preclinical { background-color: var(--color-phase-preclinical); color: white; }
 .badge-phase-1 { background-color: var(--color-phase-1); color: white; }
-.badge-phase-2 { background-color: var(--color-phase-2); color: var(--color-black); }
+.badge-phase-2 { background-color: var(--color-phase-2); color: white; }
 .badge-phase-3 { background-color: var(--color-phase-3); color: var(--color-black); }
-.badge-phase-4 { background-color: var(--color-phase-4); color: var(--color-black); }
 .badge-approved { background-color: var(--color-phase-approved); color: white; }
 
 /* ==========================================
