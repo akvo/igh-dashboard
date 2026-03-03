@@ -361,6 +361,8 @@ export default function PortfolioAnalysis() {
     return data;
   }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
 
+  const hasExtractFilters = extractHealthArea.length > 0 || extractDisease.length > 0 || extractProduct.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
+
   const handleResetExtractFilters = () => {
     setExtractHealthArea([]);
     setExtractDisease([]);
@@ -556,7 +558,7 @@ export default function PortfolioAnalysis() {
       <main className="flex-1 min-w-0 overflow-x-hidden">
         <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
           {/* Page Header */}
-          <div className="flex flex-col gap-6 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className={`flex flex-col gap-6 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8 mb-8 ${activeTab === 'extract' ? '!pb-0' : ''}`}>
             {/* Title Row */}
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
@@ -592,6 +594,7 @@ export default function PortfolioAnalysis() {
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
+                size="large"
               />
             </div>
 
@@ -606,7 +609,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={healthAreaOptions}
                     multiSelect={true}
-                    showAllOption={true}
+
                     loading={healthAreasLoading}
                   />
                 </div>
@@ -618,7 +621,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={diseaseOptions}
                     multiSelect={true}
-                    showAllOption={true}
+
                     loading={diseasesLoading}
                   />
                 </div>
@@ -630,14 +633,19 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={productOptions}
                     multiSelect={true}
-                    showAllOption={true}
+
                     loading={productsLoading}
                   />
                 </div>
                 <div className="flex-1" />
                 <button
                   onClick={handleClearFilters}
-                  className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+                  disabled={!hasFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                    hasFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                  }`}
                 >
                   Clear
                   <RefreshIcon className="w-4 h-4" />
@@ -659,7 +667,7 @@ export default function PortfolioAnalysis() {
                     onClick={() => setExtractTab(tab.value)}
                     className={`pb-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                       extractTab === tab.value
-                        ? 'text-black border-orange-500'
+                        ? 'text-[#262626] border-[#262626]'
                         : 'text-gray-400 border-transparent hover:text-gray-600'
                     }`}
                   >
@@ -753,7 +761,7 @@ export default function PortfolioAnalysis() {
                         { label: 'Products', value: 'Product' },
                       ]}
                       multiSelect={true}
-                      showAllOption={true}
+  
                       compact={true}
                       className="w-32"
                     />
@@ -825,7 +833,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Filters row */}
-                  <div className="flex items-end gap-4 mt-4">
+                  <div className="flex flex-wrap items-end gap-4 mt-4">
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Global health area"
@@ -834,7 +842,7 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={healthAreaOptions}
                         multiSelect={true}
-                        showAllOption={true}
+    
                         compact={true}
                       />
                     </div>
@@ -846,7 +854,7 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={extractDiseaseOptions}
                         multiSelect={true}
-                        showAllOption={true}
+    
                         compact={true}
                       />
                     </div>
@@ -858,7 +866,7 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={productOptions}
                         multiSelect={true}
-                        showAllOption={true}
+    
                         compact={true}
                       />
                     </div>
@@ -870,14 +878,19 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={rdStageOptions}
                         multiSelect={true}
-                        showAllOption={true}
+    
                         compact={true}
                       />
                     </div>
                     <div className="flex-1" />
                     <button
                       onClick={handleResetExtractFilters}
-                      className="flex items-center gap-2 text-sm text-gray-500 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
+                      disabled={!hasExtractFilters}
+                      className={`flex items-center gap-2 text-sm px-4 h-[36px] whitespace-nowrap border ${
+                        hasExtractFilters
+                          ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                          : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                      }`}
                     >
                       Reset filters
                       <RefreshIcon className="w-4 h-4" />
@@ -957,17 +970,22 @@ export default function PortfolioAnalysis() {
                       <button
                         onClick={handleApplyColumns}
                         disabled={selectedColumns.length === 0}
-                        className={`flex-1 px-4 py-2 text-sm font-medium border ${
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
                           selectedColumns.length > 0
-                            ? 'text-orange-500 border-orange-500 hover:bg-orange-50 cursor-pointer'
-                            : 'text-gray-300 border-gray-200 cursor-not-allowed'
-                        } bg-transparent`}
+                            ? 'bg-[#E76A42] text-[#262626] hover:bg-[#d45e38] cursor-pointer'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
                       >
                         Apply
                       </button>
                       <button
                         onClick={handleClearColumns}
-                        className="flex-1 px-4 py-2 text-sm text-gray-500 bg-gray-100 border-none hover:bg-gray-200"
+                        disabled={selectedColumns.length === 0}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
+                          selectedColumns.length > 0
+                            ? 'bg-gray-200 text-[#262626] hover:bg-gray-300 cursor-pointer'
+                            : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                        }`}
                       >
                         Clear
                       </button>
@@ -1540,7 +1558,7 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={['Active', 'Completed', 'Terminated']}
                         multiSelect={true}
-                        showAllOption={true}
+    
                         compact={true}
                         className="w-32"
                       />

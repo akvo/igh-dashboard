@@ -95,6 +95,8 @@ export default function CrossPipelineAnalytics() {
     );
   };
 
+  const hasCrossFilters = selectedHealthArea.length > 0 || selectedDisease.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
+
   const handleResetFilters = () => {
     setSelectedHealthArea([]);
     setSelectedDisease([]);
@@ -161,7 +163,7 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={healthAreaOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={healthAreasLoading}
                 />
               </div>
@@ -173,7 +175,7 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={diseaseOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={diseasesLoading}
                 />
               </div>
@@ -185,14 +187,19 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={productOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={productsLoading}
                 />
               </div>
               <div className="flex-1" />
               <button
                 onClick={handleResetFilters}
-                className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+                disabled={!hasCrossFilters}
+                className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                  hasCrossFilters
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                    : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Clear
                 <RefreshIcon className="w-4 h-4" />
