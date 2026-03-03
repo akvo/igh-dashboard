@@ -145,9 +145,9 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
                 From Discovery to Approval: Mapping the Global Health R&D Pipeline
@@ -177,7 +177,7 @@ export default function Home() {
           </div>
 
           {/* Stat Cards - Connected to GraphQL */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {kpisLoading ? (
               <>
                 {[1, 2, 3].map((i) => (
@@ -205,9 +205,9 @@ export default function Home() {
           </div>
 
           {/* Bubble Chart + World Map */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
             {/* Bubble Chart Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 flex flex-col">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
               <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                 <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
@@ -313,7 +313,7 @@ export default function Home() {
             </div>
 
             {/* World Map Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 flex flex-col">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
@@ -357,7 +357,7 @@ export default function Home() {
           </div>
 
           {/* Portfolio Overview by Global Health Area */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
                 Portfolio overview by global health area
@@ -369,13 +369,13 @@ export default function Home() {
                 Explore Portfolio Analysis
               </a>
             </div>
-            <p className="text-xs text-gray-500 mb-5 max-w-4xl">
+            <p className="text-xs text-gray-500 mb-4 max-w-4xl">
                 A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters above to focus on specific product types or R&D stage, and click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
-            <div className="mb-5" style={{ borderBottom: '1px solid #26262617' }} />
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-5">
+            <div className="flex flex-wrap items-end gap-4 mb-4">
               <div className="w-[280px]">
                 <Dropdown
                   label="Product type"
@@ -440,7 +440,7 @@ export default function Home() {
           </div>
 
           {/* Cross-pipeline Analytics */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
                 Cross pipeline analytics
@@ -452,13 +452,13 @@ export default function Home() {
                 Make custom comparison
               </a>
             </div>
-            <p className="text-xs text-gray-500 mb-5 max-w-4xl">
+            <p className="text-xs text-gray-500 mb-4 max-w-4xl">
             A high-level view of how the global R&D pipeline evolves over time across development stages. this chart shows changes in the number of candidates in early development, late development and approved products across IGH its review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progrssing through the R&D lifecycle over time.
             </p>
-            <div className="mb-5" style={{ borderBottom: '1px solid #26262617' }} />
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-5">
+            <div className="flex flex-wrap items-end gap-4 mb-4">
               <div className="w-[280px]">
                 <Dropdown
                   label="Global health area"
@@ -520,7 +520,7 @@ export default function Home() {
 
 
           {/* Reports and Insights */}
-          <div className="bg-black p-5 sm:p-8 lg:p-10 mb-10" style={{ margin: '0 -40px' }}>
+          <div className="bg-black p-5 sm:p-8 lg:p-10 mb-10" style={{ margin: '0 -32px' }}>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Reports and Insights
@@ -534,7 +534,7 @@ export default function Home() {
               given us.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-6">
               {/* Report Card 1 - Top Left (horizontal) */}
               <div className="bg-[#FBF6EB] rounded-xl overflow-hidden flex flex-col sm:flex-row">
                 <div className="h-36 sm:h-auto sm:w-40 shrink-0 relative">

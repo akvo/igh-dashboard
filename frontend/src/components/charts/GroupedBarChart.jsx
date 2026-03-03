@@ -41,7 +41,7 @@ export default function GroupedBarChart({
   yAxisLabel = '',
   showFilters = true,
   showBarLabels = false,
-  barRadius = 4,
+  barRadius = 0,
 }) {
   const [visibleSeries, setVisibleSeries] = useState(
     series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})

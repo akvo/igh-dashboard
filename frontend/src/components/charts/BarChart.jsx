@@ -47,7 +47,7 @@ export default function BarChart({
   yAxisLabel = '',
   nameKey = 'name',
   valueKey = 'value',
-  barRadius = 4,
+  barRadius = 0,
   barSize,
   maxTickChars = 25,
   // Controlled mode: parent manages item visibility via URL state.

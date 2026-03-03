@@ -180,7 +180,7 @@ export default function BubbleChart({
               onMouseLeave={() => setHoveredIndex(null)}
             >
               <span
-                className="w-3 h-3 rounded-full flex-shrink-0"
+                className="w-3 h-3 rounded-sm flex-shrink-0"
                 style={{ backgroundColor: bubble.color }}
               />
               <span

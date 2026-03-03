@@ -113,9 +113,9 @@ export default function CrossPipelineAnalytics() {
       <Sidebar activeId="cross-pipeline-analytics" />
 
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
@@ -140,7 +140,7 @@ export default function CrossPipelineAnalytics() {
           </div>
 
           {/* Cross-pipeline analytics section */}
-          <div className="bg-white border border-gray-200 p-6 mb-6">
+          <div className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
@@ -154,7 +154,7 @@ export default function CrossPipelineAnalytics() {
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
+            <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
               <div className="min-w-[220px]">
                 <Dropdown
                   label="Global health area"

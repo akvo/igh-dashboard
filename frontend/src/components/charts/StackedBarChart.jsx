@@ -58,7 +58,7 @@ export default function StackedBarChart({
   yAxisLabel = '',
   showFilters = true,
   height = 400,
-  barRadius = 4,
+  barRadius = 0,
   yAxisWidth = 120,
   hideXAxisTicks = false,
   maxTickChars = 25,
