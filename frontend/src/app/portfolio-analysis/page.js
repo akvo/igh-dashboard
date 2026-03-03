@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
+import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
@@ -31,6 +31,9 @@ export default function PortfolioAnalysis() {
   const [extractTab, setExtractTab] = useUrlState('extTab', 'candidates-approved', { ...stringSerializer, historyMode: 'push' });
   const [selectedColumns, setSelectedColumns] = useUrlState('cols', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
+  const [appliedColumns, setAppliedColumns] = useState([]);
+  const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
+  const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
   const [extractHealthArea, setExtractHealthArea] = useUrlState('extGha', [], arraySerializer);
   const [extractDisease, setExtractDisease] = useUrlState('extDisease', [], arraySerializer);
@@ -231,19 +234,73 @@ export default function PortfolioAnalysis() {
     { id: 'recentUpdates', label: 'Recent updates', accessor: 'recent_updates' },
   ];
 
-  // Columns currently active based on user selection
-  const activeExtractColumns = availableColumns.filter((col) => selectedColumns.includes(col.id));
+  // Columns currently active in the table — only updates when "Apply" is clicked
+  const activeExtractColumns = appliedColumns.map((id) => availableColumns.find((col) => col.id === id)).filter(Boolean);
 
-  const filteredColumns = availableColumns.filter((col) =>
-    col.label.toLowerCase().includes(columnSearchQuery.toLowerCase())
-  );
+  // Build the column list respecting drag order: selected columns in their reordered
+  // sequence first, then unselected columns in original order, filtered by search.
+  const filteredColumns = useMemo(() => {
+    const search = columnSearchQuery.toLowerCase();
+    const selected = selectedColumns
+      .map((id) => availableColumns.find((col) => col.id === id))
+      .filter(Boolean);
+    const unselected = availableColumns.filter((col) => !selectedColumns.includes(col.id));
+    return [...selected, ...unselected].filter((col) =>
+      col.label.toLowerCase().includes(search)
+    );
+  }, [availableColumns, selectedColumns, columnSearchQuery]);
+
+  // Drag-and-drop reordering state
+  const draggedColumnRef = useRef(null);
+  const [dragOverColumn, setDragOverColumn] = useState(null);
+
+  const handleDragStart = (colId) => {
+    draggedColumnRef.current = colId;
+  };
+
+  const handleDragOver = (e, colId) => {
+    e.preventDefault();
+    if (!draggedColumnRef.current || draggedColumnRef.current === colId) return;
+    if (!selectedColumns.includes(draggedColumnRef.current) || !selectedColumns.includes(colId)) return;
+    setDragOverColumn(colId);
+    setSelectedColumns((prev) => {
+      const draggedId = draggedColumnRef.current;
+      const fromIndex = prev.indexOf(draggedId);
+      const toIndex = prev.indexOf(colId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, draggedId);
+      return next;
+    });
+  };
+
+  const handleDragEnd = () => {
+    draggedColumnRef.current = null;
+    setDragOverColumn(null);
+  };
 
   const handleSelectAllColumns = () => {
-    setSelectedColumns(availableColumns.map((col) => col.id));
+    // Preserve existing order for already-selected columns; append unselected ones at the end
+    setSelectedColumns((prev) => {
+      const allIds = availableColumns.map((col) => col.id);
+      const remaining = allIds.filter((id) => !prev.includes(id));
+      return [...prev, ...remaining];
+    });
   };
 
   const handleClearColumns = () => {
     setSelectedColumns([]);
+    setAppliedColumns([]);
+    setExtractSort({ colId: null, direction: null });
+    setExtractColumnFilters({});
+  };
+
+  const handleApplyColumns = () => {
+    setAppliedColumns([...selectedColumns]);
+    setExtractSort({ colId: null, direction: null });
+    setExtractColumnFilters({});
+    setExtractPage(1);
   };
 
   const handleToggleColumn = (colId) => {
@@ -251,6 +308,58 @@ export default function PortfolioAnalysis() {
       prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId]
     );
   };
+
+  // Sort toggle: null → asc → desc → null
+  const handleExtractSort = (colId) => {
+    setExtractSort((prev) => {
+      if (prev.colId !== colId) return { colId, direction: 'asc' };
+      if (prev.direction === 'asc') return { colId, direction: 'desc' };
+      return { colId: null, direction: null };
+    });
+  };
+
+  const handleExtractColumnFilter = (colId, value) => {
+    setExtractColumnFilters((prev) => ({ ...prev, [colId]: value }));
+  };
+
+  // Client-side sort & filter on the current page data
+  const processedExtractData = useMemo(() => {
+    let data = [...(extractTableData || [])];
+
+    // Apply column filters
+    const filterEntries = Object.entries(extractColumnFilters).filter(([, v]) => v.trim());
+    if (filterEntries.length > 0) {
+      data = data.filter((row) =>
+        filterEntries.every(([colId, filterVal]) => {
+          const col = availableColumns.find((c) => c.id === colId);
+          if (!col) return true;
+          const cellVal = colId === 'name'
+            ? (row.candidate_name || row.alternative_names || '')
+            : (row[col.accessor] || '');
+          return String(cellVal).toLowerCase().includes(filterVal.toLowerCase());
+        })
+      );
+    }
+
+    // Apply sort
+    if (extractSort.colId && extractSort.direction) {
+      const col = extractSort.colId === 'name'
+        ? null
+        : availableColumns.find((c) => c.id === extractSort.colId);
+      data.sort((a, b) => {
+        const aVal = extractSort.colId === 'name'
+          ? (a.candidate_name || a.alternative_names || '')
+          : (a[col?.accessor] || '');
+        const bVal = extractSort.colId === 'name'
+          ? (b.candidate_name || b.alternative_names || '')
+          : (b[col?.accessor] || '');
+        const cmp = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: 'base' });
+        return extractSort.direction === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return data;
+  }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
 
   const handleResetExtractFilters = () => {
     setExtractHealthArea([]);
@@ -421,7 +530,7 @@ export default function PortfolioAnalysis() {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, selectedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -801,36 +910,57 @@ export default function PortfolioAnalysis() {
                     </div>
 
                     <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                      {filteredColumns.map((col) => (
-                        <div
-                          key={col.id}
-                          className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleToggleColumn(col.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                                selectedColumns.includes(col.id)
-                                  ? 'border-orange-500 bg-orange-500'
-                                  : 'border-gray-300 bg-white'
-                              }`}
-                            >
-                              {selectedColumns.includes(col.id) && (
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              )}
-                            </span>
-                            <span className="text-sm text-gray-700">{col.label}</span>
+                      {filteredColumns.map((col) => {
+                        const isSelected = selectedColumns.includes(col.id);
+                        const isDragging = draggedColumnRef.current === col.id;
+                        const isDragOver = dragOverColumn === col.id;
+                        return (
+                          <div
+                            key={col.id}
+                            draggable={isSelected}
+                            onDragStart={() => handleDragStart(col.id)}
+                            onDragOver={(e) => handleDragOver(e, col.id)}
+                            onDragEnd={handleDragEnd}
+                            className={`flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer select-none ${
+                              isDragging ? 'opacity-40' : ''
+                            } ${isDragOver && isSelected ? 'border-t-2 border-orange-400' : ''}`}
+                            onClick={() => handleToggleColumn(col.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
+                                  isSelected
+                                    ? 'border-orange-500 bg-orange-500'
+                                    : 'border-gray-300 bg-white'
+                                }`}
+                              >
+                                {isSelected && (
+                                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )}
+                              </span>
+                              <span className="text-sm text-gray-700">{col.label}</span>
+                            </div>
+                            <ListFilterIcon
+                              className={`w-4 h-4 ${isSelected ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
+                            />
                           </div>
-                          <FilterIcon className="w-4 h-4 text-gray-400" />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Apply / Clear buttons */}
                     <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                      <button className="flex-1 px-4 py-2 text-sm font-medium text-orange-500 bg-transparent border border-orange-500 hover:bg-orange-50">
+                      <button
+                        onClick={handleApplyColumns}
+                        disabled={selectedColumns.length === 0}
+                        className={`flex-1 px-4 py-2 text-sm font-medium border ${
+                          selectedColumns.length > 0
+                            ? 'text-orange-500 border-orange-500 hover:bg-orange-50 cursor-pointer'
+                            : 'text-gray-300 border-gray-200 cursor-not-allowed'
+                        } bg-transparent`}
+                      >
                         Apply
                       </button>
                       <button
@@ -844,29 +974,88 @@ export default function PortfolioAnalysis() {
 
                   {/* Right: Data table or empty state */}
                   <div className="flex-1 min-w-0">
-                    {selectedColumns.length === 0 ? (
+                    {appliedColumns.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-32">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                           <InfoIcon className="w-6 h-6 text-orange-500" />
                         </div>
-                        <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
+                        <h4 className="text-lg font-bold text-black mb-2">
+                          {selectedColumns.length > 0 ? 'Click "Apply" to load table' : 'No columns selected'}
+                        </h4>
                         <p className="text-sm text-gray-500 text-center max-w-xs">
-                          Select table columns you'd like to include in the overview
+                          {selectedColumns.length > 0
+                            ? 'Select your columns and click Apply to generate the table'
+                            : "Select table columns you'd like to include in the overview"}
                         </p>
                       </div>
                     ) : (
                       <div>
                         <ScrollableTable>
                             <thead>
+                              {/* Header row with sort controls */}
                               <tr className="border-b border-gray-200">
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
+                                <th
+                                  className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
+                                  onClick={() => handleExtractSort('name')}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Name
+                                    {extractSort.colId === 'name' ? (
+                                      extractSort.direction === 'asc'
+                                        ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
+                                        : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
+                                    ) : (
+                                      <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
+                                    )}
+                                  </div>
+                                </th>
                                 {activeExtractColumns.map((col) => (
-                                  <th key={col.id} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{col.label}</th>
+                                  <th
+                                    key={col.id}
+                                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
+                                    onClick={() => handleExtractSort(col.id)}
+                                  >
+                                    <div className="flex items-center gap-1">
+                                      {col.label}
+                                      {extractSort.colId === col.id ? (
+                                        extractSort.direction === 'asc'
+                                          ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
+                                          : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
+                                      ) : (
+                                        <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
+                                      )}
+                                    </div>
+                                  </th>
+                                ))}
+                              </tr>
+                              {/* Filter row */}
+                              <tr className="border-b border-gray-200 bg-[#FEF8EE]">
+                                <th className="px-4 py-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Filter..."
+                                    value={extractColumnFilters['name'] || ''}
+                                    onChange={(e) => handleExtractColumnFilter('name', e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
+                                  />
+                                </th>
+                                {activeExtractColumns.map((col) => (
+                                  <th key={col.id} className="px-4 py-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Filter..."
+                                      value={extractColumnFilters[col.id] || ''}
+                                      onChange={(e) => handleExtractColumnFilter(col.id, e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
+                                    />
+                                  </th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {extractTableData.map((item) => (
+                              {processedExtractData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
                                   <td className="py-4 px-4 align-top">
                                     <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
