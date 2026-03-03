@@ -5,8 +5,8 @@ import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@/components/icons';
+import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
+import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
@@ -1060,7 +1060,7 @@ export default function PortfolioAnalysis() {
                               </span>
                               <span className="text-sm text-gray-700">{col.label}</span>
                             </div>
-                            <ListFilterIcon
+                            <FilterIcon
                               className={`w-4 h-4 ${isSelected ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
                             />
                           </div>
@@ -1112,113 +1112,39 @@ export default function PortfolioAnalysis() {
                         </p>
                       </div>
                     ) : (
-                      <div>
-                        <ScrollableTable>
-                            <thead>
-                              {/* Header row with sort controls */}
-                              <tr className="border-b border-gray-200">
-                                <th
-                                  className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
-                                  onClick={() => handleExtractSort('name')}
-                                >
-                                  <div className="flex items-center gap-1">
-                                    {EXTRACT_FIXED_COLUMNS[extractTab].label}
-                                    {extractSort.colId === 'name' ? (
-                                      extractSort.direction === 'asc'
-                                        ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
-                                        : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
-                                    ) : (
-                                      <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
-                                    )}
-                                  </div>
-                                </th>
-                                {activeExtractColumns.map((col) => (
-                                  <th
-                                    key={col.id}
-                                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
-                                    onClick={() => handleExtractSort(col.id)}
-                                  >
-                                    <div className="flex items-center gap-1">
-                                      {col.label}
-                                      {extractSort.colId === col.id ? (
-                                        extractSort.direction === 'asc'
-                                          ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
-                                          : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
-                                      ) : (
-                                        <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
-                                      )}
-                                    </div>
-                                  </th>
-                                ))}
-                              </tr>
-                              {/* Filter row */}
-                              <tr className="border-b border-gray-200 bg-[#FEF8EE]">
-                                <th className="px-4 py-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Filter..."
-                                    value={extractColumnFilters['name'] || ''}
-                                    onChange={(e) => handleExtractColumnFilter('name', e.target.value)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
-                                  />
-                                </th>
-                                {activeExtractColumns.map((col) => (
-                                  <th key={col.id} className="px-4 py-2">
-                                    <input
-                                      type="text"
-                                      placeholder="Filter..."
-                                      value={extractColumnFilters[col.id] || ''}
-                                      onChange={(e) => handleExtractColumnFilter(col.id, e.target.value)}
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
-                                    />
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {extractTableData.map((item) => {
-                                const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
-                                const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(item) : item[fixedCol.accessor];
-                                const rowKey = item[EXTRACT_ROW_KEY[extractTab]];
-                                return (
-                                  <tr key={rowKey} className="border-b border-gray-100 hover:bg-gray-50">
-                                    <td className="py-4 px-4 align-top" title={fixedValue}>
-                                      <div className="text-sm font-medium text-black cell-clamp">{fixedValue}</div>
-                                      {extractTab === 'candidates-approved' && (
-                                        <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
-                                      )}
-                                    </td>
-                                    {activeExtractColumns.map((col) => (
-                                      <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{col.accessor ? item[col.accessor] : ''}</CellText></td>
-                                    ))}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                        </ScrollableTable>
-
-                        {/* Pagination */}
-                        {(() => {
-                          const totalPages = Math.ceil(extractTotalCount / itemsPerPage);
-                          const maxVisible = 5;
-                          const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
-                          return (
-                            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-200">
-                              <div className="flex items-center gap-2">
-                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={extractPage <= 1} onClick={() => setExtractPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
-                                {pages.map((page) => (
-                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
-                                ))}
-                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
-                                <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!extractHasNext} onClick={() => setExtractPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
-                              </div>
-                              <span className="text-sm text-gray-500">{extractTotalCount} results</span>
-                            </div>
-                          );
-                        })()}
-                      </div>
+                      <ServerTable
+                        columns={[
+                          {
+                            header: EXTRACT_FIXED_COLUMNS[extractTab].label,
+                            accessor: typeof EXTRACT_FIXED_COLUMNS[extractTab].accessor === 'string'
+                              ? EXTRACT_FIXED_COLUMNS[extractTab].accessor
+                              : '_fixed',
+                            render: (value, row) => {
+                              const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
+                              const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(row) : value;
+                              return (
+                                <div>
+                                  <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
+                                  {extractTab === 'candidates-approved' && (
+                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
+                                  )}
+                                </div>
+                              );
+                            },
+                          },
+                          ...activeExtractColumns.map((col) => ({
+                            header: col.label,
+                            accessor: col.accessor || col.id,
+                          })),
+                        ]}
+                        data={extractTableData}
+                        rowKey={EXTRACT_ROW_KEY[extractTab]}
+                        currentPage={extractPage}
+                        onPageChange={setExtractPage}
+                        totalCount={extractTotalCount}
+                        hasNextPage={extractHasNext}
+                        itemsPerPage={itemsPerPage}
+                      />
                     )}
                   </div>
                 </div>
@@ -1297,96 +1223,49 @@ export default function PortfolioAnalysis() {
                 </p>
 
                 {/* Table */}
-                {candidatesLoading ? (
-                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
-                    <div className="animate-pulse text-gray-400">Loading candidates...</div>
-                  </div>
-                ) : !candidatesData || candidatesData.length === 0 ? (
-                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
-                    <div className="text-center">
-                      <p className="text-gray-400 font-medium">No candidates found</p>
-                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
-                    </div>
-                  </div>
-                ) : (
-                <ScrollableTable>
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Test format</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Type of preclinical results</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Preclinical results source</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {candidatesData.map((candidate) => (
-                        <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top" title={candidate.candidate_name}>
-                            <div className="text-sm font-medium text-black cell-clamp">{candidate.candidate_name}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.global_health_area}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.disease_name}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.secondary_disease_name}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.product_name}</CellText></td>
-                          <td className="py-4 px-4 align-top">
-                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(candidate.current_rd_stage)}>
-                              {candidate.current_rd_stage}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.developers_agg}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication_type}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.healthcare_facility_level}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.target}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.mechanism_of_action}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.technology_type}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.test_format}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_status}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.type_of_preclinical_results}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_source}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.key_features}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.recent_updates}</CellText></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                </ScrollableTable>
-                )}
-
-                {/* Pagination */}
-                {candidatesData && candidatesData.length > 0 && (() => {
-                  const totalPages = Math.ceil(candidatesTotalCount / itemsPerPage);
-                  const maxVisible = 5;
-                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
-                  return (
-                    <div className="flex items-center justify-between mt-6">
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={candidatesPage <= 1} onClick={() => setCandidatesPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
-                        {pages.map((page) => (
-                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
-                        ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!candidatesHasNext} onClick={() => setCandidatesPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
-                      </div>
-                      <span className="text-sm text-gray-500">{candidatesTotalCount} results</span>
-                    </div>
-                  );
-                })()}
+                <ServerTable
+                  columns={[
+                    {
+                      header: 'Name', accessor: 'candidate_name',
+                      render: (value) => (
+                        <div>
+                          <div className="text-sm font-medium text-black">{value}</div>
+                          <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
+                        </div>
+                      ),
+                    },
+                    { header: 'GHA', accessor: 'global_health_area' },
+                    { header: 'Disease', accessor: 'disease_name' },
+                    { header: 'Secondary disease', accessor: 'secondary_disease_name' },
+                    { header: 'Product', accessor: 'product_name' },
+                    {
+                      header: 'R&D stage', accessor: 'current_rd_stage',
+                      render: (value) => (
+                        <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
+                      ),
+                    },
+                    { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Indication', accessor: 'indication' },
+                    { header: 'Indication type', accessor: 'indication_type' },
+                    { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
+                    { header: 'Target', accessor: 'target' },
+                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Technology type', accessor: 'technology_type' },
+                    { header: 'Test format', accessor: 'test_format' },
+                    { header: 'Preclinical results status', accessor: 'preclinical_results_status' },
+                    { header: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
+                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                  ]}
+                  data={candidatesData}
+                  rowKey="candidate_key"
+                  currentPage={candidatesPage}
+                  onPageChange={setCandidatesPage}
+                  totalCount={candidatesTotalCount}
+                  hasNextPage={candidatesHasNext}
+                  itemsPerPage={itemsPerPage}
+                />
               </>
             )}
 
@@ -1549,106 +1428,57 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  {approvedLoading ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                      <div className="animate-pulse text-gray-400">Loading approved products...</div>
-                    </div>
-                  ) : !approvedProductsData || approvedProductsData.length === 0 ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-gray-400 font-medium">No approved products found</p>
-                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
-                      </div>
-                    </div>
-                  ) : (
-                  <ScrollableTable>
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Name</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">GHA</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Secondary disease</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Product</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">R&D stage</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Developers</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Indication type</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Health care facility level</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Target</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Mechanism of action</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Technology type</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Key features and challenges</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Recent updates</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approval status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Approving authority</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">National regulatory authority approval status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Stringent regulatory authority approval status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">EMA approval status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Japanese MHLW approval status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">US FDA approval status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {approvedProductsData.map((item) => (
-                        <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top" title={item.candidate_name}>
-                            <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.global_health_area}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.disease_name}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.secondary_disease_name}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.product_name}</CellText></td>
-                          <td className="py-4 px-4 align-top">
-                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.current_rd_stage)}>
-                              {item.current_rd_stage}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.developers_agg}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication_type}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.healthcare_facility_level}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.target}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.mechanism_of_action}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.technology_type}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.key_features}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.recent_updates}</CellText></td>
-                          <td className="py-4 px-4 align-top">
-                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.approval_status)}>
-                              {item.approval_status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.approving_authorities_agg}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.nra_approval_status}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sra_approval_status}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ema_approval_status}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.japanese_mhlw_approval_status}</CellText></td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.us_fda_approval_status}</CellText></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </ScrollableTable>
-                  )}
-
-                {/* Pagination */}
-                {approvedProductsData && approvedProductsData.length > 0 && (() => {
-                  const totalPages = Math.ceil(approvedTotalCount / itemsPerPage);
-                  const maxVisible = 5;
-                  const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
-                  return (
-                    <div className="flex items-center justify-between px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={approvedPage <= 1} onClick={() => setApprovedPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
-                        {pages.map((page) => (
-                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
-                        ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!approvedHasNext} onClick={() => setApprovedPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
-                      </div>
-                      <span className="text-sm text-gray-500">{approvedTotalCount} results</span>
-                    </div>
-                  );
-                })()}
+                  <ServerTable
+                    columns={[
+                      {
+                        header: 'Name', accessor: 'candidate_name',
+                        render: (value) => (
+                          <div>
+                            <div className="text-sm font-medium text-black">{value}</div>
+                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
+                          </div>
+                        ),
+                      },
+                      { header: 'GHA', accessor: 'global_health_area' },
+                      { header: 'Disease', accessor: 'disease_name' },
+                      { header: 'Secondary disease', accessor: 'secondary_disease_name' },
+                      { header: 'Product', accessor: 'product_name' },
+                      {
+                        header: 'R&D stage', accessor: 'current_rd_stage',
+                        render: (value) => (
+                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
+                        ),
+                      },
+                      { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Indication', accessor: 'indication' },
+                      { header: 'Indication type', accessor: 'indication_type' },
+                      { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
+                      { header: 'Target', accessor: 'target' },
+                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Technology type', accessor: 'technology_type' },
+                      { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                      {
+                        header: 'Approval status', accessor: 'approval_status',
+                        render: (value) => (
+                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
+                        ),
+                      },
+                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'truncate', maxWidth: '200px' },
+                      { header: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
+                      { header: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
+                      { header: 'EMA approval status', accessor: 'ema_approval_status' },
+                      { header: 'Japanese MHLW approval status', accessor: 'japanese_mhlw_approval_status' },
+                      { header: 'US FDA approval status', accessor: 'us_fda_approval_status' },
+                    ]}
+                    data={approvedProductsData}
+                    rowKey="candidate_key"
+                    currentPage={approvedPage}
+                    onPageChange={setApprovedPage}
+                    totalCount={approvedTotalCount}
+                    hasNextPage={approvedHasNext}
+                    itemsPerPage={itemsPerPage}
+                  />
                 </div>
               </>
             )}
@@ -1804,116 +1634,46 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
-                  {trialsListLoading ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                      <div className="animate-pulse text-gray-400">Loading clinical trials...</div>
-                    </div>
-                  ) : !filteredTrialsData || filteredTrialsData.length === 0 ? (
-                    <div className="h-[200px] flex items-center justify-center">
-                      <div className="text-center">
-                        <p className="text-gray-400 font-medium">No clinical trials found</p>
-                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
-                      </div>
-                    </div>
-                  ) : (
-                  <ScrollableTable>
-                      <thead>
-                        <tr className="border-b border-gray-200">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT number</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Candidate / product name</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Title</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Description</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT phase</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT status</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Locations</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">CT results status</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Start date</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">End date</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Sponsor</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Collaborator</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap">Source</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredTrialsData.map((item) => (
-                          <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.trial_name || item.clinicaltrialid}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.candidate_name}</CellText></td>
-                            <td className="py-4 px-4 align-top">
-                              <div className="text-sm font-medium text-black cell-clamp">{item.trial_title}</div>
-                              <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.description}</CellText></td>
-                            <td className="py-4 px-4 align-top">
-                              <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.trial_phase)}>
-                                {item.trial_phase}
-                              </span>
-                            </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.status}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.locations}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ct_results_status}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.start_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.end_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sponsor}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.collaborator}</CellText></td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.source_text}</CellText></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                  </ScrollableTable>
-                  )}
-
-                  {/* Pagination */}
-                  {filteredTrialsData && filteredTrialsData.length > 0 && (() => {
-                    const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
-                    const maxVisible = 5;
-                    const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
-                    return (
-                      <div className="flex items-center justify-between px-4 py-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
-                            disabled={trialsPage <= 1}
-                            onClick={() => setTrialsPage(p => Math.max(1, p - 1))}
-                          >
-                            <ChevronLeftIcon className="w-5 h-5" />
-                          </button>
-                          {pages.map((page) => (
-                            <button
-                              key={page}
-                              onClick={() => setTrialsPage(page)}
-                              className={`w-8 h-8 text-sm rounded ${
-                                trialsPage === page
-                                  ? 'bg-orange-500 text-black'
-                                  : 'text-gray-600 hover:bg-gray-100'
-                              }`}
-                            >
-                              {page}
-                            </button>
-                          ))}
-                          {totalPages > maxVisible && (
-                            <>
-                              <span className="text-gray-400">...</span>
-                              <button
-                                onClick={() => setTrialsPage(totalPages)}
-                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}
-                              >
-                                {totalPages}
-                              </button>
-                            </>
-                          )}
-                          <button
-                            className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50"
-                            disabled={!trialsHasNextPage}
-                            onClick={() => setTrialsPage(p => p + 1)}
-                          >
-                            <ChevronRightIcon className="w-5 h-5" />
-                          </button>
-                        </div>
-                        <span className="text-sm text-gray-500">{trialsTotalCount} results</span>
-                      </div>
-                    );
-                  })()}
+                  <ServerTable
+                    columns={[
+                      {
+                        header: 'CT number', accessor: 'clinicaltrialid',
+                        render: (value, row) => <span>{row.trial_name || value}</span>,
+                      },
+                      { header: 'Candidate / product name', accessor: 'candidate_name' },
+                      {
+                        header: 'Title', accessor: 'trial_title',
+                        render: (value) => (
+                          <div>
+                            <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
+                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
+                          </div>
+                        ),
+                      },
+                      { header: 'Description', accessor: 'description', type: 'truncate', maxWidth: '200px' },
+                      {
+                        header: 'CT phase', accessor: 'trial_phase',
+                        render: (value) => (
+                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
+                        ),
+                      },
+                      { header: 'CT status', accessor: 'status' },
+                      { header: 'Locations', accessor: 'locations', type: 'truncate', maxWidth: '200px' },
+                      { header: 'CT results status', accessor: 'ct_results_status' },
+                      { header: 'Start date', accessor: 'start_date' },
+                      { header: 'End date', accessor: 'end_date' },
+                      { header: 'Sponsor', accessor: 'sponsor' },
+                      { header: 'Collaborator', accessor: 'collaborator', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Source', accessor: 'source_text', type: 'truncate', maxWidth: '200px' },
+                    ]}
+                    data={clinicalTrialsTableData}
+                    rowKey="trial_id"
+                    currentPage={trialsPage}
+                    onPageChange={setTrialsPage}
+                    totalCount={trialsTotalCount}
+                    hasNextPage={trialsHasNextPage}
+                    itemsPerPage={trialsPerPage}
+                  />
                 </div>
               </>
             )}
@@ -1953,77 +1713,22 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Table */}
-                {technologyLoading ? (
-                  <div className="h-[200px] flex items-center justify-center">
-                    <div className="animate-pulse text-gray-400">Loading technology types...</div>
-                  </div>
-                ) : !paginatedTechData || paginatedTechData.length === 0 ? (
-                  <div className="h-[200px] flex items-center justify-center">
-                    <div className="text-center">
-                      <p className="text-gray-400 font-medium">No technology types found</p>
-                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
-                    </div>
-                  </div>
-                ) : (
-                <ScrollableTable>
-                    <thead>
-                      <tr className="border-b border-gray-200">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
-                        {technologyPhases.map((phase) => (
-                          <th key={phase.key} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{phase.label}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedTechData.map((item, index) => (
-                        <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 align-top">{item.technology_type}</td>
-                          {technologyPhases.map((phase) => (
-                            <td key={phase.key} className="py-4 px-4 text-sm text-gray-600 align-top">{item[phase.key] || 0}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                </ScrollableTable>
-                )}
-
-                {/* Pagination */}
-                {paginatedTechData && paginatedTechData.length > 0 && (() => {
-                  const maxVisible = 5;
-                  const pages = Array.from({ length: Math.min(maxVisible, techTotalPages) }, (_, i) => i + 1);
-                  return (
-                    <div className="flex items-center justify-between px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
-                          <ChevronLeftIcon className="w-5 h-5" />
-                        </button>
-                        {pages.map((page) => (
-                          <button
-                            key={page}
-                            onClick={() => setCurrentPage(page)}
-                            className={`w-8 h-8 text-sm rounded ${
-                              currentPage === page
-                                ? 'bg-orange-500 text-black'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        ))}
-                        {techTotalPages > maxVisible && (
-                          <>
-                            <span className="text-gray-400">...</span>
-                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
-                          </>
-                        )}
-                        <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage >= techTotalPages} onClick={() => setCurrentPage(p => p + 1)}>
-                          <ChevronRightIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                      <span className="text-sm text-gray-500">{technologyTotalCount} results</span>
-                    </div>
-                  );
-                })()}
+                <ServerTable
+                  columns={[
+                    { header: 'Name', accessor: 'technology_type' },
+                    ...technologyPhases.map((phase) => ({
+                      header: phase.label,
+                      accessor: phase.key,
+                      render: (value) => <span>{value || 0}</span>,
+                    })),
+                  ]}
+                  data={paginatedTechData}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                  totalCount={technologyTotalCount}
+                  hasNextPage={currentPage < techTotalPages}
+                  itemsPerPage={techItemsPerPage}
+                />
               </div>
             )}
           </div>
