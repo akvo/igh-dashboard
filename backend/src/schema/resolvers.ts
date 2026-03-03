@@ -15,6 +15,7 @@ import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
+import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
 import { getLastSyncDate } from "../db/queries/metadata.js";
 
@@ -106,6 +107,34 @@ export const resolvers = {
         offset?: number;
       },
     ) => getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Extract tab - R&D priorities with linked candidates (paginated)
+    rdPrioritiesWithCandidates: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          search?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getRdPrioritiesWithCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Extract tab - R&D priorities only (paginated)
+    rdPriorities: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          search?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getRdPriorities(args.filter, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trials list (paginated)
     clinicalTrials: (

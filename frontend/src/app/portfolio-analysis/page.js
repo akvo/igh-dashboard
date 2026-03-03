@@ -8,11 +8,13 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
+import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
+import { EXTRACT_TAB_COLUMNS, EXTRACT_FIXED_COLUMNS, EXTRACT_ROW_KEY } from '@/lib/extractColumnConfig';
 
 // Clamped cell text with native tooltip for full text on hover
 function CellText({ children }) {
@@ -38,9 +40,13 @@ export default function PortfolioAnalysis() {
   const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
   const [extractPage, setExtractPage] = useUrlState('extPage', 1, numberSerializer);
   const [extractTab, setExtractTab] = useUrlState('extTab', 'candidates-approved', { ...stringSerializer, historyMode: 'push' });
-  const [selectedColumns, setSelectedColumns] = useUrlState('cols', [], arraySerializer);
+  const [colsCandidates, setColsCandidates] = useUrlState('cols1', [], arraySerializer);
+  const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
+  const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
+  const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [appliedColumns, setAppliedColumns] = useState([]);
+  const [appliedColumnsMap, setAppliedColumnsMap] = useState({});
+  const appliedColumns = appliedColumnsMap[extractTab] || [];
   const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
   const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
@@ -86,16 +92,77 @@ export default function PortfolioAnalysis() {
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
-  const extractFilter = {
+  // =========================================================
+  // Per-tab column selection (delegates to active tab's state)
+  // =========================================================
+  const selectedColumnsMap = {
+    'candidates-approved': colsCandidates,
+    'rd-priorities': colsRdPriorities,
+    'clinical-trials': colsClinicalTrials,
+    'rd-only': colsRdOnly,
+  };
+  const setSelectedColumnsMap = {
+    'candidates-approved': setColsCandidates,
+    'rd-priorities': setColsRdPriorities,
+    'clinical-trials': setColsClinicalTrials,
+    'rd-only': setColsRdOnly,
+  };
+  const selectedColumns = selectedColumnsMap[extractTab] || [];
+  const setSelectedColumns = setSelectedColumnsMap[extractTab] || (() => {});
+
+  const availableColumns = EXTRACT_TAB_COLUMNS[extractTab] || [];
+
+  // =========================================================
+  // Per-tab extract filters and data fetching
+  // =========================================================
+
+  // Candidates & Approved Products (Tab 1) uses the full filter set.
+  const extractCandidatesFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
     diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
     productNames: extractProduct.length > 0 ? extractProduct : undefined,
     phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
-  const { candidates: extractTableData, totalCount: extractTotalCount, hasNextPage: extractHasNext, loading: extractLoading } = usePortfolioCandidates(
-    extractFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+
+  // Priority and trial tabs share GHA + Disease filters but not
+  // Product or R&D Stage (those fields don't exist on priorities).
+  const extractPriorityFilter = {
+    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
+    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
+    search: extractSearchQuery || undefined,
+  };
+
+  const extractTrialFilter = {
+    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
+    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
+    productNames: extractProduct.length > 0 ? extractProduct : undefined,
+  };
+
+  const { candidates: extractCandidatesData, totalCount: extractCandidatesTotalCount, hasNextPage: extractCandidatesHasNext, loading: extractCandidatesLoading } = usePortfolioCandidates(
+    extractCandidatesFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
   );
+  const { priorities: extractRdPrioritiesData, totalCount: extractRdPrioritiesTotalCount, hasNextPage: extractRdPrioritiesHasNext, loading: extractRdPrioritiesLoading } = useRdPrioritiesWithCandidates(
+    extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+  );
+  const { trials: extractTrialsData, totalCount: extractTrialsTotalCount, hasNextPage: extractTrialsHasNext, loading: extractTrialsLoading } = useClinicalTrials(
+    extractTrialFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+  );
+  const { priorities: extractRdOnlyData, totalCount: extractRdOnlyTotalCount, hasNextPage: extractRdOnlyHasNext, loading: extractRdOnlyLoading } = useRdPriorities(
+    extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+  );
+
+  // Unified view of the active extract tab's data
+  const extractDataMap = {
+    'candidates-approved': { data: extractCandidatesData, totalCount: extractCandidatesTotalCount, hasNextPage: extractCandidatesHasNext, loading: extractCandidatesLoading },
+    'rd-priorities': { data: extractRdPrioritiesData, totalCount: extractRdPrioritiesTotalCount, hasNextPage: extractRdPrioritiesHasNext, loading: extractRdPrioritiesLoading },
+    'clinical-trials': { data: extractTrialsData, totalCount: extractTrialsTotalCount, hasNextPage: extractTrialsHasNext, loading: extractTrialsLoading },
+    'rd-only': { data: extractRdOnlyData, totalCount: extractRdOnlyTotalCount, hasNextPage: extractRdOnlyHasNext, loading: extractRdOnlyLoading },
+  };
+  const activeExtractData = extractDataMap[extractTab] || extractDataMap['candidates-approved'];
+  const extractTableData = activeExtractData.data;
+  const extractTotalCount = activeExtractData.totalCount;
+  const extractHasNext = activeExtractData.hasNextPage;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
     { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product },
@@ -221,28 +288,6 @@ export default function PortfolioAnalysis() {
   const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
 
 
-  // Available columns for Extract custom details
-  const availableColumns = [
-    { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
-    { id: 'disease', label: 'Disease', accessor: 'disease_name' },
-    { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
-    { id: 'product', label: 'Product', accessor: 'product_name' },
-    { id: 'rdStage', label: 'R&D Stage', accessor: 'current_rd_stage' },
-    { id: 'developers', label: 'Developers', accessor: 'developers_agg' },
-    { id: 'indication', label: 'Indication', accessor: 'indication' },
-    { id: 'indicationType', label: 'Indication type', accessor: 'indication_type' },
-    { id: 'facilityLevel', label: 'Health care facility level', accessor: 'healthcare_facility_level' },
-    { id: 'target', label: 'Target', accessor: 'target' },
-    { id: 'moa', label: 'Mechanism of action', accessor: 'mechanism_of_action' },
-    { id: 'techType', label: 'Technology type', accessor: 'technology_type' },
-    { id: 'testFormat', label: 'Test format', accessor: 'test_format' },
-    { id: 'preclinicalStatus', label: 'Preclinical results status', accessor: 'preclinical_results_status' },
-    { id: 'preclinicalType', label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
-    { id: 'preclinicalSource', label: 'Preclinical results source', accessor: 'preclinical_results_source' },
-    { id: 'keyFeatures', label: 'Key features & challenges', accessor: 'key_features' },
-    { id: 'recentUpdates', label: 'Recent updates', accessor: 'recent_updates' },
-  ];
-
   // Columns currently active in the table — only updates when "Apply" is clicked
   const activeExtractColumns = appliedColumns.map((id) => availableColumns.find((col) => col.id === id)).filter(Boolean);
 
@@ -300,13 +345,13 @@ export default function PortfolioAnalysis() {
 
   const handleClearColumns = () => {
     setSelectedColumns([]);
-    setAppliedColumns([]);
+    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
   };
 
   const handleApplyColumns = () => {
-    setAppliedColumns([...selectedColumns]);
+    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [...selectedColumns] }));
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
     setExtractPage(1);
@@ -521,27 +566,41 @@ export default function PortfolioAnalysis() {
     }
   }, [technologyTableData, technologyPhases]);
 
-  // Fetch all filtered candidates and download as CSV.
+  // Fetch all filtered rows for the active extract tab and download as CSV.
   // Batches through the paginated API (max 100 per request) so the
   // export includes every matching row, not just the current page.
   const handleExtractDownloadCSV = useCallback(async () => {
     if (activeExtractColumns.length === 0) return;
     setExtractDownloading(true);
     try {
-      const allRows = await fetchAllCandidates(apolloClient, extractFilter);
+      let allRows;
+      if (extractTab === 'candidates-approved') {
+        allRows = await fetchAllCandidates(apolloClient, extractCandidatesFilter);
+      } else if (extractTab === 'clinical-trials') {
+        allRows = await fetchAllTrials(apolloClient, extractTrialFilter);
+      } else if (extractTab === 'rd-priorities') {
+        allRows = await fetchAllPrioritiesWithCandidates(apolloClient, extractPriorityFilter);
+      } else {
+        allRows = await fetchAllPriorities(apolloClient, extractPriorityFilter);
+      }
+
+      const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
       const columns = [
-        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
-        ...activeExtractColumns.map((col) => ({ label: col.label, accessor: col.accessor })),
+        { label: fixedCol.label, accessor: fixedCol.accessor },
+        ...activeExtractColumns.map((col) => ({
+          label: col.label,
+          accessor: col.accessor || (() => ''),
+        })),
       ];
       const csv = buildCSV(columns, allRows);
-      downloadCSV(csv, 'extract-custom-details');
+      downloadCSV(csv, `extract-${extractTab}`);
     } catch (err) {
       console.error('Extract CSV download failed:', err);
     } finally {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, extractTab, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -833,7 +892,12 @@ export default function PortfolioAnalysis() {
                 <div className="p-4 border-b border-gray-200">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
+                      <h3 className="text-xl font-bold text-black mb-1">
+                        {extractTab === 'candidates-approved' && 'Candidates & Approved Products'}
+                        {extractTab === 'rd-priorities' && 'R&D Priorities & Candidates'}
+                        {extractTab === 'clinical-trials' && 'Clinical Trials & Candidates'}
+                        {extractTab === 'rd-only' && 'R&D Priorities'}
+                      </h3>
                       <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
                       <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
@@ -863,7 +927,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
 
-                  {/* Filters row */}
+                  {/* Filters row — which filters appear depends on the active extract sub-tab */}
                   <div className="flex flex-wrap items-end gap-4 mt-4">
                     <div className="min-w-[180px]">
                       <Dropdown
@@ -889,30 +953,38 @@ export default function PortfolioAnalysis() {
                         variant="outlined"
                       />
                     </div>
-                    <div className="min-w-[180px]">
-                      <Dropdown
-                        label="Product"
-                        value={extractProduct}
-                        onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
-                        placeholder="All"
-                        options={productOptions}
-                        multiSelect={true}
-                        compact={true}
-                        variant="outlined"
-                      />
-                    </div>
-                    <div className="min-w-[180px]">
-                      <Dropdown
-                        label="R&D stage"
-                        value={extractRdStage}
-                        onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
-                        placeholder="All"
-                        options={rdStageOptions}
-                        multiSelect={true}
-                        compact={true}
-                        variant="outlined"
-                      />
-                    </div>
+                    {/* Product filter: only for candidates and clinical trials tabs */}
+                    {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
+                      <div className="min-w-[180px]">
+                        <Dropdown
+                          label="Product"
+                          value={extractProduct}
+                          onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
+                          placeholder="All"
+                          options={productOptions}
+                          multiSelect={true}
+                          showAllOption={true}
+                          compact={true}
+                          variant="outlined"
+                        />
+                      </div>
+                    )}
+                    {/* R&D stage filter: only for candidates tab */}
+                    {extractTab === 'candidates-approved' && (
+                      <div className="min-w-[180px]">
+                        <Dropdown
+                          label="R&D stage"
+                          value={extractRdStage}
+                          onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
+                          placeholder="All"
+                          options={rdStageOptions}
+                          multiSelect={true}
+                          showAllOption={true}
+                          compact={true}
+                          variant="outlined"
+                        />
+                      </div>
+                    )}
                     <div className="flex-1" />
                     <button
                       onClick={handleResetExtractFilters}
@@ -1050,7 +1122,7 @@ export default function PortfolioAnalysis() {
                                   onClick={() => handleExtractSort('name')}
                                 >
                                   <div className="flex items-center gap-1">
-                                    Name
+                                    {EXTRACT_FIXED_COLUMNS[extractTab].label}
                                     {extractSort.colId === 'name' ? (
                                       extractSort.direction === 'asc'
                                         ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
@@ -1106,17 +1178,24 @@ export default function PortfolioAnalysis() {
                               </tr>
                             </thead>
                             <tbody>
-                              {processedExtractData.map((item) => (
-                                <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-4 px-4 align-top" title={item.candidate_name || item.alternative_names}>
-                                    <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name || item.alternative_names}</div>
-                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
-                                  </td>
-                                  {activeExtractColumns.map((col) => (
-                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item[col.accessor]}</CellText></td>
-                                  ))}
-                                </tr>
-                              ))}
+                              {extractTableData.map((item) => {
+                                const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
+                                const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(item) : item[fixedCol.accessor];
+                                const rowKey = item[EXTRACT_ROW_KEY[extractTab]];
+                                return (
+                                  <tr key={rowKey} className="border-b border-gray-100 hover:bg-gray-50">
+                                    <td className="py-4 px-4 align-top" title={fixedValue}>
+                                      <div className="text-sm font-medium text-black cell-clamp">{fixedValue}</div>
+                                      {extractTab === 'candidates-approved' && (
+                                        <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
+                                      )}
+                                    </td>
+                                    {activeExtractColumns.map((col) => (
+                                      <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{col.accessor ? item[col.accessor] : ''}</CellText></td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                         </ScrollableTable>
 

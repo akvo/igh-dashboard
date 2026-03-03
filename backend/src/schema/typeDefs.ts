@@ -267,6 +267,7 @@ export const typeDefs = `#graphql
     developers_agg: String
     mechanism_of_action: String
     key_features: String
+    known_funders_agg: String
     technology_type: String
     indication_type: String
     healthcare_facility_level: String
@@ -315,6 +316,9 @@ export const typeDefs = `#graphql
     locations: String
     sponsor: String
     source_text: String
+    age_groups: String
+    enrollment_count: Int
+    study_type: String
   }
 
   type ClinicalTrialConnection {
@@ -328,6 +332,28 @@ export const typeDefs = `#graphql
     country_name: String
     iso_code: String
     location_scope: String
+  }
+
+  # =============================================================================
+  # R&D PRIORITY TYPES (Extract tab)
+  # =============================================================================
+
+  type RdPriorityNode {
+    priority_key: Int!
+    rdpriorityid: String
+    priority_name: String
+    indication: String
+    intended_use: String
+    disease_name: String
+    global_health_area: String
+    candidate_name: String
+    current_rd_stage: String
+  }
+
+  type RdPriorityConnection {
+    nodes: [RdPriorityNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
   # =============================================================================
@@ -348,6 +374,12 @@ export const typeDefs = `#graphql
     disease_names: [String!]
     product_names: [String!]
     status: String
+  }
+
+  input RdPriorityFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    search: String
   }
 
   input CandidateFilter {
@@ -393,6 +425,12 @@ export const typeDefs = `#graphql
 
     # Portfolio analysis - clinical trials list (paginated)
     clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
+
+    # Extract tab - R&D priorities with linked candidates (paginated)
+    rdPrioritiesWithCandidates(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
+
+    # Extract tab - R&D priorities only (paginated)
+    rdPriorities(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
 
     # Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): ClinicalTrialStats!
