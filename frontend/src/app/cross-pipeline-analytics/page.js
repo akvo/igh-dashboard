@@ -146,9 +146,10 @@ export default function CrossPipelineAnalytics() {
                 <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
               </div>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               The total volume of the R&D pipeline across the IGH measurement years. Use the filter to zoom into how the pipeline of one disease changed over time and see if the total number of candidates and approved products is increasing year-over-year.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
             <div className="flex items-end gap-4 pb-6 border-b border-gray-200">

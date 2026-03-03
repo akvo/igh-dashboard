@@ -720,9 +720,10 @@ export default function PortfolioAnalysis() {
                     <DownloadIcon className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                A global overview of the R&D pipeline by product type and development stage. Each horizontal bar represents a product type, with colour‑coded segments showing how many candidates and approved products sit at each stage of the R&D lifecycle, from discovery and pre‑clinical through clinical phases to approval. Use the filters above to narrow the view by global health area, disease, or product type, and click items in the legend to toggle individual stages on or off and compare where activity is concentrated across the pipeline.
                 </p>
+                <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
                 <StackedBarChart
                   data={pipelineData}
@@ -769,9 +770,10 @@ export default function PortfolioAnalysis() {
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both.
                 </p>
+                <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
                 <DonutChart
                   data={productTypesData}
@@ -1106,9 +1108,10 @@ export default function PortfolioAnalysis() {
                 <MoreHorizontalIcon className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               The aggregated portfolio lets you deepdive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Tabs */}
             <div className="flex gap-6 border-b border-gray-200 mb-6">
