@@ -162,12 +162,19 @@ export function computeGrowthTable(aggregatedData) {
     aggregatedData.forEach((yearData, idx) => {
       const value = yearData[stage];
       const prev = idx > 0 ? aggregatedData[idx - 1][stage] : null;
-      const yoyChange = prev !== null && prev > 0
-        ? (((value - prev) / prev) * 100).toFixed(1)
-        : null;
-      const totalGrowth = baseline[stage] > 0
-        ? (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1)
-        : null;
+      let yoyChange = null;
+      if (prev !== null) {
+        if (prev > 0) {
+          yoyChange = (((value - prev) / prev) * 100).toFixed(1);
+        } else if (prev === 0 && value > 0) {
+          // From 0 to something — show as null (no meaningful %)
+          yoyChange = null;
+        }
+      }
+      let totalGrowth = null;
+      if (baseline[stage] > 0) {
+        totalGrowth = (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1);
+      }
 
       row.values[yearData.year] = {
         count: value,

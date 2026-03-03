@@ -12,13 +12,16 @@ import {
   AGGREGATE_STAGE_COLORS,
 } from '@/lib/transformations';
 
+// Year colors — deliberately distinct from the stage colors
+// (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
+// the stacked bar chart above, so the two charts read differently.
 const YEAR_COLORS = [
   '#AD5133',
-  '#F0B456',
-  '#54A5C4',
-  '#B28FC9',
-  '#6AB085',
+  '#FE7449',
+  '#F9A78D',
+  '#8c4028',
   '#CC9949',
+  '#e3d6c1',
 ];
 
 const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
@@ -359,6 +362,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <p className="text-sm text-gray-400 mb-4">
           Compare up to four portfolios &mdash; each defined by a specific combination of disease and product &mdash; in a single year. View how each portfolio is distributed across R&amp;D stages, choose the year of interest, and use the legend to filter stages in or out to focus the comparison on pipeline components most relevant to the analysis.
         </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Phase checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -404,9 +408,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <p className="text-sm text-gray-500 mb-2">
           Explore the underlying data for the selected portfolios by aggregated R&amp;D stage in the chosen year, enabling detailed comparison of portfolio compositions.
         </p>
-        <p className="text-sm text-gray-400 italic mb-6">
+        <p className="text-sm text-gray-400 italic mb-4">
           How many candidates are present in each research stage for each portfolio?
         </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         <Table
           columns={compareTableColumns}
@@ -430,6 +435,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <p className="text-sm text-gray-400 mb-4">
           Explore the temporal trends for each selected portfolio with R&amp;D stages aggregated into early development, late development, and approved products across IGH review years.
         </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Stage checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -581,12 +587,21 @@ export default function TemporalTrendsSection({
         render: (value, row) => {
           const cell = row._values?.[year];
           if (!cell) return '-';
+          const change = cell.yoyChange !== null ? parseFloat(cell.yoyChange) : null;
+          const isNegative = change !== null && change < 0;
+          const isPositive = change !== null && change > 0;
           return (
             <div className="flex items-center gap-3">
               <span>{cell.count}</span>
-              {cell.yoyChange !== null && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-[#E8F5E9] text-[#2E7D32]">
-                  {Math.abs(parseFloat(cell.yoyChange)).toFixed(0)}%
+              {change !== null && (
+                <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+                  isNegative
+                    ? 'bg-[#FFEBEE] text-[#C62828]'
+                    : isPositive
+                      ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                      : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {isNegative ? '↓' : isPositive ? '↑' : ''} {Math.abs(change).toFixed(0)}%
                 </span>
               )}
             </div>
@@ -599,9 +614,18 @@ export default function TemporalTrendsSection({
       header: 'Total Growth (%)',
       render: (value) => {
         if (value === null || value === undefined) return '-';
+        const num = parseFloat(value);
+        const isNegative = num < 0;
+        const isPositive = num > 0;
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-[#E8F5E9] text-[#2E7D32]">
-            {Math.abs(parseFloat(value)).toFixed(1)}%
+          <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+            isNegative
+              ? 'bg-[#FFEBEE] text-[#C62828]'
+              : isPositive
+                ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                : 'bg-gray-100 text-gray-600'
+          }`}>
+            {isNegative ? '↓' : isPositive ? '↑' : ''} {Math.abs(num).toFixed(1)}%
           </span>
         );
       },
@@ -638,10 +662,11 @@ export default function TemporalTrendsSection({
         </h3>
         <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
       </div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
         Track how candidates progress through the R&amp;D cycle over time and compare
         the maturity of different disease portfolios with each other.
       </p>
+      <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
       {/* Tabs */}
       <TabNav
@@ -719,6 +744,7 @@ export default function TemporalTrendsSection({
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio, showing how distributions across R&amp;D stages change over time. Filter by disease and product, and use the R&amp;D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Phase checkboxes */}
             <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -777,6 +803,7 @@ export default function TemporalTrendsSection({
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio with R&amp;D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&amp;D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             <div className="mt-4">
               {loading ? (
@@ -788,10 +815,11 @@ export default function TemporalTrendsSection({
                   data={groupedChartData}
                   series={yearSeries}
                   categoryKey="category"
-                  height={350}
+                  height={380}
                   xAxisLabel="R&D Stage"
                   yAxisLabel="Number of Candidates"
                   showFilters={true}
+                  showBarLabels={true}
                 />
               )}
             </div>
@@ -802,9 +830,10 @@ export default function TemporalTrendsSection({
             <h4 className="text-lg font-bold text-black mb-2">
               Temporal trends in aggregated R&amp;D stages &ndash; table view
             </h4>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-400 mb-4">
               Explore the underlying data for aggregated R&amp;D stages, including year-on-year changes and total growth in portfolio composition over time.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {loading ? (
               <div className="h-[120px] flex items-center justify-center">
