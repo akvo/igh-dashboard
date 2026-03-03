@@ -38,7 +38,10 @@ export default function PortfolioAnalysis() {
   const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
   const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
-  const [extractPage, setExtractPage] = useUrlState('extPage', 1, numberSerializer);
+  const [extractPageCandidates, setExtractPageCandidates] = useUrlState('extP1', 1, numberSerializer);
+  const [extractPageRdPriorities, setExtractPageRdPriorities] = useUrlState('extP2', 1, numberSerializer);
+  const [extractPageTrials, setExtractPageTrials] = useUrlState('extP3', 1, numberSerializer);
+  const [extractPageRdOnly, setExtractPageRdOnly] = useUrlState('extP4', 1, numberSerializer);
   const [extractTab, setExtractTab] = useUrlState('extTab', 'candidates-approved', { ...stringSerializer, historyMode: 'push' });
   const [colsCandidates, setColsCandidates] = useUrlState('cols1', [], arraySerializer);
   const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
@@ -109,6 +112,24 @@ export default function PortfolioAnalysis() {
   };
   const selectedColumns = selectedColumnsMap[extractTab] || [];
   const setSelectedColumns = setSelectedColumnsMap[extractTab] || (() => {});
+
+  // =========================================================
+  // Per-tab page state (each tab keeps its own page position)
+  // =========================================================
+  const extractPageMap = {
+    'candidates-approved': extractPageCandidates,
+    'rd-priorities': extractPageRdPriorities,
+    'clinical-trials': extractPageTrials,
+    'rd-only': extractPageRdOnly,
+  };
+  const setExtractPageMap = {
+    'candidates-approved': setExtractPageCandidates,
+    'rd-priorities': setExtractPageRdPriorities,
+    'clinical-trials': setExtractPageTrials,
+    'rd-only': setExtractPageRdOnly,
+  };
+  const extractPage = extractPageMap[extractTab] || 1;
+  const setExtractPage = setExtractPageMap[extractTab] || (() => {});
 
   const availableColumns = EXTRACT_TAB_COLUMNS[extractTab] || [];
 
