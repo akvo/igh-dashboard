@@ -52,7 +52,7 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
 
   const diseases = db
     .prepare(
-      `SELECT COUNT(DISTINCT d.disease_key) as count
+      `SELECT COUNT(DISTINCT d.disease_group_name) as count
     FROM fact_pipeline_snapshot f
     ${diseaseJoins.join("\n    ")}
     WHERE ${baseConditions.join("\n      AND ")}`,
