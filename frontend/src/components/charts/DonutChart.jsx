@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload }) => {
     <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
       <div className="flex items-center gap-2">
         <span
-          className="w-3 h-3 rounded-full"
+          className="w-3 h-3 rounded-sm"
           style={{ backgroundColor: data.payload.fill }}
         />
         <span className="font-medium text-black">{data.name}</span>
@@ -109,7 +109,7 @@ export default function DonutChart({
           onMouseLeave={() => setActiveIndex(null)}
         >
           <span
-            className="w-3 h-3 rounded-full flex-shrink-0"
+            className="w-3 h-3 rounded-sm flex-shrink-0"
             style={{ backgroundColor: item.fill }}
           />
           <span

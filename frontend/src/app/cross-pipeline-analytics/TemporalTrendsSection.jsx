@@ -257,13 +257,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
         Compare up to four portfolios&mdash;each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&amp;D stages to identify contrasts in growth and progression.
       </p>
 
       {/* Portfolio selectors — each has Disease + Product */}
-      <div className="flex items-center gap-5 mb-6">
-        <div className="flex-1 grid grid-cols-2 gap-5">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex-1 grid grid-cols-2 gap-4">
           {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
             <div
               key={label}
@@ -359,7 +359,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       </div>
 
       {/* Sub-section A: Portfolio comparison by R&D stage */}
-      <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
             Portfolio comparison by R&amp;D stage in selected year
@@ -411,7 +411,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       </div>
 
       {/* Sub-section B: Table view */}
-      <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <p className="text-sm text-gray-500 mb-2">
           Explore the underlying data for the selected portfolios by aggregated R&amp;D stage in the chosen year, enabling detailed comparison of portfolio compositions.
         </p>
@@ -432,7 +432,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       </div>
 
       {/* Sub-section C: Aggregated R&D stages across portfolios */}
-      <div className="mb-4 p-6" style={{ border: '1px solid #26262617' }}>
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
             Temporal trends in aggregated R&amp;D stages across portfolios
@@ -663,7 +663,7 @@ export default function TemporalTrendsSection({
   );
 
   return (
-    <div className="bg-white border border-gray-200 p-6 mb-6">
+    <div className="bg-white border border-gray-200 p-4 mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-bold text-black">
@@ -682,13 +682,13 @@ export default function TemporalTrendsSection({
         tabs={tabs}
         activeTab={activeTab}
         onChange={setActiveTab}
-        className="mb-6"
+        className="mb-4"
       />
 
       {activeTab === 'single' ? (
         <div>
           {/* Filters */}
-          <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
+          <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
             <div className="min-w-[200px]">
               <Dropdown
                 label="Disease"
@@ -748,7 +748,7 @@ export default function TemporalTrendsSection({
           </p>
 
           {/* Sub-section A: Temporal trends in portfolio composition */}
-          <div className="mt-6 mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mt-4 mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
                 Temporal trends in portfolio composition across R&amp;D stages
@@ -807,7 +807,7 @@ export default function TemporalTrendsSection({
           </div>
 
           {/* Sub-section B: Aggregated R&D stages grouped bar */}
-          <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
                 Temporal trends in aggregated R&amp;D stages
@@ -840,7 +840,7 @@ export default function TemporalTrendsSection({
           </div>
 
           {/* Sub-section C: Growth table */}
-          <div className="mb-4 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <h4 className="text-lg font-bold text-black mb-2">
               Temporal trends in aggregated R&amp;D stages &ndash; table view
             </h4>

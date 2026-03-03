@@ -16,6 +16,7 @@ const Dropdown = ({
   showClearText = false,
   compact = false,
   showAllOption = false,
+  variant = 'filled',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -213,7 +214,9 @@ const Dropdown = ({
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) setSearchQuery(''); }}
         className={`flex items-center justify-between text-sm font-normal text-black cursor-pointer text-left transition-colors
           ${compact ? 'gap-2 px-3 h-9 w-[180px] max-w-full' : 'w-full px-4 py-2.5 h-[44px]'}
-          ${isOpen ? 'bg-white border-2 border-orange-500' : 'bg-[#F2F2F4]'}`}
+          ${variant === 'outlined'
+            ? `border ${isOpen ? 'bg-white border-orange-500' : 'bg-white border-black-24'}`
+            : isOpen ? 'bg-white border-2 border-orange-500' : 'bg-[#F2F2F4]'}`}
       >
         <span className="flex items-center overflow-hidden min-w-0 flex-1">
           {getDisplayValue()}
@@ -231,7 +234,7 @@ const Dropdown = ({
               </svg>
             </span>
           )}
-          <ChevronDownIcon className={`w-5 h-5 text-gray-500 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-5 h-5 ${variant === 'outlined' ? 'text-black-64' : 'text-gray-500'} transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </button>
       {menu}

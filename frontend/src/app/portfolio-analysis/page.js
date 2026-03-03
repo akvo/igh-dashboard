@@ -194,10 +194,11 @@ export default function PortfolioAnalysis() {
   const approvedProducts = kpis?.find(k => k.id === 'approved')?.value || 0;
 
 
-  // Donut chart colors (enough for typical product count)
+  // Donut chart colors — brand chart palette (from design system)
   const productTypeColors = [
-    '#fe7449', '#a78bfa', '#f9a78d', '#ddd6fe',
-    '#f0b456', '#54a5c4', '#8c4028', '#e3d6c1',
+    '#F0B456', '#CBAFDE', '#B08888', '#E3D6C1',
+    '#F9A78D', '#CC9949', '#6AB085', '#54A5C4',
+    '#B28FC9', '#FFDCD1',
   ];
 
   // Dummy data for candidates table
@@ -557,13 +558,13 @@ export default function PortfolioAnalysis() {
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex h-[calc(100vh-74px)] bg-cream-200">
       <Sidebar activeId="portfolio-analysis" />
 
-      <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className={`flex flex-col gap-6 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8 mb-8 ${activeTab === 'extract' ? '!pb-0' : ''}`}>
+          <div className={`flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 ${activeTab === 'extract' ? '!pb-0 mb-8' : 'mb-0'}`}>
             {/* Title Row */}
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
@@ -603,61 +604,6 @@ export default function PortfolioAnalysis() {
               />
             </div>
 
-            {/* Filters for Explore tab */}
-            {activeTab === 'explore' && (
-              <div className="flex items-end gap-4">
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Global health area"
-                    value={healthArea}
-                    onChange={setHealthArea}
-                    placeholder="All"
-                    options={healthAreaOptions}
-                    multiSelect={true}
-
-                    loading={healthAreasLoading}
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Disease"
-                    value={disease}
-                    onChange={setDisease}
-                    placeholder="All"
-                    options={diseaseOptions}
-                    multiSelect={true}
-
-                    loading={diseasesLoading}
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Product"
-                    value={product}
-                    onChange={setProduct}
-                    placeholder="All"
-                    options={productOptions}
-                    multiSelect={true}
-
-                    loading={productsLoading}
-                  />
-                </div>
-                <div className="flex-1" />
-                <button
-                  onClick={handleClearFilters}
-                  disabled={!hasFilters}
-                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
-                    hasFilters
-                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
-                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
-                  }`}
-                >
-                  Clear
-                  <RefreshIcon className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
             {/* Sub-tabs for Extract tab */}
             {activeTab === 'extract' && (
               <div className="flex gap-6 border-b border-gray-200">
@@ -683,15 +629,72 @@ export default function PortfolioAnalysis() {
             )}
           </div>
 
+          {/* Sticky Filters for Explore tab */}
+          {activeTab === 'explore' && (
+            <div className="sticky top-0 z-20 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 mb-8">
+              <div className="flex items-end gap-4">
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Global health area"
+                    value={healthArea}
+                    onChange={setHealthArea}
+                    placeholder="All"
+                    options={healthAreaOptions}
+                    multiSelect={true}
+                    loading={healthAreasLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Disease"
+                    value={disease}
+                    onChange={setDisease}
+                    placeholder="All"
+                    options={diseaseOptions}
+                    multiSelect={true}
+                    loading={diseasesLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Product"
+                    value={product}
+                    onChange={setProduct}
+                    placeholder="All"
+                    options={productOptions}
+                    multiSelect={true}
+                    loading={productsLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleClearFilters}
+                  disabled={!hasFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                    hasFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  Clear
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Content based on active tab */}
           {activeTab === 'explore' ? (
             <>
               {/* Pipeline Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {kpisLoading ? (
                   <>
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                      <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
                         <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
                         <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
                         <div className="h-3 bg-gray-200 rounded w-3/4"></div>
@@ -723,9 +726,9 @@ export default function PortfolioAnalysis() {
               </div>
 
               {/* Charts Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Global pipeline overview - takes 2 columns */}
-              <div className="lg:col-span-2 bg-white border border-gray-200 p-6">
+              <div className="lg:col-span-2 bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Global pipeline overview</h3>
                   <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
@@ -753,7 +756,7 @@ export default function PortfolioAnalysis() {
               </div>
 
               {/* Product types - takes 1 column */}
-              <div className="bg-white border border-gray-200 p-6">
+              <div className="bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Product types</h3>
                   <div className="flex items-center gap-2">
@@ -766,9 +769,9 @@ export default function PortfolioAnalysis() {
                         { label: 'Products', value: 'Product' },
                       ]}
                       multiSelect={true}
-  
                       compact={true}
                       className="w-32"
+                      variant="outlined"
                     />
                     <ChartMenu
                       onDownloadCSV={() => {
@@ -805,7 +808,7 @@ export default function PortfolioAnalysis() {
               {/* Main content card */}
               <div className="bg-white border border-gray-200">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-4 border-b border-gray-200">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
@@ -848,8 +851,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={healthAreaOptions}
                         multiSelect={true}
-    
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -860,8 +863,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={extractDiseaseOptions}
                         multiSelect={true}
-    
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -872,8 +875,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={productOptions}
                         multiSelect={true}
-    
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -884,8 +887,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={rdStageOptions}
                         multiSelect={true}
-    
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="flex-1" />
@@ -1124,7 +1127,7 @@ export default function PortfolioAnalysis() {
 
           {/* Aggregated portfolio section - only in explore tab */}
           {activeTab === 'explore' && (
-          <div className="bg-white border border-gray-200 p-6 mt-6">
+          <div className="bg-white border border-gray-200 p-4 mt-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Aggregated portfolio</h3>
@@ -1294,7 +1297,7 @@ export default function PortfolioAnalysis() {
                 </p>
 
                 {/* Three chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                   {/* Approval status */}
                   <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
@@ -1366,7 +1369,7 @@ export default function PortfolioAnalysis() {
                           xAxisLabel="Authority type"
                           yAxisLabel="Number of products"
                           showFilters={true}
-                          barRadius={4}
+                          barRadius={0}
                           maxTickChars={15}
                           visiblePhases={authVisiblePhases}
                           onVisiblePhasesChange={handleAuthVisiblePhasesChange}
@@ -1552,7 +1555,7 @@ export default function PortfolioAnalysis() {
                   High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   {/* Age groups in clinical trials */}
                   <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
@@ -1632,7 +1635,7 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Geographic distribution */}
-                <div className="bg-white border border-gray-200 p-6">
+                <div className="bg-white border border-gray-200 p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-lg font-bold text-black">Geographic distribution of clinical trials</h4>
                     <div className="flex items-center gap-2">
@@ -1642,9 +1645,9 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={['Active', 'Completed', 'Terminated']}
                         multiSelect={true}
-    
                         compact={true}
                         className="w-32"
+                        variant="outlined"
                       />
                       <ChartMenu onDownloadCSV={() => {
                         const columns = [
