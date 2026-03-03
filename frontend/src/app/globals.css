@@ -293,6 +293,14 @@ h1 {
 .badge-phase-3 { background-color: var(--color-phase-3); color: var(--color-black); }
 .badge-approved { background-color: var(--color-phase-approved); color: white; }
 
+/* Cell text clamp – max 3 lines with ellipsis */
+.cell-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ==========================================
    ANIMATIONS
    ========================================== */

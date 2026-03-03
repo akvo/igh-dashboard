@@ -9,10 +9,16 @@ import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/c
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
+
+// Clamped cell text with native tooltip for full text on hover
+function CellText({ children }) {
+  const text = typeof children === 'string' ? children : (children ?? '');
+  return <div className="cell-clamp" title={text}>{children}</div>;
+}
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useUrlState('tab', 'explore', { ...stringSerializer, historyMode: 'push' });
@@ -196,15 +202,14 @@ export default function PortfolioAnalysis() {
 
   // Dummy data for candidates table
 
+  // Dark-text phase colors (lighter backgrounds)
+  const LIGHT_BG_PHASES = new Set(['#F9A78D', '#CBAFDE', '#F0B456', '#E3D6C1', '#BFAB8A', '#bbbbbb']);
+
   const getRdStageStyle = (stage) => {
-    switch (stage) {
-      case 'Phase 2': return 'bg-orange-100 text-orange-700';
-      case 'Phase 1': return 'bg-orange-100 text-orange-600';
-      case 'Discovery': return 'bg-red-100 text-red-700';
-      case 'Pre clinical': return 'bg-purple-100 text-purple-700';
-      case 'Approved': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-600';
-    }
+    const color = PHASE_COLORS[stage];
+    if (!color) return { backgroundColor: '#f3f4f6', color: '#4b5563' };
+    const textColor = LIGHT_BG_PHASES.has(color) ? '#262626' : '#ffffff';
+    return { backgroundColor: color, color: textColor };
   };
 
 
@@ -682,7 +687,7 @@ export default function PortfolioAnalysis() {
           {activeTab === 'explore' ? (
             <>
               {/* Pipeline Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 {kpisLoading ? (
                   <>
                     {[1, 2, 3].map((i) => (
@@ -804,7 +809,8 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
-                      <p className="text-sm text-gray-500">Select the columns you would like to include in the overview and click on apply.</p>
+                      <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
+                      <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -1077,12 +1083,12 @@ export default function PortfolioAnalysis() {
                             <tbody>
                               {processedExtractData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-4 px-4 align-top">
-                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
+                                  <td className="py-4 px-4 align-top" title={item.candidate_name || item.alternative_names}>
+                                    <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
                                   {activeExtractColumns.map((col) => (
-                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top">{item[col.accessor]}</td>
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item[col.accessor]}</CellText></td>
                                   ))}
                                 </tr>
                               ))}
@@ -1132,7 +1138,7 @@ export default function PortfolioAnalysis() {
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Tabs */}
-            <div className="flex gap-6 border-b border-gray-200 mb-6">
+            <div className="flex gap-6 border-b border-gray-200 mb-4">
               {['candidates', 'approved', 'trials', 'technology'].map((tab) => (
                 <button
                   key={tab}
@@ -1182,11 +1188,23 @@ export default function PortfolioAnalysis() {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
 
                 {/* Table */}
+                {candidatesLoading ? (
+                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
+                    <div className="animate-pulse text-gray-400">Loading candidates...</div>
+                  </div>
+                ) : !candidatesData || candidatesData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
+                    <div className="text-center">
+                      <p className="text-gray-400 font-medium">No candidates found</p>
+                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                    </div>
+                  </div>
+                ) : (
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1214,39 +1232,40 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {candidatesData.map((candidate) => (
                         <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top">
-                            <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
+                          <td className="py-4 px-4 align-top" title={candidate.candidate_name}>
+                            <div className="text-sm font-medium text-black cell-clamp">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.global_health_area}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.secondary_disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.product_name}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(candidate.current_rd_stage)}>
                               {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.test_format}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.preclinical_results_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.type_of_preclinical_results}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.preclinical_results_source}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.recent_updates}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.developers_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.healthcare_facility_level}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.target}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.mechanism_of_action}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.technology_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.test_format}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.type_of_preclinical_results}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_source}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.key_features}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.recent_updates}</CellText></td>
                         </tr>
                       ))}
                     </tbody>
                 </ScrollableTable>
+                )}
 
                 {/* Pagination */}
-                {(() => {
+                {candidatesData && candidatesData.length > 0 && (() => {
                   const totalPages = Math.ceil(candidatesTotalCount / itemsPerPage);
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1270,14 +1289,14 @@ export default function PortfolioAnalysis() {
             {/* Approved Product Tab Content */}
             {portfolioTab === 'approved' && (
               <>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   This view includes summary charts showing approval status, approving authorities, and WHO prequalification, alongside a searchable table of approved products based on current filters. The table provides product‑level details such as name, indication, approval status, approving authorities, WHO prequalification status, and other key attributes.
                 </p>
 
                 {/* Three chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                   {/* Approval status */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approval status</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1289,21 +1308,33 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'approval-status');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <BarChart
-                      data={approvalStatusData}
-                      height={200}
-                      xAxisLabel="Approval status"
-                      yAxisLabel="Number of products"
-                      visibleItems={approvalVisibleItems}
-                      onVisibleItemsChange={handleApprovalVisibleItemsChange}
-                    />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvalStatusData || approvalStatusData.length === 0 ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <BarChart
+                          data={approvalStatusData}
+                          height={200}
+                          xAxisLabel="Approval status"
+                          yAxisLabel="Number of products"
+                          visibleItems={approvalVisibleItems}
+                          onVisibleItemsChange={handleApprovalVisibleItemsChange}
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
                     </p>
                   </div>
 
                   {/* Approving Authorities */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1316,27 +1347,39 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'approving-authorities');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <StackedBarChart
-                      data={approvingAuthoritiesData}
-                      phases={approvingAuthoritiesPhases}
-                      categoryKey="category"
-                      layout="horizontal"
-                      height={200}
-                      xAxisLabel="Authority type"
-                      yAxisLabel="Number of products"
-                      showFilters={true}
-                      barRadius={4}
-                      maxTickChars={15}
-                      visiblePhases={authVisiblePhases}
-                      onVisiblePhasesChange={handleAuthVisiblePhasesChange}
-                    />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <StackedBarChart
+                          data={approvingAuthoritiesData}
+                          phases={approvingAuthoritiesPhases}
+                          categoryKey="category"
+                          layout="horizontal"
+                          height={200}
+                          xAxisLabel="Authority type"
+                          yAxisLabel="Number of products"
+                          showFilters={true}
+                          barRadius={4}
+                          maxTickChars={15}
+                          visiblePhases={authVisiblePhases}
+                          onVisiblePhasesChange={handleAuthVisiblePhasesChange}
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
                     </p>
                   </div>
 
                   {/* WHO prequalification */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">WHO prequalification</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1348,15 +1391,23 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'who-prequalification');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <DonutChart
-                      data={whoPrequalData}
-                      colors={['#fe7449', '#e3d6c1']}
-                      height={180}
-                      innerRadius={50}
-                      outerRadius={80}
-                      showLegend={true}
-                      legendPosition="bottom"
-                    />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[180px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : (
+                        <DonutChart
+                          data={whoPrequalData}
+                          colors={['#fe7449', '#e3d6c1']}
+                          height={180}
+                          innerRadius={50}
+                          outerRadius={80}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low and middle-income countries.
                     </p>
@@ -1392,6 +1443,18 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
+                  {approvedLoading ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading approved products...</div>
+                    </div>
+                  ) : !approvedProductsData || approvedProductsData.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-400 font-medium">No approved products found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                      </div>
+                    </div>
+                  ) : (
                   <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1422,46 +1485,47 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {approvedProductsData.map((item) => (
                         <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top">
-                            <div className="text-sm font-medium text-black">{item.candidate_name}</div>
+                          <td className="py-4 px-4 align-top" title={item.candidate_name}>
+                            <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.global_health_area}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.secondary_disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.product_name}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.current_rd_stage)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.current_rd_stage)}>
                               {item.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.recent_updates}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.developers_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.healthcare_facility_level}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.target}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.mechanism_of_action}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.technology_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.key_features}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.recent_updates}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.approval_status)}>
                               {item.approval_status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.approving_authorities_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.nra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ema_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.japanese_mhlw_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.us_fda_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.approving_authorities_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.nra_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sra_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ema_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.japanese_mhlw_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.us_fda_approval_status}</CellText></td>
                         </tr>
                       ))}
                     </tbody>
                   </ScrollableTable>
+                  )}
 
                 {/* Pagination */}
-                {(() => {
+                {approvedProductsData && approvedProductsData.length > 0 && (() => {
                   const totalPages = Math.ceil(approvedTotalCount / itemsPerPage);
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1484,13 +1548,13 @@ export default function PortfolioAnalysis() {
             )}
             {portfolioTab === 'trials' && (
               <>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 mb-4">
                   High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                   {/* Age groups in clinical trials */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Age groups in clinical trials</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1502,16 +1566,26 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'age-groups-in-clinical-trials');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="border-t border-gray-100 pt-4">
-                      <DonutChart
-                        data={ageGroupsData}
-                        colors={ageGroupColors}
-                        height={280}
-                        innerRadius={70}
-                        outerRadius={120}
-                        showLegend={true}
-                        legendPosition="bottom"
-                      />
+                    <div className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !ageGroupsData || ageGroupsData.length === 0 ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <DonutChart
+                          data={ageGroupsData}
+                          colors={ageGroupColors}
+                          height={280}
+                          innerRadius={70}
+                          outerRadius={120}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
                       Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
@@ -1519,7 +1593,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Clinical trial status */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Clinical trial status</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1531,15 +1605,25 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'clinical-trial-status');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="border-t border-gray-100 pt-4">
-                      <BarChart
-                        data={trialStatusData}
-                        height={280}
-                        xAxisLabel="Trial status"
-                        yAxisLabel="Number of trials"
-                        visibleItems={trialStatusVisibleItems}
-                        onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
-                      />
+                    <div className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !trialStatusData || trialStatusData.length === 0 ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <BarChart
+                          data={trialStatusData}
+                          height={280}
+                          xAxisLabel="Trial status"
+                          yAxisLabel="Number of trials"
+                          visibleItems={trialStatusVisibleItems}
+                          onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
+                        />
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
                       The clinical trial status chart shows the number of studies at each stage, from ongoing to completed, providing a quick view of overall trial progress across the portfolio.
@@ -1573,7 +1657,7 @@ export default function PortfolioAnalysis() {
                       }} onDownloadPNG={() => {}} />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mb-6">
+                  <p className="text-sm text-gray-500 mb-4">
                     The spatial heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
                   </p>
                   <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
@@ -1612,6 +1696,18 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
+                  {trialsListLoading ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading clinical trials...</div>
+                    </div>
+                  ) : !clinicalTrialsTableData || clinicalTrialsTableData.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-400 font-medium">No clinical trials found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                      </div>
+                    </div>
+                  ) : (
                   <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
@@ -1633,33 +1729,34 @@ export default function PortfolioAnalysis() {
                       <tbody>
                         {clinicalTrialsTableData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.trial_name || item.clinicaltrialid}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.candidate_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.trial_name || item.clinicaltrialid}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.candidate_name}</CellText></td>
                             <td className="py-4 px-4 align-top">
-                              <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
+                              <div className="text-sm font-medium text-black cell-clamp">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.description}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.description}</CellText></td>
                             <td className="py-4 px-4 align-top">
-                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
+                              <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.trial_phase)}>
                                 {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.status}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.locations}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ct_results_status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.status}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.locations}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ct_results_status}</CellText></td>
                             <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.start_date}</td>
                             <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.end_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sponsor}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.collaborator}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.source_text}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sponsor}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.collaborator}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.source_text}</CellText></td>
                           </tr>
                         ))}
                       </tbody>
                   </ScrollableTable>
+                  )}
 
                   {/* Pagination */}
-                  {(() => {
+                  {clinicalTrialsTableData && clinicalTrialsTableData.length > 0 && (() => {
                     const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
                     const maxVisible = 5;
                     const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1746,6 +1843,18 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Table */}
+                {technologyLoading ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading technology types...</div>
+                  </div>
+                ) : !paginatedTechData || paginatedTechData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-gray-400 font-medium">No technology types found</p>
+                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                    </div>
+                  </div>
+                ) : (
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1758,7 +1867,7 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {paginatedTechData.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px] align-top">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-800 align-top">{item.technology_type}</td>
                           {technologyPhases.map((phase) => (
                             <td key={phase.key} className="py-4 px-4 text-sm text-gray-600 align-top">{item[phase.key] || 0}</td>
                           ))}
@@ -1766,9 +1875,10 @@ export default function PortfolioAnalysis() {
                       ))}
                     </tbody>
                 </ScrollableTable>
+                )}
 
                 {/* Pagination */}
-                {(() => {
+                {paginatedTechData && paginatedTechData.length > 0 && (() => {
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, techTotalPages) }, (_, i) => i + 1);
                   return (
