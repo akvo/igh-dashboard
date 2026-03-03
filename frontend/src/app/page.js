@@ -405,7 +405,12 @@ export default function Home() {
                   setProduct([]);
                   setRdStage([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 cursor-pointer whitespace-nowrap font-medium"
+                disabled={product.length === 0 && rdStage.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  product.length > 0 || rdStage.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Reset filters
               </button>
@@ -482,7 +487,12 @@ export default function Home() {
                   setCrossGlobalHealthArea([]);
                   setCrossProduct([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 cursor-pointer whitespace-nowrap font-medium"
+                disabled={crossGlobalHealthArea.length === 0 && crossProduct.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  crossGlobalHealthArea.length > 0 || crossProduct.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Reset filters
               </button>

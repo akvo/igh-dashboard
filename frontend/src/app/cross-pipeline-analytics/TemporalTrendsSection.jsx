@@ -135,6 +135,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     setAppliedCompareYear(compareYear);
   };
 
+  const hasCompareFilters = portfolios.some(p => p.disease || p.product) || compareYear !== '';
+
   const handleCompareClear = () => {
     setPortfolios([
       { disease: '', product: '' },
@@ -338,7 +340,12 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         </div>
         <button
           onClick={handleCompareClear}
-          className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px] shrink-0"
+          disabled={!hasCompareFilters}
+          className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap shrink-0 border ${
+            hasCompareFilters
+              ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+              : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+          }`}
         >
           Clear
           <RefreshIcon className="w-4 h-4" />
@@ -510,6 +517,8 @@ export default function TemporalTrendsSection({
     setAppliedProduct(filterProduct);
     setAppliedYear(filterYear);
   };
+
+  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 || filterYear !== '';
 
   const handleClear = () => {
     setFilterDisease([]);
@@ -688,7 +697,7 @@ export default function TemporalTrendsSection({
                 placeholder="All"
                 options={diseaseOptions}
                 multiSelect={true}
-                showAllOption={true}
+
               />
             </div>
             <div className="min-w-[200px]">
@@ -699,7 +708,7 @@ export default function TemporalTrendsSection({
                 placeholder="All"
                 options={productOptions}
                 multiSelect={true}
-                showAllOption={true}
+
               />
             </div>
             <div className="min-w-[160px]">
@@ -714,7 +723,12 @@ export default function TemporalTrendsSection({
             <div className="flex-1" />
             <button
               onClick={handleClear}
-              className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+              disabled={!hasSingleFilters}
+              className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                hasSingleFilters
+                  ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                  : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+              }`}
             >
               Clear
               <RefreshIcon className="w-4 h-4" />

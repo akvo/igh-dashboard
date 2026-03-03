@@ -170,8 +170,8 @@ export default function BarChart({
               layout={layout}
               margin={{
                 top: 10,
-                right: 20,
-                left: isHorizontalBars ? 80 : 20,
+                right: 10,
+                left: isHorizontalBars ? 80 : 5,
                 bottom: xAxisLabel ? 40 : 20,
               }}
               barCategoryGap="20%"
