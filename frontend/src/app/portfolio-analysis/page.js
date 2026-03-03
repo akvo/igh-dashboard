@@ -198,7 +198,7 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, disease, product);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.

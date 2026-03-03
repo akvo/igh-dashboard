@@ -432,7 +432,7 @@ export const typeDefs = `#graphql
     candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
-    geographicDistribution(location_scope: String!, statuses: [String!]): [GeographicDistributionRow!]!
+    geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], disease_names: [String!], product_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
     temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
