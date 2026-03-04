@@ -48,6 +48,7 @@ export function getRdPrioritiesWithCandidates(
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
+    LEFT JOIN dim_product pr ON p.product_key = pr.product_key
     LEFT JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
     LEFT JOIN dim_candidate_core c ON bp.candidate_key = c.candidate_key
   `;
@@ -70,6 +71,14 @@ export function getRdPrioritiesWithCandidates(
       p.intended_use,
       d.disease_group_name AS disease_name,
       d.global_health_area,
+      p.type_of_guidance,
+      p.author,
+      p.publication_date,
+      p.target_population,
+      p.efficacy,
+      p.safety,
+      p.source,
+      pr.product_name,
       c.candidate_name,
       c.current_rd_stage
     FROM dim_priority p
@@ -105,6 +114,7 @@ export function getRdPriorities(
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
+    LEFT JOIN dim_product pr ON p.product_key = pr.product_key
   `;
 
   const countSql = `
@@ -124,7 +134,15 @@ export function getRdPriorities(
       p.indication,
       p.intended_use,
       d.disease_group_name AS disease_name,
-      d.global_health_area
+      d.global_health_area,
+      p.type_of_guidance,
+      p.author,
+      p.publication_date,
+      p.target_population,
+      p.efficacy,
+      p.safety,
+      p.source,
+      pr.product_name
     FROM dim_priority p
     ${joins}
     ${whereClause}

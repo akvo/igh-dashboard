@@ -153,6 +153,14 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         japanese_mhlw_approval_status
         us_fda_approval_status
         approving_authorities_agg
+        technology_principle
+        target_population
+        route_of_administration
+        platform
+        chim_study
+        key_clinical_trial
+        rd_stage_2023
+        rd_stage_2019
       }
       totalCount
       hasNextPage
@@ -185,6 +193,13 @@ export const GET_CLINICAL_TRIALS = gql`
         age_groups
         enrollment_count
         study_type
+        funder_type
+        interventions
+        outcome_measure
+        sex
+        study_design
+        ct_results_type
+        ct_terminated_reason
       }
       totalCount
       hasNextPage
@@ -276,6 +291,14 @@ export const GET_RD_PRIORITIES_WITH_CANDIDATES = gql`
         intended_use
         disease_name
         global_health_area
+        type_of_guidance
+        author
+        publication_date
+        target_population
+        efficacy
+        safety
+        source
+        product_name
         candidate_name
         current_rd_stage
       }
@@ -297,6 +320,14 @@ export const GET_RD_PRIORITIES = gql`
         intended_use
         disease_name
         global_health_area
+        type_of_guidance
+        author
+        publication_date
+        target_population
+        efficacy
+        safety
+        source
+        product_name
       }
       totalCount
       hasNextPage

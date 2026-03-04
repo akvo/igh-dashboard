@@ -87,6 +87,12 @@ export function getPortfolioCandidates(
         c.recent_updates,
         c.test_format,
         c.known_funders_agg,
+        c.technology_principle,
+        c.target_population,
+        c.route_of_administration,
+        c.platform,
+        c.chim_study,
+        c.key_clinical_trial,
         t.technology_type,
         d.global_health_area,
         d.disease_group_name AS disease_name,
@@ -105,6 +111,18 @@ export function getPortfolioCandidates(
          FROM bridge_candidate_approving_authority baa
          JOIN dim_approving_authority da ON baa.authority_key = da.authority_key
          WHERE baa.candidate_key = c.candidate_key) AS approving_authorities_agg,
+        (SELECT p23.phase_name
+         FROM fact_pipeline_snapshot f23
+         JOIN dim_date dt23 ON f23.date_key = dt23.date_key
+         LEFT JOIN dim_phase p23 ON f23.phase_key = p23.phase_key
+         WHERE f23.candidate_key = c.candidate_key AND dt23.year <= 2023
+         ORDER BY dt23.year DESC LIMIT 1) AS rd_stage_2023,
+        (SELECT p19.phase_name
+         FROM fact_pipeline_snapshot f19
+         JOIN dim_date dt19 ON f19.date_key = dt19.date_key
+         LEFT JOIN dim_phase p19 ON f19.phase_key = p19.phase_key
+         WHERE f19.candidate_key = c.candidate_key AND dt19.year <= 2019
+         ORDER BY dt19.year DESC LIMIT 1) AS rd_stage_2019,
         ROW_NUMBER() OVER (
           PARTITION BY c.candidate_key
           ORDER BY COALESCE(p.sort_order, -1) DESC, f.snapshot_id DESC
@@ -120,13 +138,16 @@ export function getPortfolioCandidates(
            indication_type, healthcare_facility_level,
            preclinical_results_status, type_of_preclinical_results,
            preclinical_results_source, recent_updates, test_format,
-           known_funders_agg, technology_type,
+           known_funders_agg, technology_principle, target_population,
+           route_of_administration, platform, chim_study, key_clinical_trial,
+           technology_type,
            global_health_area, disease_name, secondary_disease_name,
            product_name, sub_product_name, phase_name,
            approval_status, who_prequalification,
            nra_approval_status, sra_approval_status,
            ema_approval_status, japanese_mhlw_approval_status,
-           us_fda_approval_status, approving_authorities_agg
+           us_fda_approval_status, approving_authorities_agg,
+           rd_stage_2023, rd_stage_2019
     FROM ranked
     WHERE rn = 1
     ORDER BY candidate_name
