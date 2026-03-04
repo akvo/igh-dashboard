@@ -3,7 +3,7 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_CLINICAL_TRIALS } from '../queries';
 
-export function useClinicalTrials(filter, limit = 20, offset = 0) {
+export function useClinicalTrials(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_CLINICAL_TRIALS, {
     variables: {
       filter: {
@@ -16,6 +16,7 @@ export function useClinicalTrials(filter, limit = 20, offset = 0) {
       offset,
     },
     fetchPolicy: 'network-only',
+    skip: options.skip,
   });
 
   const result = data?.clinicalTrials;
