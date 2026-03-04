@@ -11,7 +11,7 @@ function buildFilterVars(filter) {
   };
 }
 
-export function useRdPrioritiesWithCandidates(filter, limit = 20, offset = 0) {
+export function useRdPrioritiesWithCandidates(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_RD_PRIORITIES_WITH_CANDIDATES, {
     variables: {
       filter: buildFilterVars(filter),
@@ -19,6 +19,7 @@ export function useRdPrioritiesWithCandidates(filter, limit = 20, offset = 0) {
       offset,
     },
     fetchPolicy: 'network-only',
+    skip: options.skip,
   });
 
   const result = data?.rdPrioritiesWithCandidates;
@@ -32,7 +33,7 @@ export function useRdPrioritiesWithCandidates(filter, limit = 20, offset = 0) {
   };
 }
 
-export function useRdPriorities(filter, limit = 20, offset = 0) {
+export function useRdPriorities(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_RD_PRIORITIES, {
     variables: {
       filter: buildFilterVars(filter),
@@ -40,6 +41,7 @@ export function useRdPriorities(filter, limit = 20, offset = 0) {
       offset,
     },
     fetchPolicy: 'network-only',
+    skip: options.skip,
   });
 
   const result = data?.rdPriorities;

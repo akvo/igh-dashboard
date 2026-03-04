@@ -160,17 +160,24 @@ export default function PortfolioAnalysis() {
     productNames: extractProduct.length > 0 ? extractProduct : undefined,
   };
 
+  // Only fire the hook for the active extract tab to prevent cross-tab data
+  // bleed — inactive hooks would refetch with stale offsets during tab switches,
+  // causing R&D priority rows to briefly appear in other tabs' tables.
   const { candidates: extractCandidatesData, totalCount: extractCandidatesTotalCount, hasNextPage: extractCandidatesHasNext, loading: extractCandidatesLoading } = usePortfolioCandidates(
     extractCandidatesFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'candidates-approved' },
   );
   const { priorities: extractRdPrioritiesData, totalCount: extractRdPrioritiesTotalCount, hasNextPage: extractRdPrioritiesHasNext, loading: extractRdPrioritiesLoading } = useRdPrioritiesWithCandidates(
     extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'rd-priorities' },
   );
   const { trials: extractTrialsData, totalCount: extractTrialsTotalCount, hasNextPage: extractTrialsHasNext, loading: extractTrialsLoading } = useClinicalTrials(
     extractTrialFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'clinical-trials' },
   );
   const { priorities: extractRdOnlyData, totalCount: extractRdOnlyTotalCount, hasNextPage: extractRdOnlyHasNext, loading: extractRdOnlyLoading } = useRdPriorities(
     extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'rd-only' },
   );
 
   // Unified view of the active extract tab's data
@@ -1134,6 +1141,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     ) : (
                       <ServerTable
+                        key={extractTab}
                         columns={[
                           {
                             header: EXTRACT_FIXED_COLUMNS[extractTab].label,
