@@ -3,7 +3,7 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_PORTFOLIO_CANDIDATES } from '../queries';
 
-export function usePortfolioCandidates(filter, limit = 20, offset = 0) {
+export function usePortfolioCandidates(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_PORTFOLIO_CANDIDATES, {
     variables: {
       filter: {
@@ -18,6 +18,7 @@ export function usePortfolioCandidates(filter, limit = 20, offset = 0) {
       offset,
     },
     fetchPolicy: 'network-only',
+    skip: options.skip,
   });
 
   const result = data?.portfolioCandidates;

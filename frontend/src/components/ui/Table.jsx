@@ -70,11 +70,27 @@ const Pagination = ({
 }) => {
   const getPageNumbers = () => {
     const pages = [];
-    if (totalPages <= 7) {
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      // Sliding window centred on currentPage
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > totalPages) { end = totalPages; start = Math.max(1, end - maxVisible + 1); }
+
+      // First page + left ellipsis
+      if (start > 1) { pages.push(1); }
+      if (start > 2) { pages.push('...'); }
+
+      for (let i = start; i <= end; i++) pages.push(i);
+
+      // Right ellipsis + last page
+      if (end < totalPages - 1) { pages.push('...'); }
+      if (end < totalPages) { pages.push(totalPages); }
     }
+
     return pages;
   };
 

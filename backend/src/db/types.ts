@@ -279,6 +279,9 @@ export interface ClinicalTrialNode {
   locations: string | null;
   sponsor: string | null;
   source_text: string | null;
+  age_groups: string | null;
+  enrollment_count: number | null;
+  study_type: string | null;
 }
 
 export interface ClinicalTrialFilter {
@@ -316,6 +319,7 @@ export interface PortfolioCandidateNode {
   developers_agg: string | null;
   mechanism_of_action: string | null;
   key_features: string | null;
+  known_funders_agg: string | null;
   technology_type: string | null;
   indication_type: string | null;
   healthcare_facility_level: string | null;
@@ -372,6 +376,35 @@ export interface RegulatoryDistribution {
 export interface ProductDistributionRow {
   product_name: string;
   candidateCount: number;
+}
+
+// =============================================================================
+// R&D Priorities (Extract tab)
+// =============================================================================
+
+export interface RdPriorityNode {
+  priority_key: number;
+  rdpriorityid: string | null;
+  priority_name: string | null;
+  indication: string | null;
+  intended_use: string | null;
+  disease_name: string | null;
+  global_health_area: string | null;
+  // Present when joined with candidates (Tab 2), null for priorities-only (Tab 4)
+  candidate_name: string | null;
+  current_rd_stage: string | null;
+}
+
+export interface RdPriorityFilter {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  search?: string;
+}
+
+export interface RdPriorityConnection {
+  nodes: RdPriorityNode[];
+  totalCount: number;
+  hasNextPage: boolean;
 }
 
 // =============================================================================
