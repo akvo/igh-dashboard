@@ -229,6 +229,11 @@ body {
   font-family: var(--font-public-sans), system-ui, sans-serif;
 }
 
+/* Sidebar border */
+aside[class*="bg-sidebar-bg"] {
+  border-right: 1px solid #26262617;
+}
+
 /* ==========================================
    TYPOGRAPHY SCALE
    Headings use Align font, body uses Public Sans
