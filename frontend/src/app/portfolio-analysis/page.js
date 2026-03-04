@@ -29,6 +29,9 @@ export default function PortfolioAnalysis() {
   const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
   const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
+  const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
+  const [trialsSearchQuery, setTrialsSearchQuery] = useState('');
+  const [technologySearchQuery, setTechnologySearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
   const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
@@ -81,7 +84,7 @@ export default function PortfolioAnalysis() {
     { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
+    { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
   const extractFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
@@ -549,10 +552,29 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
+  // Client-side filtering for clinical trials (backend doesn't support search)
+  const filteredTrialsData = useMemo(() => {
+    if (!trialsSearchQuery.trim()) return clinicalTrialsTableData;
+    const q = trialsSearchQuery.toLowerCase();
+    return clinicalTrialsTableData.filter((item) =>
+      [item.trial_name, item.clinicaltrialid, item.candidate_name, item.trial_title, item.description, item.status, item.sponsor, item.locations]
+        .some((val) => val && String(val).toLowerCase().includes(q))
+    );
+  }, [clinicalTrialsTableData, trialsSearchQuery]);
+
+  // Client-side filtering for technology types (backend doesn't support search)
+  const filteredTechData = useMemo(() => {
+    if (!technologySearchQuery.trim()) return technologyTableData;
+    const q = technologySearchQuery.toLowerCase();
+    return technologyTableData.filter((item) =>
+      item.technology_type && item.technology_type.toLowerCase().includes(q)
+    );
+  }, [technologyTableData, technologySearchQuery]);
+
   // Client-side pagination for technology types table
   const techItemsPerPage = 10;
-  const techTotalPages = Math.ceil(technologyTotalCount / techItemsPerPage);
-  const paginatedTechData = technologyTableData.slice(
+  const techTotalPages = Math.ceil(filteredTechData.length / techItemsPerPage);
+  const paginatedTechData = filteredTechData.slice(
     (currentPage - 1) * techItemsPerPage,
     currentPage * techItemsPerPage,
   );
@@ -579,7 +601,7 @@ export default function PortfolioAnalysis() {
                 </p>
               </div>
               <button
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
                   setShareCopied(true);
@@ -731,7 +753,7 @@ export default function PortfolioAnalysis() {
               <div className="lg:col-span-2 bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Global pipeline overview</h3>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 transition-colors">
                     Export Visual
                     <DownloadIcon className="w-4 h-4" />
                   </button>
@@ -827,10 +849,10 @@ export default function PortfolioAnalysis() {
                         />
                       </div>
                       <button
-                        className={`flex items-center gap-2 px-4 py-2 text-sm border ${
+                        className={`flex items-center gap-2 px-4 py-2 text-sm border transition-colors ${
                           selectedColumns.length > 0 && !extractDownloading
-                            ? 'text-gray-600 border-gray-300 hover:bg-gray-50'
-                            : 'text-gray-400 border-gray-200 cursor-not-allowed'
+                            ? 'text-black bg-white border-black-24 hover:bg-gray-50'
+                            : 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
                         }`}
                         disabled={selectedColumns.length === 0 || extractDownloading}
                         onClick={handleExtractDownloadCSV}
@@ -981,7 +1003,7 @@ export default function PortfolioAnalysis() {
                         disabled={selectedColumns.length === 0}
                         className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
                           selectedColumns.length > 0
-                            ? 'bg-[#E76A42] text-[#262626] hover:bg-[#d45e38] cursor-pointer'
+                            ? 'bg-orange-500 text-black hover:bg-black hover:text-white cursor-pointer transition-colors'
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
                       >
@@ -1108,9 +1130,9 @@ export default function PortfolioAnalysis() {
                               <div className="flex items-center gap-2">
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={extractPage <= 1} onClick={() => setExtractPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                                 {pages.map((page) => (
-                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                                 ))}
-                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!extractHasNext} onClick={() => setExtractPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                               </div>
                               <span className="text-sm text-gray-500">{extractTotalCount} results</span>
@@ -1183,7 +1205,7 @@ export default function PortfolioAnalysis() {
                     <button
                       onClick={handleCandidatesDownloadCSV}
                       disabled={candidatesDownloading}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                     >
                       <CloudDownloadIcon className="w-4 h-4" />
                       {candidatesDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1277,9 +1299,9 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-2">
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={candidatesPage <= 1} onClick={() => setCandidatesPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                         {pages.map((page) => (
-                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                         ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!candidatesHasNext} onClick={() => setCandidatesPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                       </div>
                       <span className="text-sm text-gray-500">{candidatesTotalCount} results</span>
@@ -1297,7 +1319,7 @@ export default function PortfolioAnalysis() {
                 </p>
 
                 {/* Three chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                   {/* Approval status */}
                   <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
@@ -1431,13 +1453,15 @@ export default function PortfolioAnalysis() {
                         <input
                           type="text"
                           placeholder="Search item"
+                          value={approvedSearchQuery}
+                          onChange={(e) => { setApprovedSearchQuery(e.target.value); setApprovedPage(1); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                       <button
                         onClick={handleApprovedDownloadCSV}
                         disabled={approvedDownloading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
                         {approvedDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1537,9 +1561,9 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-2">
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={approvedPage <= 1} onClick={() => setApprovedPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                         {pages.map((page) => (
-                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                         ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!approvedHasNext} onClick={() => setApprovedPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                       </div>
                       <span className="text-sm text-gray-500">{approvedTotalCount} results</span>
@@ -1555,7 +1579,7 @@ export default function PortfolioAnalysis() {
                   High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                   {/* Age groups in clinical trials */}
                   <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
@@ -1680,13 +1704,15 @@ export default function PortfolioAnalysis() {
                           <input
                             type="text"
                             placeholder="Search"
+                            value={trialsSearchQuery}
+                            onChange={(e) => { setTrialsSearchQuery(e.target.value); setTrialsPage(1); }}
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
                         <button
                           onClick={handleTrialsDownloadCSV}
                           disabled={trialsDownloading}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                         >
                           <CloudDownloadIcon className="w-4 h-4" />
                           {trialsDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1703,7 +1729,7 @@ export default function PortfolioAnalysis() {
                     <div className="h-[200px] flex items-center justify-center">
                       <div className="animate-pulse text-gray-400">Loading clinical trials...</div>
                     </div>
-                  ) : !clinicalTrialsTableData || clinicalTrialsTableData.length === 0 ? (
+                  ) : !filteredTrialsData || filteredTrialsData.length === 0 ? (
                     <div className="h-[200px] flex items-center justify-center">
                       <div className="text-center">
                         <p className="text-gray-400 font-medium">No clinical trials found</p>
@@ -1730,7 +1756,7 @@ export default function PortfolioAnalysis() {
                         </tr>
                       </thead>
                       <tbody>
-                        {clinicalTrialsTableData.map((item) => (
+                        {filteredTrialsData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.trial_name || item.clinicaltrialid}</CellText></td>
                             <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.candidate_name}</CellText></td>
@@ -1759,7 +1785,7 @@ export default function PortfolioAnalysis() {
                   )}
 
                   {/* Pagination */}
-                  {clinicalTrialsTableData && clinicalTrialsTableData.length > 0 && (() => {
+                  {filteredTrialsData && filteredTrialsData.length > 0 && (() => {
                     const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
                     const maxVisible = 5;
                     const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1779,7 +1805,7 @@ export default function PortfolioAnalysis() {
                               onClick={() => setTrialsPage(page)}
                               className={`w-8 h-8 text-sm rounded ${
                                 trialsPage === page
-                                  ? 'bg-orange-500 text-white'
+                                  ? 'bg-orange-500 text-black'
                                   : 'text-gray-600 hover:bg-gray-100'
                               }`}
                             >
@@ -1791,7 +1817,7 @@ export default function PortfolioAnalysis() {
                               <span className="text-gray-400">...</span>
                               <button
                                 onClick={() => setTrialsPage(totalPages)}
-                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}
                               >
                                 {totalPages}
                               </button>
@@ -1827,13 +1853,15 @@ export default function PortfolioAnalysis() {
                         <input
                           type="text"
                           placeholder="Search item"
+                          value={technologySearchQuery}
+                          onChange={(e) => { setTechnologySearchQuery(e.target.value); setCurrentPage(1); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                       <button
                         onClick={handleTechnologyDownloadCSV}
                         disabled={technologyDownloading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
                         {technologyDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1896,7 +1924,7 @@ export default function PortfolioAnalysis() {
                             onClick={() => setCurrentPage(page)}
                             className={`w-8 h-8 text-sm rounded ${
                               currentPage === page
-                                ? 'bg-orange-500 text-white'
+                                ? 'bg-orange-500 text-black'
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}
                           >
@@ -1906,7 +1934,7 @@ export default function PortfolioAnalysis() {
                         {techTotalPages > maxVisible && (
                           <>
                             <span className="text-gray-400">...</span>
-                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
+                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
                           </>
                         )}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage >= techTotalPages} onClick={() => setCurrentPage(p => p + 1)}>

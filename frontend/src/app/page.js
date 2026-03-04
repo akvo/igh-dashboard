@@ -364,7 +364,7 @@ export default function Home() {
               </h3>
               <a
                 href="/portfolio-analysis"
-                className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
+                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Explore Portfolio Analysis
               </a>
@@ -447,7 +447,7 @@ export default function Home() {
               </h3>
               <a
                 href="/cross-pipeline-analytics"
-                className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
+                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Make custom comparison
               </a>
@@ -525,7 +525,7 @@ export default function Home() {
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Reports and Insights
               </h2>
-              <button className="px-5 py-2 text-sm font-medium text-white bg-white/10 border border-white/30 cursor-pointer hover:bg-white/20 transition-colors">
+              <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white cursor-pointer hover:bg-white hover:text-black transition-colors">
                 View all insights
               </button>
             </div>

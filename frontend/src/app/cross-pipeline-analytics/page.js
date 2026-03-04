@@ -126,7 +126,7 @@ export default function CrossPipelineAnalytics() {
                 </p>
               </div>
               <button
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
                   setShareCopied(true);
@@ -282,7 +282,7 @@ export default function CrossPipelineAnalytics() {
                   <strong className="text-white">Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
                 </p>
               </div>
-              <button className="px-6 py-3 bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors">
+              <button className="px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
                 Explore G-finder data →
               </button>
             </div>

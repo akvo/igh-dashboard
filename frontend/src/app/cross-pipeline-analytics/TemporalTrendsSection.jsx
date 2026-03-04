@@ -352,7 +352,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         </button>
         <button
           onClick={handleCompareApply}
-          className="flex items-center gap-2 text-sm font-medium text-white bg-[#E76A42] border border-[#E76A42] px-6 hover:bg-[#d45e38] h-[44px] shrink-0"
+          className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] shrink-0 transition-colors"
         >
           Apply
         </button>
@@ -735,7 +735,7 @@ export default function TemporalTrendsSection({
             </button>
             <button
               onClick={handleApply}
-              className="flex items-center gap-2 text-sm font-medium text-white bg-[#E76A42] px-6 hover:bg-[#d45e38] h-[44px]"
+              className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] transition-colors"
             >
               Apply
             </button>

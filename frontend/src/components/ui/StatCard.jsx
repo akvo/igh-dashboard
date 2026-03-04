@@ -56,7 +56,7 @@ const StatCard = ({
               onButtonClick();
             }
           }}
-          className="block w-full py-3 px-4 text-sm font-medium text-gray-600 bg-transparent border border-gray-200 rounded-lg cursor-pointer text-center no-underline mt-2 hover:bg-gray-50 transition-colors"
+          className="block w-full py-3 px-4 text-sm font-medium text-black bg-white border border-black-24 cursor-pointer text-center no-underline mt-2 hover:bg-gray-50 transition-colors"
         >
           {buttonText}
         </a>
