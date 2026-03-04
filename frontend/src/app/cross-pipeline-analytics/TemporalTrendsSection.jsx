@@ -505,12 +505,12 @@ export default function TemporalTrendsSection({
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
-  const [filterYear, setFilterYear] = useState('');
+  const [filterYear, setFilterYear] = useState([]);
 
   // Applied filters (committed on Apply)
   const [appliedDisease, setAppliedDisease] = useState([]);
   const [appliedProduct, setAppliedProduct] = useState([]);
-  const [appliedYear, setAppliedYear] = useState('');
+  const [appliedYear, setAppliedYear] = useState([]);
 
   const handleApply = () => {
     setAppliedDisease(filterDisease);
@@ -518,21 +518,21 @@ export default function TemporalTrendsSection({
     setAppliedYear(filterYear);
   };
 
-  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 || filterYear !== '';
+  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 || filterYear.length > 0;
 
   const handleClear = () => {
     setFilterDisease([]);
     setFilterProduct([]);
-    setFilterYear('');
+    setFilterYear([]);
     setAppliedDisease([]);
     setAppliedProduct([]);
-    setAppliedYear('');
+    setAppliedYear([]);
   };
 
   // Build API filter params
   const diseaseGroupNames = appliedDisease.length > 0 ? appliedDisease : null;
   const productKeys = appliedProduct.length > 0 ? appliedProduct.map(v => parseInt(v)) : null;
-  const years = appliedYear ? [parseInt(appliedYear)] : null;
+  const years = appliedYear.length > 0 ? appliedYear.map(v => parseInt(v)) : null;
 
   const { chartData, phases, loading, raw } = useTemporalSnapshots(
     years,
@@ -718,6 +718,7 @@ export default function TemporalTrendsSection({
                 onChange={setFilterYear}
                 placeholder="All years"
                 options={yearOptions}
+                multiSelect={true}
               />
             </div>
             <div className="flex-1" />
