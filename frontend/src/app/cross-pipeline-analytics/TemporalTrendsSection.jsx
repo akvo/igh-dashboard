@@ -145,18 +145,19 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
   // --- Sub-section A: Stacked bar chart data ---
   const compareChartData = useMemo(() => {
-    const activeResults = results.filter(Boolean);
-    if (activeResults.length === 0 || !targetYear) return [];
-    return activeResults.map((raw, idx) => {
+    if (activePortfolios.length === 0 || !targetYear) return [];
+    return activePortfolios.map((portfolio, idx) => {
+      const raw = results[idx];
+      if (!raw) return null;
       const yearData = raw.filter(r => r.year === targetYear);
-      const row = { category: PORTFOLIO_LABELS[idx] };
+      const row = { category: portfolio.label };
       apiPhases.forEach(phase => {
         const match = yearData.find(r => phaseNameToKey(r.phase_name) === phase.key);
         row[phase.key] = match ? match.candidateCount : 0;
       });
       return row;
-    });
-  }, [results, targetYear, apiPhases]);
+    }).filter(Boolean);
+  }, [results, activePortfolios, targetYear, apiPhases]);
 
   // --- Sub-section B: Table ---
   const portfolioCellClass = (value, row) =>
@@ -167,11 +168,11 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     const cols = [
       { accessor: 'phase', header: 'Phase', minWidth: '140px' },
     ];
-    activePortfolios.forEach((name, idx) => {
+    activePortfolios.forEach((portfolio, idx) => {
       const accessor = `portfolio_${idx}`;
       cols.push({
         accessor,
-        header: PORTFOLIO_LABELS[idx],
+        header: portfolio.label,
         cellClassName: portfolioCellClass,
         render: (value, row) => {
           const sublabel = row[`${accessor}_label`];
@@ -210,8 +211,9 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       approved: 'Approved products',
     };
 
-    const activeResults = results.filter(Boolean);
-    const aggregated = activeResults.map(raw => {
+    const aggregated = activePortfolios.map((_, idx) => {
+      const raw = results[idx];
+      if (!raw) return { earlyDevelopment: 0, lateDevelopment: 0, approved: 0 };
       const yearData = raw.filter(r => r.year === targetYear);
       const agg = aggregateTemporalPhases(yearData);
       return agg.length > 0 ? agg[0] : { earlyDevelopment: 0, lateDevelopment: 0, approved: 0 };
@@ -249,15 +251,16 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // --- Sub-section C: Across portfolios ---
   const acrossChartData = useMemo(() => {
     if (activePortfolios.length === 0) return [];
-    const activeResults = results.filter(Boolean);
-    return activeResults.flatMap((raw, idx) => {
+    return activePortfolios.flatMap((portfolio, idx) => {
+      const raw = results[idx];
+      if (!raw) return [];
       const aggregated = aggregateTemporalPhases(raw);
       return aggregated.map(yd => ({
         category: String(yd.year),
         earlyDevelopment: yd.earlyDevelopment,
         lateDevelopment: yd.lateDevelopment,
         approved: yd.approved,
-        group: activePortfolios[idx],
+        group: portfolio.label,
       }));
     });
   }, [results, activePortfolios]);
@@ -427,7 +430,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               layout="vertical"
               height={220}
               xAxisLabel="Number of Products"
-              yAxisLabel="Years"
+              yAxisLabel="Portfolio"
               showFilters={false}
             />
           ) : (
