@@ -80,12 +80,12 @@ export default function CrossPipelineAnalytics() {
     }
     // Fallback while loading
     return [
-      { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-      { key: 'pre_clinical', label: 'Pre-clinical', color: '#fe7449' },
-      { key: 'phase_1', label: 'Phase 1', color: '#f9a78d' },
-      { key: 'phase_2', label: 'Phase 2', color: '#ddd6fe' },
-      { key: 'phase_3', label: 'Phase 3', color: '#a78bfa' },
-      { key: 'approved', label: 'Approved', color: '#f0b456' },
+      { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+      { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449' },
+      { key: 'phase_1', label: 'Phase 1', color: '#F9A78D' },
+      { key: 'phase_2', label: 'Phase 2', color: '#B28FC9' },
+      { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE' },
+      { key: 'approved', label: 'Approved', color: '#F0B456' },
     ];
   }, [apiPhases]);
 
@@ -94,6 +94,8 @@ export default function CrossPipelineAnalytics() {
       prev.includes(phaseKey) ? prev.filter((key) => key !== phaseKey) : [...prev, phaseKey]
     );
   };
+
+  const hasCrossFilters = selectedHealthArea.length > 0 || selectedDisease.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
 
   const handleResetFilters = () => {
     setSelectedHealthArea([]);
@@ -111,9 +113,9 @@ export default function CrossPipelineAnalytics() {
       <Sidebar activeId="cross-pipeline-analytics" />
 
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
@@ -124,7 +126,7 @@ export default function CrossPipelineAnalytics() {
                 </p>
               </div>
               <button
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
                   setShareCopied(true);
@@ -138,7 +140,7 @@ export default function CrossPipelineAnalytics() {
           </div>
 
           {/* Cross-pipeline analytics section */}
-          <div className="bg-white border border-gray-200 p-6 mb-6">
+          <div className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
@@ -146,12 +148,13 @@ export default function CrossPipelineAnalytics() {
                 <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
               </div>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               The total volume of the R&D pipeline across the IGH measurement years. Use the filter to zoom into how the pipeline of one disease changed over time and see if the total number of candidates and approved products is increasing year-over-year.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
+            <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
               <div className="min-w-[220px]">
                 <Dropdown
                   label="Global health area"
@@ -160,7 +163,7 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={healthAreaOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={healthAreasLoading}
                 />
               </div>
@@ -172,7 +175,7 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={diseaseOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={diseasesLoading}
                 />
               </div>
@@ -184,14 +187,19 @@ export default function CrossPipelineAnalytics() {
                   placeholder="All"
                   options={productOptions}
                   multiSelect={true}
-                  showAllOption={true}
+
                   loading={productsLoading}
                 />
               </div>
               <div className="flex-1" />
               <button
                 onClick={handleResetFilters}
-                className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+                disabled={!hasCrossFilters}
+                className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                  hasCrossFilters
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                    : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Clear
                 <RefreshIcon className="w-4 h-4" />
@@ -274,7 +282,7 @@ export default function CrossPipelineAnalytics() {
                   <strong className="text-white">Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
                 </p>
               </div>
-              <button className="px-6 py-3 bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors">
+              <button className="px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
                 Explore G-finder data →
               </button>
             </div>

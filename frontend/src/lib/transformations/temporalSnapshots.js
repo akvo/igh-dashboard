@@ -79,6 +79,8 @@ export function transformTemporalSnapshots(data) {
 export const AGGREGATE_PHASE_MAPPING = {
   'Discovery': 'earlyDevelopment',
   'Discovery and preclinical': 'earlyDevelopment',
+  'Discovery & Preclinical': 'earlyDevelopment',
+  'Discovery & preclinical': 'earlyDevelopment',
   'Primary and secondary screening and optimisation': 'earlyDevelopment',
   'Preclinical': 'earlyDevelopment',
   'Development': 'earlyDevelopment',
@@ -109,9 +111,9 @@ export const AGGREGATE_STAGE_LABELS = {
 };
 
 export const AGGREGATE_STAGE_COLORS = {
-  earlyDevelopment: '#E76A42',
-  lateDevelopment: '#F9A78D',
-  approved: '#C0A0E8',
+  earlyDevelopment: '#FE7449',
+  lateDevelopment: '#B28FC9',
+  approved: '#F0B456',
 };
 
 /**
@@ -160,12 +162,19 @@ export function computeGrowthTable(aggregatedData) {
     aggregatedData.forEach((yearData, idx) => {
       const value = yearData[stage];
       const prev = idx > 0 ? aggregatedData[idx - 1][stage] : null;
-      const yoyChange = prev !== null && prev > 0
-        ? (((value - prev) / prev) * 100).toFixed(1)
-        : null;
-      const totalGrowth = baseline[stage] > 0
-        ? (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1)
-        : null;
+      let yoyChange = null;
+      if (prev !== null) {
+        if (prev > 0) {
+          yoyChange = (((value - prev) / prev) * 100).toFixed(1);
+        } else if (prev === 0 && value > 0) {
+          // From 0 to something — show as null (no meaningful %)
+          yoyChange = null;
+        }
+      }
+      let totalGrowth = null;
+      if (baseline[stage] > 0) {
+        totalGrowth = (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1);
+      }
 
       row.values[yearData.year] = {
         count: value,

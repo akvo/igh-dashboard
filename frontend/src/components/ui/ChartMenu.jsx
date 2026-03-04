@@ -80,7 +80,7 @@ const ChartMenu = ({
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center justify-center border-none bg-[#F2F2F4] cursor-pointer w-9 h-9 hover:bg-gray-200 transition-colors ${className}`}
+        className={`inline-flex items-center justify-center border-none bg-[#F2F2F4] cursor-pointer w-9 h-9 min-w-[36px] min-h-[36px] shrink-0 hover:bg-gray-200 transition-colors ${className}`}
       >
         <MoreHorizontalIcon className="w-5 h-5 text-gray-400" />
       </button>

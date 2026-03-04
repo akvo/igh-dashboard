@@ -12,21 +12,24 @@ import {
   AGGREGATE_STAGE_COLORS,
 } from '@/lib/transformations';
 
+// Year colors — deliberately distinct from the stage colors
+// (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
+// the stacked bar chart above, so the two charts read differently.
 const YEAR_COLORS = [
-  '#E76A42',
+  '#AD5133',
+  '#FE7449',
   '#F9A78D',
-  '#C0A0E8',
   '#8c4028',
-  '#fe7449',
-  '#b090e0',
+  '#CC9949',
+  '#e3d6c1',
 ];
 
 const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
 
 const STAGE_SERIES = [
-  { key: 'approved', label: 'Approved', color: '#C0A0E8' },
-  { key: 'lateDevelopment', label: 'Late development', color: '#F9A78D' },
-  { key: 'earlyDevelopment', label: 'Early development', color: '#E76A42' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
+  { key: 'lateDevelopment', label: 'Late development', color: '#B28FC9' },
+  { key: 'earlyDevelopment', label: 'Early development', color: '#FE7449' },
 ];
 
 // Dummy data for compare tab (placeholder until API is wired)
@@ -46,12 +49,12 @@ const DUMMY_COMPARE_CHART_DATA = [
 ];
 
 const DUMMY_COMPARE_PHASES = [
-  { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-  { key: 'preclinical', label: 'Pre-clinical', color: '#b45038' },
-  { key: 'phase_i', label: 'Phase 1', color: '#fe7449' },
-  { key: 'phase_ii', label: 'Phase 2', color: '#f9a78d' },
-  { key: 'phase_iii', label: 'Phase 3', color: '#ddd6fe' },
-  { key: 'approved', label: 'Approved', color: '#f0b456' },
+  { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+  { key: 'preclinical', label: 'Pre-clinical', color: '#FE7449' },
+  { key: 'phase_i', label: 'Phase 1', color: '#F9A78D' },
+  { key: 'phase_ii', label: 'Phase 2', color: '#B28FC9' },
+  { key: 'phase_iii', label: 'Phase 3', color: '#CBAFDE' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
 ];
 
 const DUMMY_COMPARE_TABLE = [
@@ -75,11 +78,16 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
-function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
+function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [] }) {
   const [visibleCount, setVisibleCount] = useState(2);
-  const [portfolios, setPortfolios] = useState(['', '', '', '']);
+  const [portfolios, setPortfolios] = useState([
+    { disease: '', product: '' },
+    { disease: '', product: '' },
+    { disease: '', product: '' },
+    { disease: '', product: '' },
+  ]);
   const [compareYear, setCompareYear] = useState('');
-  const [appliedPortfolios, setAppliedPortfolios] = useState(['', '', '', '']);
+  const [appliedPortfolios, setAppliedPortfolios] = useState([]);
   const [appliedCompareYear, setAppliedCompareYear] = useState('');
 
   // Compare phase checkboxes
@@ -102,23 +110,42 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
     );
   };
 
-  const handlePortfolioChange = (index, value) => {
+  const handleDiseaseChange = (index, value) => {
     setPortfolios(prev => {
       const next = [...prev];
-      next[index] = value;
+      next[index] = { ...next[index], disease: value };
+      return next;
+    });
+  };
+
+  const handleProductChange = (index, value) => {
+    setPortfolios(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], product: value };
       return next;
     });
   };
 
   const handleCompareApply = () => {
-    setAppliedPortfolios([...portfolios]);
+    const applied = portfolios
+      .slice(0, visibleCount)
+      .map((p, idx) => ({ ...p, label: PORTFOLIO_LABELS[idx] }))
+      .filter(p => p.disease || p.product);
+    setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
   };
 
+  const hasCompareFilters = portfolios.some(p => p.disease || p.product) || compareYear !== '';
+
   const handleCompareClear = () => {
-    setPortfolios(['', '', '', '']);
+    setPortfolios([
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+    ]);
     setCompareYear('');
-    setAppliedPortfolios(['', '', '', '']);
+    setAppliedPortfolios([]);
     setAppliedCompareYear('');
     setVisibleCount(2);
   };
@@ -127,13 +154,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
     setVisibleCount(prev => Math.min(prev + 1, 4));
   };
 
-  const handleRemovePortfolio = (idx) => {
-    setPortfolios(prev => {
-      const next = [...prev];
-      next[idx] = '';
-      return next;
-    });
-    setVisibleCount(prev => Math.max(prev - 1, 2));
+  const handleRemoveTag = (idx) => {
+    setAppliedPortfolios(prev => prev.filter((_, i) => i !== idx));
   };
 
   // Table columns for compare view — always show 3 portfolios with static data as default
@@ -142,7 +164,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
 
   const DEFAULT_PORTFOLIO_COUNT = 3;
   const displayPortfolioCount = Math.max(
-    appliedPortfolios.filter(Boolean).length,
+    appliedPortfolios.length,
     DEFAULT_PORTFOLIO_COUNT
   );
 
@@ -200,14 +222,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
   }, [displayPortfolioCount]);
 
   // Build stacked bar chart data for compare view
-  const selectedPortfolios = appliedPortfolios.filter(Boolean);
   const compareChartData = useMemo(() => {
-    if (selectedPortfolios.length === 0) return DUMMY_COMPARE_CHART_DATA;
-    return selectedPortfolios.map((name, idx) => {
+    if (appliedPortfolios.length === 0) return DUMMY_COMPARE_CHART_DATA;
+    return appliedPortfolios.map((p, idx) => {
       const src = DUMMY_COMPARE_CHART_DATA[idx] || DUMMY_COMPARE_CHART_DATA[0];
-      return { ...src, category: PORTFOLIO_LABELS[idx] || name };
+      return { ...src, category: p.label || PORTFOLIO_LABELS[idx] };
     });
-  }, [selectedPortfolios]);
+  }, [appliedPortfolios]);
 
   // Build across-portfolios grouped bar data
   const acrossChartData = useMemo(() => {
@@ -236,82 +257,109 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
 
   return (
     <div>
-      {/* Portfolio dropdowns */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
-          <div
-            key={label}
-            className="relative p-0"
-            style={{ border: '1px solid #26262617' }}
-          >
-            <Dropdown
-              value={portfolios[idx]}
-              onChange={(val) => handlePortfolioChange(idx, val)}
-              placeholder={label}
-              options={diseaseOptions}
-            />
-            {idx >= 2 && (
-              <button
-                type="button"
-                onClick={() => handleRemovePortfolio(idx)}
-                className="absolute top-1/2 -translate-y-1/2 right-10 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 bg-transparent border-none cursor-pointer"
-                title="Remove portfolio"
-              >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            )}
-          </div>
-        ))}
+      <p className="text-sm text-gray-500 mb-4">
+        Compare up to four portfolios&mdash;each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&amp;D stages to identify contrasts in growth and progression.
+      </p>
+
+      {/* Portfolio selectors — each has Disease + Product */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className="flex-1 grid grid-cols-2 gap-4">
+          {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
+            <div
+              key={label}
+              className="bg-[#F7F7F7] rounded px-5 pt-4 pb-2"
+            >
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Dropdown
+                    label="Disease"
+                    value={portfolios[idx].disease}
+                    onChange={(val) => handleDiseaseChange(idx, val)}
+                    placeholder="All"
+                    options={diseaseOptions}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Dropdown
+                    label="Product"
+                    value={portfolios[idx].product}
+                    onChange={(val) => handleProductChange(idx, val)}
+                    placeholder="All"
+                    options={productOptions}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 text-right mt-2 mb-0">{label.toLowerCase()}</p>
+            </div>
+          ))}
+        </div>
         {visibleCount < 4 && (
           <button
             type="button"
             onClick={handleAddPortfolio}
-            className="flex items-center justify-center gap-2 text-sm text-[#E76A42] bg-transparent cursor-pointer h-[44px]"
-            style={{ border: '1px dashed #E76A42' }}
+            className="flex items-center justify-center w-11 h-11 rounded-full text-gray-400 bg-gray-100 hover:bg-gray-200 cursor-pointer shrink-0 transition-colors"
+            style={{ border: '1px solid #d1d5db' }}
+            title="Add portfolio"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
             </svg>
-            Add portfolio
           </button>
         )}
       </div>
 
-      {/* Year + Clear + Apply */}
-      <div className="flex items-end gap-4 pb-6 mb-4">
-        <div className="min-w-[220px]">
+      {/* Tags + Year + Clear + Apply — single row */}
+      <div className="flex items-end gap-4 pb-6 mb-2 border-b border-gray-200">
+        <div className="flex items-center gap-2 flex-wrap flex-1 min-h-[44px]">
+          {appliedPortfolios.map((p, idx) => (
+            <span
+              key={idx}
+              className="inline-flex items-center gap-2 pl-4 pr-3 py-1.5 bg-[#E76A42] text-white text-sm font-medium rounded-full"
+            >
+              {p.label}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(idx)}
+                className="bg-white/20 hover:bg-white/40 border-none text-white cursor-pointer p-0 leading-none rounded-full w-5 h-5 flex items-center justify-center transition-colors"
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                  <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="min-w-[200px]">
           <Dropdown
             label="Year"
             value={compareYear}
             onChange={setCompareYear}
-            placeholder="Latest"
+            placeholder="Most recent"
             options={yearOptions}
           />
         </div>
-        <div className="flex-1" />
         <button
           onClick={handleCompareClear}
-          className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+          disabled={!hasCompareFilters}
+          className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap shrink-0 border ${
+            hasCompareFilters
+              ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+              : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+          }`}
         >
           Clear
           <RefreshIcon className="w-4 h-4" />
         </button>
         <button
           onClick={handleCompareApply}
-          className="flex items-center gap-2 text-sm font-medium text-white bg-[#E76A42] px-6 hover:bg-[#d45e38] h-[44px]"
+          className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] shrink-0 transition-colors"
         >
           Apply
         </button>
       </div>
 
-      <p className="text-sm text-gray-500 mb-6">
-        Compare up to four portfolios &mdash; each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&amp;D stages to identify contrasts in growth and progression.
-      </p>
-
       {/* Sub-section A: Portfolio comparison by R&D stage */}
-      <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
             Portfolio comparison by R&amp;D stage in selected year
@@ -321,6 +369,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
         <p className="text-sm text-gray-400 mb-4">
           Compare up to four portfolios &mdash; each defined by a specific combination of disease and product &mdash; in a single year. View how each portfolio is distributed across R&amp;D stages, choose the year of interest, and use the legend to filter stages in or out to focus the comparison on pipeline components most relevant to the analysis.
         </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Phase checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -362,13 +411,14 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
       </div>
 
       {/* Sub-section B: Table view */}
-      <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
-        <h4 className="text-lg font-bold text-black mb-2">
-          Temporal trends in aggregated R&amp;D stages &ndash; table view
-        </h4>
-        <p className="text-sm text-gray-400 mb-6">
-          Explore the underlying data for aggregated R&amp;D stages, including year-on-year changes and total growth in portfolio composition over time.
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
+        <p className="text-sm text-gray-500 mb-2">
+          Explore the underlying data for the selected portfolios by aggregated R&amp;D stage in the chosen year, enabling detailed comparison of portfolio compositions.
         </p>
+        <p className="text-sm text-gray-400 italic mb-4">
+          How many candidates are present in each research stage for each portfolio?
+        </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         <Table
           columns={compareTableColumns}
@@ -382,7 +432,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
       </div>
 
       {/* Sub-section C: Aggregated R&D stages across portfolios */}
-      <div className="mb-4 p-6" style={{ border: '1px solid #26262617' }}>
+      <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
             Temporal trends in aggregated R&amp;D stages across portfolios
@@ -392,6 +442,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], yearOptions = [] }) {
         <p className="text-sm text-gray-400 mb-4">
           Explore the temporal trends for each selected portfolio with R&amp;D stages aggregated into early development, late development, and approved products across IGH review years.
         </p>
+        <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Stage checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -454,12 +505,12 @@ export default function TemporalTrendsSection({
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
-  const [filterYear, setFilterYear] = useState('');
+  const [filterYear, setFilterYear] = useState([]);
 
   // Applied filters (committed on Apply)
   const [appliedDisease, setAppliedDisease] = useState([]);
   const [appliedProduct, setAppliedProduct] = useState([]);
-  const [appliedYear, setAppliedYear] = useState('');
+  const [appliedYear, setAppliedYear] = useState([]);
 
   const handleApply = () => {
     setAppliedDisease(filterDisease);
@@ -467,19 +518,21 @@ export default function TemporalTrendsSection({
     setAppliedYear(filterYear);
   };
 
+  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 || filterYear.length > 0;
+
   const handleClear = () => {
     setFilterDisease([]);
     setFilterProduct([]);
-    setFilterYear('');
+    setFilterYear([]);
     setAppliedDisease([]);
     setAppliedProduct([]);
-    setAppliedYear('');
+    setAppliedYear([]);
   };
 
   // Build API filter params
   const diseaseGroupNames = appliedDisease.length > 0 ? appliedDisease : null;
   const productKeys = appliedProduct.length > 0 ? appliedProduct.map(v => parseInt(v)) : null;
-  const years = appliedYear ? [parseInt(appliedYear)] : null;
+  const years = appliedYear.length > 0 ? appliedYear.map(v => parseInt(v)) : null;
 
   const { chartData, phases, loading, raw } = useTemporalSnapshots(
     years,
@@ -543,12 +596,21 @@ export default function TemporalTrendsSection({
         render: (value, row) => {
           const cell = row._values?.[year];
           if (!cell) return '-';
+          const change = cell.yoyChange !== null ? parseFloat(cell.yoyChange) : null;
+          const isNegative = change !== null && change < 0;
+          const isPositive = change !== null && change > 0;
           return (
             <div className="flex items-center gap-3">
               <span>{cell.count}</span>
-              {cell.yoyChange !== null && (
-                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-[#E8F5E9] text-[#2E7D32]">
-                  {Math.abs(parseFloat(cell.yoyChange)).toFixed(0)}%
+              {change !== null && (
+                <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+                  isNegative
+                    ? 'bg-[#FFEBEE] text-[#C62828]'
+                    : isPositive
+                      ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                      : 'bg-gray-100 text-gray-600'
+                }`}>
+                  {isNegative ? '↓' : isPositive ? '↑' : ''} {Math.abs(change).toFixed(0)}%
                 </span>
               )}
             </div>
@@ -561,9 +623,18 @@ export default function TemporalTrendsSection({
       header: 'Total Growth (%)',
       render: (value) => {
         if (value === null || value === undefined) return '-';
+        const num = parseFloat(value);
+        const isNegative = num < 0;
+        const isPositive = num > 0;
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-[#E8F5E9] text-[#2E7D32]">
-            {Math.abs(parseFloat(value)).toFixed(1)}%
+          <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+            isNegative
+              ? 'bg-[#FFEBEE] text-[#C62828]'
+              : isPositive
+                ? 'bg-[#E8F5E9] text-[#2E7D32]'
+                : 'bg-gray-100 text-gray-600'
+          }`}>
+            {isNegative ? '↓' : isPositive ? '↑' : ''} {Math.abs(num).toFixed(1)}%
           </span>
         );
       },
@@ -592,7 +663,7 @@ export default function TemporalTrendsSection({
   );
 
   return (
-    <div className="bg-white border border-gray-200 p-6 mb-6">
+    <div className="bg-white border border-gray-200 p-4 mb-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-bold text-black">
@@ -600,23 +671,24 @@ export default function TemporalTrendsSection({
         </h3>
         <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
       </div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-4">
         Track how candidates progress through the R&amp;D cycle over time and compare
         the maturity of different disease portfolios with each other.
       </p>
+      <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
       {/* Tabs */}
       <TabNav
         tabs={tabs}
         activeTab={activeTab}
         onChange={setActiveTab}
-        className="mb-6"
+        className="mb-4"
       />
 
       {activeTab === 'single' ? (
         <div>
           {/* Filters */}
-          <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
+          <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
             <div className="min-w-[200px]">
               <Dropdown
                 label="Disease"
@@ -625,7 +697,7 @@ export default function TemporalTrendsSection({
                 placeholder="All"
                 options={diseaseOptions}
                 multiSelect={true}
-                showAllOption={true}
+
               />
             </div>
             <div className="min-w-[200px]">
@@ -636,7 +708,7 @@ export default function TemporalTrendsSection({
                 placeholder="All"
                 options={productOptions}
                 multiSelect={true}
-                showAllOption={true}
+
               />
             </div>
             <div className="min-w-[160px]">
@@ -646,19 +718,25 @@ export default function TemporalTrendsSection({
                 onChange={setFilterYear}
                 placeholder="All years"
                 options={yearOptions}
+                multiSelect={true}
               />
             </div>
             <div className="flex-1" />
             <button
               onClick={handleClear}
-              className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
+              disabled={!hasSingleFilters}
+              className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                hasSingleFilters
+                  ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                  : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+              }`}
             >
               Clear
               <RefreshIcon className="w-4 h-4" />
             </button>
             <button
               onClick={handleApply}
-              className="flex items-center gap-2 text-sm font-medium text-white bg-[#E76A42] px-6 hover:bg-[#d45e38] h-[44px]"
+              className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] transition-colors"
             >
               Apply
             </button>
@@ -671,7 +749,7 @@ export default function TemporalTrendsSection({
           </p>
 
           {/* Sub-section A: Temporal trends in portfolio composition */}
-          <div className="mt-6 mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mt-4 mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
                 Temporal trends in portfolio composition across R&amp;D stages
@@ -681,6 +759,7 @@ export default function TemporalTrendsSection({
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio, showing how distributions across R&amp;D stages change over time. Filter by disease and product, and use the R&amp;D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Phase checkboxes */}
             <div className="flex items-center gap-6 py-4 flex-wrap">
@@ -729,7 +808,7 @@ export default function TemporalTrendsSection({
           </div>
 
           {/* Sub-section B: Aggregated R&D stages grouped bar */}
-          <div className="mb-6 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
                 Temporal trends in aggregated R&amp;D stages
@@ -739,6 +818,7 @@ export default function TemporalTrendsSection({
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio with R&amp;D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&amp;D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             <div className="mt-4">
               {loading ? (
@@ -750,23 +830,25 @@ export default function TemporalTrendsSection({
                   data={groupedChartData}
                   series={yearSeries}
                   categoryKey="category"
-                  height={350}
+                  height={380}
                   xAxisLabel="R&D Stage"
                   yAxisLabel="Number of Candidates"
                   showFilters={true}
+                  showBarLabels={true}
                 />
               )}
             </div>
           </div>
 
           {/* Sub-section C: Growth table */}
-          <div className="mb-4 p-6" style={{ border: '1px solid #26262617' }}>
+          <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <h4 className="text-lg font-bold text-black mb-2">
               Temporal trends in aggregated R&amp;D stages &ndash; table view
             </h4>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-gray-400 mb-4">
               Explore the underlying data for aggregated R&amp;D stages, including year-on-year changes and total growth in portfolio composition over time.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {loading ? (
               <div className="h-[120px] flex items-center justify-center">
@@ -789,6 +871,7 @@ export default function TemporalTrendsSection({
         /* Tab 2: Compare different portfolios */
         <ComparePortfoliosTab
           diseaseOptions={diseaseOptions}
+          productOptions={productOptions}
           yearOptions={yearOptions}
         />
       )}
