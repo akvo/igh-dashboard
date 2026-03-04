@@ -1197,7 +1197,7 @@ export default function PortfolioAnalysis() {
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Tabs */}
-            <div className="flex gap-6 border-b border-gray-200 mb-4">
+            <div className="flex gap-6 border-b border-gray-200">
               {['candidates', 'approved', 'trials', 'technology'].map((tab) => (
                 <button
                   key={tab}
@@ -1218,9 +1218,9 @@ export default function PortfolioAnalysis() {
 
             {/* Candidates Tab Content */}
             {portfolioTab === 'candidates' && (
-              <>
+              <div className="border border-gray-200 border-t-0">
                 {/* Title row */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between p-4 pb-0 mb-4">
                   <div className="flex items-center gap-3">
                     <h4 className="text-xl font-bold text-black leading-none">Selected candidates</h4>
                     <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount} candidates</span>
@@ -1247,7 +1247,7 @@ export default function PortfolioAnalysis() {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 mb-4 px-4">
                   This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
 
@@ -1295,7 +1295,7 @@ export default function PortfolioAnalysis() {
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
                 />
-              </>
+              </div>
             )}
 
             {/* Approved Product Tab Content */}
