@@ -290,6 +290,14 @@ export const typeDefs = `#graphql
     japanese_mhlw_approval_status: String
     us_fda_approval_status: String
     approving_authorities_agg: String
+    technology_principle: String
+    target_population: String
+    route_of_administration: String
+    platform: String
+    chim_study: String
+    key_clinical_trial: String
+    rd_stage_2023: String
+    rd_stage_2019: String
   }
 
   type PortfolioCandidateConnection {
@@ -319,6 +327,13 @@ export const typeDefs = `#graphql
     age_groups: String
     enrollment_count: Int
     study_type: String
+    funder_type: String
+    interventions: String
+    outcome_measure: String
+    sex: String
+    study_design: String
+    ct_results_type: String
+    ct_terminated_reason: String
   }
 
   type ClinicalTrialConnection {
@@ -346,6 +361,14 @@ export const typeDefs = `#graphql
     intended_use: String
     disease_name: String
     global_health_area: String
+    type_of_guidance: String
+    author: String
+    publication_date: String
+    target_population: String
+    efficacy: String
+    safety: String
+    source: String
+    product_name: String
     candidate_name: String
     current_rd_stage: String
   }

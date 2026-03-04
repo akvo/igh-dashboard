@@ -282,6 +282,13 @@ export interface ClinicalTrialNode {
   age_groups: string | null;
   enrollment_count: number | null;
   study_type: string | null;
+  funder_type: string | null;
+  interventions: string | null;
+  outcome_measure: string | null;
+  sex: string | null;
+  study_design: string | null;
+  ct_results_type: string | null;
+  ct_terminated_reason: string | null;
 }
 
 export interface ClinicalTrialFilter {
@@ -334,6 +341,14 @@ export interface PortfolioCandidateNode {
   japanese_mhlw_approval_status: string | null;
   us_fda_approval_status: string | null;
   approving_authorities_agg: string | null;
+  technology_principle: string | null;
+  target_population: string | null;
+  route_of_administration: string | null;
+  platform: string | null;
+  chim_study: string | null;
+  key_clinical_trial: string | null;
+  rd_stage_2023: string | null;
+  rd_stage_2019: string | null;
 }
 
 export interface PortfolioCandidateFilter {
@@ -390,6 +405,14 @@ export interface RdPriorityNode {
   intended_use: string | null;
   disease_name: string | null;
   global_health_area: string | null;
+  type_of_guidance: string | null;
+  author: string | null;
+  publication_date: string | null;
+  target_population: string | null;
+  efficacy: string | null;
+  safety: string | null;
+  source: string | null;
+  product_name: string | null;
   // Present when joined with candidates (Tab 2), null for priorities-only (Tab 4)
   candidate_name: string | null;
   current_rd_stage: string | null;
