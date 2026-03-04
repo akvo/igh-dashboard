@@ -11,56 +11,17 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-
-// Word-wrap text into lines that fit within maxChars, truncating with "…"
-// on the last line if the full text exceeds the limit.
-function wrapLabel(text, maxChars) {
-  if (text.length <= maxChars) {
-    return text.split(/\s+/).reduce((lines, word) => {
-      const last = lines[lines.length - 1];
-      if (last && (last + ' ' + word).length <= maxChars) {
-        lines[lines.length - 1] = last + ' ' + word;
-      } else {
-        lines.push(word);
-      }
-      return lines;
-    }, []);
-  }
-
-  const words = text.split(/\s+/);
-  const lines = [];
-  let remaining = maxChars;
-
-  for (const word of words) {
-    const last = lines[lines.length - 1];
-    if (last && (last + ' ' + word).length <= Math.min(remaining, maxChars)) {
-      lines[lines.length - 1] = last + ' ' + word;
-      remaining -= word.length + 1;
-    } else if (remaining > 0) {
-      lines.push(word.length > remaining ? word.slice(0, remaining) + '…' : word);
-      remaining -= Math.min(word.length, remaining);
-    } else {
-      // Truncate the last line we added and stop.
-      const lastLine = lines[lines.length - 1];
-      if (lastLine && !lastLine.endsWith('…')) {
-        lines[lines.length - 1] = lastLine + '…';
-      }
-      break;
-    }
-  }
-
-  return lines;
-}
+import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultColors = [
-  '#fe7449', // Orange
-  '#8c4028', // Dark brown
-  '#f9a78d', // Peach
-  '#f0b456', // Gold
-  '#cbafde', // Light purple
-  '#a78bfa', // Purple
-  '#54a5c4', // Teal
-  '#8dd6a9', // Green
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#B08888', // Mauve
+  '#E3D6C1', // Beige
+  '#F9A78D', // Peach
+  '#CC9949', // Dark Gold
+  '#6AB085', // Green
+  '#54A5C4', // Blue
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -86,19 +47,28 @@ export default function BarChart({
   yAxisLabel = '',
   nameKey = 'name',
   valueKey = 'value',
-  barRadius = 4,
+  barRadius = 0,
   barSize,
-  maxTickLength = 25,
+  maxTickChars = 25,
+  // Controlled mode: parent manages item visibility via URL state.
+  // When omitted, the component manages its own internal state.
+  visibleItems: controlledVisibleItems,
+  onVisibleItemsChange,
 }) {
-  const [visibleItems, setVisibleItems] = useState(
+  const [internalVisibleItems, setInternalVisibleItems] = useState(
     data.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {})
   );
 
+  const isControlled = controlledVisibleItems !== undefined;
+  const visibleItems = isControlled ? controlledVisibleItems : internalVisibleItems;
+
   const toggleItem = (name) => {
-    setVisibleItems((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+    const next = { ...visibleItems, [name]: !visibleItems[name] };
+    if (isControlled && onVisibleItemsChange) {
+      onVisibleItemsChange(next);
+    } else {
+      setInternalVisibleItems(next);
+    }
   };
 
   const chartData = useMemo(() => {
@@ -200,8 +170,8 @@ export default function BarChart({
               layout={layout}
               margin={{
                 top: 10,
-                right: 20,
-                left: isHorizontalBars ? 80 : 20,
+                right: 10,
+                left: isHorizontalBars ? 80 : 5,
                 bottom: xAxisLabel ? 40 : 20,
               }}
               barCategoryGap="20%"
@@ -230,7 +200,7 @@ export default function BarChart({
                     tickLine={false}
                     tick={({ x, y, payload }) => {
                       const label = payload.value;
-                      const lines = wrapLabel(label, maxTickLength);
+                      const lines = wrapLabel(label, maxTickChars);
                       const lineHeight = 16;
                       const startY = y - ((lines.length - 1) * lineHeight) / 2;
                       return (

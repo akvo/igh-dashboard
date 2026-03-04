@@ -1,44 +1,64 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ScrollableTable } from '@/components/ui';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
+import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 
+// Clamped cell text with native tooltip for full text on hover
+function CellText({ children }) {
+  const text = typeof children === 'string' ? children : (children ?? '');
+  return <div className="cell-clamp" title={text}>{children}</div>;
+}
+
 export default function PortfolioAnalysis() {
-  const [activeTab, setActiveTab] = useState('explore');
-  const [healthArea, setHealthArea] = useState([]);
-  const [disease, setDisease] = useState([]);
-  const [product, setProduct] = useState([]);
-  const [productTypeFilter, setProductTypeFilter] = useState([]);
-  const [geoTrialStatus, setGeoTrialStatus] = useState([]);
-  const [portfolioTab, setPortfolioTab] = useState('candidates');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [trialsPage, setTrialsPage] = useState(1);
-  const [candidatesPage, setCandidatesPage] = useState(1);
-  const [approvedPage, setApprovedPage] = useState(1);
-  const [extractPage, setExtractPage] = useState(1);
-  const [extractTab, setExtractTab] = useState('candidates-approved');
-  const [selectedColumns, setSelectedColumns] = useState([]);
+  const [activeTab, setActiveTab] = useUrlState('tab', 'explore', { ...stringSerializer, historyMode: 'push' });
+  const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
+  const [disease, setDisease] = useUrlState('disease', [], arraySerializer);
+  const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [productTypeFilter, setProductTypeFilter] = useUrlState('productType', [], arraySerializer);
+  const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
+  const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
+  const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
+  const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
+  const [trialsSearchQuery, setTrialsSearchQuery] = useState('');
+  const [technologySearchQuery, setTechnologySearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
+  const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
+  const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
+  const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
+  const [extractPage, setExtractPage] = useUrlState('extPage', 1, numberSerializer);
+  const [extractTab, setExtractTab] = useUrlState('extTab', 'candidates-approved', { ...stringSerializer, historyMode: 'push' });
+  const [selectedColumns, setSelectedColumns] = useUrlState('cols', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [extractSearchQuery, setExtractSearchQuery] = useState('');
-  const [extractHealthArea, setExtractHealthArea] = useState([]);
-  const [extractDisease, setExtractDisease] = useState([]);
-  const [extractProduct, setExtractProduct] = useState([]);
-  const [extractRdStage, setExtractRdStage] = useState([]);
+  const [appliedColumns, setAppliedColumns] = useState([]);
+  const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
+  const [extractColumnFilters, setExtractColumnFilters] = useState({});
+  const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
+  const [extractHealthArea, setExtractHealthArea] = useUrlState('extGha', [], arraySerializer);
+  const [extractDisease, setExtractDisease] = useUrlState('extDisease', [], arraySerializer);
+  const [extractProduct, setExtractProduct] = useUrlState('extProduct', [], arraySerializer);
+  const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
   const [technologyDownloading, setTechnologyDownloading] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  // Hidden phase/item keys for charts with filters (empty = all visible).
+  const [pipelineHiddenPhases, setPipelineHiddenPhases] = useUrlState('phide', [], arraySerializer);
+  const [authHiddenPhases, setAuthHiddenPhases] = useUrlState('ahide', [], arraySerializer);
+  const [approvalHiddenItems, setApprovalHiddenItems] = useUrlState('apphide', [], arraySerializer);
+  const [trialStatusHiddenItems, setTrialStatusHiddenItems] = useUrlState('tshide', [], arraySerializer);
 
   const apolloClient = useApolloClient();
 
@@ -64,7 +84,7 @@ export default function PortfolioAnalysis() {
     { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Product' }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
+    { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined }, itemsPerPage, (approvedPage - 1) * itemsPerPage,
   );
   const extractFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
@@ -84,6 +104,37 @@ export default function PortfolioAnalysis() {
   );
   const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus);
   const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
+
+  // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
+  const pipelineVisiblePhases = useMemo(() =>
+    pipelinePhases.reduce((acc, p) => ({ ...acc, [p.key]: !pipelineHiddenPhases.includes(p.key) }), {}),
+    [pipelinePhases, pipelineHiddenPhases]
+  );
+  const authVisiblePhases = useMemo(() =>
+    approvingAuthoritiesPhases.reduce((acc, p) => ({ ...acc, [p.key]: !authHiddenPhases.includes(p.key) }), {}),
+    [approvingAuthoritiesPhases, authHiddenPhases]
+  );
+  const handlePipelineVisiblePhasesChange = useCallback((next) => {
+    setPipelineHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setPipelineHiddenPhases]);
+  const handleAuthVisiblePhasesChange = useCallback((next) => {
+    setAuthHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setAuthHiddenPhases]);
+  // BarChart visibility maps (keyed by item name).
+  const approvalVisibleItems = useMemo(() =>
+    (approvalStatusData || []).reduce((acc, d) => ({ ...acc, [d.name]: !approvalHiddenItems.includes(d.name) }), {}),
+    [approvalStatusData, approvalHiddenItems]
+  );
+  const trialStatusVisibleItems = useMemo(() =>
+    (trialStatusData || []).reduce((acc, d) => ({ ...acc, [d.name]: !trialStatusHiddenItems.includes(d.name) }), {}),
+    [trialStatusData, trialStatusHiddenItems]
+  );
+  const handleApprovalVisibleItemsChange = useCallback((next) => {
+    setApprovalHiddenItems(Object.keys(next).filter(k => !next[k]));
+  }, [setApprovalHiddenItems]);
+  const handleTrialStatusVisibleItemsChange = useCallback((next) => {
+    setTrialStatusHiddenItems(Object.keys(next).filter(k => !next[k]));
+  }, [setTrialStatusHiddenItems]);
 
   // Health area options from API
   const healthAreaOptions = useMemo(() =>
@@ -146,23 +197,23 @@ export default function PortfolioAnalysis() {
   const approvedProducts = kpis?.find(k => k.id === 'approved')?.value || 0;
 
 
-  // Donut chart colors (enough for typical product count)
+  // Donut chart colors — brand chart palette (from design system)
   const productTypeColors = [
-    '#fe7449', '#a78bfa', '#f9a78d', '#ddd6fe',
-    '#f0b456', '#54a5c4', '#8c4028', '#e3d6c1',
+    '#F0B456', '#CBAFDE', '#B08888', '#E3D6C1',
+    '#F9A78D', '#CC9949', '#6AB085', '#54A5C4',
+    '#B28FC9', '#FFDCD1',
   ];
 
   // Dummy data for candidates table
 
+  // Dark-text phase colors (lighter backgrounds)
+  const LIGHT_BG_PHASES = new Set(['#F9A78D', '#CBAFDE', '#F0B456', '#E3D6C1', '#BFAB8A', '#bbbbbb']);
+
   const getRdStageStyle = (stage) => {
-    switch (stage) {
-      case 'Phase 2': return 'bg-orange-100 text-orange-700';
-      case 'Phase 1': return 'bg-orange-100 text-orange-600';
-      case 'Discovery': return 'bg-red-100 text-red-700';
-      case 'Pre clinical': return 'bg-purple-100 text-purple-700';
-      case 'Approved': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-600';
-    }
+    const color = PHASE_COLORS[stage];
+    if (!color) return { backgroundColor: '#f3f4f6', color: '#4b5563' };
+    const textColor = LIGHT_BG_PHASES.has(color) ? '#262626' : '#ffffff';
+    return { backgroundColor: color, color: textColor };
   };
 
 
@@ -192,19 +243,73 @@ export default function PortfolioAnalysis() {
     { id: 'recentUpdates', label: 'Recent updates', accessor: 'recent_updates' },
   ];
 
-  // Columns currently active based on user selection
-  const activeExtractColumns = availableColumns.filter((col) => selectedColumns.includes(col.id));
+  // Columns currently active in the table — only updates when "Apply" is clicked
+  const activeExtractColumns = appliedColumns.map((id) => availableColumns.find((col) => col.id === id)).filter(Boolean);
 
-  const filteredColumns = availableColumns.filter((col) =>
-    col.label.toLowerCase().includes(columnSearchQuery.toLowerCase())
-  );
+  // Build the column list respecting drag order: selected columns in their reordered
+  // sequence first, then unselected columns in original order, filtered by search.
+  const filteredColumns = useMemo(() => {
+    const search = columnSearchQuery.toLowerCase();
+    const selected = selectedColumns
+      .map((id) => availableColumns.find((col) => col.id === id))
+      .filter(Boolean);
+    const unselected = availableColumns.filter((col) => !selectedColumns.includes(col.id));
+    return [...selected, ...unselected].filter((col) =>
+      col.label.toLowerCase().includes(search)
+    );
+  }, [availableColumns, selectedColumns, columnSearchQuery]);
+
+  // Drag-and-drop reordering state
+  const draggedColumnRef = useRef(null);
+  const [dragOverColumn, setDragOverColumn] = useState(null);
+
+  const handleDragStart = (colId) => {
+    draggedColumnRef.current = colId;
+  };
+
+  const handleDragOver = (e, colId) => {
+    e.preventDefault();
+    if (!draggedColumnRef.current || draggedColumnRef.current === colId) return;
+    if (!selectedColumns.includes(draggedColumnRef.current) || !selectedColumns.includes(colId)) return;
+    setDragOverColumn(colId);
+    setSelectedColumns((prev) => {
+      const draggedId = draggedColumnRef.current;
+      const fromIndex = prev.indexOf(draggedId);
+      const toIndex = prev.indexOf(colId);
+      if (fromIndex === -1 || toIndex === -1) return prev;
+      const next = [...prev];
+      next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, draggedId);
+      return next;
+    });
+  };
+
+  const handleDragEnd = () => {
+    draggedColumnRef.current = null;
+    setDragOverColumn(null);
+  };
 
   const handleSelectAllColumns = () => {
-    setSelectedColumns(availableColumns.map((col) => col.id));
+    // Preserve existing order for already-selected columns; append unselected ones at the end
+    setSelectedColumns((prev) => {
+      const allIds = availableColumns.map((col) => col.id);
+      const remaining = allIds.filter((id) => !prev.includes(id));
+      return [...prev, ...remaining];
+    });
   };
 
   const handleClearColumns = () => {
     setSelectedColumns([]);
+    setAppliedColumns([]);
+    setExtractSort({ colId: null, direction: null });
+    setExtractColumnFilters({});
+  };
+
+  const handleApplyColumns = () => {
+    setAppliedColumns([...selectedColumns]);
+    setExtractSort({ colId: null, direction: null });
+    setExtractColumnFilters({});
+    setExtractPage(1);
   };
 
   const handleToggleColumn = (colId) => {
@@ -212,6 +317,60 @@ export default function PortfolioAnalysis() {
       prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId]
     );
   };
+
+  // Sort toggle: null → asc → desc → null
+  const handleExtractSort = (colId) => {
+    setExtractSort((prev) => {
+      if (prev.colId !== colId) return { colId, direction: 'asc' };
+      if (prev.direction === 'asc') return { colId, direction: 'desc' };
+      return { colId: null, direction: null };
+    });
+  };
+
+  const handleExtractColumnFilter = (colId, value) => {
+    setExtractColumnFilters((prev) => ({ ...prev, [colId]: value }));
+  };
+
+  // Client-side sort & filter on the current page data
+  const processedExtractData = useMemo(() => {
+    let data = [...(extractTableData || [])];
+
+    // Apply column filters
+    const filterEntries = Object.entries(extractColumnFilters).filter(([, v]) => v.trim());
+    if (filterEntries.length > 0) {
+      data = data.filter((row) =>
+        filterEntries.every(([colId, filterVal]) => {
+          const col = availableColumns.find((c) => c.id === colId);
+          if (!col) return true;
+          const cellVal = colId === 'name'
+            ? (row.candidate_name || row.alternative_names || '')
+            : (row[col.accessor] || '');
+          return String(cellVal).toLowerCase().includes(filterVal.toLowerCase());
+        })
+      );
+    }
+
+    // Apply sort
+    if (extractSort.colId && extractSort.direction) {
+      const col = extractSort.colId === 'name'
+        ? null
+        : availableColumns.find((c) => c.id === extractSort.colId);
+      data.sort((a, b) => {
+        const aVal = extractSort.colId === 'name'
+          ? (a.candidate_name || a.alternative_names || '')
+          : (a[col?.accessor] || '');
+        const bVal = extractSort.colId === 'name'
+          ? (b.candidate_name || b.alternative_names || '')
+          : (b[col?.accessor] || '');
+        const cmp = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: 'base' });
+        return extractSort.direction === 'asc' ? cmp : -cmp;
+      });
+    }
+
+    return data;
+  }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
+
+  const hasExtractFilters = extractHealthArea.length > 0 || extractDisease.length > 0 || extractProduct.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
 
   const handleResetExtractFilters = () => {
     setExtractHealthArea([]);
@@ -382,7 +541,7 @@ export default function PortfolioAnalysis() {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, selectedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -393,22 +552,41 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
+  // Client-side filtering for clinical trials (backend doesn't support search)
+  const filteredTrialsData = useMemo(() => {
+    if (!trialsSearchQuery.trim()) return clinicalTrialsTableData;
+    const q = trialsSearchQuery.toLowerCase();
+    return clinicalTrialsTableData.filter((item) =>
+      [item.trial_name, item.clinicaltrialid, item.candidate_name, item.trial_title, item.description, item.status, item.sponsor, item.locations]
+        .some((val) => val && String(val).toLowerCase().includes(q))
+    );
+  }, [clinicalTrialsTableData, trialsSearchQuery]);
+
+  // Client-side filtering for technology types (backend doesn't support search)
+  const filteredTechData = useMemo(() => {
+    if (!technologySearchQuery.trim()) return technologyTableData;
+    const q = technologySearchQuery.toLowerCase();
+    return technologyTableData.filter((item) =>
+      item.technology_type && item.technology_type.toLowerCase().includes(q)
+    );
+  }, [technologyTableData, technologySearchQuery]);
+
   // Client-side pagination for technology types table
   const techItemsPerPage = 10;
-  const techTotalPages = Math.ceil(technologyTotalCount / techItemsPerPage);
-  const paginatedTechData = technologyTableData.slice(
+  const techTotalPages = Math.ceil(filteredTechData.length / techItemsPerPage);
+  const paginatedTechData = filteredTechData.slice(
     (currentPage - 1) * techItemsPerPage,
     currentPage * techItemsPerPage,
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex h-[calc(100vh-74px)] bg-cream-200">
       <Sidebar activeId="portfolio-analysis" />
 
-      <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col gap-6 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className={`flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 ${activeTab === 'extract' ? '!pb-0 mb-8' : 'mb-0'}`}>
             {/* Title Row */}
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
@@ -422,8 +600,15 @@ export default function PortfolioAnalysis() {
                   export your findings as a .csv file for further analysis.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
@@ -437,58 +622,9 @@ export default function PortfolioAnalysis() {
                 ]}
                 activeTab={activeTab}
                 onChange={setActiveTab}
+                size="large"
               />
             </div>
-
-            {/* Filters for Explore tab */}
-            {activeTab === 'explore' && (
-              <div className="flex items-end gap-4">
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Global health area"
-                    value={healthArea}
-                    onChange={setHealthArea}
-                    placeholder="All"
-                    options={healthAreaOptions}
-                    multiSelect={true}
-                    showAllOption={true}
-                    loading={healthAreasLoading}
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Disease"
-                    value={disease}
-                    onChange={setDisease}
-                    placeholder="All"
-                    options={diseaseOptions}
-                    multiSelect={true}
-                    showAllOption={true}
-                    loading={diseasesLoading}
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Product"
-                    value={product}
-                    onChange={setProduct}
-                    placeholder="All"
-                    options={productOptions}
-                    multiSelect={true}
-                    showAllOption={true}
-                    loading={productsLoading}
-                  />
-                </div>
-                <div className="flex-1" />
-                <button
-                  onClick={handleClearFilters}
-                  className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 px-4 hover:bg-gray-200 h-[44px]"
-                >
-                  Clear
-                  <RefreshIcon className="w-4 h-4" />
-                </button>
-              </div>
-            )}
 
             {/* Sub-tabs for Extract tab */}
             {activeTab === 'extract' && (
@@ -504,7 +640,7 @@ export default function PortfolioAnalysis() {
                     onClick={() => setExtractTab(tab.value)}
                     className={`pb-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
                       extractTab === tab.value
-                        ? 'text-black border-orange-500'
+                        ? 'text-[#262626] border-[#262626]'
                         : 'text-gray-400 border-transparent hover:text-gray-600'
                     }`}
                   >
@@ -515,15 +651,72 @@ export default function PortfolioAnalysis() {
             )}
           </div>
 
+          {/* Sticky Filters for Explore tab */}
+          {activeTab === 'explore' && (
+            <div className="sticky top-0 z-20 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 mb-8">
+              <div className="flex items-end gap-4">
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Global health area"
+                    value={healthArea}
+                    onChange={setHealthArea}
+                    placeholder="All"
+                    options={healthAreaOptions}
+                    multiSelect={true}
+                    loading={healthAreasLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Disease"
+                    value={disease}
+                    onChange={setDisease}
+                    placeholder="All"
+                    options={diseaseOptions}
+                    multiSelect={true}
+                    loading={diseasesLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Product"
+                    value={product}
+                    onChange={setProduct}
+                    placeholder="All"
+                    options={productOptions}
+                    multiSelect={true}
+                    loading={productsLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleClearFilters}
+                  disabled={!hasFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                    hasFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  Clear
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Content based on active tab */}
           {activeTab === 'explore' ? (
             <>
               {/* Pipeline Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 {kpisLoading ? (
                   <>
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+                      <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
                         <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
                         <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
                         <div className="h-3 bg-gray-200 rounded w-3/4"></div>
@@ -555,19 +748,20 @@ export default function PortfolioAnalysis() {
               </div>
 
               {/* Charts Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Global pipeline overview - takes 2 columns */}
-              <div className="lg:col-span-2 bg-white border border-gray-200 p-6">
+              <div className="lg:col-span-2 bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Global pipeline overview</h3>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200">
+                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 transition-colors">
                     Export Visual
                     <DownloadIcon className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                A global overview of the R&D pipeline by product type and development stage. Each horizontal bar represents a product type, with colour‑coded segments showing how many candidates and approved products sit at each stage of the R&D lifecycle, from discovery and pre‑clinical through clinical phases to approval. Use the filters above to narrow the view by global health area, disease, or product type, and click items in the legend to toggle individual stages on or off and compare where activity is concentrated across the pipeline.
                 </p>
+                <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
                 <StackedBarChart
                   data={pipelineData}
@@ -577,12 +771,14 @@ export default function PortfolioAnalysis() {
                   xAxisLabel="Amount of Candidates/Products"
                   yAxisLabel="Product type"
                   showFilters={true}
+                  visiblePhases={pipelineVisiblePhases}
+                  onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
                 />
 
               </div>
 
               {/* Product types - takes 1 column */}
-              <div className="bg-white border border-gray-200 p-6">
+              <div className="bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Product types</h3>
                   <div className="flex items-center gap-2">
@@ -595,9 +791,9 @@ export default function PortfolioAnalysis() {
                         { label: 'Products', value: 'Product' },
                       ]}
                       multiSelect={true}
-                      showAllOption={true}
                       compact={true}
                       className="w-32"
+                      variant="outlined"
                     />
                     <ChartMenu
                       onDownloadCSV={() => {
@@ -612,9 +808,10 @@ export default function PortfolioAnalysis() {
                     />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both.
                 </p>
+                <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
                 <DonutChart
                   data={productTypesData}
@@ -633,11 +830,12 @@ export default function PortfolioAnalysis() {
               {/* Main content card */}
               <div className="bg-white border border-gray-200">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-200">
+                <div className="p-4 border-b border-gray-200">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
-                      <p className="text-sm text-gray-500">Select the columns you would like to include in the overview and click on apply.</p>
+                      <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
+                      <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -651,10 +849,10 @@ export default function PortfolioAnalysis() {
                         />
                       </div>
                       <button
-                        className={`flex items-center gap-2 px-4 py-2 text-sm border ${
+                        className={`flex items-center gap-2 px-4 py-2 text-sm border transition-colors ${
                           selectedColumns.length > 0 && !extractDownloading
-                            ? 'text-gray-600 border-gray-300 hover:bg-gray-50'
-                            : 'text-gray-400 border-gray-200 cursor-not-allowed'
+                            ? 'text-black bg-white border-black-24 hover:bg-gray-50'
+                            : 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
                         }`}
                         disabled={selectedColumns.length === 0 || extractDownloading}
                         onClick={handleExtractDownloadCSV}
@@ -666,7 +864,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Filters row */}
-                  <div className="flex items-end gap-4 mt-4">
+                  <div className="flex flex-wrap items-end gap-4 mt-4">
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Global health area"
@@ -675,8 +873,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={healthAreaOptions}
                         multiSelect={true}
-                        showAllOption={true}
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -687,8 +885,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={extractDiseaseOptions}
                         multiSelect={true}
-                        showAllOption={true}
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -699,8 +897,8 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={productOptions}
                         multiSelect={true}
-                        showAllOption={true}
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="min-w-[180px]">
@@ -711,14 +909,19 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={rdStageOptions}
                         multiSelect={true}
-                        showAllOption={true}
                         compact={true}
+                        variant="outlined"
                       />
                     </div>
                     <div className="flex-1" />
                     <button
                       onClick={handleResetExtractFilters}
-                      className="flex items-center gap-2 text-sm text-gray-500 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
+                      disabled={!hasExtractFilters}
+                      className={`flex items-center gap-2 text-sm px-4 h-[36px] whitespace-nowrap border ${
+                        hasExtractFilters
+                          ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                          : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                      }`}
                     >
                       Reset filters
                       <RefreshIcon className="w-4 h-4" />
@@ -753,41 +956,67 @@ export default function PortfolioAnalysis() {
                     </div>
 
                     <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                      {filteredColumns.map((col) => (
-                        <div
-                          key={col.id}
-                          className="flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => handleToggleColumn(col.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                                selectedColumns.includes(col.id)
-                                  ? 'border-orange-500 bg-orange-500'
-                                  : 'border-gray-300 bg-white'
-                              }`}
-                            >
-                              {selectedColumns.includes(col.id) && (
-                                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              )}
-                            </span>
-                            <span className="text-sm text-gray-700">{col.label}</span>
+                      {filteredColumns.map((col) => {
+                        const isSelected = selectedColumns.includes(col.id);
+                        const isDragging = draggedColumnRef.current === col.id;
+                        const isDragOver = dragOverColumn === col.id;
+                        return (
+                          <div
+                            key={col.id}
+                            draggable={isSelected}
+                            onDragStart={() => handleDragStart(col.id)}
+                            onDragOver={(e) => handleDragOver(e, col.id)}
+                            onDragEnd={handleDragEnd}
+                            className={`flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer select-none ${
+                              isDragging ? 'opacity-40' : ''
+                            } ${isDragOver && isSelected ? 'border-t-2 border-orange-400' : ''}`}
+                            onClick={() => handleToggleColumn(col.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
+                                  isSelected
+                                    ? 'border-orange-500 bg-orange-500'
+                                    : 'border-gray-300 bg-white'
+                                }`}
+                              >
+                                {isSelected && (
+                                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                                    <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )}
+                              </span>
+                              <span className="text-sm text-gray-700">{col.label}</span>
+                            </div>
+                            <ListFilterIcon
+                              className={`w-4 h-4 ${isSelected ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
+                            />
                           </div>
-                          <FilterIcon className="w-4 h-4 text-gray-400" />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Apply / Clear buttons */}
                     <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                      <button className="flex-1 px-4 py-2 text-sm font-medium text-orange-500 bg-transparent border border-orange-500 hover:bg-orange-50">
+                      <button
+                        onClick={handleApplyColumns}
+                        disabled={selectedColumns.length === 0}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
+                          selectedColumns.length > 0
+                            ? 'bg-orange-500 text-black hover:bg-black hover:text-white cursor-pointer transition-colors'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
                         Apply
                       </button>
                       <button
                         onClick={handleClearColumns}
-                        className="flex-1 px-4 py-2 text-sm text-gray-500 bg-gray-100 border-none hover:bg-gray-200"
+                        disabled={selectedColumns.length === 0}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
+                          selectedColumns.length > 0
+                            ? 'bg-gray-200 text-[#262626] hover:bg-gray-300 cursor-pointer'
+                            : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                        }`}
                       >
                         Clear
                       </button>
@@ -796,36 +1025,95 @@ export default function PortfolioAnalysis() {
 
                   {/* Right: Data table or empty state */}
                   <div className="flex-1 min-w-0">
-                    {selectedColumns.length === 0 ? (
+                    {appliedColumns.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-32">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                           <InfoIcon className="w-6 h-6 text-orange-500" />
                         </div>
-                        <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
+                        <h4 className="text-lg font-bold text-black mb-2">
+                          {selectedColumns.length > 0 ? 'Click "Apply" to load table' : 'No columns selected'}
+                        </h4>
                         <p className="text-sm text-gray-500 text-center max-w-xs">
-                          Select table columns you'd like to include in the overview
+                          {selectedColumns.length > 0
+                            ? 'Select your columns and click Apply to generate the table'
+                            : "Select table columns you'd like to include in the overview"}
                         </p>
                       </div>
                     ) : (
                       <div>
                         <ScrollableTable>
                             <thead>
+                              {/* Header row with sort controls */}
                               <tr className="border-b border-gray-200">
-                                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">Name</th>
+                                <th
+                                  className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
+                                  onClick={() => handleExtractSort('name')}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    Name
+                                    {extractSort.colId === 'name' ? (
+                                      extractSort.direction === 'asc'
+                                        ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
+                                        : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
+                                    ) : (
+                                      <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
+                                    )}
+                                  </div>
+                                </th>
                                 {activeExtractColumns.map((col) => (
-                                  <th key={col.id} className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE]">{col.label}</th>
+                                  <th
+                                    key={col.id}
+                                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] cursor-pointer select-none whitespace-nowrap"
+                                    onClick={() => handleExtractSort(col.id)}
+                                  >
+                                    <div className="flex items-center gap-1">
+                                      {col.label}
+                                      {extractSort.colId === col.id ? (
+                                        extractSort.direction === 'asc'
+                                          ? <ArrowUpIcon className="w-3.5 h-3.5 text-orange-500" />
+                                          : <ArrowDownIcon className="w-3.5 h-3.5 text-orange-500" />
+                                      ) : (
+                                        <ArrowUpIcon className="w-3.5 h-3.5 text-gray-300" />
+                                      )}
+                                    </div>
+                                  </th>
+                                ))}
+                              </tr>
+                              {/* Filter row */}
+                              <tr className="border-b border-gray-200 bg-[#FEF8EE]">
+                                <th className="px-4 py-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Filter..."
+                                    value={extractColumnFilters['name'] || ''}
+                                    onChange={(e) => handleExtractColumnFilter('name', e.target.value)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
+                                  />
+                                </th>
+                                {activeExtractColumns.map((col) => (
+                                  <th key={col.id} className="px-4 py-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Filter..."
+                                      value={extractColumnFilters[col.id] || ''}
+                                      onChange={(e) => handleExtractColumnFilter(col.id, e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-full px-2 py-1 text-xs font-normal border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-gray-700"
+                                    />
+                                  </th>
                                 ))}
                               </tr>
                             </thead>
                             <tbody>
-                              {extractTableData.map((item) => (
+                              {processedExtractData.map((item) => (
                                 <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="py-4 px-4 align-top">
-                                    <div className="text-sm font-medium text-black max-w-[300px]">{item.candidate_name || item.alternative_names}</div>
+                                  <td className="py-4 px-4 align-top" title={item.candidate_name || item.alternative_names}>
+                                    <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name || item.alternative_names}</div>
                                     <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                                   </td>
                                   {activeExtractColumns.map((col) => (
-                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top">{item[col.accessor]}</td>
+                                    <td key={col.id} className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item[col.accessor]}</CellText></td>
                                   ))}
                                 </tr>
                               ))}
@@ -842,9 +1130,9 @@ export default function PortfolioAnalysis() {
                               <div className="flex items-center gap-2">
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={extractPage <= 1} onClick={() => setExtractPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                                 {pages.map((page) => (
-                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                                  <button key={page} onClick={() => setExtractPage(page)} className={`w-8 h-8 text-sm rounded ${extractPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                                 ))}
-                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                                {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setExtractPage(totalPages)} className={`w-8 h-8 text-sm rounded ${extractPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                                 <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!extractHasNext} onClick={() => setExtractPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                               </div>
                               <span className="text-sm text-gray-500">{extractTotalCount} results</span>
@@ -861,7 +1149,7 @@ export default function PortfolioAnalysis() {
 
           {/* Aggregated portfolio section - only in explore tab */}
           {activeTab === 'explore' && (
-          <div className="bg-white border border-gray-200 p-6 mt-6">
+          <div className="bg-white border border-gray-200 p-4 mt-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Aggregated portfolio</h3>
@@ -869,12 +1157,13 @@ export default function PortfolioAnalysis() {
                 <MoreHorizontalIcon className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               The aggregated portfolio lets you deepdive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Tabs */}
-            <div className="flex gap-6 border-b border-gray-200 mb-6">
+            <div className="flex gap-6 border-b border-gray-200 mb-4">
               {['candidates', 'approved', 'trials', 'technology'].map((tab) => (
                 <button
                   key={tab}
@@ -916,7 +1205,7 @@ export default function PortfolioAnalysis() {
                     <button
                       onClick={handleCandidatesDownloadCSV}
                       disabled={candidatesDownloading}
-                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                     >
                       <CloudDownloadIcon className="w-4 h-4" />
                       {candidatesDownloading ? 'Downloading...' : 'Download CSV'}
@@ -924,11 +1213,23 @@ export default function PortfolioAnalysis() {
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
 
                 {/* Table */}
+                {candidatesLoading ? (
+                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
+                    <div className="animate-pulse text-gray-400">Loading candidates...</div>
+                  </div>
+                ) : !candidatesData || candidatesData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center border border-gray-200">
+                    <div className="text-center">
+                      <p className="text-gray-400 font-medium">No candidates found</p>
+                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                    </div>
+                  </div>
+                ) : (
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -956,39 +1257,40 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {candidatesData.map((candidate) => (
                         <tr key={candidate.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top">
-                            <div className="text-sm font-medium text-black">{candidate.candidate_name}</div>
+                          <td className="py-4 px-4 align-top" title={candidate.candidate_name}>
+                            <div className="text-sm font-medium text-black cell-clamp">{candidate.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.global_health_area}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.secondary_disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.product_name}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(candidate.current_rd_stage)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(candidate.current_rd_stage)}>
                               {candidate.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.test_format}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.preclinical_results_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{candidate.type_of_preclinical_results}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.preclinical_results_source}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{candidate.recent_updates}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.developers_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.indication_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.healthcare_facility_level}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.target}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.mechanism_of_action}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.technology_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.test_format}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.type_of_preclinical_results}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.preclinical_results_source}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.key_features}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{candidate.recent_updates}</CellText></td>
                         </tr>
                       ))}
                     </tbody>
                 </ScrollableTable>
+                )}
 
                 {/* Pagination */}
-                {(() => {
+                {candidatesData && candidatesData.length > 0 && (() => {
                   const totalPages = Math.ceil(candidatesTotalCount / itemsPerPage);
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -997,9 +1299,9 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-2">
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={candidatesPage <= 1} onClick={() => setCandidatesPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                         {pages.map((page) => (
-                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                          <button key={page} onClick={() => setCandidatesPage(page)} className={`w-8 h-8 text-sm rounded ${candidatesPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                         ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setCandidatesPage(totalPages)} className={`w-8 h-8 text-sm rounded ${candidatesPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!candidatesHasNext} onClick={() => setCandidatesPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                       </div>
                       <span className="text-sm text-gray-500">{candidatesTotalCount} results</span>
@@ -1012,14 +1314,14 @@ export default function PortfolioAnalysis() {
             {/* Approved Product Tab Content */}
             {portfolioTab === 'approved' && (
               <>
-                <p className="text-sm text-gray-500 mb-6">
+                <p className="text-sm text-gray-500 mb-4">
                   This view includes summary charts showing approval status, approving authorities, and WHO prequalification, alongside a searchable table of approved products based on current filters. The table provides product‑level details such as name, indication, approval status, approving authorities, WHO prequalification status, and other key attributes.
                 </p>
 
                 {/* Three chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
                   {/* Approval status */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approval status</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1031,14 +1333,33 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'approval-status');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <BarChart data={approvalStatusData} height={200} />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvalStatusData || approvalStatusData.length === 0 ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <BarChart
+                          data={approvalStatusData}
+                          height={200}
+                          xAxisLabel="Approval status"
+                          yAxisLabel="Number of products"
+                          visibleItems={approvalVisibleItems}
+                          onVisibleItemsChange={handleApprovalVisibleItemsChange}
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
                     </p>
                   </div>
 
                   {/* Approving Authorities */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Approving Authorities</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1051,22 +1372,39 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'approving-authorities');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <StackedBarChart
-                      data={approvingAuthoritiesData}
-                      phases={approvingAuthoritiesPhases}
-                      categoryKey="category"
-                      layout="horizontal"
-                      height={200}
-                      showFilters={true}
-                      barRadius={4}
-                    />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <StackedBarChart
+                          data={approvingAuthoritiesData}
+                          phases={approvingAuthoritiesPhases}
+                          categoryKey="category"
+                          layout="horizontal"
+                          height={200}
+                          xAxisLabel="Authority type"
+                          yAxisLabel="Number of products"
+                          showFilters={true}
+                          barRadius={0}
+                          maxTickChars={15}
+                          visiblePhases={authVisiblePhases}
+                          onVisiblePhasesChange={handleAuthVisiblePhasesChange}
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
                     </p>
                   </div>
 
                   {/* WHO prequalification */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">WHO prequalification</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1078,15 +1416,23 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'who-prequalification');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <DonutChart
-                      data={whoPrequalData}
-                      colors={['#fe7449', '#e3d6c1']}
-                      height={180}
-                      innerRadius={50}
-                      outerRadius={80}
-                      showLegend={true}
-                      legendPosition="bottom"
-                    />
+                    <div className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[180px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : (
+                        <DonutChart
+                          data={whoPrequalData}
+                          colors={['#fe7449', '#e3d6c1']}
+                          height={180}
+                          innerRadius={50}
+                          outerRadius={80}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-4">
                       A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low and middle-income countries.
                     </p>
@@ -1107,13 +1453,15 @@ export default function PortfolioAnalysis() {
                         <input
                           type="text"
                           placeholder="Search item"
+                          value={approvedSearchQuery}
+                          onChange={(e) => { setApprovedSearchQuery(e.target.value); setApprovedPage(1); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                       <button
                         onClick={handleApprovedDownloadCSV}
                         disabled={approvedDownloading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
                         {approvedDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1122,6 +1470,18 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
+                  {approvedLoading ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading approved products...</div>
+                    </div>
+                  ) : !approvedProductsData || approvedProductsData.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-400 font-medium">No approved products found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                      </div>
+                    </div>
+                  ) : (
                   <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1152,46 +1512,47 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {approvedProductsData.map((item) => (
                         <tr key={item.candidate_key} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 align-top">
-                            <div className="text-sm font-medium text-black">{item.candidate_name}</div>
+                          <td className="py-4 px-4 align-top" title={item.candidate_name}>
+                            <div className="text-sm font-medium text-black cell-clamp">{item.candidate_name}</div>
                             <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.global_health_area}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.secondary_disease_name}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.product_name}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.global_health_area}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.secondary_disease_name}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.product_name}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.current_rd_stage)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.current_rd_stage)}>
                               {item.current_rd_stage}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.developers_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.indication_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.healthcare_facility_level}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.target}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.mechanism_of_action}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.technology_type}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.key_features}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.recent_updates}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.developers_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.indication_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.healthcare_facility_level}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.target}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.mechanism_of_action}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.technology_type}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.key_features}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.recent_updates}</CellText></td>
                           <td className="py-4 px-4 align-top">
-                            <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.approval_status)}`}>
+                            <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.approval_status)}>
                               {item.approval_status}
                             </span>
                           </td>
-                          <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.approving_authorities_agg}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.nra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sra_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ema_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.japanese_mhlw_approval_status}</td>
-                          <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.us_fda_approval_status}</td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.approving_authorities_agg}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.nra_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sra_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ema_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.japanese_mhlw_approval_status}</CellText></td>
+                          <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.us_fda_approval_status}</CellText></td>
                         </tr>
                       ))}
                     </tbody>
                   </ScrollableTable>
+                  )}
 
                 {/* Pagination */}
-                {(() => {
+                {approvedProductsData && approvedProductsData.length > 0 && (() => {
                   const totalPages = Math.ceil(approvedTotalCount / itemsPerPage);
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1200,9 +1561,9 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-2">
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={approvedPage <= 1} onClick={() => setApprovedPage(p => Math.max(1, p - 1))}><ChevronLeftIcon className="w-5 h-5" /></button>
                         {pages.map((page) => (
-                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
+                          <button key={page} onClick={() => setApprovedPage(page)} className={`w-8 h-8 text-sm rounded ${approvedPage === page ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{page}</button>
                         ))}
-                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
+                        {totalPages > maxVisible && (<><span className="text-gray-400">...</span><button onClick={() => setApprovedPage(totalPages)} className={`w-8 h-8 text-sm rounded ${approvedPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{totalPages}</button></>)}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={!approvedHasNext} onClick={() => setApprovedPage(p => p + 1)}><ChevronRightIcon className="w-5 h-5" /></button>
                       </div>
                       <span className="text-sm text-gray-500">{approvedTotalCount} results</span>
@@ -1214,13 +1575,13 @@ export default function PortfolioAnalysis() {
             )}
             {portfolioTab === 'trials' && (
               <>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-500 mb-4">
                   High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                   {/* Age groups in clinical trials */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Age groups in clinical trials</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1232,16 +1593,26 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'age-groups-in-clinical-trials');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="border-t border-gray-100 pt-4">
-                      <DonutChart
-                        data={ageGroupsData}
-                        colors={ageGroupColors}
-                        height={280}
-                        innerRadius={70}
-                        outerRadius={120}
-                        showLegend={true}
-                        legendPosition="bottom"
-                      />
+                    <div className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !ageGroupsData || ageGroupsData.length === 0 ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <DonutChart
+                          data={ageGroupsData}
+                          colors={ageGroupColors}
+                          height={280}
+                          innerRadius={70}
+                          outerRadius={120}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
                       Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
@@ -1249,7 +1620,7 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Clinical trial status */}
-                  <div className="bg-white border border-gray-200 p-4">
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-base font-bold text-black">Clinical trial status</h4>
                       <ChartMenu onDownloadCSV={() => {
@@ -1261,8 +1632,25 @@ export default function PortfolioAnalysis() {
                         downloadCSV(csv, 'clinical-trial-status');
                       }} onDownloadPNG={() => {}} />
                     </div>
-                    <div className="border-t border-gray-100 pt-4">
-                      <BarChart data={trialStatusData} height={280} />
+                    <div className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !trialStatusData || trialStatusData.length === 0 ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <p className="text-gray-400">No data available</p>
+                        </div>
+                      ) : (
+                        <BarChart
+                          data={trialStatusData}
+                          height={280}
+                          xAxisLabel="Trial status"
+                          yAxisLabel="Number of trials"
+                          visibleItems={trialStatusVisibleItems}
+                          onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
+                        />
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
                       The clinical trial status chart shows the number of studies at each stage, from ongoing to completed, providing a quick view of overall trial progress across the portfolio.
@@ -1271,7 +1659,7 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Geographic distribution */}
-                <div className="bg-white border border-gray-200 p-6">
+                <div className="bg-white border border-gray-200 p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-lg font-bold text-black">Geographic distribution of clinical trials</h4>
                     <div className="flex items-center gap-2">
@@ -1281,9 +1669,9 @@ export default function PortfolioAnalysis() {
                         placeholder="All"
                         options={['Active', 'Completed', 'Terminated']}
                         multiSelect={true}
-                        showAllOption={true}
                         compact={true}
                         className="w-32"
+                        variant="outlined"
                       />
                       <ChartMenu onDownloadCSV={() => {
                         const columns = [
@@ -1296,7 +1684,7 @@ export default function PortfolioAnalysis() {
                       }} onDownloadPNG={() => {}} />
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 mb-6">
+                  <p className="text-sm text-gray-500 mb-4">
                     The spatial heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
                   </p>
                   <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
@@ -1316,13 +1704,15 @@ export default function PortfolioAnalysis() {
                           <input
                             type="text"
                             placeholder="Search"
+                            value={trialsSearchQuery}
+                            onChange={(e) => { setTrialsSearchQuery(e.target.value); setTrialsPage(1); }}
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
                         <button
                           onClick={handleTrialsDownloadCSV}
                           disabled={trialsDownloading}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                         >
                           <CloudDownloadIcon className="w-4 h-4" />
                           {trialsDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1335,6 +1725,18 @@ export default function PortfolioAnalysis() {
                   </div>
 
                   {/* Table */}
+                  {trialsListLoading ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading clinical trials...</div>
+                    </div>
+                  ) : !filteredTrialsData || filteredTrialsData.length === 0 ? (
+                    <div className="h-[200px] flex items-center justify-center">
+                      <div className="text-center">
+                        <p className="text-gray-400 font-medium">No clinical trials found</p>
+                        <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                      </div>
+                    </div>
+                  ) : (
                   <ScrollableTable>
                       <thead>
                         <tr className="border-b border-gray-200">
@@ -1354,35 +1756,36 @@ export default function PortfolioAnalysis() {
                         </tr>
                       </thead>
                       <tbody>
-                        {clinicalTrialsTableData.map((item) => (
+                        {filteredTrialsData.map((item) => (
                           <tr key={item.trial_id} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.trial_name || item.clinicaltrialid}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.candidate_name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.trial_name || item.clinicaltrialid}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.candidate_name}</CellText></td>
                             <td className="py-4 px-4 align-top">
-                              <div className="text-sm font-medium text-black max-w-[300px]">{item.trial_title}</div>
+                              <div className="text-sm font-medium text-black cell-clamp">{item.trial_title}</div>
                               <a href="#" className="text-sm text-orange-500 hover:underline">Explore →</a>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.description}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.description}</CellText></td>
                             <td className="py-4 px-4 align-top">
-                              <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(item.trial_phase)}`}>
+                              <span className="px-2 py-1 text-xs rounded whitespace-nowrap" style={getRdStageStyle(item.trial_phase)}>
                                 {item.trial_phase}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.status}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.locations}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.ct_results_status}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.status}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.locations}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.ct_results_status}</CellText></td>
                             <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.start_date}</td>
                             <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.end_date}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 align-top">{item.sponsor}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.collaborator}</td>
-                            <td className="py-4 px-4 text-sm text-gray-600 max-w-[200px] truncate align-top">{item.source_text}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.sponsor}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.collaborator}</CellText></td>
+                            <td className="py-4 px-4 text-sm text-gray-600 align-top"><CellText>{item.source_text}</CellText></td>
                           </tr>
                         ))}
                       </tbody>
                   </ScrollableTable>
+                  )}
 
                   {/* Pagination */}
-                  {(() => {
+                  {filteredTrialsData && filteredTrialsData.length > 0 && (() => {
                     const totalPages = Math.ceil(trialsTotalCount / trialsPerPage);
                     const maxVisible = 5;
                     const pages = Array.from({ length: Math.min(maxVisible, totalPages) }, (_, i) => i + 1);
@@ -1402,7 +1805,7 @@ export default function PortfolioAnalysis() {
                               onClick={() => setTrialsPage(page)}
                               className={`w-8 h-8 text-sm rounded ${
                                 trialsPage === page
-                                  ? 'bg-orange-500 text-white'
+                                  ? 'bg-orange-500 text-black'
                                   : 'text-gray-600 hover:bg-gray-100'
                               }`}
                             >
@@ -1414,7 +1817,7 @@ export default function PortfolioAnalysis() {
                               <span className="text-gray-400">...</span>
                               <button
                                 onClick={() => setTrialsPage(totalPages)}
-                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                                className={`w-8 h-8 text-sm rounded ${trialsPage === totalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}
                               >
                                 {totalPages}
                               </button>
@@ -1450,13 +1853,15 @@ export default function PortfolioAnalysis() {
                         <input
                           type="text"
                           placeholder="Search item"
+                          value={technologySearchQuery}
+                          onChange={(e) => { setTechnologySearchQuery(e.target.value); setCurrentPage(1); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
                       <button
                         onClick={handleTechnologyDownloadCSV}
                         disabled={technologyDownloading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
                         <CloudDownloadIcon className="w-4 h-4" />
                         {technologyDownloading ? 'Downloading...' : 'Download CSV'}
@@ -1469,6 +1874,18 @@ export default function PortfolioAnalysis() {
                 </div>
 
                 {/* Table */}
+                {technologyLoading ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading technology types...</div>
+                  </div>
+                ) : !paginatedTechData || paginatedTechData.length === 0 ? (
+                  <div className="h-[200px] flex items-center justify-center">
+                    <div className="text-center">
+                      <p className="text-gray-400 font-medium">No technology types found</p>
+                      <p className="text-sm text-gray-400 mt-1">Try adjusting your filters</p>
+                    </div>
+                  </div>
+                ) : (
                 <ScrollableTable>
                     <thead>
                       <tr className="border-b border-gray-200">
@@ -1481,7 +1898,7 @@ export default function PortfolioAnalysis() {
                     <tbody>
                       {paginatedTechData.map((item, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4 text-sm text-gray-800 max-w-[250px] align-top">{item.technology_type}</td>
+                          <td className="py-4 px-4 text-sm text-gray-800 align-top">{item.technology_type}</td>
                           {technologyPhases.map((phase) => (
                             <td key={phase.key} className="py-4 px-4 text-sm text-gray-600 align-top">{item[phase.key] || 0}</td>
                           ))}
@@ -1489,9 +1906,10 @@ export default function PortfolioAnalysis() {
                       ))}
                     </tbody>
                 </ScrollableTable>
+                )}
 
                 {/* Pagination */}
-                {(() => {
+                {paginatedTechData && paginatedTechData.length > 0 && (() => {
                   const maxVisible = 5;
                   const pages = Array.from({ length: Math.min(maxVisible, techTotalPages) }, (_, i) => i + 1);
                   return (
@@ -1506,7 +1924,7 @@ export default function PortfolioAnalysis() {
                             onClick={() => setCurrentPage(page)}
                             className={`w-8 h-8 text-sm rounded ${
                               currentPage === page
-                                ? 'bg-orange-500 text-white'
+                                ? 'bg-orange-500 text-black'
                                 : 'text-gray-600 hover:bg-gray-100'
                             }`}
                           >
@@ -1516,7 +1934,7 @@ export default function PortfolioAnalysis() {
                         {techTotalPages > maxVisible && (
                           <>
                             <span className="text-gray-400">...</span>
-                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
+                            <button onClick={() => setCurrentPage(techTotalPages)} className={`w-8 h-8 text-sm rounded ${currentPage === techTotalPages ? 'bg-orange-500 text-black' : 'text-gray-600 hover:bg-gray-100'}`}>{techTotalPages}</button>
                           </>
                         )}
                         <button className="p-2 text-gray-400 hover:bg-gray-100 rounded disabled:opacity-50" disabled={currentPage >= techTotalPages} onClick={() => setCurrentPage(p => p + 1)}>

@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
 
 const defaultColors = [
-  '#f9a78d', // Peach/Neonates
-  '#8c4028', // Dark brown/Infants
-  '#fe7449', // Orange/Children
-  '#cbafde', // Light purple/Adolescents
-  '#e3d6c1', // Beige
-  '#f0b456', // Gold/Yellow
-  '#54a5c4', // Teal/Blue
-  '#a78bfa', // Purple
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#B08888', // Mauve
+  '#E3D6C1', // Beige
+  '#F9A78D', // Peach
+  '#CC9949', // Dark Gold
+  '#6AB085', // Green
+  '#54A5C4', // Blue
 ];
 
 const CustomTooltip = ({ active, payload }) => {
@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload }) => {
     <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
       <div className="flex items-center gap-2">
         <span
-          className="w-3 h-3 rounded-full"
+          className="w-3 h-3 rounded-sm"
           style={{ backgroundColor: data.payload.fill }}
         />
         <span className="font-medium text-black">{data.name}</span>
@@ -109,7 +109,7 @@ export default function DonutChart({
           onMouseLeave={() => setActiveIndex(null)}
         >
           <span
-            className="w-3 h-3 rounded-full flex-shrink-0"
+            className="w-3 h-3 rounded-sm flex-shrink-0"
             style={{ backgroundColor: item.fill }}
           />
           <span

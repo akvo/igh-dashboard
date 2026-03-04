@@ -98,7 +98,7 @@ const Pagination = ({
               onClick={() => onPageChange(page)}
               className={`w-8 h-8 text-sm rounded border-none cursor-pointer ${
                 currentPage === page
-                  ? 'bg-orange-500 text-white font-medium'
+                  ? 'bg-orange-500 text-black font-medium'
                   : 'bg-transparent text-gray-600 font-normal'
               }`}
             >
@@ -284,7 +284,7 @@ export default function Table({
 // Use this instead of manually adding overflow-x-auto divs.
 export function ScrollableTable({ children, className = '', tableClassName = '' }) {
   return (
-    <div className={`overflow-x-auto ${className}`}>
+    <div className={`overflow-x-auto border border-gray-200 ${className}`}>
       <table className={`w-full ${tableClassName}`}>{children}</table>
     </div>
   );

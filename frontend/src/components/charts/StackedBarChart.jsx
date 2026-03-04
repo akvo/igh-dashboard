@@ -10,54 +10,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-
-// Word-wrap text into lines that fit within maxChars, truncating with "…"
-// on the last line if the full text exceeds the limit.
-function wrapLabel(text, maxChars) {
-  if (text.length <= maxChars) {
-    return text.split(/\s+/).reduce((lines, word) => {
-      const last = lines[lines.length - 1];
-      if (last && (last + ' ' + word).length <= maxChars) {
-        lines[lines.length - 1] = last + ' ' + word;
-      } else {
-        lines.push(word);
-      }
-      return lines;
-    }, []);
-  }
-
-  const words = text.split(/\s+/);
-  const lines = [];
-  let remaining = maxChars;
-
-  for (const word of words) {
-    const last = lines[lines.length - 1];
-    if (last && (last + ' ' + word).length <= Math.min(remaining, maxChars)) {
-      lines[lines.length - 1] = last + ' ' + word;
-      remaining -= word.length + 1;
-    } else if (remaining > 0) {
-      lines.push(word.length > remaining ? word.slice(0, remaining) + '…' : word);
-      remaining -= Math.min(word.length, remaining);
-    } else {
-      // Truncate the last line we added and stop.
-      const lastLine = lines[lines.length - 1];
-      if (lastLine && !lastLine.endsWith('…')) {
-        lines[lines.length - 1] = lastLine + '…';
-      }
-      break;
-    }
-  }
-
-  return lines;
-}
+import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultPhases = [
-  { key: 'preClinical', label: 'Pre-clinical trial', color: '#8c4028' },
-  { key: 'phase1', label: 'Phase 1', color: '#fe7449' },
-  { key: 'phase2', label: 'Phase 2', color: '#fdba74' },
-  { key: 'phase3', label: 'Phase 3', color: '#ddd6fe' },
-  { key: 'phase4', label: 'Phase 4', color: '#a78bfa' },
-  { key: 'approved', label: 'Approved', color: '#f0b456' },
+  { key: 'discovery', label: 'Discovery', color: '#AD5133' },
+  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449' },
+  { key: 'phase1', label: 'Phase 1', color: '#F9A78D' },
+  { key: 'phase2', label: 'Phase 2', color: '#B28FC9' },
+  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE' },
+  { key: 'approved', label: 'Approved', color: '#F0B456' },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -97,18 +58,25 @@ export default function StackedBarChart({
   yAxisLabel = '',
   showFilters = true,
   height = 400,
-  barRadius = 4,
+  barRadius = 0,
   yAxisWidth = 120,
   hideXAxisTicks = false,
-  maxTickLength = 25,
+  maxTickChars = 25,
+  // Controlled mode: parent manages phase visibility via URL state.
+  // When omitted, the component manages its own internal state.
+  visiblePhases: controlledVisiblePhases,
+  onVisiblePhasesChange,
 }) {
-  const [visiblePhases, setVisiblePhases] = useState(
+  const [internalVisiblePhases, setInternalVisiblePhases] = useState(
     phases.reduce((acc, phase) => ({ ...acc, [phase.key]: true }), {})
   );
 
+  const isControlled = controlledVisiblePhases !== undefined;
+  const visiblePhases = isControlled ? controlledVisiblePhases : internalVisiblePhases;
+
   useEffect(() => {
-    if (phases.length > 0) {
-      setVisiblePhases(prev => {
+    if (!isControlled && phases.length > 0) {
+      setInternalVisiblePhases(prev => {
         const next = { ...prev };
         phases.forEach(phase => {
           if (!(phase.key in next)) {
@@ -118,13 +86,15 @@ export default function StackedBarChart({
         return next;
       });
     }
-  }, [phases]);
+  }, [phases, isControlled]);
 
   const togglePhase = (phaseKey) => {
-    setVisiblePhases((prev) => ({
-      ...prev,
-      [phaseKey]: !prev[phaseKey],
-    }));
+    const next = { ...visiblePhases, [phaseKey]: !visiblePhases[phaseKey] };
+    if (isControlled && onVisiblePhasesChange) {
+      onVisiblePhasesChange(next);
+    } else {
+      setInternalVisiblePhases(next);
+    }
   };
 
   const filteredPhases = useMemo(
@@ -151,6 +121,11 @@ export default function StackedBarChart({
   }, [maxValue]);
 
   const isHorizontalBars = layout === 'vertical';
+
+  const hasLongLabels = useMemo(
+    () => data.some((item) => String(item[categoryKey] || '').replace(/\n/g, ' ').length > maxTickChars),
+    [data, categoryKey, maxTickChars]
+  );
 
   const getBarRadius = (index) => {
     const isLast = index === filteredPhases.length - 1;
@@ -259,7 +234,7 @@ export default function StackedBarChart({
                     tickLine={false}
                     tick={({ x, y, payload }) => {
                       const label = payload.value;
-                      const lines = wrapLabel(label, maxTickLength);
+                      const lines = wrapLabel(label, maxTickChars);
                       const lineHeight = 14;
                       const startY = y - ((lines.length - 1) * lineHeight) / 2;
                       return (
@@ -283,7 +258,27 @@ export default function StackedBarChart({
                     dataKey={categoryKey}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
-                    tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                    tick={hasLongLabels
+                      ? ({ x, y, payload }) => {
+                          const label = String(payload.value).replace(/\n/g, ' ');
+                          const display = label.length > maxTickChars ? label.slice(0, maxTickChars) + '…' : label;
+                          return (
+                            <text
+                              x={x}
+                              y={y + 8}
+                              textAnchor="end"
+                              fill="rgba(38, 38, 38, 0.88)"
+                              fontSize={12}
+                              transform={`rotate(-45, ${x}, ${y + 8})`}
+                            >
+                              <title>{label}</title>
+                              {display}
+                            </text>
+                          );
+                        }
+                      : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
+                    }
+                    height={hasLongLabels ? 80 : undefined}
                   />
                   <YAxis
                     type="number"
