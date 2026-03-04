@@ -12,6 +12,7 @@ interface ClinicalTrialStatsFilters {
   product_names?: string[];
 }
 
+const ACTIVE_TRIAL_STATUS = "Active";
 const DISEASE_JOIN = "JOIN dim_disease d ON t.disease_key = d.disease_key";
 
 /**
@@ -45,8 +46,10 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
 export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): ClinicalTrialStats {
   const db = getDatabase();
 
-  // Total trials count
+  // Total trials count (only active trials)
   const tc = buildFilterClauses(filters);
+  tc.conditions.push("t.status = ?");
+  tc.params.push(ACTIVE_TRIAL_STATUS);
   const totalSql = `
     SELECT COUNT(*) as count
     FROM fact_clinical_trial_event t
@@ -72,8 +75,10 @@ export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): Clin
   `;
   const statusDistribution = db.prepare(statusSql).all(...sc.params) as ClinicalTrialStatusRow[];
 
-  // Age group distribution (via bridge_candidate_age_group + dim_age_group)
+  // Age group distribution (via bridge_candidate_age_group + dim_age_group, active trials only)
   const ac = buildFilterClauses(filters);
+  ac.conditions.push("t.status = ?");
+  ac.params.push(ACTIVE_TRIAL_STATUS);
   const ageJoins = [
     "JOIN bridge_candidate_age_group bag ON t.candidate_key = bag.candidate_key",
     "JOIN dim_age_group ag ON bag.age_group_key = ag.age_group_key",

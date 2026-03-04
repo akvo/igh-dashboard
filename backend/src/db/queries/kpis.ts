@@ -68,7 +68,7 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
 
   const candidates = db
     .prepare(
-      `SELECT COUNT(DISTINCT c.candidate_name) as count
+      `SELECT COUNT(DISTINCT f.candidate_key) as count
     FROM fact_pipeline_snapshot f
     ${candidateJoins.join("\n    ")}
     WHERE ${candidateConditions.join("\n      AND ")}`,
@@ -80,7 +80,7 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
 
   const approved = db
     .prepare(
-      `SELECT COUNT(DISTINCT c.candidate_name) as count
+      `SELECT COUNT(DISTINCT f.candidate_key) as count
     FROM fact_pipeline_snapshot f
     ${candidateJoins.join("\n    ")}
     WHERE ${approvedConditions.join("\n      AND ")}`,

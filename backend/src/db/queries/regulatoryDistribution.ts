@@ -19,8 +19,11 @@ const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
  * Build shared joins/conditions for regulatory queries.
  */
 function buildFilterClauses(filters?: RegulatoryDistributionFilters) {
-  const joins = ["JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key"];
-  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
+  const joins = [
+    "JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key",
+    "JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key",
+  ];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, "c.candidate_type = 'Product'"];
   const params: (string | number)[] = [];
 
   const diseaseCtx = { joins, join: DISEASE_JOIN };
@@ -50,16 +53,14 @@ export function getRegulatoryDistribution(
 
   // Approval status distribution
   const as = buildFilterClauses(filters);
-  as.conditions.push("r.approval_status IS NOT NULL");
-
   const approvalSql = `
     SELECT
-      r.approval_status,
+      COALESCE(r.approval_status, 'Unknown') as approval_status,
       COUNT(DISTINCT f.candidate_key) as candidateCount
     FROM fact_pipeline_snapshot f
     ${as.joins.join("\n    ")}
     WHERE ${as.conditions.join("\n      AND ")}
-    GROUP BY r.approval_status
+    GROUP BY COALESCE(r.approval_status, 'Unknown')
     ORDER BY candidateCount DESC
   `;
 
@@ -67,16 +68,14 @@ export function getRegulatoryDistribution(
 
   // WHO prequalification distribution
   const wq = buildFilterClauses(filters);
-  wq.conditions.push("r.who_prequalification IS NOT NULL");
-
   const whoSql = `
     SELECT
-      r.who_prequalification,
+      COALESCE(r.who_prequalification, 'Unknown') as who_prequalification,
       COUNT(DISTINCT f.candidate_key) as candidateCount
     FROM fact_pipeline_snapshot f
     ${wq.joins.join("\n    ")}
     WHERE ${wq.conditions.join("\n      AND ")}
-    GROUP BY r.who_prequalification
+    GROUP BY COALESCE(r.who_prequalification, 'Unknown')
     ORDER BY candidateCount DESC
   `;
 

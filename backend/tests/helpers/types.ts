@@ -107,6 +107,28 @@ export interface FactClinicalTrialEvent {
   status: string | null;
 }
 
+export interface ApprovalStatusRow {
+  approval_status: string;
+  candidateCount: number;
+}
+
+export interface WHOPrequalRow {
+  who_prequalification: string;
+  candidateCount: number;
+}
+
+export interface ApprovingAuthorityRow {
+  authority_type: string;
+  who_prequalified: number;
+  no_who_listing: number;
+}
+
+export interface RegulatoryDistribution {
+  approvalStatus: ApprovalStatusRow[];
+  whoPrequalification: WHOPrequalRow[];
+  approvingAuthorities: ApprovingAuthorityRow[];
+}
+
 export interface CandidateDetail extends CandidateNode {
   disease: DimDisease | null;
   phase: DimPhase | null;
