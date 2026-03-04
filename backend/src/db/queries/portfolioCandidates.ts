@@ -4,12 +4,12 @@ import type {
   PortfolioCandidateFilter,
   PortfolioCandidateConnection,
 } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
 function buildWhere(filter?: PortfolioCandidateFilter) {
-  const conditions = ["f.is_active_flag = 1"];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);

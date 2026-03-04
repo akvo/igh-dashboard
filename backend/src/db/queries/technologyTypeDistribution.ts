@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { TechnologyTypeDistributionRow } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TechnologyTypeDistributionFilters {
   global_health_areas?: string[];
@@ -24,6 +24,7 @@ export function getTechnologyTypeDistribution(
   ];
   const conditions = [
     "f.is_active_flag = 1",
+    PIPELINE_FILTER,
     "t.technology_type IS NOT NULL",
     "p.phase_name IS NOT NULL",
   ];

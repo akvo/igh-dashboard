@@ -1,3 +1,5 @@
+export const PIPELINE_FILTER = "f.include_in_pipeline = 1";
+
 /**
  * Append an IN-clause condition when `values` is a non-empty array.
  * Optionally deduplicates a JOIN clause.

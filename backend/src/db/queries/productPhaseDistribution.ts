@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { ProductPhaseDistributionRow } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface ProductPhaseDistributionFilters {
   global_health_areas?: string[];
@@ -24,6 +24,7 @@ export function getProductPhaseDistribution(
   ];
   const conditions = [
     "f.is_active_flag = 1",
+    PIPELINE_FILTER,
     "pr.product_name IS NOT NULL",
     "p.phase_name IS NOT NULL",
   ];

@@ -127,6 +127,7 @@ export interface FactPipelineSnapshot {
   phase_key: number | null;
   date_key: number | null;
   is_active_flag: number | null;
+  include_in_pipeline: number | null;
   secondary_disease_key: number | null;
   sub_product_key: number | null;
 }

@@ -5,6 +5,7 @@ import type {
   CandidateFilter,
   FactPipelineSnapshot,
 } from "../types.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
@@ -23,13 +24,17 @@ function buildCandidateWhereClause(filter?: CandidateFilter): {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
-  // is_active has special default-to-true logic
+  // is_active has special default-to-true logic.
+  // When a year filter is present we skip the default because historical
+  // snapshots have is_active_flag = 0 (only the latest snapshot is "active").
   if (filter?.is_active !== undefined) {
     conditions.push("f.is_active_flag = ?");
     params.push(filter.is_active ? 1 : 0);
-  } else {
+  } else if (filter?.year == null) {
     conditions.push("f.is_active_flag = 1");
   }
+
+  conditions.push(PIPELINE_FILTER);
 
   for (const [key, sql] of FILTER_COLUMN_MAP) {
     if (filter?.[key] != null) {
@@ -148,10 +153,11 @@ export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapsho
       `
     SELECT snapshot_id, candidate_key, product_key, disease_key,
            technology_key, regulatory_key, phase_key, date_key, is_active_flag,
-           secondary_disease_key, sub_product_key
+           include_in_pipeline, secondary_disease_key, sub_product_key
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1
+      AND include_in_pipeline = 1
     ORDER BY snapshot_id DESC
     LIMIT 1
   `,

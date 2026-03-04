@@ -1,5 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { GlobalHealthAreaSummary } from "../types.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 
 interface GlobalHealthAreaFilters {
   candidate_types?: string[];
@@ -16,7 +17,7 @@ export function getGlobalHealthAreaSummaries(
   const db = getDatabase();
 
   const joins = ["JOIN dim_disease d ON f.disease_key = d.disease_key"];
-  const conditions = ["f.is_active_flag = 1", "d.global_health_area IS NOT NULL"];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, "d.global_health_area IS NOT NULL"];
   const params: (string | number)[] = [];
 
   if (filters?.candidate_types && filters.candidate_types.length > 0) {
