@@ -271,10 +271,14 @@ export default function ServerTable({
                     const cellClass = typeof column.cellClassName === 'function'
                       ? column.cellClassName(row[column.accessor], row)
                       : (column.cellClassName || '');
+                    const cellStyle = typeof column.cellStyle === 'function'
+                      ? column.cellStyle(row[column.accessor], row)
+                      : (column.cellStyle || undefined);
                     return (
                       <td
                         key={column.accessor || colIdx}
                         className={`py-4 px-4 text-sm align-top border-b border-gray-200 text-black ${cellClass}`}
+                        style={cellStyle}
                       >
                         {renderCell(row, column)}
                       </td>

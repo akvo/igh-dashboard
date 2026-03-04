@@ -15,6 +15,7 @@ import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
 import { EXTRACT_TAB_COLUMNS, EXTRACT_FIXED_COLUMNS, EXTRACT_ROW_KEY } from '@/lib/extractColumnConfig';
+import { createHeatmapScale } from '@/lib/heatmap';
 
 // Clamped cell text with native tooltip for full text on hover
 function CellText({ children }) {
@@ -657,6 +658,15 @@ export default function PortfolioAnalysis() {
       item.technology_type && item.technology_type.toLowerCase().includes(q)
     );
   }, [technologyTableData, technologySearchQuery]);
+
+  // Heatmap scale for technology types table.  Computed from the full
+  // dataset (not the current page) so colours stay stable across pages.
+  const phaseAccessors = technologyPhases.map((p) => p.key);
+  const getHeatmapStyle = useMemo(
+    () => createHeatmapScale(technologyTableData, phaseAccessors),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [technologyTableData, technologyPhases],
+  );
 
   // Client-side pagination for technology types table
   const techItemsPerPage = 10;
@@ -1748,7 +1758,10 @@ export default function PortfolioAnalysis() {
                     ...technologyPhases.map((phase) => ({
                       header: phase.label,
                       accessor: phase.key,
-                      render: (value) => <span>{value || 0}</span>,
+                      cellStyle: (value) => getHeatmapStyle(value),
+                      render: (value) => (
+                        <span className="tabular-nums text-center block">{value || 0}</span>
+                      ),
                     })),
                   ]}
                   data={paginatedTechData}
