@@ -13,12 +13,12 @@ import {
 import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultPhases = [
-  { key: 'discovery', label: 'Discovery', color: '#AD5133' },
-  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449' },
-  { key: 'phase1', label: 'Phase 1', color: '#F9A78D' },
-  { key: 'phase2', label: 'Phase 2', color: '#B28FC9' },
-  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE' },
-  { key: 'approved', label: 'Approved', color: '#F0B456' },
+  { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
+  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
+  { key: 'phase1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
+  { key: 'phase2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
+  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+  { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -97,9 +97,17 @@ export default function StackedBarChart({
     }
   };
 
+  // Enforce R&D lifecycle ordering via sortOrder so the chart and
+  // legend always read Discovery → … → Approved regardless of
+  // selection sequence or data arrival order.
+  const sortedPhases = useMemo(
+    () => [...phases].sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity)),
+    [phases]
+  );
+
   const filteredPhases = useMemo(
-    () => phases.filter((phase) => visiblePhases[phase.key]),
-    [phases, visiblePhases]
+    () => sortedPhases.filter((phase) => visiblePhases[phase.key]),
+    [sortedPhases, visiblePhases]
   );
 
   const maxValue = useMemo(() => {
@@ -127,9 +135,17 @@ export default function StackedBarChart({
     [data, categoryKey, maxTickChars]
   );
 
-  const getBarRadius = (index) => {
-    const isLast = index === filteredPhases.length - 1;
-    if (!isLast) return [0, 0, 0, 0];
+  // Index of the last visible phase within sortedPhases, used for
+  // rounding the outermost bar segment's corners.
+  const lastVisibleIndex = useMemo(() => {
+    for (let i = sortedPhases.length - 1; i >= 0; i--) {
+      if (visiblePhases[sortedPhases[i].key]) return i;
+    }
+    return -1;
+  }, [sortedPhases, visiblePhases]);
+
+  const getBarRadius = (sortedIndex) => {
+    if (sortedIndex !== lastVisibleIndex) return [0, 0, 0, 0];
 
     if (isHorizontalBars) {
       return [0, barRadius, barRadius, 0]; // Right side rounded for horizontal bars
@@ -141,7 +157,7 @@ export default function StackedBarChart({
     <div className="w-full overflow-hidden">
       {showFilters && (
         <div className="flex flex-wrap gap-4 mb-6">
-          {phases.map((phase) => (
+          {sortedPhases.map((phase) => (
             <label
               key={phase.key}
               className="flex items-center gap-2 cursor-pointer select-none"
@@ -296,7 +312,11 @@ export default function StackedBarChart({
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
               />
 
-              {filteredPhases.map((phase, index) => (
+              {/* Render ALL phases so Recharts maintains a stable React
+                  tree — toggling checkboxes uses the `hide` prop instead
+                  of adding/removing <Bar> children, which prevents
+                  Recharts from reordering the stack. */}
+              {sortedPhases.map((phase, index) => (
                 <Bar
                   key={phase.key}
                   dataKey={phase.key}
@@ -304,6 +324,7 @@ export default function StackedBarChart({
                   stackId="stack"
                   fill={phase.color}
                   radius={getBarRadius(index)}
+                  hide={!visiblePhases[phase.key]}
                 />
               ))}
             </BarChart>

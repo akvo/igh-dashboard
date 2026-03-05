@@ -73,20 +73,21 @@ export default function CrossPipelineAnalytics() {
     [productsList]
   );
 
-  // Use API phases with consistent colors
+  // Use API phases with consistent colors, enforcing lifecycle ordering
+  // via sortOrder so the chart and legend always read
+  // Discovery → … → Approved.
   const phases = useMemo(() => {
-    if (apiPhases.length > 0) {
-      return apiPhases;
-    }
-    // Fallback while loading
-    return [
-      { key: 'discovery', label: 'Discovery', color: '#AD5133' },
-      { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449' },
-      { key: 'phase_1', label: 'Phase 1', color: '#F9A78D' },
-      { key: 'phase_2', label: 'Phase 2', color: '#B28FC9' },
-      { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE' },
-      { key: 'approved', label: 'Approved', color: '#F0B456' },
-    ];
+    const source = apiPhases.length > 0
+      ? apiPhases
+      : [
+          { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
+          { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
+          { key: 'phase_1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
+          { key: 'phase_2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
+          { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+          { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
+        ];
+    return [...source].sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity));
   }, [apiPhases]);
 
   const handlePhaseToggle = (phaseKey) => {
@@ -241,12 +242,13 @@ export default function CrossPipelineAnalytics() {
               ) : (
                 <StackedBarChart
                   data={chartData}
-                  phases={phases.filter((p) => isPhaseVisible(p.key))}
+                  phases={phases}
                   layout="vertical"
                   height={280}
                   xAxisLabel="Amount"
                   yAxisLabel="Years"
                   showFilters={false}
+                  visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
                 />
               )}
             </div>

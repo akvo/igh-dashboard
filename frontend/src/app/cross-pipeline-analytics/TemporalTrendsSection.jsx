@@ -426,12 +426,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
           ) : compareChartData.length > 0 ? (
             <StackedBarChart
               data={compareChartData}
-              phases={apiPhases.filter(p => comparePhases.includes(p.key))}
+              phases={apiPhases}
               layout="vertical"
               height={220}
               xAxisLabel="Number of Products"
               yAxisLabel="Portfolio"
               showFilters={false}
+              visiblePhases={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
             />
           ) : (
             <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
@@ -514,23 +515,21 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               <div className="animate-pulse text-gray-400">Loading chart data...</div>
             </div>
           ) : acrossGroups.length > 0 ? (
-            acrossGroups.map(([group, items]) => {
-              const visibleStages = STAGE_SERIES.filter(s => acrossStages.includes(s.key));
-              return (
-                <div key={group} className="flex-1 min-w-0">
-                  <StackedBarChart
-                    data={items}
-                    phases={visibleStages}
-                    layout="horizontal"
-                    height={300}
-                    xAxisLabel={group}
-                    yAxisLabel={acrossGroups[0][0] === group ? 'Number of Candidates' : ''}
-                    showFilters={false}
-                    yAxisWidth={acrossGroups[0][0] === group ? 50 : 30}
-                  />
-                </div>
-              );
-            })
+            acrossGroups.map(([group, items]) => (
+              <div key={group} className="flex-1 min-w-0">
+                <StackedBarChart
+                  data={items}
+                  phases={STAGE_SERIES}
+                  layout="horizontal"
+                  height={300}
+                  xAxisLabel={group}
+                  yAxisLabel={acrossGroups[0][0] === group ? 'Number of Candidates' : ''}
+                  showFilters={false}
+                  yAxisWidth={acrossGroups[0][0] === group ? 50 : 30}
+                  visiblePhases={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
+                />
+              </div>
+            ))
           ) : (
             <div className="w-full h-[300px] flex items-center justify-center text-gray-400 text-sm">
               Select portfolios and click Apply to see temporal trends.
@@ -843,12 +842,13 @@ export default function TemporalTrendsSection({
               ) : (
                 <StackedBarChart
                   data={chartData}
-                  phases={phases.filter(p => selectedPhases.includes(p.key))}
+                  phases={phases}
                   layout="vertical"
                   height={280}
                   xAxisLabel="Amount of Candidates / Products"
                   yAxisLabel="Years"
                   showFilters={false}
+                  visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
                 />
               )}
             </div>
