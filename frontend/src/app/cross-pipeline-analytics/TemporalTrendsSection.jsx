@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useApolloClient } from '@apollo/client/react';
-import { GET_TEMPORAL_SNAPSHOTS } from '@/graphql/queries';
+import { useState, useMemo } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart } from '@/components/charts';
-import { useTemporalSnapshots, usePortfolioComparison } from '@/graphql/hooks';
+import { useTemporalSnapshots, usePortfolioComparison, useTemporalFilterOptions } from '@/graphql/hooks';
 import {
   aggregateTemporalPhases,
   computeGrowthTable,
@@ -40,22 +38,7 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
-// Probe temporal snapshots to check if a filter combination has data
-async function probeHasData(client, variables) {
-  try {
-    const { data } = await client.query({
-      query: GET_TEMPORAL_SNAPSHOTS,
-      variables,
-      fetchPolicy: 'cache-first',
-    });
-    return (data?.temporalSnapshots?.length ?? 0) > 0;
-  } catch {
-    return true; // On error, keep option available
-  }
-}
-
-function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [] }) {
-  const client = useApolloClient();
+function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [], filterPairs = [] }) {
   const [visibleCount, setVisibleCount] = useState(2);
   const [portfolios, setPortfolios] = useState([
     { disease: '', product: '' },
@@ -67,53 +50,28 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const [appliedPortfolios, setAppliedPortfolios] = useState([]);
   const [appliedCompareYear, setAppliedCompareYear] = useState('');
 
-  // Cascading filters: per-portfolio valid options (null = all valid)
-  const [validProducts, setValidProducts] = useState([null, null, null, null]);
-  const [validDiseases, setValidDiseases] = useState([null, null, null, null]);
-
-  // Probe valid products when a portfolio's disease changes
-  const portfolioDiseases = portfolios.map(p => p.disease).join('|');
-  useEffect(() => {
-    portfolios.slice(0, visibleCount).forEach((p, idx) => {
-      if (!p.disease) {
-        setValidProducts(prev => { const n = [...prev]; n[idx] = null; return n; });
-        return;
-      }
-      Promise.all(
-        productOptions.map(opt =>
-          probeHasData(client, { diseaseGroupNames: [p.disease], productKeys: [parseInt(opt.value)] })
-        )
-      ).then(results => {
-        setValidProducts(prev => {
-          const n = [...prev];
-          n[idx] = productOptions.filter((_, i) => results[i]);
-          return n;
-        });
-      });
+  // Client-side cascading filters from disease×product pairs
+  const validProducts = useMemo(() => {
+    return portfolios.map(p => {
+      if (!p.disease) return null;
+      const validKeys = new Set(
+        filterPairs.filter(pair => pair.disease_group_name === p.disease)
+                   .map(pair => String(pair.product_key))
+      );
+      return productOptions.filter(o => validKeys.has(o.value));
     });
-  }, [portfolioDiseases, visibleCount, productOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [portfolios, filterPairs, productOptions]);
 
-  // Probe valid diseases when a portfolio's product changes
-  const portfolioProducts = portfolios.map(p => p.product).join('|');
-  useEffect(() => {
-    portfolios.slice(0, visibleCount).forEach((p, idx) => {
-      if (!p.product) {
-        setValidDiseases(prev => { const n = [...prev]; n[idx] = null; return n; });
-        return;
-      }
-      Promise.all(
-        diseaseOptions.map(d =>
-          probeHasData(client, { productKeys: [parseInt(p.product)], diseaseGroupNames: [d] })
-        )
-      ).then(results => {
-        setValidDiseases(prev => {
-          const n = [...prev];
-          n[idx] = diseaseOptions.filter((_, i) => results[i]);
-          return n;
-        });
-      });
+  const validDiseases = useMemo(() => {
+    return portfolios.map(p => {
+      if (!p.product) return null;
+      const validNames = new Set(
+        filterPairs.filter(pair => String(pair.product_key) === p.product)
+                   .map(pair => pair.disease_group_name)
+      );
+      return diseaseOptions.filter(d => validNames.has(typeof d === 'string' ? d : d.value));
     });
-  }, [portfolioProducts, visibleCount, diseaseOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [portfolios, filterPairs, diseaseOptions]);
 
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
@@ -625,55 +583,33 @@ export default function TemporalTrendsSection({
   productOptions = [],
   availableYears = [],
 }) {
-  const client = useApolloClient();
   const [activeTab, setActiveTab] = useState('single');
+  const { pairs } = useTemporalFilterOptions();
 
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
   const [filterYear, setFilterYear] = useState([]);
 
-  // Cascading filters: valid options based on the other filter's selection
-  const [filteredProductOpts, setFilteredProductOpts] = useState(null);
-  const [filteredDiseaseOpts, setFilteredDiseaseOpts] = useState(null);
+  // Client-side cascading filters from disease×product pairs
+  const effectiveProductOptions = useMemo(() => {
+    if (filterDisease.length === 0) return productOptions;
+    const validKeys = new Set(
+      pairs.filter(p => filterDisease.includes(p.disease_group_name))
+           .map(p => String(p.product_key))
+    );
+    return productOptions.filter(o => validKeys.has(o.value));
+  }, [filterDisease, pairs, productOptions]);
 
-  // When disease filter changes, probe which products have data
-  useEffect(() => {
-    if (filterDisease.length === 0) {
-      setFilteredProductOpts(null);
-      return;
-    }
-    let cancelled = false;
-    Promise.all(
-      productOptions.map(opt =>
-        probeHasData(client, { diseaseGroupNames: filterDisease, productKeys: [parseInt(opt.value)] })
-      )
-    ).then(results => {
-      if (!cancelled) setFilteredProductOpts(productOptions.filter((_, i) => results[i]));
-    });
-    return () => { cancelled = true; };
-  }, [filterDisease, productOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // When product filter changes, probe which diseases have data
-  useEffect(() => {
-    if (filterProduct.length === 0) {
-      setFilteredDiseaseOpts(null);
-      return;
-    }
-    let cancelled = false;
-    const pkeys = filterProduct.map(v => parseInt(v));
-    Promise.all(
-      diseaseOptions.map(d =>
-        probeHasData(client, { productKeys: pkeys, diseaseGroupNames: [d] })
-      )
-    ).then(results => {
-      if (!cancelled) setFilteredDiseaseOpts(diseaseOptions.filter((_, i) => results[i]));
-    });
-    return () => { cancelled = true; };
-  }, [filterProduct, diseaseOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const effectiveDiseaseOptions = filteredDiseaseOpts ?? diseaseOptions;
-  const effectiveProductOptions = filteredProductOpts ?? productOptions;
+  const effectiveDiseaseOptions = useMemo(() => {
+    if (filterProduct.length === 0) return diseaseOptions;
+    const pkeys = new Set(filterProduct);
+    const validNames = new Set(
+      pairs.filter(p => pkeys.has(String(p.product_key)))
+           .map(p => p.disease_group_name)
+    );
+    return diseaseOptions.filter(d => validNames.has(typeof d === 'string' ? d : d.value));
+  }, [filterProduct, pairs, diseaseOptions]);
 
   // Applied filters (committed on Apply)
   const [appliedDisease, setAppliedDisease] = useState([]);
@@ -856,7 +792,7 @@ export default function TemporalTrendsSection({
       {activeTab === 'single' ? (
         <div>
           {/* Sticky filters */}
-          <div className="sticky z-40 bg-white" style={{ top: 74 }}>
+          <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
             <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
               <div className="min-w-[200px]">
                 <Dropdown
@@ -1049,6 +985,7 @@ export default function TemporalTrendsSection({
           diseaseOptions={diseaseOptions}
           productOptions={productOptions}
           yearOptions={yearOptions}
+          filterPairs={pairs}
         />
       )}
     </div>

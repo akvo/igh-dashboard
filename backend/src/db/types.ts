@@ -216,6 +216,11 @@ export interface TemporalSnapshotRow {
   candidateCount: number;
 }
 
+export interface TemporalFilterOption {
+  disease_group_name: string;
+  product_key: number;
+}
+
 export interface CandidateConnection {
   nodes: DimCandidateCore[];
   totalCount: number;

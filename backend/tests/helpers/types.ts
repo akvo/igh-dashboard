@@ -43,6 +43,11 @@ export interface TemporalSnapshotRow {
   candidateCount: number;
 }
 
+export interface TemporalFilterOption {
+  disease_group_name: string;
+  product_key: number;
+}
+
 export interface Product {
   product_key: number;
   product_name: string | null;

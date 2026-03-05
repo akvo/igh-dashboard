@@ -18,3 +18,4 @@ export { usePortfolioCandidates } from './usePortfolioCandidates';
 export { useTechnologyTypeDistribution } from './useTechnologyTypeDistribution';
 export { usePortfolioComparison } from './usePortfolioComparison';
 export { useRdPrioritiesWithCandidates, useRdPriorities } from './useRdPriorities';
+export { useTemporalFilterOptions } from './useTemporalFilterOptions';

@@ -335,6 +335,16 @@ export const GET_RD_PRIORITIES = gql`
   }
 `;
 
+// Temporal filter options — distinct (disease, product) pairs for cross-filtering
+export const GET_TEMPORAL_FILTER_OPTIONS = gql`
+  query TemporalFilterOptions {
+    temporalFilterOptions {
+      disease_group_name
+      product_key
+    }
+  }
+`;
+
 // Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {

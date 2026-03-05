@@ -243,6 +243,11 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type TemporalFilterOption {
+    disease_group_name: String!
+    product_key: Int!
+  }
+
   # =============================================================================
   # CONNECTION TYPES (pagination)
   # =============================================================================
@@ -436,6 +441,9 @@ export const typeDefs = `#graphql
 
     # Cross-pipeline temporal
     temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+
+    # Cross-pipeline temporal filter options (disease×product pairs)
+    temporalFilterOptions: [TemporalFilterOption!]!
 
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!

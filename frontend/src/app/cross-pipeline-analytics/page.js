@@ -155,7 +155,7 @@ export default function CrossPipelineAnalytics() {
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Sticky filters + phase checkboxes */}
-            <div className="sticky z-40 bg-white" style={{ top: 74 }}>
+            <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
               {/* Filters */}
               <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
                 <div className="min-w-[220px]">
