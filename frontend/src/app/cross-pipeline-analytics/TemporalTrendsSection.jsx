@@ -733,59 +733,61 @@ export default function TemporalTrendsSection({
 
       {activeTab === 'single' ? (
         <div>
-          {/* Filters */}
-          <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
-            <div className="min-w-[200px]">
-              <Dropdown
-                label="Disease"
-                value={filterDisease}
-                onChange={setFilterDisease}
-                placeholder="All"
-                options={diseaseOptions}
-                multiSelect={true}
+          {/* Sticky filters */}
+          <div className="sticky z-40 bg-white" style={{ top: 74 }}>
+            <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
+              <div className="min-w-[200px]">
+                <Dropdown
+                  label="Disease"
+                  value={filterDisease}
+                  onChange={setFilterDisease}
+                  placeholder="All"
+                  options={diseaseOptions}
+                  multiSelect={true}
 
-              />
-            </div>
-            <div className="min-w-[200px]">
-              <Dropdown
-                label="Product"
-                value={filterProduct}
-                onChange={setFilterProduct}
-                placeholder="All"
-                options={productOptions}
-                multiSelect={true}
+                />
+              </div>
+              <div className="min-w-[200px]">
+                <Dropdown
+                  label="Product"
+                  value={filterProduct}
+                  onChange={setFilterProduct}
+                  placeholder="All"
+                  options={productOptions}
+                  multiSelect={true}
 
-              />
+                />
+              </div>
+              <div className="min-w-[160px]">
+                <Dropdown
+                  label="Year"
+                  value={filterYear}
+                  onChange={setFilterYear}
+                  placeholder="All years"
+                  options={yearOptions}
+                  multiSelect={true}
+                />
+              </div>
+              <div className="flex-1" />
+              <button
+                onClick={handleClear}
+                disabled={!hasSingleFilters}
+                className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                  hasSingleFilters
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                    : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                Clear
+                <RefreshIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleApply}
+                className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] transition-colors"
+              >
+                Apply
+              </button>
             </div>
-            <div className="min-w-[160px]">
-              <Dropdown
-                label="Year"
-                value={filterYear}
-                onChange={setFilterYear}
-                placeholder="All years"
-                options={yearOptions}
-                multiSelect={true}
-              />
-            </div>
-            <div className="flex-1" />
-            <button
-              onClick={handleClear}
-              disabled={!hasSingleFilters}
-              className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
-                hasSingleFilters
-                  ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
-                  : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
-              }`}
-            >
-              Clear
-              <RefreshIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleApply}
-              className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] transition-colors"
-            >
-              Apply
-            </button>
           </div>
 
           <p className="text-sm text-gray-500 my-4">
