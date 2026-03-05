@@ -1020,9 +1020,11 @@ export default function PortfolioAnalysis() {
                       </button>
                     </div>
                   </div>
+                </div>
 
-                  {/* Filters row — which filters appear depends on the active extract sub-tab */}
-                  <div className="flex flex-wrap items-end gap-4 mt-4">
+                {/* Sticky filters row */}
+                <div className="sticky top-0 z-20 bg-white px-4 py-4 border-b border-gray-200">
+                  <div className="flex flex-wrap items-end gap-4">
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Global health area"
