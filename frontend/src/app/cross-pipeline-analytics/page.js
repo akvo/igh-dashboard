@@ -34,7 +34,7 @@ export default function CrossPipelineAnalytics() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
-  const { pairs } = usePipelineFilterPairs();
+  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
@@ -105,21 +105,25 @@ export default function CrossPipelineAnalytics() {
   }, [selectedDisease, pairs, allProductOptions]);
 
   // When GHA or product narrows the disease list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (diseasesLoading || pairsLoading) return;
     if (selectedDisease.length > 0) {
       const valid = selectedDisease.filter(d => diseaseOptions.includes(d));
       if (valid.length !== selectedDisease.length) setSelectedDisease(valid);
     }
-  }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [diseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When disease narrows the product list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (productsLoading || pairsLoading) return;
     if (selectedProduct.length > 0) {
       const validValues = new Set(productOptions.map(o => o.value));
       const valid = selectedProduct.filter(p => validValues.has(p));
       if (valid.length !== selectedProduct.length) setSelectedProduct(valid);
     }
-  }, [productOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Use API phases with consistent colors, enforcing lifecycle ordering
   // via sortOrder so the chart and legend always read

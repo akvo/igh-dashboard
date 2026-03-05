@@ -92,7 +92,7 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
-  const { pairs } = usePipelineFilterPairs();
+  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -311,20 +311,24 @@ export default function PortfolioAnalysis() {
   }, [disease, pairs, allProductOptions]);
 
   // When GHA or product narrows the disease list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (diseasesLoading || pairsLoading) return;
     if (disease.length > 0) {
       const valid = disease.filter(d => diseaseOptions.includes(d));
       if (valid.length !== disease.length) setDisease(valid);
     }
-  }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [diseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When disease narrows the product list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (productsLoading || pairsLoading) return;
     if (product.length > 0) {
       const valid = product.filter(p => productOptions.includes(p));
       if (valid.length !== product.length) setProduct(valid);
     }
-  }, [productOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Disease options for the Extract tab, cascading from extractHealthArea
   // (independent of the Explore tab's healthArea filter).
@@ -373,20 +377,24 @@ export default function PortfolioAnalysis() {
   }, [extractDisease, pairs, allProductOptions]);
 
   // Prune extract disease selections that become invalid when GHA or product narrows.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (diseasesLoading || pairsLoading) return;
     if (extractDisease.length > 0) {
       const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
       if (valid.length !== extractDisease.length) setExtractDisease(valid);
     }
-  }, [extractDiseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [extractDiseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prune extract product selections that become invalid when disease narrows.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
   useEffect(() => {
+    if (productsLoading || pairsLoading) return;
     if (extractProduct.length > 0) {
       const valid = extractProduct.filter(p => extractProductOptions.includes(p));
       if (valid.length !== extractProduct.length) setExtractProduct(valid);
     }
-  }, [extractProductOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [extractProductOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
