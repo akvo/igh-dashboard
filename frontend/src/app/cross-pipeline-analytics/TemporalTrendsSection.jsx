@@ -733,7 +733,8 @@ export default function TemporalTrendsSection({
 
       {activeTab === 'single' ? (
         <div>
-          {/* Filters */}
+          {/* Sticky filters */}
+          <div className="sticky z-40 bg-white" style={{ top: 74 }}>
           <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
             <div className="min-w-[200px]">
               <Dropdown
@@ -786,6 +787,7 @@ export default function TemporalTrendsSection({
             >
               Apply
             </button>
+          </div>
           </div>
 
           <p className="text-sm text-gray-500 my-4">
