@@ -2,16 +2,24 @@ import { getDatabase } from "../connection.js";
 import type { GeographicDistributionRow } from "../types.js";
 import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
+interface GeographicFilters {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  product_names?: string[];
+}
+
 /**
  * Get geographic distribution for map visualization.
  * Returns candidate counts grouped by country for a specific location scope.
  *
  * @param location_scope - "Trial Location", "Target Country", or "Developer Location"
  * @param statuses - Optional clinical trial statuses to filter by (e.g. "Active", "Completed")
+ * @param filters - Optional global filters (health area, disease, product)
  */
 export function getGeographicDistribution(
   location_scope: string,
   statuses?: string[],
+  filters?: GeographicFilters,
 ): GeographicDistributionRow[] {
   const db = getDatabase();
 
@@ -32,6 +40,15 @@ export function getGeographicDistribution(
     joins,
     join: "JOIN fact_clinical_trial_event t ON bg.candidate_key = t.candidate_key",
   });
+
+  // Global filters: health area and disease filter through dim_disease,
+  // product filter through dim_product — both joined via fact_pipeline_snapshot.
+  const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params, diseaseCtx);
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
 
   const joinClause = joins.length > 0 ? joins.join("\n    ") + "\n    " : "";
 
