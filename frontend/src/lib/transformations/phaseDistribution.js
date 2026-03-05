@@ -3,7 +3,7 @@
  * Transforms raw API response into stacked bar chart format
  */
 
-import { PHASE_COLORS, SIMPLIFIED_PHASE_NAMES } from './constants';
+import { PHASE_COLORS, SIMPLIFIED_PHASE_NAMES, PHASE_CANONICAL_ORDER } from './constants';
 
 /**
  * Convert phase name to a safe key for chart data
@@ -22,9 +22,15 @@ export function phaseNameToKey(phaseName) {
 export function extractPhases(data) {
   if (!data || data.length === 0) return [];
 
+  // Use the frontend canonical order as the primary sort key so that
+  // chart stacking always follows the R&D lifecycle, falling back to
+  // the backend's sort_order for phases not in the canonical map.
+  const canonicalOrder = (name) => PHASE_CANONICAL_ORDER[name] ?? 500;
+
   const uniquePhases = [...new Map(
     [...data]
-      .sort((a, b) => a.sort_order - b.sort_order)
+      .sort((a, b) => canonicalOrder(a.phase_name) - canonicalOrder(b.phase_name)
+                    || a.sort_order - b.sort_order)
       .map(r => [r.phase_name, r])
   ).values()];
 
