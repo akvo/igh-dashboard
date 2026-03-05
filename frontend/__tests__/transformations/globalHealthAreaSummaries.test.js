@@ -15,7 +15,7 @@ describe('globalHealthAreaSummaries transformations', () => {
       const rawData = [
         {
           global_health_area: 'Neglected disease',
-          candidateCount: 3611,
+          candidateCount: 3618,
           diseaseCount: 112,
           productCount: 7,
         },
@@ -26,7 +26,7 @@ describe('globalHealthAreaSummaries transformations', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         name: 'Neglected diseases',
-        value: 3611,
+        value: 3625,
         diseaseCount: 112,
         productCount: 7,
         originalName: 'Neglected disease',
