@@ -31,6 +31,10 @@ import {
   useDiseases,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import {
+  consolidateProductOptionsByKey,
+  expandProductKeySelection,
+} from '@/lib/filterGroups';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -74,10 +78,11 @@ export default function Home() {
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
+  const expandedCrossProduct = expandProductKeySelection(crossProduct);
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
-    crossProduct.length > 0 ? crossProduct.map(v => parseInt(v, 10)) : null,
+    expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
   );
 
   // R&D stage dropdown options from DB phases
@@ -91,17 +96,18 @@ export default function Home() {
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
+  const expandedProduct = expandProductKeySelection(product);
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    product.length > 0 ? product.map(v => parseInt(v, 10)) : product,
+    expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
     rdStage.length > 0 ? rdStage : null,
   );
 
   // Product options for dropdown (from API).
   // Values are strings to stay consistent with URL serialization.
-  const productOptions = useMemo(() =>
-    products.map(p => ({ label: p.product_name, value: String(p.product_key) })),
-    [products]
-  );
+  const productOptions = useMemo(() => {
+    const raw = products.map(p => ({ label: p.product_name, value: String(p.product_key) }));
+    return consolidateProductOptionsByKey(raw);
+  }, [products]);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const portfolioVisiblePhases = useMemo(() =>

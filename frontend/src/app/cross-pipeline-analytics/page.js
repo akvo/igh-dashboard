@@ -14,6 +14,12 @@ import {
   useProducts,
   useDiseases,
 } from '@/graphql/hooks';
+import {
+  addMalariaOption,
+  expandDiseaseSelection,
+  consolidateProductOptionsByKey,
+  expandProductKeySelection,
+} from '@/lib/filterGroups';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
@@ -29,8 +35,10 @@ export default function CrossPipelineAnalytics() {
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
-  const selectedProductKeys = selectedProduct.length > 0 ? selectedProduct.map(v => parseInt(v)) : null;
-  const selectedDiseaseGroupNames = selectedDisease.length > 0 ? selectedDisease : null;
+  const expandedProductKeys = expandProductKeySelection(selectedProduct);
+  const selectedProductKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
+  const expandedDiseases = expandDiseaseSelection(selectedDisease);
+  const selectedDiseaseGroupNames = expandedDiseases.length > 0 ? expandedDiseases : null;
 
   // Fetch chart data with filters
   const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
@@ -55,7 +63,8 @@ export default function CrossPipelineAnalytics() {
     const filtered = selectedHealthArea.length > 0
       ? source.filter(d => selectedHealthArea.includes(d.global_health_area))
       : source;
-    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    return addMalariaOption(names);
   }, [diseasesRaw, selectedHealthArea]);
 
   // When the GHA filter narrows the disease list, remove any disease
@@ -68,10 +77,10 @@ export default function CrossPipelineAnalytics() {
   }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Product options with key-value pairs for filtering
-  const productOptions = useMemo(() =>
-    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
-    [productsList]
-  );
+  const productOptions = useMemo(() => {
+    const raw = (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name }));
+    return consolidateProductOptionsByKey(raw);
+  }, [productsList]);
 
   // Use API phases with consistent colors, enforcing lifecycle ordering
   // via sortOrder so the chart and legend always read

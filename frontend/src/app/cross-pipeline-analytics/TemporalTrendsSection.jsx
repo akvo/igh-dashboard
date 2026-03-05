@@ -12,6 +12,10 @@ import {
   phaseNameToKey,
   AGGREGATE_STAGE_LABELS,
 } from '@/lib/transformations';
+import {
+  expandDiseaseSelection,
+  expandProductKeySelection,
+} from '@/lib/filterGroups';
 
 // Year colors — deliberately distinct from the stage colors
 // (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
@@ -575,9 +579,11 @@ export default function TemporalTrendsSection({
     setAppliedYear([]);
   };
 
-  // Build API filter params
-  const diseaseGroupNames = appliedDisease.length > 0 ? appliedDisease : null;
-  const productKeys = appliedProduct.length > 0 ? appliedProduct.map(v => parseInt(v)) : null;
+  // Build API filter params (expand composite selections)
+  const expandedDisease = expandDiseaseSelection(appliedDisease);
+  const expandedProductKeys = expandProductKeySelection(appliedProduct);
+  const diseaseGroupNames = expandedDisease.length > 0 ? expandedDisease : null;
+  const productKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
   const years = appliedYear.length > 0 ? appliedYear.map(v => parseInt(v)) : null;
 
   const { chartData, phases, loading, raw } = useTemporalSnapshots(
