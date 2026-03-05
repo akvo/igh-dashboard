@@ -156,84 +156,84 @@ export default function CrossPipelineAnalytics() {
 
             {/* Sticky filters + phase checkboxes */}
             <div className="sticky z-40 bg-white" style={{ top: 74 }}>
-            {/* Filters */}
-            <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Global health area"
-                  value={selectedHealthArea}
-                  onChange={setSelectedHealthArea}
-                  placeholder="All"
-                  options={healthAreaOptions}
-                  multiSelect={true}
+              {/* Filters */}
+              <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Global health area"
+                    value={selectedHealthArea}
+                    onChange={setSelectedHealthArea}
+                    placeholder="All"
+                    options={healthAreaOptions}
+                    multiSelect={true}
 
-                  loading={healthAreasLoading}
-                />
+                    loading={healthAreasLoading}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Disease"
+                    value={selectedDisease}
+                    onChange={setSelectedDisease}
+                    placeholder="All"
+                    options={diseaseOptions}
+                    multiSelect={true}
+
+                    loading={diseasesLoading}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Product"
+                    value={selectedProduct}
+                    onChange={setSelectedProduct}
+                    placeholder="All"
+                    options={productOptions}
+                    multiSelect={true}
+
+                    loading={productsLoading}
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleResetFilters}
+                  disabled={!hasCrossFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                    hasCrossFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  Clear
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
               </div>
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Disease"
-                  value={selectedDisease}
-                  onChange={setSelectedDisease}
-                  placeholder="All"
-                  options={diseaseOptions}
-                  multiSelect={true}
 
-                  loading={diseasesLoading}
-                />
+              {/* Phase checkboxes */}
+              <div className="flex items-center gap-6 py-4 flex-wrap">
+                {phases.map((phase) => (
+                  <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
+                    <span
+                      onClick={() => handlePhaseToggle(phase.key)}
+                      className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
+                        isPhaseVisible(phase.key)
+                          ? 'border-transparent'
+                          : 'border-gray-300 bg-white'
+                      }`}
+                      style={{
+                        backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
+                      }}
+                    >
+                      {isPhaseVisible(phase.key) && (
+                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                          <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    <span className="text-sm text-gray-700">{phase.label}</span>
+                  </label>
+                ))}
               </div>
-              <div className="min-w-[220px]">
-                <Dropdown
-                  label="Product"
-                  value={selectedProduct}
-                  onChange={setSelectedProduct}
-                  placeholder="All"
-                  options={productOptions}
-                  multiSelect={true}
-
-                  loading={productsLoading}
-                />
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={handleResetFilters}
-                disabled={!hasCrossFilters}
-                className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
-                  hasCrossFilters
-                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
-                    : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
-                }`}
-              >
-                Clear
-                <RefreshIcon className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Phase checkboxes */}
-            <div className="flex items-center gap-6 py-4 flex-wrap">
-              {phases.map((phase) => (
-                <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                  <span
-                    onClick={() => handlePhaseToggle(phase.key)}
-                    className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      isPhaseVisible(phase.key)
-                        ? 'border-transparent'
-                        : 'border-gray-300 bg-white'
-                    }`}
-                    style={{
-                      backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
-                    }}
-                  >
-                    {isPhaseVisible(phase.key) && (
-                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                        <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-sm text-gray-700">{phase.label}</span>
-                </label>
-              ))}
-            </div>
             </div>
 
             {/* Chart */}
