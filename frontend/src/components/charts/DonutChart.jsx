@@ -19,10 +19,10 @@ const CustomTooltip = ({ active, payload }) => {
 
   const data = payload[0];
   const total = data.payload.total;
-  const percentage = ((data.value / total) * 100).toFixed(1);
+  const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : 0;
 
   return (
-    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
+    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3 relative z-50">
       <div className="flex items-center gap-2">
         <span
           className="w-3 h-3 rounded-sm"
@@ -128,7 +128,7 @@ export default function DonutChart({
 
   if (isEmpty) {
     return (
-      <div className="w-full overflow-hidden">
+      <div className="w-full overflow-visible">
         <div
           style={{ height }}
           className="flex items-center justify-center"

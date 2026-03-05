@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
@@ -77,6 +77,7 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { pairs } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -238,14 +239,14 @@ export default function PortfolioAnalysis() {
     [healthAreas]
   );
 
-  // Product options from API
-  const productOptions = useMemo(() =>
+  // All product options from API (before cross-filtering)
+  const allProductOptions = useMemo(() =>
     (productsList || []).map(p => p.product_name),
     [productsList]
   );
 
   // Disease options from API, narrowed to the selected GHA(s) when present
-  const diseaseOptions = useMemo(() => {
+  const ghaDiseaseOptions = useMemo(() => {
     const source = diseasesRaw || [];
     const filtered = healthArea.length > 0
       ? source.filter(d => healthArea.includes(d.global_health_area))
@@ -253,8 +254,27 @@ export default function PortfolioAnalysis() {
     return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
   }, [diseasesRaw, healthArea]);
 
-  // When the GHA filter narrows the disease list, remove any disease
-  // selections that are no longer valid options.
+  // Disease↔product cross-filtering via pipeline pairs (Explore tab)
+  const diseaseOptions = useMemo(() => {
+    if (product.length === 0) return ghaDiseaseOptions;
+    const selectedNames = new Set(product);
+    const validDiseases = new Set(
+      pairs.filter(p => selectedNames.has(p.product_name))
+           .map(p => p.disease_group_name)
+    );
+    return ghaDiseaseOptions.filter(d => validDiseases.has(d));
+  }, [product, pairs, ghaDiseaseOptions]);
+
+  const productOptions = useMemo(() => {
+    if (disease.length === 0) return allProductOptions;
+    const validNames = new Set(
+      pairs.filter(p => disease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return allProductOptions.filter(name => validNames.has(name));
+  }, [disease, pairs, allProductOptions]);
+
+  // When GHA or product narrows the disease list, remove invalid selections.
   useEffect(() => {
     if (disease.length > 0) {
       const valid = disease.filter(d => diseaseOptions.includes(d));
@@ -262,9 +282,17 @@ export default function PortfolioAnalysis() {
     }
   }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When disease narrows the product list, remove invalid selections.
+  useEffect(() => {
+    if (product.length > 0) {
+      const valid = product.filter(p => productOptions.includes(p));
+      if (valid.length !== product.length) setProduct(valid);
+    }
+  }, [productOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Disease options for the Extract tab, cascading from extractHealthArea
   // (independent of the Explore tab's healthArea filter).
-  const extractDiseaseOptions = useMemo(() => {
+  const ghaExtractDiseaseOptions = useMemo(() => {
     const source = diseasesRaw || [];
     const filtered = extractHealthArea.length > 0
       ? source.filter(d => extractHealthArea.includes(d.global_health_area))
@@ -272,13 +300,41 @@ export default function PortfolioAnalysis() {
     return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
   }, [diseasesRaw, extractHealthArea]);
 
-  // Prune extract disease selections that become invalid when GHA narrows.
+  // Disease↔product cross-filtering for Extract tab (uses product_name)
+  const extractDiseaseOptions = useMemo(() => {
+    if (extractProduct.length === 0) return ghaExtractDiseaseOptions;
+    const selectedNames = new Set(extractProduct);
+    const validDiseases = new Set(
+      pairs.filter(p => selectedNames.has(p.product_name))
+           .map(p => p.disease_group_name)
+    );
+    return ghaExtractDiseaseOptions.filter(d => validDiseases.has(d));
+  }, [extractProduct, pairs, ghaExtractDiseaseOptions]);
+
+  const extractProductOptions = useMemo(() => {
+    if (extractDisease.length === 0) return allProductOptions;
+    const validNames = new Set(
+      pairs.filter(p => extractDisease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return allProductOptions.filter(name => validNames.has(name));
+  }, [extractDisease, pairs, allProductOptions]);
+
+  // Prune extract disease selections that become invalid when GHA or product narrows.
   useEffect(() => {
     if (extractDisease.length > 0) {
       const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
       if (valid.length !== extractDisease.length) setExtractDisease(valid);
     }
   }, [extractDiseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prune extract product selections that become invalid when disease narrows.
+  useEffect(() => {
+    if (extractProduct.length > 0) {
+      const valid = extractProduct.filter(p => extractProductOptions.includes(p));
+      if (valid.length !== extractProduct.length) setExtractProduct(valid);
+    }
+  }, [extractProductOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -300,7 +356,7 @@ export default function PortfolioAnalysis() {
     '#B28FC9', '#FFDCD1',
   ];
 
-  // Dummy data for candidates table
+
 
   // Dark-text phase colors (lighter backgrounds)
   const LIGHT_BG_PHASES = new Set(['#F9A78D', '#CBAFDE', '#F0B456', '#E3D6C1', '#BFAB8A', '#bbbbbb']);
@@ -999,7 +1055,7 @@ export default function PortfolioAnalysis() {
                           value={extractProduct}
                           onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                           placeholder="All"
-                          options={productOptions}
+                          options={extractProductOptions}
                           multiSelect={true}
                           showAllOption={true}
                           compact={true}
@@ -1162,12 +1218,7 @@ export default function PortfolioAnalysis() {
                               const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
                               const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(row) : value;
                               return (
-                                <div>
-                                  <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
-                                  {extractTab === 'candidates-approved' && (
-                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                                  )}
-                                </div>
+                                <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
                               );
                             },
                           },
@@ -1184,6 +1235,7 @@ export default function PortfolioAnalysis() {
                         totalCount={extractTotalCount}
                         hasNextPage={extractHasNext}
                         itemsPerPage={itemsPerPage}
+                        fitContent
                       />
                     )}
                   </div>
@@ -1268,10 +1320,7 @@ export default function PortfolioAnalysis() {
                     {
                       header: 'Name', accessor: 'candidate_name',
                       render: (value) => (
-                        <div>
-                          <div className="text-sm font-medium text-black">{value}</div>
-                          <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                        </div>
+                        <div className="text-sm font-medium text-black">{value}</div>
                       ),
                     },
                     { header: 'GHA', accessor: 'global_health_area' },
@@ -1473,10 +1522,7 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Name', accessor: 'candidate_name',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black">{value}</div>
                         ),
                       },
                       { header: 'GHA', accessor: 'global_health_area' },
@@ -1684,10 +1730,7 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Title', accessor: 'trial_title',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
                         ),
                       },
                       { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px' },

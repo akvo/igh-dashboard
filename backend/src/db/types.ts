@@ -216,6 +216,12 @@ export interface TemporalSnapshotRow {
   candidateCount: number;
 }
 
+export interface PipelineFilterPair {
+  disease_group_name: string;
+  product_key: number;
+  product_name: string;
+}
+
 export interface CandidateConnection {
   nodes: DimCandidateCore[];
   totalCount: number;

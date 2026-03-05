@@ -23,7 +23,12 @@ export function groupByProductName(data) {
     return acc;
   }, {});
 
-  return Object.values(grouped);
+  // Sort by total count descending
+  return Object.values(grouped).sort((a, b) => {
+    const totalA = Object.entries(a).reduce((sum, [k, v]) => k !== 'category' ? sum + (v || 0) : sum, 0);
+    const totalB = Object.entries(b).reduce((sum, [k, v]) => k !== 'category' ? sum + (v || 0) : sum, 0);
+    return totalB - totalA;
+  });
 }
 
 /**

@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { query } from "../helpers/graphql.js";
-import type { TemporalSnapshotRow } from "../helpers/types.js";
+import type { TemporalSnapshotRow, PipelineFilterPair } from "../helpers/types.js";
 
 describe("Temporal Analysis", () => {
   it("returns available years for selector", async () => {
@@ -281,5 +281,76 @@ describe("Temporal Analysis — year filter", () => {
 
     const years = [...new Set(data.temporalSnapshots.map((r) => r.year))];
     expect(years.length).toBeGreaterThan(1);
+  });
+});
+
+describe("Pipeline filter pairs (cross-filtering)", () => {
+  it("returns disease×product pairs with product_name", async () => {
+    const { data } = await query<{
+      pipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      pipelineFilterPairs {
+        disease_group_name
+        product_key
+        product_name
+      }
+    }`);
+
+    expect(data.pipelineFilterPairs.length).toBeGreaterThan(0);
+    data.pipelineFilterPairs.forEach((row) => {
+      expect(typeof row.disease_group_name).toBe("string");
+      expect(typeof row.product_key).toBe("number");
+      expect(typeof row.product_name).toBe("string");
+    });
+  });
+
+  it("returns distinct pairs", async () => {
+    const { data } = await query<{
+      pipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      pipelineFilterPairs {
+        disease_group_name
+        product_key
+        product_name
+      }
+    }`);
+
+    const keys = data.pipelineFilterPairs.map(
+      (r) => `${r.disease_group_name}::${r.product_key}`,
+    );
+    const unique = new Set(keys);
+    expect(unique.size).toBe(keys.length);
+  });
+
+  it("pairs are consistent with temporal snapshots", async () => {
+    const { data: pairsData } = await query<{
+      pipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      pipelineFilterPairs {
+        disease_group_name
+        product_key
+        product_name
+      }
+    }`);
+
+    // Pick a pair and verify temporalSnapshots returns data for it
+    const pair = pairsData.pipelineFilterPairs[0];
+    const { data } = await query<{
+      temporalSnapshots: TemporalSnapshotRow[];
+    }>(
+      `query ($diseaseGroupNames: [String!], $productKeys: [Int!]) {
+        temporalSnapshots(disease_group_names: $diseaseGroupNames, product_keys: $productKeys) {
+          year
+          phase_name
+          candidateCount
+        }
+      }`,
+      {
+        diseaseGroupNames: [pair.disease_group_name],
+        productKeys: [pair.product_key],
+      },
+    );
+
+    expect(data.temporalSnapshots.length).toBeGreaterThan(0);
   });
 });
