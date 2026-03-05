@@ -14,14 +14,14 @@ import {
 import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultColors = [
-  '#F0B456', // Gold
-  '#CBAFDE', // Light Purple
-  '#B08888', // Mauve
-  '#E3D6C1', // Beige
-  '#F9A78D', // Peach
-  '#CC9949', // Dark Gold
-  '#6AB085', // Green
   '#54A5C4', // Blue
+  '#F0B456', // Gold
+  '#6AB085', // Green
+  '#B28FC9', // Violet
+  '#F9A78D', // Peach
+  '#AD5133', // Rust
+  '#CBAFDE', // Light Purple
+  '#CC9949', // Dark Gold
 ];
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -103,10 +103,42 @@ export default function BarChart({
 
   const isHorizontalBars = layout === 'vertical';
 
+  const hasLongLabels = useMemo(
+    () => data.some((item) => String(item[nameKey] || '').length > maxTickChars),
+    [data, nameKey, maxTickChars]
+  );
+
   return (
     <div className="w-full">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          {allData.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {});
+                  if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
+                  else setInternalVisibleItems(next);
+                }}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Select all
+              </button>
+              <span className="text-xs text-black-24">|</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: false }), {});
+                  if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
+                  else setInternalVisibleItems(next);
+                }}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
           {allData.map((item) => (
             <label
               key={item[nameKey]}
@@ -172,7 +204,7 @@ export default function BarChart({
                 top: 10,
                 right: 10,
                 left: isHorizontalBars ? 80 : 5,
-                bottom: xAxisLabel ? 40 : 20,
+                bottom: hasLongLabels ? 10 : (xAxisLabel ? 40 : 20),
               }}
               barCategoryGap="20%"
             >
@@ -196,6 +228,7 @@ export default function BarChart({
                   <YAxis
                     type="category"
                     dataKey={nameKey}
+                    interval={0}
                     axisLine={false}
                     tickLine={false}
                     tick={({ x, y, payload }) => {
@@ -222,9 +255,30 @@ export default function BarChart({
                   <XAxis
                     type="category"
                     dataKey={nameKey}
+                    interval={0}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
-                    tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                    tick={hasLongLabels
+                      ? ({ x, y, payload }) => {
+                          const label = String(payload.value);
+                          const display = label.length > maxTickChars ? label.slice(0, maxTickChars) + '…' : label;
+                          return (
+                            <text
+                              x={x}
+                              y={y + 8}
+                              textAnchor="end"
+                              fill="rgba(38, 38, 38, 0.88)"
+                              fontSize={12}
+                              transform={`rotate(-45, ${x}, ${y + 8})`}
+                            >
+                              <title>{label}</title>
+                              {display}
+                            </text>
+                          );
+                        }
+                      : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
+                    }
+                    height={hasLongLabels ? 100 : undefined}
                   />
                   <YAxis
                     type="number"

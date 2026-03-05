@@ -304,7 +304,7 @@ export default function Home() {
                               {item.value.toLocaleString()}
                             </td>
                             <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {((item.value / total) * 100).toFixed(1)}%
+                              {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
                             </td>
                           </tr>
                         );

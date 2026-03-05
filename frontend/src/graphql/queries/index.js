@@ -335,6 +335,17 @@ export const GET_RD_PRIORITIES = gql`
   }
 `;
 
+// Pipeline filter pairs — distinct (disease, product) tuples for cross-filtering
+export const GET_PIPELINE_FILTER_PAIRS = gql`
+  query PipelineFilterPairs {
+    pipelineFilterPairs {
+      disease_group_name
+      product_key
+      product_name
+    }
+  }
+`;
+
 // Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {

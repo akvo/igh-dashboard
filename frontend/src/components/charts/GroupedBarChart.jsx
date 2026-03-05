@@ -16,7 +16,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
+    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3 relative z-50">
       <p className="font-semibold text-black mb-2">{label}</p>
       {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2 text-sm">
@@ -93,9 +93,28 @@ export default function GroupedBarChart({
   }, [maxValue]);
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full overflow-visible">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          {series.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button
+                type="button"
+                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {}))}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Select all
+              </button>
+              <span className="text-xs text-black-24">|</span>
+              <button
+                type="button"
+                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {}))}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
           {series.map(s => (
             <label
               key={s.key}
@@ -172,6 +191,7 @@ export default function GroupedBarChart({
               <XAxis
                 type="category"
                 dataKey={categoryKey}
+                interval={0}
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
                 tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}
@@ -222,7 +242,7 @@ export default function GroupedBarChart({
           </ResponsiveContainer>
 
           {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64 z-10">
               {xAxisLabel}
             </div>
           )}

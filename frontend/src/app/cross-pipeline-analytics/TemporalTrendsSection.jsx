@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart } from '@/components/charts';
-import { useTemporalSnapshots, usePortfolioComparison } from '@/graphql/hooks';
+import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import {
   aggregateTemporalPhases,
   computeGrowthTable,
@@ -15,6 +15,7 @@ import {
 import {
   expandDiseaseSelection,
   expandProductKeySelection,
+  MALARIA_GROUP,
 } from '@/lib/filterGroups';
 
 // Year colors — deliberately distinct from the stage colors
@@ -42,7 +43,7 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
-function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [] }) {
+function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [], filterPairs = [] }) {
   const [visibleCount, setVisibleCount] = useState(2);
   const [portfolios, setPortfolios] = useState([
     { disease: '', product: '' },
@@ -53,6 +54,40 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const [compareYear, setCompareYear] = useState('');
   const [appliedPortfolios, setAppliedPortfolios] = useState([]);
   const [appliedCompareYear, setAppliedCompareYear] = useState('');
+
+  // Client-side cascading filters from disease×product pairs
+  // (product options may have pipe-separated keys from VC consolidation)
+  const validProducts = useMemo(() => {
+    return portfolios.map(p => {
+      if (!p.disease) return null;
+      const expandedDisease = expandDiseaseSelection([p.disease]);
+      const validKeys = new Set(
+        filterPairs.filter(pair => expandedDisease.includes(pair.disease_group_name))
+                   .map(pair => String(pair.product_key))
+      );
+      return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
+    });
+  }, [portfolios, filterPairs, productOptions]);
+
+  const validDiseases = useMemo(() => {
+    return portfolios.map(p => {
+      if (!p.product) return null;
+      const expanded = expandProductKeySelection([p.product]);
+      const pkeys = new Set(expanded);
+      const validNames = new Set(
+        filterPairs.filter(pair => pkeys.has(String(pair.product_key)))
+                   .map(pair => pair.disease_group_name)
+      );
+      return diseaseOptions.filter(d => {
+        const name = typeof d === 'string' ? d : d.value;
+        if (validNames.has(name)) return true;
+        if (name === MALARIA_GROUP.label) {
+          return MALARIA_GROUP.members.some(m => validNames.has(m));
+        }
+        return false;
+      });
+    });
+  }, [portfolios, filterPairs, diseaseOptions]);
 
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
@@ -299,7 +334,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     value={portfolios[idx].disease}
                     onChange={(val) => handleDiseaseChange(idx, val)}
                     placeholder="All"
-                    options={diseaseOptions}
+                    options={validDiseases[idx] ?? diseaseOptions}
                   />
                 </div>
                 <div className="flex-1">
@@ -308,7 +343,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     value={portfolios[idx].product}
                     onChange={(val) => handleProductChange(idx, val)}
                     placeholder="All"
-                    options={productOptions}
+                    options={validProducts[idx] ?? productOptions}
                   />
                 </div>
               </div>
@@ -397,6 +432,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         {/* Phase checkboxes */}
         {apiPhases.length > 0 && (
           <div className="flex items-center gap-6 py-4 flex-wrap">
+            {apiPhases.length >= 3 && (
+              <div className="flex gap-1 mr-2">
+                <button type="button" onClick={() => setComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                <span className="text-xs text-black-24">|</span>
+                <button type="button" onClick={() => setComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+              </div>
+            )}
             {apiPhases.map(phase => (
               <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
                 <span
@@ -488,6 +530,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
         {/* Stage checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
+          {STAGE_SERIES.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button type="button" onClick={() => setAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+              <span className="text-xs text-black-24">|</span>
+              <button type="button" onClick={() => setAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+            </div>
+          )}
           {STAGE_SERIES.map(stage => (
             <label key={stage.key} className="flex items-center gap-2 cursor-pointer">
               <span
@@ -551,11 +600,41 @@ export default function TemporalTrendsSection({
   availableYears = [],
 }) {
   const [activeTab, setActiveTab] = useState('single');
+  const { pairs } = usePipelineFilterPairs();
 
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
   const [filterYear, setFilterYear] = useState([]);
+
+  // Client-side cascading filters from disease×product pairs
+  // (product options may have pipe-separated keys from VC consolidation)
+  const effectiveProductOptions = useMemo(() => {
+    if (filterDisease.length === 0) return productOptions;
+    const expandedDisease = expandDiseaseSelection(filterDisease);
+    const validKeys = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => String(p.product_key))
+    );
+    return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
+  }, [filterDisease, pairs, productOptions]);
+
+  const effectiveDiseaseOptions = useMemo(() => {
+    if (filterProduct.length === 0) return diseaseOptions;
+    const pkeys = new Set(expandProductKeySelection(filterProduct));
+    const validNames = new Set(
+      pairs.filter(p => pkeys.has(String(p.product_key)))
+           .map(p => p.disease_group_name)
+    );
+    return diseaseOptions.filter(d => {
+      const name = typeof d === 'string' ? d : d.value;
+      if (validNames.has(name)) return true;
+      if (name === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validNames.has(m));
+      }
+      return false;
+    });
+  }, [filterProduct, pairs, diseaseOptions]);
 
   // Applied filters (committed on Apply)
   const [appliedDisease, setAppliedDisease] = useState([]);
@@ -740,7 +819,7 @@ export default function TemporalTrendsSection({
       {activeTab === 'single' ? (
         <div>
           {/* Sticky filters */}
-          <div className="sticky z-40 bg-white" style={{ top: 74 }}>
+          <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
             <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
               <div className="min-w-[200px]">
                 <Dropdown
@@ -748,9 +827,8 @@ export default function TemporalTrendsSection({
                   value={filterDisease}
                   onChange={setFilterDisease}
                   placeholder="All"
-                  options={diseaseOptions}
+                  options={effectiveDiseaseOptions}
                   multiSelect={true}
-
                 />
               </div>
               <div className="min-w-[200px]">
@@ -759,9 +837,8 @@ export default function TemporalTrendsSection({
                   value={filterProduct}
                   onChange={setFilterProduct}
                   placeholder="All"
-                  options={productOptions}
+                  options={effectiveProductOptions}
                   multiSelect={true}
-
                 />
               </div>
               <div className="min-w-[160px]">
@@ -817,6 +894,13 @@ export default function TemporalTrendsSection({
 
             {/* Phase checkboxes */}
             <div className="flex items-center gap-6 py-4 flex-wrap">
+              {phases.length >= 3 && (
+                <div className="flex gap-1 mr-2">
+                  <button type="button" onClick={() => setSelectedPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                  <span className="text-xs text-black-24">|</span>
+                  <button type="button" onClick={() => setSelectedPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+                </div>
+              )}
               {phases.map(phase => (
                 <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
                   <span
@@ -928,6 +1012,7 @@ export default function TemporalTrendsSection({
           diseaseOptions={diseaseOptions}
           productOptions={productOptions}
           yearOptions={yearOptions}
+          filterPairs={pairs}
         />
       )}
     </div>

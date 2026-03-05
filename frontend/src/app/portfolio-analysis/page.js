@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import {
@@ -18,6 +18,9 @@ import {
   expandProductNameSelection,
   normalizeProductName,
   mergeVectorControlChartData,
+  VECTOR_CONTROL_PRODUCT_NAMES,
+  VECTOR_CONTROL_CONSOLIDATED_NAME,
+  MALARIA_GROUP,
 } from '@/lib/filterGroups';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
@@ -89,6 +92,7 @@ export default function PortfolioAnalysis() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { pairs } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -255,14 +259,14 @@ export default function PortfolioAnalysis() {
     [healthAreas]
   );
 
-  // Product options from API
-  const productOptions = useMemo(() => {
+  // All product options from API (before cross-filtering), with VC consolidation
+  const allProductOptions = useMemo(() => {
     const names = (productsList || []).map(p => p.product_name);
     return consolidateProductOptionsByName(names);
   }, [productsList]);
 
   // Disease options from API, narrowed to the selected GHA(s) when present
-  const diseaseOptions = useMemo(() => {
+  const ghaDiseaseOptions = useMemo(() => {
     const source = diseasesRaw || [];
     const filtered = healthArea.length > 0
       ? source.filter(d => healthArea.includes(d.global_health_area))
@@ -271,8 +275,42 @@ export default function PortfolioAnalysis() {
     return addMalariaOption(names);
   }, [diseasesRaw, healthArea]);
 
-  // When the GHA filter narrows the disease list, remove any disease
-  // selections that are no longer valid options.
+  // Disease↔product cross-filtering via pipeline pairs (Explore tab)
+  // Expand consolidated VC name when filtering product→disease
+  const diseaseOptions = useMemo(() => {
+    if (product.length === 0) return ghaDiseaseOptions;
+    const expandedProduct = expandProductNameSelection(product);
+    const selectedNames = new Set(expandedProduct);
+    const validDiseases = new Set(
+      pairs.filter(p => selectedNames.has(p.product_name))
+           .map(p => p.disease_group_name)
+    );
+    return ghaDiseaseOptions.filter(d => {
+      if (validDiseases.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
+      }
+      return false;
+    });
+  }, [product, pairs, ghaDiseaseOptions]);
+
+  const productOptions = useMemo(() => {
+    if (disease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(disease);
+    const validNames = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return allProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
+  }, [disease, pairs, allProductOptions]);
+
+  // When GHA or product narrows the disease list, remove invalid selections.
   useEffect(() => {
     if (disease.length > 0) {
       const valid = disease.filter(d => diseaseOptions.includes(d));
@@ -280,9 +318,17 @@ export default function PortfolioAnalysis() {
     }
   }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // When disease narrows the product list, remove invalid selections.
+  useEffect(() => {
+    if (product.length > 0) {
+      const valid = product.filter(p => productOptions.includes(p));
+      if (valid.length !== product.length) setProduct(valid);
+    }
+  }, [productOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Disease options for the Extract tab, cascading from extractHealthArea
   // (independent of the Explore tab's healthArea filter).
-  const extractDiseaseOptions = useMemo(() => {
+  const ghaExtractDiseaseOptions = useMemo(() => {
     const source = diseasesRaw || [];
     const filtered = extractHealthArea.length > 0
       ? source.filter(d => extractHealthArea.includes(d.global_health_area))
@@ -291,13 +337,56 @@ export default function PortfolioAnalysis() {
     return addMalariaOption(names);
   }, [diseasesRaw, extractHealthArea]);
 
-  // Prune extract disease selections that become invalid when GHA narrows.
+  // Disease↔product cross-filtering for Extract tab (uses product_name)
+  // Expand consolidated VC name when filtering product→disease
+  const extractDiseaseOptions = useMemo(() => {
+    if (extractProduct.length === 0) return ghaExtractDiseaseOptions;
+    const expandedProduct = expandProductNameSelection(extractProduct);
+    const selectedNames = new Set(expandedProduct);
+    const validDiseases = new Set(
+      pairs.filter(p => selectedNames.has(p.product_name))
+           .map(p => p.disease_group_name)
+    );
+    return ghaExtractDiseaseOptions.filter(d => {
+      if (validDiseases.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
+      }
+      return false;
+    });
+  }, [extractProduct, pairs, ghaExtractDiseaseOptions]);
+
+  const extractProductOptions = useMemo(() => {
+    if (extractDisease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(extractDisease);
+    const validNames = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return allProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
+  }, [extractDisease, pairs, allProductOptions]);
+
+  // Prune extract disease selections that become invalid when GHA or product narrows.
   useEffect(() => {
     if (extractDisease.length > 0) {
       const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
       if (valid.length !== extractDisease.length) setExtractDisease(valid);
     }
   }, [extractDiseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Prune extract product selections that become invalid when disease narrows.
+  useEffect(() => {
+    if (extractProduct.length > 0) {
+      const valid = extractProduct.filter(p => extractProductOptions.includes(p));
+      if (valid.length !== extractProduct.length) setExtractProduct(valid);
+    }
+  }, [extractProductOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -319,7 +408,7 @@ export default function PortfolioAnalysis() {
     '#B28FC9', '#FFDCD1',
   ];
 
-  // Dummy data for candidates table
+
 
   // Dark-text phase colors (lighter backgrounds)
   const LIGHT_BG_PHASES = new Set(['#F9A78D', '#CBAFDE', '#F0B456', '#E3D6C1', '#BFAB8A', '#bbbbbb']);
@@ -1018,7 +1107,7 @@ export default function PortfolioAnalysis() {
                           value={extractProduct}
                           onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                           placeholder="All"
-                          options={productOptions}
+                          options={extractProductOptions}
                           multiSelect={true}
                           showAllOption={true}
                           compact={true}
@@ -1181,18 +1270,14 @@ export default function PortfolioAnalysis() {
                               const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
                               const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(row) : value;
                               return (
-                                <div>
-                                  <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
-                                  {extractTab === 'candidates-approved' && (
-                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                                  )}
-                                </div>
+                                <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
                               );
                             },
                           },
                           ...activeExtractColumns.map((col) => ({
                             header: col.label,
                             accessor: col.accessor || col.id,
+                            ...(col.type && { type: col.type, maxWidth: col.maxWidth || '250px' }),
                           })),
                         ]}
                         data={extractTableData}
@@ -1202,6 +1287,7 @@ export default function PortfolioAnalysis() {
                         totalCount={extractTotalCount}
                         hasNextPage={extractHasNext}
                         itemsPerPage={itemsPerPage}
+                        fitContent
                       />
                     )}
                   </div>
@@ -1286,10 +1372,7 @@ export default function PortfolioAnalysis() {
                     {
                       header: 'Name', accessor: 'candidate_name',
                       render: (value) => (
-                        <div>
-                          <div className="text-sm font-medium text-black">{value}</div>
-                          <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                        </div>
+                        <div className="text-sm font-medium text-black">{value}</div>
                       ),
                     },
                     { header: 'GHA', accessor: 'global_health_area' },
@@ -1302,19 +1385,19 @@ export default function PortfolioAnalysis() {
                         <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                       ),
                     },
-                    { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Indication', accessor: 'indication' },
+                    { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
                     { header: 'Indication type', accessor: 'indication_type' },
                     { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
                     { header: 'Target', accessor: 'target' },
-                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
                     { header: 'Technology type', accessor: 'technology_type' },
                     { header: 'Test format', accessor: 'test_format' },
                     { header: 'Preclinical results status', accessor: 'preclinical_results_status' },
                     { header: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
-                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
                   ]}
                   data={candidatesData}
                   rowKey="candidate_key"
@@ -1491,10 +1574,7 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Name', accessor: 'candidate_name',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black">{value}</div>
                         ),
                       },
                       { header: 'GHA', accessor: 'global_health_area' },
@@ -1507,22 +1587,22 @@ export default function PortfolioAnalysis() {
                           <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                         ),
                       },
-                      { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Indication', accessor: 'indication' },
+                      { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'Indication type', accessor: 'indication_type' },
                       { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
                       { header: 'Target', accessor: 'target' },
-                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'Technology type', accessor: 'technology_type' },
-                      { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
                       {
                         header: 'Approval status', accessor: 'approval_status',
                         render: (value) => (
                           <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                         ),
                       },
-                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
                       { header: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
                       { header: 'EMA approval status', accessor: 'ema_approval_status' },
@@ -1702,13 +1782,10 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Title', accessor: 'trial_title',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
                         ),
                       },
-                      { header: 'Description', accessor: 'description', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px' },
                       {
                         header: 'CT phase', accessor: 'trial_phase',
                         render: (value) => (
@@ -1716,13 +1793,13 @@ export default function PortfolioAnalysis() {
                         ),
                       },
                       { header: 'CT status', accessor: 'status' },
-                      { header: 'Locations', accessor: 'locations', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Locations', accessor: 'locations', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'CT results status', accessor: 'ct_results_status' },
                       { header: 'Start date', accessor: 'start_date' },
                       { header: 'End date', accessor: 'end_date' },
                       { header: 'Sponsor', accessor: 'sponsor' },
-                      { header: 'Collaborator', accessor: 'collaborator', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Source', accessor: 'source_text', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px' },
                     ]}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
