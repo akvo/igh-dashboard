@@ -2,6 +2,7 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
+import { expandDiseaseSelection, expandProductKeySelection } from '@/lib/filterGroups';
 
 /**
  * Build query variables from a portfolio object { disease, product }.
@@ -10,8 +11,13 @@ import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
 function buildQuery(portfolio) {
   if (!portfolio) return { variables: {}, skip: true };
   const variables = {};
-  if (portfolio.disease) variables.diseaseGroupNames = [portfolio.disease];
-  if (portfolio.product) variables.productKeys = [parseInt(portfolio.product)];
+  if (portfolio.disease) {
+    variables.diseaseGroupNames = expandDiseaseSelection([portfolio.disease]);
+  }
+  if (portfolio.product) {
+    const keys = expandProductKeySelection([portfolio.product]);
+    variables.productKeys = keys.map(v => parseInt(v));
+  }
   const skip = !portfolio.disease && !portfolio.product;
   return { variables, skip };
 }

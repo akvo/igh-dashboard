@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { CloseIcon } from '../icons';
+import { MALARIA_GROUP } from '@/lib/filterGroups';
 
 export default function DiseaseListPanel({ isOpen, onClose, diseases = [] }) {
   const grouped = useMemo(() => {
@@ -58,18 +59,38 @@ export default function DiseaseListPanel({ isOpen, onClose, diseases = [] }) {
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-73px)] p-6">
-          {sortedAreas.map((area) => (
-            <div key={area} className="mb-6">
-              <h3 className="text-sm font-bold text-black mb-3">{area}</h3>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                {grouped[area].map((name) => (
-                  <span key={name} className="text-sm text-gray-700">
-                    {name}
-                  </span>
-                ))}
+          {sortedAreas.map((area) => {
+            const malariaStrains = MALARIA_GROUP.members.filter(
+              (m) => m !== MALARIA_GROUP.label && grouped[area]?.includes(m),
+            );
+            const otherDiseases = (grouped[area] || []).filter(
+              (name) => !malariaStrains.includes(name),
+            );
+            return (
+              <div key={area} className="mb-6">
+                <h3 className="text-sm font-bold text-black mb-3">{area}</h3>
+                {malariaStrains.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="text-sm font-semibold text-black mb-1.5">Malaria</h4>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pl-3">
+                      {malariaStrains.map((name) => (
+                        <span key={name} className="text-sm text-gray-700">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                  {otherDiseases.map((name) => (
+                    <span key={name} className="text-sm text-gray-700">
+                      {name}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </>

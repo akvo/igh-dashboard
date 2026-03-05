@@ -15,6 +15,13 @@ import {
   useDiseases,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
+import {
+  addMalariaOption,
+  expandDiseaseSelection,
+  consolidateProductOptionsByKey,
+  expandProductKeySelection,
+  MALARIA_GROUP,
+} from '@/lib/filterGroups';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
@@ -31,8 +38,10 @@ export default function CrossPipelineAnalytics() {
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
-  const selectedProductKeys = selectedProduct.length > 0 ? selectedProduct.map(v => parseInt(v)) : null;
-  const selectedDiseaseGroupNames = selectedDisease.length > 0 ? selectedDisease : null;
+  const expandedProductKeys = expandProductKeySelection(selectedProduct);
+  const selectedProductKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
+  const expandedDiseases = expandDiseaseSelection(selectedDisease);
+  const selectedDiseaseGroupNames = expandedDiseases.length > 0 ? expandedDiseases : null;
 
   // Fetch chart data with filters
   const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
@@ -57,33 +66,42 @@ export default function CrossPipelineAnalytics() {
     const filtered = selectedHealthArea.length > 0
       ? source.filter(d => selectedHealthArea.includes(d.global_health_area))
       : source;
-    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    return addMalariaOption(names);
   }, [diseasesRaw, selectedHealthArea]);
 
-  // All product options (before cross-filtering)
-  const allProductOptions = useMemo(() =>
-    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
-    [productsList]
-  );
+  // All product options (before cross-filtering), with VC consolidation
+  const allProductOptions = useMemo(() => {
+    const raw = (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name }));
+    return consolidateProductOptionsByKey(raw);
+  }, [productsList]);
 
   // Disease↔product cross-filtering via pipeline pairs
+  // (product options may have pipe-separated keys from VC consolidation)
   const diseaseOptions = useMemo(() => {
     if (selectedProduct.length === 0) return ghaDiseaseOptions;
-    const pkeys = new Set(selectedProduct);
+    const pkeys = new Set(expandProductKeySelection(selectedProduct));
     const validNames = new Set(
       pairs.filter(p => pkeys.has(String(p.product_key)))
            .map(p => p.disease_group_name)
     );
-    return ghaDiseaseOptions.filter(d => validNames.has(d));
+    return ghaDiseaseOptions.filter(d => {
+      if (validNames.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validNames.has(m));
+      }
+      return false;
+    });
   }, [selectedProduct, pairs, ghaDiseaseOptions]);
 
   const productOptions = useMemo(() => {
     if (selectedDisease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(selectedDisease);
     const validKeys = new Set(
-      pairs.filter(p => selectedDisease.includes(p.disease_group_name))
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
            .map(p => String(p.product_key))
     );
-    return allProductOptions.filter(o => validKeys.has(o.value));
+    return allProductOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
   }, [selectedDisease, pairs, allProductOptions]);
 
   // When GHA or product narrows the disease list, remove invalid selections.

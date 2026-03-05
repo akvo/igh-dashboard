@@ -12,6 +12,11 @@ import {
   phaseNameToKey,
   AGGREGATE_STAGE_LABELS,
 } from '@/lib/transformations';
+import {
+  expandDiseaseSelection,
+  expandProductKeySelection,
+  MALARIA_GROUP,
+} from '@/lib/filterGroups';
 
 // Year colors — deliberately distinct from the stage colors
 // (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
@@ -51,25 +56,36 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const [appliedCompareYear, setAppliedCompareYear] = useState('');
 
   // Client-side cascading filters from disease×product pairs
+  // (product options may have pipe-separated keys from VC consolidation)
   const validProducts = useMemo(() => {
     return portfolios.map(p => {
       if (!p.disease) return null;
+      const expandedDisease = expandDiseaseSelection([p.disease]);
       const validKeys = new Set(
-        filterPairs.filter(pair => pair.disease_group_name === p.disease)
+        filterPairs.filter(pair => expandedDisease.includes(pair.disease_group_name))
                    .map(pair => String(pair.product_key))
       );
-      return productOptions.filter(o => validKeys.has(o.value));
+      return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
     });
   }, [portfolios, filterPairs, productOptions]);
 
   const validDiseases = useMemo(() => {
     return portfolios.map(p => {
       if (!p.product) return null;
+      const expanded = expandProductKeySelection([p.product]);
+      const pkeys = new Set(expanded);
       const validNames = new Set(
-        filterPairs.filter(pair => String(pair.product_key) === p.product)
+        filterPairs.filter(pair => pkeys.has(String(pair.product_key)))
                    .map(pair => pair.disease_group_name)
       );
-      return diseaseOptions.filter(d => validNames.has(typeof d === 'string' ? d : d.value));
+      return diseaseOptions.filter(d => {
+        const name = typeof d === 'string' ? d : d.value;
+        if (validNames.has(name)) return true;
+        if (name === MALARIA_GROUP.label) {
+          return MALARIA_GROUP.members.some(m => validNames.has(m));
+        }
+        return false;
+      });
     });
   }, [portfolios, filterPairs, diseaseOptions]);
 
@@ -592,23 +608,32 @@ export default function TemporalTrendsSection({
   const [filterYear, setFilterYear] = useState([]);
 
   // Client-side cascading filters from disease×product pairs
+  // (product options may have pipe-separated keys from VC consolidation)
   const effectiveProductOptions = useMemo(() => {
     if (filterDisease.length === 0) return productOptions;
+    const expandedDisease = expandDiseaseSelection(filterDisease);
     const validKeys = new Set(
-      pairs.filter(p => filterDisease.includes(p.disease_group_name))
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
            .map(p => String(p.product_key))
     );
-    return productOptions.filter(o => validKeys.has(o.value));
+    return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
   }, [filterDisease, pairs, productOptions]);
 
   const effectiveDiseaseOptions = useMemo(() => {
     if (filterProduct.length === 0) return diseaseOptions;
-    const pkeys = new Set(filterProduct);
+    const pkeys = new Set(expandProductKeySelection(filterProduct));
     const validNames = new Set(
       pairs.filter(p => pkeys.has(String(p.product_key)))
            .map(p => p.disease_group_name)
     );
-    return diseaseOptions.filter(d => validNames.has(typeof d === 'string' ? d : d.value));
+    return diseaseOptions.filter(d => {
+      const name = typeof d === 'string' ? d : d.value;
+      if (validNames.has(name)) return true;
+      if (name === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validNames.has(m));
+      }
+      return false;
+    });
   }, [filterProduct, pairs, diseaseOptions]);
 
   // Applied filters (committed on Apply)
@@ -633,9 +658,11 @@ export default function TemporalTrendsSection({
     setAppliedYear([]);
   };
 
-  // Build API filter params
-  const diseaseGroupNames = appliedDisease.length > 0 ? appliedDisease : null;
-  const productKeys = appliedProduct.length > 0 ? appliedProduct.map(v => parseInt(v)) : null;
+  // Build API filter params (expand composite selections)
+  const expandedDisease = expandDiseaseSelection(appliedDisease);
+  const expandedProductKeys = expandProductKeySelection(appliedProduct);
+  const diseaseGroupNames = expandedDisease.length > 0 ? expandedDisease : null;
+  const productKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
   const years = appliedYear.length > 0 ? appliedYear.map(v => parseInt(v)) : null;
 
   const { chartData, phases, loading, raw } = useTemporalSnapshots(

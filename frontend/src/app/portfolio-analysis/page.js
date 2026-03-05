@@ -11,6 +11,17 @@ import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/ch
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
+import {
+  addMalariaOption,
+  expandDiseaseSelection,
+  consolidateProductOptionsByName,
+  expandProductNameSelection,
+  normalizeProductName,
+  mergeVectorControlChartData,
+  VECTOR_CONTROL_PRODUCT_NAMES,
+  VECTOR_CONTROL_CONSOLIDATED_NAME,
+  MALARIA_GROUP,
+} from '@/lib/filterGroups';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -73,24 +84,29 @@ export default function PortfolioAnalysis() {
   const apolloClient = useApolloClient();
 
   // Fetch data from API
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, disease, product);
+  // Expand composite filter selections for API calls
+  const expandedDisease = expandDiseaseSelection(disease);
+  const expandedProduct = expandProductNameSelection(product);
+
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, expandedDisease, expandedProduct);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { pairs } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
-  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, disease, product);
+  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
-  const { chartData: productTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, disease, product, candidateTypeForApi);
-  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, disease, product);
+  const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, candidateTypeForApi);
+  const productTypesData = useMemo(() => mergeVectorControlChartData(rawProductTypesData), [rawProductTypesData]);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, expandedDisease, expandedProduct);
 
   const approvingAuthoritiesPhases = [
     { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
     { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
   ];
-  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, disease, product);
+  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, expandedDisease, expandedProduct);
   const itemsPerPage = 10;
-  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product };
+  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct };
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
@@ -139,11 +155,15 @@ export default function PortfolioAnalysis() {
   // Per-tab extract filters and data fetching
   // =========================================================
 
+  // Expand composite selections for extract filters
+  const expandedExtractDisease = expandDiseaseSelection(extractDisease);
+  const expandedExtractProduct = expandProductNameSelection(extractProduct);
+
   // Candidates & Approved Products (Tab 1) uses the full filter set.
   const extractCandidatesFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
-    productNames: extractProduct.length > 0 ? extractProduct : undefined,
+    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
+    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
     phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
@@ -152,14 +172,14 @@ export default function PortfolioAnalysis() {
   // Product or R&D Stage (those fields don't exist on priorities).
   const extractPriorityFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
+    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
     search: extractSearchQuery || undefined,
   };
 
   const extractTrialFilter = {
     globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: extractDisease.length > 0 ? extractDisease : undefined,
-    productNames: extractProduct.length > 0 ? extractProduct : undefined,
+    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
+    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
   };
 
   // Only fire the hook for the active extract tab to prevent cross-tab data
@@ -195,12 +215,12 @@ export default function PortfolioAnalysis() {
   const extractHasNext = activeExtractData.hasNextPage;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
-    { globalHealthAreas: healthArea, diseaseNames: disease, productNames: product },
+    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, disease, product);
-  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, disease, product);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, expandedDisease, expandedProduct);
+  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, expandedDisease, expandedProduct);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const pipelineVisiblePhases = useMemo(() =>
@@ -239,11 +259,11 @@ export default function PortfolioAnalysis() {
     [healthAreas]
   );
 
-  // All product options from API (before cross-filtering)
-  const allProductOptions = useMemo(() =>
-    (productsList || []).map(p => p.product_name),
-    [productsList]
-  );
+  // All product options from API (before cross-filtering), with VC consolidation
+  const allProductOptions = useMemo(() => {
+    const names = (productsList || []).map(p => p.product_name);
+    return consolidateProductOptionsByName(names);
+  }, [productsList]);
 
   // Disease options from API, narrowed to the selected GHA(s) when present
   const ghaDiseaseOptions = useMemo(() => {
@@ -251,27 +271,43 @@ export default function PortfolioAnalysis() {
     const filtered = healthArea.length > 0
       ? source.filter(d => healthArea.includes(d.global_health_area))
       : source;
-    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    return addMalariaOption(names);
   }, [diseasesRaw, healthArea]);
 
   // Disease↔product cross-filtering via pipeline pairs (Explore tab)
+  // Expand consolidated VC name when filtering product→disease
   const diseaseOptions = useMemo(() => {
     if (product.length === 0) return ghaDiseaseOptions;
-    const selectedNames = new Set(product);
+    const expandedProduct = expandProductNameSelection(product);
+    const selectedNames = new Set(expandedProduct);
     const validDiseases = new Set(
       pairs.filter(p => selectedNames.has(p.product_name))
            .map(p => p.disease_group_name)
     );
-    return ghaDiseaseOptions.filter(d => validDiseases.has(d));
+    return ghaDiseaseOptions.filter(d => {
+      if (validDiseases.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
+      }
+      return false;
+    });
   }, [product, pairs, ghaDiseaseOptions]);
 
   const productOptions = useMemo(() => {
     if (disease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(disease);
     const validNames = new Set(
-      pairs.filter(p => disease.includes(p.disease_group_name))
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
            .map(p => p.product_name)
     );
-    return allProductOptions.filter(name => validNames.has(name));
+    return allProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
   }, [disease, pairs, allProductOptions]);
 
   // When GHA or product narrows the disease list, remove invalid selections.
@@ -297,27 +333,43 @@ export default function PortfolioAnalysis() {
     const filtered = extractHealthArea.length > 0
       ? source.filter(d => extractHealthArea.includes(d.global_health_area))
       : source;
-    return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    return addMalariaOption(names);
   }, [diseasesRaw, extractHealthArea]);
 
   // Disease↔product cross-filtering for Extract tab (uses product_name)
+  // Expand consolidated VC name when filtering product→disease
   const extractDiseaseOptions = useMemo(() => {
     if (extractProduct.length === 0) return ghaExtractDiseaseOptions;
-    const selectedNames = new Set(extractProduct);
+    const expandedProduct = expandProductNameSelection(extractProduct);
+    const selectedNames = new Set(expandedProduct);
     const validDiseases = new Set(
       pairs.filter(p => selectedNames.has(p.product_name))
            .map(p => p.disease_group_name)
     );
-    return ghaExtractDiseaseOptions.filter(d => validDiseases.has(d));
+    return ghaExtractDiseaseOptions.filter(d => {
+      if (validDiseases.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
+      }
+      return false;
+    });
   }, [extractProduct, pairs, ghaExtractDiseaseOptions]);
 
   const extractProductOptions = useMemo(() => {
     if (extractDisease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(extractDisease);
     const validNames = new Set(
-      pairs.filter(p => extractDisease.includes(p.disease_group_name))
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
            .map(p => p.product_name)
     );
-    return allProductOptions.filter(name => validNames.has(name));
+    return allProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
   }, [extractDisease, pairs, allProductOptions]);
 
   // Prune extract disease selections that become invalid when GHA or product narrows.
@@ -527,7 +579,7 @@ export default function PortfolioAnalysis() {
         { label: 'GHA', accessor: 'global_health_area' },
         { label: 'Disease', accessor: 'disease_name' },
         { label: 'Secondary disease', accessor: 'secondary_disease_name' },
-        { label: 'Product', accessor: 'product_name' },
+        { label: 'Product', accessor: (row) => normalizeProductName(row.product_name) },
         { label: 'R&D stage', accessor: 'current_rd_stage' },
         { label: 'Developers', accessor: 'developers_agg' },
         { label: 'Indication', accessor: 'indication' },
@@ -566,7 +618,7 @@ export default function PortfolioAnalysis() {
         { label: 'GHA', accessor: 'global_health_area' },
         { label: 'Disease', accessor: 'disease_name' },
         { label: 'Secondary disease', accessor: 'secondary_disease_name' },
-        { label: 'Product', accessor: 'product_name' },
+        { label: 'Product', accessor: (row) => normalizeProductName(row.product_name) },
         { label: 'R&D stage', accessor: 'current_rd_stage' },
         { label: 'Developers', accessor: 'developers_agg' },
         { label: 'Indication', accessor: 'indication' },
@@ -601,8 +653,8 @@ export default function PortfolioAnalysis() {
     try {
       const allRows = await fetchAllTrials(apolloClient, {
         globalHealthAreas: healthArea,
-        diseaseNames: disease,
-        productNames: product,
+        diseaseNames: expandedDisease,
+        productNames: expandedProduct,
       });
       const columns = [
         { label: 'CT number', accessor: (row) => row.trial_name || row.clinicaltrialid },
@@ -1328,7 +1380,7 @@ export default function PortfolioAnalysis() {
                     { header: 'GHA', accessor: 'global_health_area' },
                     { header: 'Disease', accessor: 'disease_name' },
                     { header: 'Secondary disease', accessor: 'secondary_disease_name' },
-                    { header: 'Product', accessor: 'product_name' },
+                    { header: 'Product', accessor: 'product_name', render: (v) => normalizeProductName(v) },
                     {
                       header: 'R&D stage', accessor: 'current_rd_stage',
                       render: (value) => (
@@ -1530,7 +1582,7 @@ export default function PortfolioAnalysis() {
                       { header: 'GHA', accessor: 'global_health_area' },
                       { header: 'Disease', accessor: 'disease_name' },
                       { header: 'Secondary disease', accessor: 'secondary_disease_name' },
-                      { header: 'Product', accessor: 'product_name' },
+                      { header: 'Product', accessor: 'product_name', render: (v) => normalizeProductName(v) },
                       {
                         header: 'R&D stage', accessor: 'current_rd_stage',
                         render: (value) => (
