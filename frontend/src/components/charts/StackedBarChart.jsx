@@ -27,7 +27,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   const total = payload.reduce((sum, entry) => sum + (entry.value || 0), 0);
 
   return (
-    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
+    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3 relative z-50">
       <p className="font-semibold text-black mb-2">{label}</p>
       {payload.map((entry, index) => (
         <div key={index} className="flex items-center gap-2 text-sm">
@@ -138,7 +138,7 @@ export default function StackedBarChart({
   };
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full overflow-visible">
       {showFilters && (
         <div className="flex flex-wrap gap-4 mb-6">
           {phases.map((phase) => (
@@ -310,7 +310,7 @@ export default function StackedBarChart({
           </ResponsiveContainer>
 
           {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64 z-10">
               {xAxisLabel}
             </div>
           )}

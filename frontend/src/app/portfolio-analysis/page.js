@@ -194,7 +194,7 @@ export default function PortfolioAnalysis() {
     '#f0b456', '#54a5c4', '#8c4028', '#e3d6c1',
   ];
 
-  // Dummy data for candidates table
+
 
   const getRdStageStyle = (stage) => {
     switch (stage) {

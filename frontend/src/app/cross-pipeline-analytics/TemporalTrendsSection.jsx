@@ -25,8 +25,8 @@ const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfoli
 
 const STAGE_SERIES = [
   { key: 'approved', label: 'Approved', color: '#F0B456' },
-  { key: 'lateDevelopment', label: 'Late development', color: '#B28FC9' },
-  { key: 'earlyDevelopment', label: 'Early development', color: '#FE7449' },
+  { key: 'lateDevelopment', label: 'Late development', color: '#54A5C4' },
+  { key: 'earlyDevelopment', label: 'Early development', color: '#94C9DD' },
 ];
 
 // Dummy data for compare tab (placeholder until API is wired)
