@@ -38,7 +38,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           <span className="text-black-64">{entry.name}:</span>
           <span className="font-medium text-black">{entry.value}</span>
           <span className="text-black-48">
-            ({((entry.value / total) * 100).toFixed(1)}%)
+            ({total > 0 ? ((entry.value / total) * 100).toFixed(1) : 0}%)
           </span>
         </div>
       ))}

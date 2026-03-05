@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload }) => {
 
   const data = payload[0];
   const total = data.payload.total;
-  const percentage = ((data.value / total) * 100).toFixed(1);
+  const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : 0;
 
   return (
     <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">

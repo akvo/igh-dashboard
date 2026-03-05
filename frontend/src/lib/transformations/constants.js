@@ -53,7 +53,7 @@ export const PHASE_COLORS = {
   'Late development (design and development)': '#E3D6C1',
   'Late development (clinical validation and launch readiness)': '#E3D6C1',
   'Regulatory filing': '#BFAB8A',
-  'PQ listing and regulatory approval': '#F0B456',
+  'PQ listing and regulatory approval': '#D4A03C',
   'Approved': '#F0B456',
   'Phase IV': '#94C9DD',
   'Post-marketing surveillance': '#54A5C4',

@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { GET_TEMPORAL_SNAPSHOTS } from '@/graphql/queries';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart } from '@/components/charts';
@@ -29,8 +31,8 @@ const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfoli
 
 const STAGE_SERIES = [
   { key: 'approved', label: 'Approved', color: '#F0B456' },
-  { key: 'lateDevelopment', label: 'Late development', color: '#54A5C4' },
-  { key: 'earlyDevelopment', label: 'Early development', color: '#94C9DD' },
+  { key: 'lateDevelopment', label: 'Late development', color: '#B28FC9' },
+  { key: 'earlyDevelopment', label: 'Early development', color: '#FE7449' },
 ];
 
 const tabs = [
@@ -38,7 +40,22 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
+// Probe temporal snapshots to check if a filter combination has data
+async function probeHasData(client, variables) {
+  try {
+    const { data } = await client.query({
+      query: GET_TEMPORAL_SNAPSHOTS,
+      variables,
+      fetchPolicy: 'cache-first',
+    });
+    return (data?.temporalSnapshots?.length ?? 0) > 0;
+  } catch {
+    return true; // On error, keep option available
+  }
+}
+
 function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [] }) {
+  const client = useApolloClient();
   const [visibleCount, setVisibleCount] = useState(2);
   const [portfolios, setPortfolios] = useState([
     { disease: '', product: '' },
@@ -49,6 +66,54 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const [compareYear, setCompareYear] = useState('');
   const [appliedPortfolios, setAppliedPortfolios] = useState([]);
   const [appliedCompareYear, setAppliedCompareYear] = useState('');
+
+  // Cascading filters: per-portfolio valid options (null = all valid)
+  const [validProducts, setValidProducts] = useState([null, null, null, null]);
+  const [validDiseases, setValidDiseases] = useState([null, null, null, null]);
+
+  // Probe valid products when a portfolio's disease changes
+  const portfolioDiseases = portfolios.map(p => p.disease).join('|');
+  useEffect(() => {
+    portfolios.slice(0, visibleCount).forEach((p, idx) => {
+      if (!p.disease) {
+        setValidProducts(prev => { const n = [...prev]; n[idx] = null; return n; });
+        return;
+      }
+      Promise.all(
+        productOptions.map(opt =>
+          probeHasData(client, { diseaseGroupNames: [p.disease], productKeys: [parseInt(opt.value)] })
+        )
+      ).then(results => {
+        setValidProducts(prev => {
+          const n = [...prev];
+          n[idx] = productOptions.filter((_, i) => results[i]);
+          return n;
+        });
+      });
+    });
+  }, [portfolioDiseases, visibleCount, productOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Probe valid diseases when a portfolio's product changes
+  const portfolioProducts = portfolios.map(p => p.product).join('|');
+  useEffect(() => {
+    portfolios.slice(0, visibleCount).forEach((p, idx) => {
+      if (!p.product) {
+        setValidDiseases(prev => { const n = [...prev]; n[idx] = null; return n; });
+        return;
+      }
+      Promise.all(
+        diseaseOptions.map(d =>
+          probeHasData(client, { productKeys: [parseInt(p.product)], diseaseGroupNames: [d] })
+        )
+      ).then(results => {
+        setValidDiseases(prev => {
+          const n = [...prev];
+          n[idx] = diseaseOptions.filter((_, i) => results[i]);
+          return n;
+        });
+      });
+    });
+  }, [portfolioProducts, visibleCount, diseaseOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
@@ -295,7 +360,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     value={portfolios[idx].disease}
                     onChange={(val) => handleDiseaseChange(idx, val)}
                     placeholder="All"
-                    options={diseaseOptions}
+                    options={validDiseases[idx] ?? diseaseOptions}
                   />
                 </div>
                 <div className="flex-1">
@@ -304,7 +369,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     value={portfolios[idx].product}
                     onChange={(val) => handleProductChange(idx, val)}
                     placeholder="All"
-                    options={productOptions}
+                    options={validProducts[idx] ?? productOptions}
                   />
                 </div>
               </div>
@@ -546,12 +611,55 @@ export default function TemporalTrendsSection({
   productOptions = [],
   availableYears = [],
 }) {
+  const client = useApolloClient();
   const [activeTab, setActiveTab] = useState('single');
 
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
   const [filterYear, setFilterYear] = useState([]);
+
+  // Cascading filters: valid options based on the other filter's selection
+  const [filteredProductOpts, setFilteredProductOpts] = useState(null);
+  const [filteredDiseaseOpts, setFilteredDiseaseOpts] = useState(null);
+
+  // When disease filter changes, probe which products have data
+  useEffect(() => {
+    if (filterDisease.length === 0) {
+      setFilteredProductOpts(null);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      productOptions.map(opt =>
+        probeHasData(client, { diseaseGroupNames: filterDisease, productKeys: [parseInt(opt.value)] })
+      )
+    ).then(results => {
+      if (!cancelled) setFilteredProductOpts(productOptions.filter((_, i) => results[i]));
+    });
+    return () => { cancelled = true; };
+  }, [filterDisease, productOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When product filter changes, probe which diseases have data
+  useEffect(() => {
+    if (filterProduct.length === 0) {
+      setFilteredDiseaseOpts(null);
+      return;
+    }
+    let cancelled = false;
+    const pkeys = filterProduct.map(v => parseInt(v));
+    Promise.all(
+      diseaseOptions.map(d =>
+        probeHasData(client, { productKeys: pkeys, diseaseGroupNames: [d] })
+      )
+    ).then(results => {
+      if (!cancelled) setFilteredDiseaseOpts(diseaseOptions.filter((_, i) => results[i]));
+    });
+    return () => { cancelled = true; };
+  }, [filterProduct, diseaseOptions, client]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const effectiveDiseaseOptions = filteredDiseaseOpts ?? diseaseOptions;
+  const effectiveProductOptions = filteredProductOpts ?? productOptions;
 
   // Applied filters (committed on Apply)
   const [appliedDisease, setAppliedDisease] = useState([]);
@@ -742,9 +850,8 @@ export default function TemporalTrendsSection({
                   value={filterDisease}
                   onChange={setFilterDisease}
                   placeholder="All"
-                  options={diseaseOptions}
+                  options={effectiveDiseaseOptions}
                   multiSelect={true}
-
                 />
               </div>
               <div className="min-w-[200px]">
@@ -753,9 +860,8 @@ export default function TemporalTrendsSection({
                   value={filterProduct}
                   onChange={setFilterProduct}
                   placeholder="All"
-                  options={productOptions}
+                  options={effectiveProductOptions}
                   multiSelect={true}
-
                 />
               </div>
               <div className="min-w-[160px]">

@@ -118,12 +118,9 @@ const NavItem = ({ label, hasDropdown, href, onClick, items }) => {
 };
 
 const DefaultLogo = () => (
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 bg-white/20 rounded-md flex items-center justify-center">
-      <span className="text-[11px] text-white font-semibold">Logo</span>
-    </div>
-    <span className="text-base font-bold text-white">Impact Global Health</span>
-  </div>
+  <a href="/" className="flex items-center">
+    <img src="/logo-white.svg" alt="Impact Global Health" height={40} />
+  </a>
 );
 
 export default Header;

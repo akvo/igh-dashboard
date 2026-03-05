@@ -118,8 +118,8 @@ export const AGGREGATE_STAGE_LABELS = {
 };
 
 export const AGGREGATE_STAGE_COLORS = {
-  earlyDevelopment: '#94C9DD',
-  lateDevelopment: '#54A5C4',
+  earlyDevelopment: '#FE7449',
+  lateDevelopment: '#B28FC9',
   approved: '#F0B456',
 };
 

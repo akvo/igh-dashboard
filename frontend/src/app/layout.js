@@ -28,6 +28,9 @@ const align = localFont({
 export const metadata = {
   title: 'IGH Dashboard',
   description: 'Innovation in Global Health Dashboard',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 const navItems = [
