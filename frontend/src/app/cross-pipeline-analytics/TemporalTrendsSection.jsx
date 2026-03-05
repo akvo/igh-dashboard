@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart } from '@/components/charts';
-import { useTemporalSnapshots, usePortfolioComparison, useTemporalFilterOptions } from '@/graphql/hooks';
+import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import {
   aggregateTemporalPhases,
   computeGrowthTable,
@@ -584,7 +584,7 @@ export default function TemporalTrendsSection({
   availableYears = [],
 }) {
   const [activeTab, setActiveTab] = useState('single');
-  const { pairs } = useTemporalFilterOptions();
+  const { pairs } = usePipelineFilterPairs();
 
   // Local filter state (Apply/Clear pattern)
   const [filterDisease, setFilterDisease] = useState([]);

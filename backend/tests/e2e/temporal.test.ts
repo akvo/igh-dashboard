@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { query } from "../helpers/graphql.js";
-import type { TemporalSnapshotRow, TemporalFilterOption } from "../helpers/types.js";
+import type { TemporalSnapshotRow, PipelineFilterPair } from "../helpers/types.js";
 
 describe("Temporal Analysis", () => {
   it("returns available years for selector", async () => {
@@ -284,35 +284,38 @@ describe("Temporal Analysis — year filter", () => {
   });
 });
 
-describe("Temporal filter options (cross-filtering)", () => {
-  it("returns disease×product pairs", async () => {
+describe("Pipeline filter pairs (cross-filtering)", () => {
+  it("returns disease×product pairs with product_name", async () => {
     const { data } = await query<{
-      temporalFilterOptions: TemporalFilterOption[];
+      pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
-      temporalFilterOptions {
+      pipelineFilterPairs {
         disease_group_name
         product_key
+        product_name
       }
     }`);
 
-    expect(data.temporalFilterOptions.length).toBeGreaterThan(0);
-    data.temporalFilterOptions.forEach((row) => {
+    expect(data.pipelineFilterPairs.length).toBeGreaterThan(0);
+    data.pipelineFilterPairs.forEach((row) => {
       expect(typeof row.disease_group_name).toBe("string");
       expect(typeof row.product_key).toBe("number");
+      expect(typeof row.product_name).toBe("string");
     });
   });
 
   it("returns distinct pairs", async () => {
     const { data } = await query<{
-      temporalFilterOptions: TemporalFilterOption[];
+      pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
-      temporalFilterOptions {
+      pipelineFilterPairs {
         disease_group_name
         product_key
+        product_name
       }
     }`);
 
-    const keys = data.temporalFilterOptions.map(
+    const keys = data.pipelineFilterPairs.map(
       (r) => `${r.disease_group_name}::${r.product_key}`,
     );
     const unique = new Set(keys);
@@ -321,16 +324,17 @@ describe("Temporal filter options (cross-filtering)", () => {
 
   it("pairs are consistent with temporal snapshots", async () => {
     const { data: pairsData } = await query<{
-      temporalFilterOptions: TemporalFilterOption[];
+      pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
-      temporalFilterOptions {
+      pipelineFilterPairs {
         disease_group_name
         product_key
+        product_name
       }
     }`);
 
     // Pick a pair and verify temporalSnapshots returns data for it
-    const pair = pairsData.temporalFilterOptions[0];
+    const pair = pairsData.pipelineFilterPairs[0];
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(

@@ -335,12 +335,13 @@ export const GET_RD_PRIORITIES = gql`
   }
 `;
 
-// Temporal filter options — distinct (disease, product) pairs for cross-filtering
-export const GET_TEMPORAL_FILTER_OPTIONS = gql`
-  query TemporalFilterOptions {
-    temporalFilterOptions {
+// Pipeline filter pairs — distinct (disease, product) tuples for cross-filtering
+export const GET_PIPELINE_FILTER_PAIRS = gql`
+  query PipelineFilterPairs {
+    pipelineFilterPairs {
       disease_group_name
       product_key
+      product_name
     }
   }
 `;

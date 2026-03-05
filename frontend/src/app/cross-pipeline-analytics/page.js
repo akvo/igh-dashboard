@@ -13,6 +13,7 @@ import {
   useGlobalHealthAreaSummaries,
   useProducts,
   useDiseases,
+  usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
@@ -26,6 +27,7 @@ export default function CrossPipelineAnalytics() {
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { pairs } = usePipelineFilterPairs();
 
   // Build filter arrays for API
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
@@ -50,7 +52,7 @@ export default function CrossPipelineAnalytics() {
   );
 
   // Disease options from API, narrowed to the selected GHA(s) when present
-  const diseaseOptions = useMemo(() => {
+  const ghaDiseaseOptions = useMemo(() => {
     const source = diseasesRaw || [];
     const filtered = selectedHealthArea.length > 0
       ? source.filter(d => selectedHealthArea.includes(d.global_health_area))
@@ -58,8 +60,33 @@ export default function CrossPipelineAnalytics() {
     return [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
   }, [diseasesRaw, selectedHealthArea]);
 
-  // When the GHA filter narrows the disease list, remove any disease
-  // selections that are no longer valid options.
+  // All product options (before cross-filtering)
+  const allProductOptions = useMemo(() =>
+    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
+    [productsList]
+  );
+
+  // Disease↔product cross-filtering via pipeline pairs
+  const diseaseOptions = useMemo(() => {
+    if (selectedProduct.length === 0) return ghaDiseaseOptions;
+    const pkeys = new Set(selectedProduct);
+    const validNames = new Set(
+      pairs.filter(p => pkeys.has(String(p.product_key)))
+           .map(p => p.disease_group_name)
+    );
+    return ghaDiseaseOptions.filter(d => validNames.has(d));
+  }, [selectedProduct, pairs, ghaDiseaseOptions]);
+
+  const productOptions = useMemo(() => {
+    if (selectedDisease.length === 0) return allProductOptions;
+    const validKeys = new Set(
+      pairs.filter(p => selectedDisease.includes(p.disease_group_name))
+           .map(p => String(p.product_key))
+    );
+    return allProductOptions.filter(o => validKeys.has(o.value));
+  }, [selectedDisease, pairs, allProductOptions]);
+
+  // When GHA or product narrows the disease list, remove invalid selections.
   useEffect(() => {
     if (selectedDisease.length > 0) {
       const valid = selectedDisease.filter(d => diseaseOptions.includes(d));
@@ -67,11 +94,14 @@ export default function CrossPipelineAnalytics() {
     }
   }, [diseaseOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Product options with key-value pairs for filtering
-  const productOptions = useMemo(() =>
-    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
-    [productsList]
-  );
+  // When disease narrows the product list, remove invalid selections.
+  useEffect(() => {
+    if (selectedProduct.length > 0) {
+      const validValues = new Set(productOptions.map(o => o.value));
+      const valid = selectedProduct.filter(p => validValues.has(p));
+      if (valid.length !== selectedProduct.length) setSelectedProduct(valid);
+    }
+  }, [productOptions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Use API phases with consistent colors, enforcing lifecycle ordering
   // via sortOrder so the chart and legend always read

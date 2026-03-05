@@ -1,5 +1,5 @@
 import { getDatabase } from "../connection.js";
-import type { TemporalSnapshotRow, TemporalFilterOption } from "../types.js";
+import type { TemporalSnapshotRow, PipelineFilterPair } from "../types.js";
 import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TemporalSnapshotFilters {
@@ -72,24 +72,25 @@ export function getTemporalSnapshots(filters?: TemporalSnapshotFilters): Tempora
 }
 
 /**
- * Get distinct (disease_group_name, product_key) pairs present in the pipeline.
- * Used for client-side cross-filtering in the temporal trends UI.
+ * Get distinct (disease_group_name, product_key, product_name) tuples present
+ * in the pipeline.  Used app-wide for client-side disease↔product cross-filtering.
  */
-export function getTemporalFilterOptions(): TemporalFilterOption[] {
+export function getPipelineFilterPairs(): PipelineFilterPair[] {
   const db = getDatabase();
 
   return db
     .prepare(
       `
-    SELECT DISTINCT dd.disease_group_name, f.product_key
+    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name
     FROM fact_pipeline_snapshot f
     JOIN dim_disease dd ON f.disease_key = dd.disease_key
+    JOIN dim_product dp ON f.product_key = dp.product_key
     WHERE ${PIPELINE_FILTER}
       AND dd.disease_group_name IS NOT NULL
       AND f.product_key IS NOT NULL
   `,
     )
-    .all() as TemporalFilterOption[];
+    .all() as PipelineFilterPair[];
 }
 
 /**
