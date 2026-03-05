@@ -158,6 +158,8 @@ const Pagination = ({
 // Cell rendering — matches Table.jsx's renderCell logic
 // =========================================================
 
+const emptyPlaceholder = <span className="text-gray-400 italic">no information available</span>;
+
 const renderCell = (row, column) => {
   const value = row[column.accessor];
 
@@ -193,21 +195,38 @@ const renderCell = (row, column) => {
       );
 
     case 'number':
+      if (value == null && value !== 0) return emptyPlaceholder;
       return <span className="tabular-nums">{typeof value === 'number' ? value.toLocaleString() : value}</span>;
 
     case 'date':
-      if (!value) return <span className="text-gray-400">-</span>;
+      if (!value) return emptyPlaceholder;
       return <span className="text-gray-600 tabular-nums">{new Date(value).toLocaleDateString()}</span>;
 
     case 'truncate':
-      return (
+      return value ? (
         <span className="block overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: column.maxWidth || '200px' }} title={value}>
-          {value || '-'}
+          {value}
         </span>
-      );
+      ) : emptyPlaceholder;
+
+    case 'line-clamp':
+      return value ? (
+        <span
+          className="block overflow-hidden"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: column.lines || 3,
+            WebkitBoxOrient: 'vertical',
+            maxWidth: column.maxWidth || '250px',
+          }}
+          title={value}
+        >
+          {value}
+        </span>
+      ) : emptyPlaceholder;
 
     default:
-      return <span className="text-black">{value ?? '-'}</span>;
+      return value != null ? <span className="text-black">{value}</span> : emptyPlaceholder;
   }
 };
 
