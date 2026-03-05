@@ -1174,6 +1174,7 @@ export default function PortfolioAnalysis() {
                           ...activeExtractColumns.map((col) => ({
                             header: col.label,
                             accessor: col.accessor || col.id,
+                            ...(col.type && { type: col.type, maxWidth: col.maxWidth || '250px' }),
                           })),
                         ]}
                         data={extractTableData}
@@ -1283,19 +1284,19 @@ export default function PortfolioAnalysis() {
                         <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                       ),
                     },
-                    { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Indication', accessor: 'indication' },
+                    { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
                     { header: 'Indication type', accessor: 'indication_type' },
                     { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
                     { header: 'Target', accessor: 'target' },
-                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
                     { header: 'Technology type', accessor: 'technology_type' },
                     { header: 'Test format', accessor: 'test_format' },
                     { header: 'Preclinical results status', accessor: 'preclinical_results_status' },
                     { header: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
-                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
-                    { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
+                    { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
                   ]}
                   data={candidatesData}
                   rowKey="candidate_key"
@@ -1488,22 +1489,22 @@ export default function PortfolioAnalysis() {
                           <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                         ),
                       },
-                      { header: 'Developers', accessor: 'developers_agg', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Indication', accessor: 'indication' },
+                      { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'Indication type', accessor: 'indication_type' },
                       { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
                       { header: 'Target', accessor: 'target' },
-                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'Technology type', accessor: 'technology_type' },
-                      { header: 'Key features and challenges', accessor: 'key_features', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Recent updates', accessor: 'recent_updates', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
                       {
                         header: 'Approval status', accessor: 'approval_status',
                         render: (value) => (
                           <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
                         ),
                       },
-                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
                       { header: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
                       { header: 'EMA approval status', accessor: 'ema_approval_status' },
@@ -1689,7 +1690,7 @@ export default function PortfolioAnalysis() {
                           </div>
                         ),
                       },
-                      { header: 'Description', accessor: 'description', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px' },
                       {
                         header: 'CT phase', accessor: 'trial_phase',
                         render: (value) => (
@@ -1697,13 +1698,13 @@ export default function PortfolioAnalysis() {
                         ),
                       },
                       { header: 'CT status', accessor: 'status' },
-                      { header: 'Locations', accessor: 'locations', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Locations', accessor: 'locations', type: 'line-clamp', maxWidth: '200px' },
                       { header: 'CT results status', accessor: 'ct_results_status' },
                       { header: 'Start date', accessor: 'start_date' },
                       { header: 'End date', accessor: 'end_date' },
                       { header: 'Sponsor', accessor: 'sponsor' },
-                      { header: 'Collaborator', accessor: 'collaborator', type: 'truncate', maxWidth: '200px' },
-                      { header: 'Source', accessor: 'source_text', type: 'truncate', maxWidth: '200px' },
+                      { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px' },
+                      { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px' },
                     ]}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
