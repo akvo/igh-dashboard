@@ -156,7 +156,34 @@ export default function StackedBarChart({
   return (
     <div className="w-full overflow-visible">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          {sortedPhases.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: true }), {});
+                  if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
+                  else setInternalVisiblePhases(next);
+                }}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Select all
+              </button>
+              <span className="text-xs text-black-24">|</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: false }), {});
+                  if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
+                  else setInternalVisiblePhases(next);
+                }}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
           {sortedPhases.map((phase) => (
             <label
               key={phase.key}
@@ -246,6 +273,7 @@ export default function StackedBarChart({
                   <YAxis
                     type="category"
                     dataKey={categoryKey}
+                    interval={0}
                     axisLine={false}
                     tickLine={false}
                     tick={({ x, y, payload }) => {
@@ -272,6 +300,7 @@ export default function StackedBarChart({
                   <XAxis
                     type="category"
                     dataKey={categoryKey}
+                    interval={0}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
                     tick={hasLongLabels

@@ -230,6 +230,7 @@ export default function ServerTable({
   itemsPerPage = 10,
   emptyState,
   className = '',
+  fitContent = false,
 }) {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
@@ -260,6 +261,7 @@ export default function ServerTable({
                   {column.header}
                 </th>
               ))}
+              {fitContent && <th className="bg-[#FEF8EE]" />}
             </tr>
           </thead>
           <tbody>
@@ -284,6 +286,7 @@ export default function ServerTable({
                       </td>
                     );
                   })}
+                  {fitContent && <td className="border-b border-gray-200" />}
                 </tr>
               );
             })}

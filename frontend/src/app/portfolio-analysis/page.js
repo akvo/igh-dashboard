@@ -1162,12 +1162,7 @@ export default function PortfolioAnalysis() {
                               const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
                               const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(row) : value;
                               return (
-                                <div>
-                                  <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
-                                  {extractTab === 'candidates-approved' && (
-                                    <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                                  )}
-                                </div>
+                                <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
                               );
                             },
                           },
@@ -1183,6 +1178,7 @@ export default function PortfolioAnalysis() {
                         totalCount={extractTotalCount}
                         hasNextPage={extractHasNext}
                         itemsPerPage={itemsPerPage}
+                        fitContent
                       />
                     )}
                   </div>
@@ -1267,10 +1263,7 @@ export default function PortfolioAnalysis() {
                     {
                       header: 'Name', accessor: 'candidate_name',
                       render: (value) => (
-                        <div>
-                          <div className="text-sm font-medium text-black">{value}</div>
-                          <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                        </div>
+                        <div className="text-sm font-medium text-black">{value}</div>
                       ),
                     },
                     { header: 'GHA', accessor: 'global_health_area' },
@@ -1472,10 +1465,7 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Name', accessor: 'candidate_name',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black">{value}</div>
                         ),
                       },
                       { header: 'GHA', accessor: 'global_health_area' },
@@ -1683,10 +1673,7 @@ export default function PortfolioAnalysis() {
                       {
                         header: 'Title', accessor: 'trial_title',
                         render: (value) => (
-                          <div>
-                            <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
-                            <a href="#" className="text-sm text-orange-500 hover:underline">Explore &rarr;</a>
-                          </div>
+                          <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
                         ),
                       },
                       { header: 'Description', accessor: 'description', type: 'truncate', maxWidth: '200px' },

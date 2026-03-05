@@ -95,7 +95,26 @@ export default function GroupedBarChart({
   return (
     <div className="w-full overflow-visible">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          {series.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button
+                type="button"
+                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {}))}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Select all
+              </button>
+              <span className="text-xs text-black-24">|</span>
+              <button
+                type="button"
+                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {}))}
+                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
           {series.map(s => (
             <label
               key={s.key}
@@ -172,6 +191,7 @@ export default function GroupedBarChart({
               <XAxis
                 type="category"
                 dataKey={categoryKey}
+                interval={0}
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
                 tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}

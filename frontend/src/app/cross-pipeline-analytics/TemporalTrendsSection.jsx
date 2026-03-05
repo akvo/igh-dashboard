@@ -458,6 +458,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         {/* Phase checkboxes */}
         {apiPhases.length > 0 && (
           <div className="flex items-center gap-6 py-4 flex-wrap">
+            {apiPhases.length >= 3 && (
+              <div className="flex gap-1 mr-2">
+                <button type="button" onClick={() => setComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                <span className="text-xs text-black-24">|</span>
+                <button type="button" onClick={() => setComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+              </div>
+            )}
             {apiPhases.map(phase => (
               <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
                 <span
@@ -549,6 +556,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
         {/* Stage checkboxes */}
         <div className="flex items-center gap-6 py-4 flex-wrap">
+          {STAGE_SERIES.length >= 3 && (
+            <div className="flex gap-1 mr-2">
+              <button type="button" onClick={() => setAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+              <span className="text-xs text-black-24">|</span>
+              <button type="button" onClick={() => setAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+            </div>
+          )}
           {STAGE_SERIES.map(stage => (
             <label key={stage.key} className="flex items-center gap-2 cursor-pointer">
               <span
@@ -917,6 +931,13 @@ export default function TemporalTrendsSection({
 
             {/* Phase checkboxes */}
             <div className="flex items-center gap-6 py-4 flex-wrap">
+              {phases.length >= 3 && (
+                <div className="flex gap-1 mr-2">
+                  <button type="button" onClick={() => setSelectedPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                  <span className="text-xs text-black-24">|</span>
+                  <button type="button" onClick={() => setSelectedPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+                </div>
+              )}
               {phases.map(phase => (
                 <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
                   <span
