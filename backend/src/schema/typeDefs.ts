@@ -267,6 +267,7 @@ export const typeDefs = `#graphql
     developers_agg: String
     mechanism_of_action: String
     key_features: String
+    known_funders_agg: String
     technology_type: String
     indication_type: String
     healthcare_facility_level: String
@@ -289,6 +290,14 @@ export const typeDefs = `#graphql
     japanese_mhlw_approval_status: String
     us_fda_approval_status: String
     approving_authorities_agg: String
+    technology_principle: String
+    target_population: String
+    route_of_administration: String
+    platform: String
+    chim_study: String
+    key_clinical_trial: String
+    rd_stage_2023: String
+    rd_stage_2019: String
   }
 
   type PortfolioCandidateConnection {
@@ -315,6 +324,16 @@ export const typeDefs = `#graphql
     locations: String
     sponsor: String
     source_text: String
+    age_groups: String
+    enrollment_count: Int
+    study_type: String
+    funder_type: String
+    interventions: String
+    outcome_measure: String
+    sex: String
+    study_design: String
+    ct_results_type: String
+    ct_terminated_reason: String
   }
 
   type ClinicalTrialConnection {
@@ -328,6 +347,36 @@ export const typeDefs = `#graphql
     country_name: String
     iso_code: String
     location_scope: String
+  }
+
+  # =============================================================================
+  # R&D PRIORITY TYPES (Extract tab)
+  # =============================================================================
+
+  type RdPriorityNode {
+    priority_key: Int!
+    rdpriorityid: String
+    priority_name: String
+    indication: String
+    intended_use: String
+    disease_name: String
+    global_health_area: String
+    type_of_guidance: String
+    author: String
+    publication_date: String
+    target_population: String
+    efficacy: String
+    safety: String
+    source: String
+    product_name: String
+    candidate_name: String
+    current_rd_stage: String
+  }
+
+  type RdPriorityConnection {
+    nodes: [RdPriorityNode!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
   # =============================================================================
@@ -348,6 +397,12 @@ export const typeDefs = `#graphql
     disease_names: [String!]
     product_names: [String!]
     status: String
+  }
+
+  input RdPriorityFilter {
+    global_health_areas: [String!]
+    disease_names: [String!]
+    search: String
   }
 
   input CandidateFilter {
@@ -377,7 +432,7 @@ export const typeDefs = `#graphql
     candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
-    geographicDistribution(location_scope: String!, statuses: [String!]): [GeographicDistributionRow!]!
+    geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], disease_names: [String!], product_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
     temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
@@ -393,6 +448,12 @@ export const typeDefs = `#graphql
 
     # Portfolio analysis - clinical trials list (paginated)
     clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
+
+    # Extract tab - R&D priorities with linked candidates (paginated)
+    rdPrioritiesWithCandidates(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
+
+    # Extract tab - R&D priorities only (paginated)
+    rdPriorities(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
 
     # Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!]): ClinicalTrialStats!

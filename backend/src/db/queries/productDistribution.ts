@@ -1,6 +1,6 @@
 import { getDatabase } from "../connection.js";
 import type { ProductDistributionRow } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface ProductDistributionFilters {
   global_health_areas?: string[];
@@ -19,7 +19,7 @@ export function getProductDistribution(
   const db = getDatabase();
 
   const joins = ["JOIN dim_product pr ON f.product_key = pr.product_key"];
-  const conditions = ["f.is_active_flag = 1", "pr.product_name IS NOT NULL"];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, "pr.product_name IS NOT NULL"];
   const params: (string | number)[] = [];
 
   const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };

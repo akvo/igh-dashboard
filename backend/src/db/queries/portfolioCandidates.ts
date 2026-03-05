@@ -4,12 +4,12 @@ import type {
   PortfolioCandidateFilter,
   PortfolioCandidateConnection,
 } from "../types.js";
-import { addArrayCondition } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
 function buildWhere(filter?: PortfolioCandidateFilter) {
-  const conditions = ["f.is_active_flag = 1"];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
@@ -64,7 +64,7 @@ export function getPortfolioCandidates(
   const totalCount = countResult.total;
 
   const dataSql = `
-    WITH ranked AS (
+    WITH page AS (
       SELECT
         c.candidate_key,
         c.candidate_name,
@@ -86,6 +86,13 @@ export function getPortfolioCandidates(
         c.preclinical_results_source,
         c.recent_updates,
         c.test_format,
+        c.known_funders_agg,
+        c.technology_principle,
+        c.target_population,
+        c.route_of_administration,
+        c.platform,
+        c.chim_study,
+        c.key_clinical_trial,
         t.technology_type,
         d.global_health_area,
         d.disease_group_name AS disease_name,
@@ -99,37 +106,31 @@ export function getPortfolioCandidates(
         r.sra_approval_status,
         r.ema_approval_status,
         r.japanese_mhlw_approval_status,
-        r.us_fda_approval_status,
-        (SELECT GROUP_CONCAT(da.authority_name, '; ')
-         FROM bridge_candidate_approving_authority baa
-         JOIN dim_approving_authority da ON baa.authority_key = da.authority_key
-         WHERE baa.candidate_key = c.candidate_key) AS approving_authorities_agg,
-        ROW_NUMBER() OVER (
-          PARTITION BY c.candidate_key
-          ORDER BY COALESCE(p.sort_order, -1) DESC, f.snapshot_id DESC
-        ) as rn
+        r.us_fda_approval_status
       FROM dim_candidate_core c
       ${JOINS}
       ${whereClause}
+      ORDER BY c.candidate_name
+      LIMIT ? OFFSET ?
     )
-    SELECT candidate_key, candidate_name, candidate_type, candidateid,
-           alternative_names, current_rd_stage, countries_approved_count,
-           countries_approved_agg, indication, target,
-           developers_agg, mechanism_of_action, key_features,
-           indication_type, healthcare_facility_level,
-           preclinical_results_status, type_of_preclinical_results,
-           preclinical_results_source, recent_updates, test_format,
-           technology_type,
-           global_health_area, disease_name, secondary_disease_name,
-           product_name, sub_product_name, phase_name,
-           approval_status, who_prequalification,
-           nra_approval_status, sra_approval_status,
-           ema_approval_status, japanese_mhlw_approval_status,
-           us_fda_approval_status, approving_authorities_agg
-    FROM ranked
-    WHERE rn = 1
-    ORDER BY candidate_name
-    LIMIT ? OFFSET ?
+    SELECT page.*,
+      (SELECT GROUP_CONCAT(da.authority_name, '; ')
+       FROM bridge_candidate_approving_authority baa
+       JOIN dim_approving_authority da ON baa.authority_key = da.authority_key
+       WHERE baa.candidate_key = page.candidate_key) AS approving_authorities_agg,
+      (SELECT p23.phase_name
+       FROM fact_pipeline_snapshot f23
+       JOIN dim_date dt23 ON f23.date_key = dt23.date_key
+       LEFT JOIN dim_phase p23 ON f23.phase_key = p23.phase_key
+       WHERE f23.candidate_key = page.candidate_key AND dt23.year <= 2023
+       ORDER BY dt23.year DESC LIMIT 1) AS rd_stage_2023,
+      (SELECT p19.phase_name
+       FROM fact_pipeline_snapshot f19
+       JOIN dim_date dt19 ON f19.date_key = dt19.date_key
+       LEFT JOIN dim_phase p19 ON f19.phase_key = p19.phase_key
+       WHERE f19.candidate_key = page.candidate_key AND dt19.year <= 2019
+       ORDER BY dt19.year DESC LIMIT 1) AS rd_stage_2019
+    FROM page
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as PortfolioCandidateNode[];
 

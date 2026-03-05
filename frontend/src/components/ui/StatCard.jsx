@@ -16,7 +16,7 @@ const StatCard = ({
   const [isInfoHovered, setIsInfoHovered] = useState(false);
 
   return (
-    <div className={`bg-white border border-gray-200 p-6 flex flex-col gap-4 ${className}`}>
+    <div className={`bg-white border border-gray-200 p-4 flex flex-col gap-4 ${className}`}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <h3 className="text-base font-semibold text-black">{title}</h3>
@@ -38,7 +38,7 @@ const StatCard = ({
 
       {/* Value */}
       <div>
-        <div className="text-[40px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
+        <div className="text-[48px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
           {typeof value === 'number' ? value.toLocaleString() : value}
         </div>
         {description && (
@@ -56,7 +56,7 @@ const StatCard = ({
               onButtonClick();
             }
           }}
-          className="block w-full py-3 px-4 text-sm font-medium text-gray-600 bg-transparent border border-gray-200 rounded-lg cursor-pointer text-center no-underline mt-2 hover:bg-gray-50 transition-colors"
+          className="block w-full py-3 px-4 text-sm font-medium text-black bg-white border border-black-24 cursor-pointer text-center no-underline mt-2 hover:bg-gray-50 transition-colors"
         >
           {buttonText}
         </a>

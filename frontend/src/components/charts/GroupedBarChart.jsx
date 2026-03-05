@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts';
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -39,7 +40,8 @@ export default function GroupedBarChart({
   xAxisLabel = '',
   yAxisLabel = '',
   showFilters = true,
-  barRadius = 4,
+  showBarLabels = false,
+  barRadius = 0,
 }) {
   const [visibleSeries, setVisibleSeries] = useState(
     series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})
@@ -156,7 +158,7 @@ export default function GroupedBarChart({
                 top: 10,
                 right: 10,
                 left: 5,
-                bottom: xAxisLabel ? 40 : 20,
+                bottom: showBarLabels ? 55 : (xAxisLabel ? 40 : 20),
               }}
               barCategoryGap="20%"
               barGap={4}
@@ -172,7 +174,7 @@ export default function GroupedBarChart({
                 dataKey={categoryKey}
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
-                tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }}
+                tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}
               />
               <YAxis
                 type="number"
@@ -195,7 +197,26 @@ export default function GroupedBarChart({
                   name={s.label}
                   fill={s.color}
                   radius={[barRadius, barRadius, 0, 0]}
-                />
+                >
+                  {showBarLabels && (
+                    <LabelList
+                      content={({ x, y, width, height: barHeight }) => {
+                        const baseline = y + barHeight;
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={baseline + 14}
+                            textAnchor="middle"
+                            fontSize={11}
+                            fill="rgba(38, 38, 38, 0.64)"
+                          >
+                            {s.label}
+                          </text>
+                        );
+                      }}
+                    />
+                  )}
+                </Bar>
               ))}
             </BarChart>
           </ResponsiveContainer>

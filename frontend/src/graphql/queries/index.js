@@ -48,8 +48,8 @@ export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
 
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
-  query GeographicMap($scope: String!, $statuses: [String!]) {
-    geographicDistribution(location_scope: $scope, statuses: $statuses) {
+  query GeographicMap($scope: String!, $statuses: [String!], $globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
       country_key
       country_name
       iso_code
@@ -130,6 +130,7 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         developers_agg
         mechanism_of_action
         key_features
+        known_funders_agg
         technology_type
         indication_type
         healthcare_facility_level
@@ -152,6 +153,14 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
         japanese_mhlw_approval_status
         us_fda_approval_status
         approving_authorities_agg
+        technology_principle
+        target_population
+        route_of_administration
+        platform
+        chim_study
+        key_clinical_trial
+        rd_stage_2023
+        rd_stage_2019
       }
       totalCount
       hasNextPage
@@ -181,6 +190,16 @@ export const GET_CLINICAL_TRIALS = gql`
         locations
         sponsor
         source_text
+        age_groups
+        enrollment_count
+        study_type
+        funder_type
+        interventions
+        outcome_measure
+        sex
+        study_design
+        ct_results_type
+        ct_terminated_reason
       }
       totalCount
       hasNextPage
@@ -256,6 +275,62 @@ export const GET_TECHNOLOGY_TYPE_DISTRIBUTION = gql`
       phase_name
       sort_order
       candidateCount
+    }
+  }
+`;
+
+// R&D Priorities with Candidates - Extract tab (Tab 2, paginated)
+export const GET_RD_PRIORITIES_WITH_CANDIDATES = gql`
+  query RdPrioritiesWithCandidates($filter: RdPriorityFilter, $limit: Int, $offset: Int) {
+    rdPrioritiesWithCandidates(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        priority_key
+        rdpriorityid
+        priority_name
+        indication
+        intended_use
+        disease_name
+        global_health_area
+        type_of_guidance
+        author
+        publication_date
+        target_population
+        efficacy
+        safety
+        source
+        product_name
+        candidate_name
+        current_rd_stage
+      }
+      totalCount
+      hasNextPage
+    }
+  }
+`;
+
+// R&D Priorities only - Extract tab (Tab 4, paginated)
+export const GET_RD_PRIORITIES = gql`
+  query RdPriorities($filter: RdPriorityFilter, $limit: Int, $offset: Int) {
+    rdPriorities(filter: $filter, limit: $limit, offset: $offset) {
+      nodes {
+        priority_key
+        rdpriorityid
+        priority_name
+        indication
+        intended_use
+        disease_name
+        global_health_area
+        type_of_guidance
+        author
+        publication_date
+        target_population
+        efficacy
+        safety
+        source
+        product_name
+      }
+      totalCount
+      hasNextPage
     }
   }
 `;

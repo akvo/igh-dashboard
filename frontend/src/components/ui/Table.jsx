@@ -70,11 +70,27 @@ const Pagination = ({
 }) => {
   const getPageNumbers = () => {
     const pages = [];
-    if (totalPages <= 7) {
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      // Sliding window centred on currentPage
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > totalPages) { end = totalPages; start = Math.max(1, end - maxVisible + 1); }
+
+      // First page + left ellipsis
+      if (start > 1) { pages.push(1); }
+      if (start > 2) { pages.push('...'); }
+
+      for (let i = start; i <= end; i++) pages.push(i);
+
+      // Right ellipsis + last page
+      if (end < totalPages - 1) { pages.push('...'); }
+      if (end < totalPages) { pages.push(totalPages); }
     }
+
     return pages;
   };
 
@@ -98,7 +114,7 @@ const Pagination = ({
               onClick={() => onPageChange(page)}
               className={`w-8 h-8 text-sm rounded border-none cursor-pointer ${
                 currentPage === page
-                  ? 'bg-orange-500 text-white font-medium'
+                  ? 'bg-orange-500 text-black font-medium'
                   : 'bg-transparent text-gray-600 font-normal'
               }`}
             >
@@ -284,7 +300,7 @@ export default function Table({
 // Use this instead of manually adding overflow-x-auto divs.
 export function ScrollableTable({ children, className = '', tableClassName = '' }) {
   return (
-    <div className={`overflow-x-auto ${className}`}>
+    <div className={`overflow-x-auto border border-gray-200 ${className}`}>
       <table className={`w-full ${tableClassName}`}>{children}</table>
     </div>
   );

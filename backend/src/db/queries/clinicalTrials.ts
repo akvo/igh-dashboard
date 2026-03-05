@@ -68,7 +68,17 @@ export function getClinicalTrials(
       t.collaborator,
       t.locations,
       t.sponsor,
-      t.source_text
+      t.source_text,
+      t.age_groups,
+      t.enrollment_count,
+      t.study_type,
+      t.funder_type,
+      t.interventions,
+      t.outcome_measure,
+      t.sex,
+      t.study_design,
+      t.ct_results_type,
+      t.ct_terminated_reason
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}

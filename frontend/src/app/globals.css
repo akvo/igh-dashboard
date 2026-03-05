@@ -229,6 +229,11 @@ body {
   font-family: var(--font-public-sans), system-ui, sans-serif;
 }
 
+/* Sidebar border */
+aside[class*="bg-sidebar-bg"] {
+  border-right: 1px solid #26262617;
+}
+
 /* ==========================================
    TYPOGRAPHY SCALE
    Headings use Align font, body uses Public Sans
@@ -292,6 +297,14 @@ h1 {
 .badge-phase-2 { background-color: var(--color-phase-2); color: white; }
 .badge-phase-3 { background-color: var(--color-phase-3); color: var(--color-black); }
 .badge-approved { background-color: var(--color-phase-approved); color: white; }
+
+/* Cell text clamp – max 3 lines with ellipsis */
+.cell-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
 /* ==========================================
    ANIMATIONS

@@ -35,7 +35,7 @@ describe('temporalSnapshots transformations', () => {
       const phases = extractPhases(sampleData);
 
       expect(phases[0].key).toBe('discovery');
-      expect(phases[0].color).toBe('#8c4028');
+      expect(phases[0].color).toBe('#AD5133');
     });
   });
 

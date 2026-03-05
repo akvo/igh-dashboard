@@ -26,6 +26,7 @@ describe('portfolioKPIs transformations', () => {
         title: 'Diseases covered',
         value: 215,
         buttonText: 'See full list of diseases',
+        tooltip: 'The number of diseases that is currently covered in the IGH R&D portfolio, spanning all global health areas tracked in this platform.',
       });
       expect(result[1]).toEqual({
         id: 'candidates',
@@ -33,6 +34,7 @@ describe('portfolioKPIs transformations', () => {
         value: 8581,
         buttonText: 'Explore candidates',
         buttonHref: '/portfolio-analysis',
+        tooltip: 'The total number of investigational candidates in the IGH pipeline, across all development stages from discovery through late-stage clinical trials.',
       });
       expect(result[2]).toEqual({
         id: 'approved',
@@ -40,6 +42,7 @@ describe('portfolioKPIs transformations', () => {
         value: 5,
         buttonText: 'Explore approved products',
         buttonHref: '/portfolio-analysis',
+        tooltip: 'The total number of products in the IGH portfolio that have received regulatory approval, emergency authorisation, or are used off-label including those already available for use in countries.',
       });
     });
 

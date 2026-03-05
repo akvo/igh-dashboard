@@ -3,7 +3,7 @@
  * Transforms raw API response into stacked bar chart format for temporal analysis
  */
 
-import { PHASE_COLORS, SIMPLIFIED_PHASE_NAMES } from './constants';
+import { PHASE_COLORS, SIMPLIFIED_PHASE_NAMES, PHASE_CANONICAL_ORDER } from './constants';
 
 /**
  * Convert phase name to a safe key for chart data
@@ -22,9 +22,15 @@ function phaseNameToKey(phaseName) {
 export function extractPhases(data) {
   if (!data || data.length === 0) return [];
 
+  // Use the frontend canonical order as the primary sort key so that
+  // chart stacking always follows the R&D lifecycle, falling back to
+  // the backend's sort_order for phases not in the canonical map.
+  const canonicalOrder = (name) => PHASE_CANONICAL_ORDER[name] ?? 500;
+
   const uniquePhases = [...new Map(
     [...data]
-      .sort((a, b) => a.sort_order - b.sort_order)
+      .sort((a, b) => canonicalOrder(a.phase_name) - canonicalOrder(b.phase_name)
+                    || a.sort_order - b.sort_order)
       .map(r => [r.phase_name, r])
   ).values()];
 
@@ -78,6 +84,7 @@ export function transformTemporalSnapshots(data) {
  */
 export const AGGREGATE_PHASE_MAPPING = {
   'Discovery': 'earlyDevelopment',
+  'Discovery & Preclinical': 'earlyDevelopment',
   'Discovery and preclinical': 'earlyDevelopment',
   'Discovery & Preclinical': 'earlyDevelopment',
   'Discovery & preclinical': 'earlyDevelopment',
@@ -162,12 +169,19 @@ export function computeGrowthTable(aggregatedData) {
     aggregatedData.forEach((yearData, idx) => {
       const value = yearData[stage];
       const prev = idx > 0 ? aggregatedData[idx - 1][stage] : null;
-      const yoyChange = prev !== null && prev > 0
-        ? (((value - prev) / prev) * 100).toFixed(1)
-        : null;
-      const totalGrowth = baseline[stage] > 0
-        ? (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1)
-        : null;
+      let yoyChange = null;
+      if (prev !== null) {
+        if (prev > 0) {
+          yoyChange = (((value - prev) / prev) * 100).toFixed(1);
+        } else if (prev === 0 && value > 0) {
+          // From 0 to something — show as null (no meaningful %)
+          yoyChange = null;
+        }
+      }
+      let totalGrowth = null;
+      if (baseline[stage] > 0) {
+        totalGrowth = (((value - baseline[stage]) / baseline[stage]) * 100).toFixed(1);
+      }
 
       row.values[yearData.year] = {
         count: value,

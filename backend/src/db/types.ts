@@ -127,6 +127,7 @@ export interface FactPipelineSnapshot {
   phase_key: number | null;
   date_key: number | null;
   is_active_flag: number | null;
+  include_in_pipeline: number | null;
   secondary_disease_key: number | null;
   sub_product_key: number | null;
 }
@@ -278,6 +279,16 @@ export interface ClinicalTrialNode {
   locations: string | null;
   sponsor: string | null;
   source_text: string | null;
+  age_groups: string | null;
+  enrollment_count: number | null;
+  study_type: string | null;
+  funder_type: string | null;
+  interventions: string | null;
+  outcome_measure: string | null;
+  sex: string | null;
+  study_design: string | null;
+  ct_results_type: string | null;
+  ct_terminated_reason: string | null;
 }
 
 export interface ClinicalTrialFilter {
@@ -315,6 +326,7 @@ export interface PortfolioCandidateNode {
   developers_agg: string | null;
   mechanism_of_action: string | null;
   key_features: string | null;
+  known_funders_agg: string | null;
   technology_type: string | null;
   indication_type: string | null;
   healthcare_facility_level: string | null;
@@ -329,6 +341,14 @@ export interface PortfolioCandidateNode {
   japanese_mhlw_approval_status: string | null;
   us_fda_approval_status: string | null;
   approving_authorities_agg: string | null;
+  technology_principle: string | null;
+  target_population: string | null;
+  route_of_administration: string | null;
+  platform: string | null;
+  chim_study: string | null;
+  key_clinical_trial: string | null;
+  rd_stage_2023: string | null;
+  rd_stage_2019: string | null;
 }
 
 export interface PortfolioCandidateFilter {
@@ -371,6 +391,43 @@ export interface RegulatoryDistribution {
 export interface ProductDistributionRow {
   product_name: string;
   candidateCount: number;
+}
+
+// =============================================================================
+// R&D Priorities (Extract tab)
+// =============================================================================
+
+export interface RdPriorityNode {
+  priority_key: number;
+  rdpriorityid: string | null;
+  priority_name: string | null;
+  indication: string | null;
+  intended_use: string | null;
+  disease_name: string | null;
+  global_health_area: string | null;
+  type_of_guidance: string | null;
+  author: string | null;
+  publication_date: string | null;
+  target_population: string | null;
+  efficacy: string | null;
+  safety: string | null;
+  source: string | null;
+  product_name: string | null;
+  // Present when joined with candidates (Tab 2), null for priorities-only (Tab 4)
+  candidate_name: string | null;
+  current_rd_stage: string | null;
+}
+
+export interface RdPriorityFilter {
+  global_health_areas?: string[];
+  disease_names?: string[];
+  search?: string;
+}
+
+export interface RdPriorityConnection {
+  nodes: RdPriorityNode[];
+  totalCount: number;
+  hasNextPage: boolean;
 }
 
 // =============================================================================
