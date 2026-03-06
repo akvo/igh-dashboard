@@ -250,8 +250,48 @@ export default function ServerTable({
   emptyState,
   className = '',
   fitContent = false,
+  loading = false,
 }) {
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Skeleton placeholder while data is being fetched, so users see
+  // shimmer rows instead of a misleading "No data found" empty state.
+  if (loading) {
+    return (
+      <div className={className}>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                {columns.map((column, idx) => (
+                  <th
+                    key={column.accessor || idx}
+                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap"
+                    style={{ width: column.width, minWidth: column.minWidth }}
+                  >
+                    {column.header}
+                  </th>
+                ))}
+                {fitContent && <th className="bg-[#FEF8EE]" />}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  {columns.map((col, j) => (
+                    <td key={col.accessor || j} className="py-4 px-4">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                    </td>
+                  ))}
+                  {fitContent && <td />}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   if (data.length === 0) {
     return (

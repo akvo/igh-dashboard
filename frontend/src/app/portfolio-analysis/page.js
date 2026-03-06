@@ -213,6 +213,7 @@ export default function PortfolioAnalysis() {
   const extractTableData = activeExtractData.data;
   const extractTotalCount = activeExtractData.totalCount;
   const extractHasNext = activeExtractData.hasNextPage;
+  const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
     { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct },
@@ -976,17 +977,23 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-                <StackedBarChart
-                  data={pipelineData}
-                  phases={pipelinePhases}
-                  layout="vertical"
-                  height={500}
-                  xAxisLabel="Amount of Candidates/Products"
-                  yAxisLabel="Product type"
-                  showFilters={true}
-                  visiblePhases={pipelineVisiblePhases}
-                  onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
-                />
+                {pipelineLoading ? (
+                  <div className="h-[500px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  </div>
+                ) : (
+                  <StackedBarChart
+                    data={pipelineData}
+                    phases={pipelinePhases}
+                    layout="vertical"
+                    height={500}
+                    xAxisLabel="Amount of Candidates/Products"
+                    yAxisLabel="Product type"
+                    showFilters={true}
+                    visiblePhases={pipelineVisiblePhases}
+                    onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
+                  />
+                )}
 
               </div>
 
@@ -1026,15 +1033,21 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-                <DonutChart
-                  data={productTypesData}
-                  colors={productTypeColors}
-                  height={500}
-                  innerRadius={55}
-                  outerRadius={140}
-                  showLegend={true}
-                  legendPosition="top"
-                />
+                {productTypesLoading ? (
+                  <div className="h-[500px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  </div>
+                ) : (
+                  <DonutChart
+                    data={productTypesData}
+                    colors={productTypeColors}
+                    height={500}
+                    innerRadius={55}
+                    outerRadius={140}
+                    showLegend={true}
+                    legendPosition="top"
+                  />
+                )}
               </div>
             </div>
             </>
@@ -1298,6 +1311,7 @@ export default function PortfolioAnalysis() {
                         hasNextPage={extractHasNext}
                         itemsPerPage={itemsPerPage}
                         fitContent
+                        loading={extractLoading}
                       />
                     )}
                   </div>
@@ -1416,6 +1430,7 @@ export default function PortfolioAnalysis() {
                   totalCount={candidatesTotalCount}
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
+                  loading={candidatesLoading}
                 />
               </div>
             )}
@@ -1455,6 +1470,7 @@ export default function PortfolioAnalysis() {
                         <BarChart
                           data={approvalStatusData}
                           height={200}
+                          maxTickChars={12}
                           xAxisLabel="Approval status"
                           yAxisLabel="Number of products"
                           visibleItems={approvalVisibleItems}
@@ -1626,6 +1642,7 @@ export default function PortfolioAnalysis() {
                     totalCount={approvedTotalCount}
                     hasNextPage={approvedHasNext}
                     itemsPerPage={itemsPerPage}
+                    loading={approvedLoading}
                   />
                 </div>
               </>
@@ -1824,6 +1841,7 @@ export default function PortfolioAnalysis() {
                     totalCount={trialsTotalCount}
                     hasNextPage={trialsHasNextPage}
                     itemsPerPage={trialsPerPage}
+                    loading={trialsListLoading}
                   />
                 </div>
               </>
@@ -1882,6 +1900,7 @@ export default function PortfolioAnalysis() {
                   totalCount={technologyTotalCount}
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
+                  loading={technologyLoading}
                 />
               </div>
             )}

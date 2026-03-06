@@ -143,7 +143,7 @@ export const EXTRACT_TAB_LABELS = {
  */
 export const EXTRACT_ROW_KEY = {
   'candidates-approved': 'candidate_key',
-  'rd-priorities': 'priority_key',
+  'rd-priorities': null,
   'clinical-trials': 'trial_id',
   'rd-only': 'priority_key',
 };
