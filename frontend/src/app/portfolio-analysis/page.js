@@ -1744,7 +1744,13 @@ export default function PortfolioAnalysis() {
                   <p className="text-sm text-gray-500 mb-4">
                     The spatial heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
                   </p>
-                  <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
+                  {geoLoading ? (
+                    <div className="h-[400px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading map...</div>
+                    </div>
+                  ) : (
+                    <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
+                  )}
                 </div>
 
                 {/* Selected clinical trials section */}
