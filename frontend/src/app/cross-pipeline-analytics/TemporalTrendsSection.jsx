@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart } from '@/components/charts';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
 import {
   aggregateTemporalPhases,
   computeGrowthTable,
@@ -32,6 +34,26 @@ const YEAR_COLORS = [
 
 const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
 
+// Compact URL encoding for up to 4 portfolio {disease, product} objects.
+// [{disease:'HIV/AIDS', product:'1|2'}, {disease:'TB', product:'3'}]
+//   → 'HIV/AIDS:1|2,TB:3'
+// Labels are derived from index (Portfolio A, B, ...) — not stored.
+const portfolioSerializer = {
+  serialize: (portfolios) => {
+    const parts = portfolios
+      .filter(p => p.disease || p.product)
+      .map(p => `${p.disease || ''}:${p.product || ''}`);
+    return parts.length > 0 ? parts.join(',') : null;
+  },
+  deserialize: (str) => {
+    if (!str) return null;
+    return str.split(',').map((part, idx) => {
+      const [disease = '', product = ''] = part.split(':');
+      return { disease, product, label: PORTFOLIO_LABELS[idx] };
+    });
+  },
+};
+
 const STAGE_SERIES = [
   { key: 'approved', label: 'Approved', color: '#F0B456' },
   { key: 'lateDevelopment', label: 'Late development', color: '#B28FC9' },
@@ -44,16 +66,46 @@ const tabs = [
 ];
 
 function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [], filterPairs = [] }) {
-  const [visibleCount, setVisibleCount] = useState(2);
-  const [portfolios, setPortfolios] = useState([
-    { disease: '', product: '' },
-    { disease: '', product: '' },
-    { disease: '', product: '' },
-    { disease: '', product: '' },
-  ]);
-  const [compareYear, setCompareYear] = useState('');
-  const [appliedPortfolios, setAppliedPortfolios] = useState([]);
-  const [appliedCompareYear, setAppliedCompareYear] = useState('');
+  const [appliedPortfolios, setAppliedPortfolios] = useUrlState('cpf', [], portfolioSerializer);
+  const [appliedCompareYear, setAppliedCompareYear] = useUrlState('cpYear', '', stringSerializer);
+  const [visibleCount, setVisibleCount] = useUrlState('cpN', 2, numberSerializer);
+
+  // Local/pending state — initialized from URL-restored applied values
+  const [portfolios, setPortfolios] = useState(() => {
+    const initial = [
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+      { disease: '', product: '' },
+    ];
+    appliedPortfolios.forEach((p, i) => {
+      if (i < 4) initial[i] = { disease: p.disease || '', product: p.product || '' };
+    });
+    return initial;
+  });
+  const [compareYear, setCompareYear] = useState(appliedCompareYear);
+
+  // One-time sync: populate local portfolio dropdowns from URL-restored
+  // applied values after client hydration.
+  const compareSynced = useRef(false);
+  useEffect(() => {
+    if (!compareSynced.current) {
+      if (appliedPortfolios.length > 0) {
+        compareSynced.current = true;
+        setPortfolios(prev => {
+          const next = [...prev];
+          appliedPortfolios.forEach((p, i) => {
+            if (i < 4) next[i] = { disease: p.disease || '', product: p.product || '' };
+          });
+          return next;
+        });
+      }
+      if (appliedCompareYear) {
+        compareSynced.current = true;
+        setCompareYear(appliedCompareYear);
+      }
+    }
+  }, [appliedPortfolios, appliedCompareYear]);
 
   // Client-side cascading filters from disease×product pairs
   // (product options may have pipe-separated keys from VC consolidation)
@@ -151,7 +203,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     setComparePhases([]);
   };
 
-  const hasCompareFilters = portfolios.some(p => p.disease || p.product) || compareYear !== '';
+  const hasCompareFilters = portfolios.some(p => p.disease || p.product) || compareYear !== '' ||
+    appliedPortfolios.length > 0 || appliedCompareYear !== '';
 
   const handleCompareClear = () => {
     setPortfolios([
@@ -599,13 +652,35 @@ export default function TemporalTrendsSection({
   productOptions = [],
   availableYears = [],
 }) {
-  const [activeTab, setActiveTab] = useState('single');
+  const [activeTab, setActiveTab] = useUrlState('ttTab', 'single', {
+    ...stringSerializer, historyMode: 'push',
+  });
   const { pairs } = usePipelineFilterPairs();
 
-  // Local filter state (Apply/Clear pattern)
-  const [filterDisease, setFilterDisease] = useState([]);
-  const [filterProduct, setFilterProduct] = useState([]);
-  const [filterYear, setFilterYear] = useState([]);
+  // Applied filters → URL (committed on Apply)
+  const [appliedDisease, setAppliedDisease] = useUrlState('ttDisease', [], arraySerializer);
+  const [appliedProduct, setAppliedProduct] = useUrlState('ttProduct', [], arraySerializer);
+  const [appliedYear, setAppliedYear] = useUrlState('ttYear', [], arraySerializer);
+
+  // Local/pending filter state — initialized from URL-restored applied values
+  const [filterDisease, setFilterDisease] = useState(appliedDisease);
+  const [filterProduct, setFilterProduct] = useState(appliedProduct);
+  const [filterYear, setFilterYear] = useState(appliedYear);
+
+  // One-time sync: populate local filter dropdowns from URL-restored
+  // applied values after client hydration. useState initializers miss
+  // the URL state because getServerSnapshot returns '' during SSR.
+  const singleSynced = useRef(false);
+  useEffect(() => {
+    if (!singleSynced.current) {
+      if (appliedDisease.length || appliedProduct.length || appliedYear.length) {
+        singleSynced.current = true;
+        setFilterDisease(appliedDisease);
+        setFilterProduct(appliedProduct);
+        setFilterYear(appliedYear);
+      }
+    }
+  }, [appliedDisease, appliedProduct, appliedYear]);
 
   // Client-side cascading filters from disease×product pairs
   // (product options may have pipe-separated keys from VC consolidation)
@@ -636,18 +711,15 @@ export default function TemporalTrendsSection({
     });
   }, [filterProduct, pairs, diseaseOptions]);
 
-  // Applied filters (committed on Apply)
-  const [appliedDisease, setAppliedDisease] = useState([]);
-  const [appliedProduct, setAppliedProduct] = useState([]);
-  const [appliedYear, setAppliedYear] = useState([]);
-
   const handleApply = () => {
     setAppliedDisease(filterDisease);
     setAppliedProduct(filterProduct);
     setAppliedYear(filterYear);
   };
 
-  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 || filterYear.length > 0;
+  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 ||
+    filterYear.length > 0 || appliedDisease.length > 0 || appliedProduct.length > 0 ||
+    appliedYear.length > 0;
 
   const handleClear = () => {
     setFilterDisease([]);
