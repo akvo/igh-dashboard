@@ -977,17 +977,23 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-                <StackedBarChart
-                  data={pipelineData}
-                  phases={pipelinePhases}
-                  layout="vertical"
-                  height={500}
-                  xAxisLabel="Amount of Candidates/Products"
-                  yAxisLabel="Product type"
-                  showFilters={true}
-                  visiblePhases={pipelineVisiblePhases}
-                  onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
-                />
+                {pipelineLoading ? (
+                  <div className="h-[500px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  </div>
+                ) : (
+                  <StackedBarChart
+                    data={pipelineData}
+                    phases={pipelinePhases}
+                    layout="vertical"
+                    height={500}
+                    xAxisLabel="Amount of Candidates/Products"
+                    yAxisLabel="Product type"
+                    showFilters={true}
+                    visiblePhases={pipelineVisiblePhases}
+                    onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
+                  />
+                )}
 
               </div>
 
@@ -1027,15 +1033,21 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-                <DonutChart
-                  data={productTypesData}
-                  colors={productTypeColors}
-                  height={500}
-                  innerRadius={55}
-                  outerRadius={140}
-                  showLegend={true}
-                  legendPosition="top"
-                />
+                {productTypesLoading ? (
+                  <div className="h-[500px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  </div>
+                ) : (
+                  <DonutChart
+                    data={productTypesData}
+                    colors={productTypeColors}
+                    height={500}
+                    innerRadius={55}
+                    outerRadius={140}
+                    showLegend={true}
+                    legendPosition="top"
+                  />
+                )}
               </div>
             </div>
             </>
