@@ -213,6 +213,7 @@ export default function PortfolioAnalysis() {
   const extractTableData = activeExtractData.data;
   const extractTotalCount = activeExtractData.totalCount;
   const extractHasNext = activeExtractData.hasNextPage;
+  const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
     { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct },
@@ -1298,6 +1299,7 @@ export default function PortfolioAnalysis() {
                         hasNextPage={extractHasNext}
                         itemsPerPage={itemsPerPage}
                         fitContent
+                        loading={extractLoading}
                       />
                     )}
                   </div>
