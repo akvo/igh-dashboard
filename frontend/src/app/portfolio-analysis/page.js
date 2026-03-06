@@ -1470,6 +1470,7 @@ export default function PortfolioAnalysis() {
                         <BarChart
                           data={approvalStatusData}
                           height={200}
+                          maxTickChars={12}
                           xAxisLabel="Approval status"
                           yAxisLabel="Number of products"
                           visibleItems={approvalVisibleItems}
