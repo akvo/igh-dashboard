@@ -1416,6 +1416,7 @@ export default function PortfolioAnalysis() {
                   totalCount={candidatesTotalCount}
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
+                  loading={candidatesLoading}
                 />
               </div>
             )}
@@ -1626,6 +1627,7 @@ export default function PortfolioAnalysis() {
                     totalCount={approvedTotalCount}
                     hasNextPage={approvedHasNext}
                     itemsPerPage={itemsPerPage}
+                    loading={approvedLoading}
                   />
                 </div>
               </>
@@ -1824,6 +1826,7 @@ export default function PortfolioAnalysis() {
                     totalCount={trialsTotalCount}
                     hasNextPage={trialsHasNextPage}
                     itemsPerPage={trialsPerPage}
+                    loading={trialsListLoading}
                   />
                 </div>
               </>
@@ -1882,6 +1885,7 @@ export default function PortfolioAnalysis() {
                   totalCount={technologyTotalCount}
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
+                  loading={technologyLoading}
                 />
               </div>
             )}
