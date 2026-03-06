@@ -354,7 +354,13 @@ export default function Home() {
                     ]}
                   />
                 </div>
-                <WorldMap data={gqlMapData} height={280} showLegend={false} />
+                {mapLoading ? (
+                  <div className="h-[280px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading map...</div>
+                  </div>
+                ) : (
+                  <WorldMap data={gqlMapData} height={280} showLegend={false} />
+                )}
               </div>
               <p className="text-sm text-gray-500 mt-auto pt-4 border-t border-gray-200">
                 The global heat map illustrating where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
