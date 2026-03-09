@@ -148,10 +148,10 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
-                From Discovery to Approval: Mapping the Global Health R&D Pipeline
+                From discovery to approval: Mapping the global health R&D pipeline
               </h1>
               <p className="text-sm text-gray-500">
-                An end-to-end interactive view of global health R&D pipeline, from investigational candidates to approved products reaching people in need.
+                An end-to-end interactive view of the global health R&D pipeline, from investigational candidates to approved products reaching people in need.
               </p>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
@@ -245,7 +245,7 @@ export default function Home() {
                     <thead>
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Health Area
+                          Health area
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
                           Candidates
@@ -284,7 +284,7 @@ export default function Home() {
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                This bubble chart shows the relative scale of product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the dropwdown menu to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
+                This bubble chart shows the relative scale of the product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the dropdown menu to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
               </p>
             </div>
 
@@ -293,7 +293,7 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Geographic Distribution of Clinical Trials and Developers
+                    Geographic distribution of clinical trials and developers
                   </h3>
                   <p className="text-sm text-gray-500">
                     A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based.
@@ -321,7 +321,7 @@ export default function Home() {
                 <WorldMap data={gqlMapData} height={280} showLegend={false} />
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                The global heat map illustrating where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
+                This global heat map illustrates where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
               </p>
             </div>
           </div>
@@ -336,11 +336,11 @@ export default function Home() {
                 href="/portfolio"
                 className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
               >
-                Explore Portfolio Analysis
+                Explore portfolio analysis
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters above to focus on specific product types or R&D stage, and click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
+                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
 
             {/* Filters */}
@@ -401,7 +401,7 @@ export default function Home() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Cross pipeline analytics
+                Cross-pipeline analytics
               </h3>
               <a
                 href="/cross-pipeline"
@@ -411,7 +411,7 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-            A high-level view of how the global R&D pipeline evolves over time across development stages. this chart shows changes in the number of candidates in early development, late development and approved products across IGH its review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progrssing through the R&D lifecycle over time.
+            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
             </p>
 
             {/* Filters */}
@@ -459,7 +459,7 @@ export default function Home() {
                 phases={temporalPhases}
                 layout="vertical"
                 height={220}
-                xAxisLabel="Number of Candidates"
+                xAxisLabel="Number of candidates"
                 showFilters={true}
               />
             )}
@@ -470,7 +470,7 @@ export default function Home() {
           <div className="bg-black rounded-2xl p-5 sm:p-8 lg:p-10 mb-10">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
-                Reports and Insights
+                Reports and insights
               </h2>
               <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white/30 rounded-lg cursor-pointer">
                 View all insights

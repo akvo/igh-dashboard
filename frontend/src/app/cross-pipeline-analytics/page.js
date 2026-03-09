@@ -164,10 +164,10 @@ export default function CrossPipelineAnalytics() {
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                  Cross-Pipeline Analytics
+                  Cross-pipeline analytics
                 </h1>
                 <p className="text-sm text-gray-500 max-w-3xl">
-                  The Cross-Pipeline Analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
+                  The Cross-pipeline analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
                 </p>
               </div>
               <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">

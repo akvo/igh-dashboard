@@ -21,8 +21,8 @@ const defaultMenuItems = [
     section: 'GENERAL',
     items: [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
-      { id: 'portfolio-analysis', label: 'Portfolio Analysis', icon: ChartIcon, href: '/portfolio-analysis' },
-      { id: 'cross-pipeline-analytics', label: 'Cross-Pipeline Analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
+      { id: 'portfolio-analysis', label: 'Portfolio analysis', icon: ChartIcon, href: '/portfolio-analysis' },
+      { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
     ],
   }
 ];

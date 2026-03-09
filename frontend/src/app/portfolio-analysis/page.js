@@ -191,7 +191,7 @@ export default function PortfolioAnalysis() {
     { id: 'gha', label: 'Global health area' },
     { id: 'primaryDisease', label: 'Primary disease' },
     { id: 'secondaryDisease', label: 'Secondary disease' },
-    { id: 'product', label: 'Product' },
+    { id: 'product', label: 'Product type' },
     { id: 'subProduct', label: 'Sub product' },
     { id: 'indication', label: 'Indication' },
     { id: 'target', label: 'Target' },
@@ -266,11 +266,11 @@ export default function PortfolioAnalysis() {
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                  Portfolio Analysis
+                  Portfolio analysis
                 </h1>
                 <p className="text-sm text-gray-500 max-w-3xl">
                   Explore the global R&D pipeline for each global health area, disease or product type through two lenses.
-                  Use the Explore visual insights view to analyze portfolio trends through interactive charts and maps,
+                  Use the Explore visual insights view to analyse portfolio trends through interactive charts and maps,
                   or switch to the Extract custom details tab to build a filtered data table tailored to your needs and
                   export your findings as a .csv file for further analysis.
                 </p>
@@ -326,7 +326,7 @@ export default function PortfolioAnalysis() {
                 </div>
                 <div className="min-w-[220px]">
                   <Dropdown
-                    label="Product"
+                    label="Product type"
                     value={product}
                     onChange={setProduct}
                     placeholder="All"
@@ -350,10 +350,10 @@ export default function PortfolioAnalysis() {
             {activeTab === 'extract' && (
               <div className="flex gap-6 border-b border-gray-200">
                 {[
-                  { value: 'candidates-approved', label: 'Candidates & Approved Products' },
-                  { value: 'rd-priorities', label: 'R&D Priorities & Candidates' },
-                  { value: 'clinical-trials', label: 'Clinical Trials & Candidates' },
-                  { value: 'rd-only', label: 'R&D Priorities' },
+                  { value: 'candidates-approved', label: 'Candidates & approved products' },
+                  { value: 'rd-priorities', label: 'R&D priorities & candidates' },
+                  { value: 'clinical-trials', label: 'Clinical trials & candidates' },
+                  { value: 'rd-only', label: 'R&D priorities' },
                 ].map((tab) => (
                   <button
                     key={tab.value}
@@ -430,7 +430,7 @@ export default function PortfolioAnalysis() {
                   phases={pipelinePhases}
                   layout="vertical"
                   height={350}
-                  xAxisLabel="Amount of Candidates/Products"
+                  xAxisLabel="Number of candidates / approved products"
                   yAxisLabel="Product type"
                   showFilters={true}
                 />
@@ -486,7 +486,7 @@ export default function PortfolioAnalysis() {
                 <div className="p-6 border-b border-gray-200">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-xl font-bold text-black mb-1">Candidates & Approved Products</h3>
+                      <h3 className="text-xl font-bold text-black mb-1">Candidates & approved products</h3>
                       <p className="text-sm text-gray-500">Select the columns you would like to include in the overview and click on apply.</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -737,7 +737,7 @@ export default function PortfolioAnalysis() {
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-6">
-              The aggregated portfolio lets you deepdive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
+              The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
             </p>
 
             {/* Tabs */}
@@ -753,9 +753,9 @@ export default function PortfolioAnalysis() {
                   }`}
                 >
                   {tab === 'candidates' && 'Candidates'}
-                  {tab === 'approved' && 'Approved product'}
+                  {tab === 'approved' && 'Approved products'}
                   {tab === 'trials' && 'Clinical trials'}
-                  {tab === 'technology' && 'Technology'}
+                  {tab === 'technology' && 'Technology types'}
                 </button>
               ))}
             </div>
@@ -892,7 +892,7 @@ export default function PortfolioAnalysis() {
                   {/* Approving Authorities */}
                   <div className="bg-white border border-gray-200 p-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-base font-bold text-black">Approving Authorities</h4>
+                      <h4 className="text-base font-bold text-black">Approving authorities</h4>
                       <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
                     </div>
                     <div className="h-[200px] flex items-center justify-center text-gray-400">
@@ -919,7 +919,7 @@ export default function PortfolioAnalysis() {
                       legendPosition="bottom"
                     />
                     <p className="text-xs text-gray-500 mt-4">
-                      A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low and middle-income countries.
+                      A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
                     </p>
                   </div>
                 </div>
@@ -1090,7 +1090,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
-                    The spatial heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
+                    The global heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
                   </p>
                   <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
                 </div>
@@ -1119,7 +1119,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">
-                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using a text search box and (filtered results) can be exported as a .csv file.
+                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using a text search box and (filtered results) can be exported as a .csv file. This provides a high-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression.
                     </p>
                   </div>
 
@@ -1225,7 +1225,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quicly locate specific technologies and (filtered results) can be exported as a .csv file. 
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file. 
                   </p>
                 </div>
 
