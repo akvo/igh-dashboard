@@ -59,7 +59,7 @@ export function getTechnologyTypeDistribution(
     ${joins.join("\n    ")}
     WHERE ${conditions.join("\n      AND ")}
     GROUP BY t.technology_type, p.phase_name, p.sort_order
-    ORDER BY t.technology_type, p.sort_order
+    ORDER BY t.technology_type NULLS LAST, p.sort_order NULLS LAST
   `;
 
   return db.prepare(sql).all(...params) as TechnologyTypeDistributionRow[];

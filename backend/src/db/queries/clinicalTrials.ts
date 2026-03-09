@@ -82,7 +82,7 @@ export function getClinicalTrials(
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}
-    ORDER BY t.trial_id DESC
+    ORDER BY t.trial_id DESC NULLS LAST
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as ClinicalTrialNode[];
