@@ -17,6 +17,7 @@ import {
   consolidateProductOptionsByName,
   expandProductNameSelection,
   mergeVectorControlChartData,
+  mergeVectorControlStackedData,
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
   MALARIA_GROUP,
@@ -94,7 +95,8 @@ export default function PortfolioAnalysis() {
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
-  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
+  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
+  const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
   const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, candidateTypeForApi);
   const productTypesData = useMemo(() => mergeVectorControlChartData(rawProductTypesData), [rawProductTypesData]);
@@ -928,6 +930,8 @@ export default function PortfolioAnalysis() {
                     phases={pipelinePhases}
                     layout="vertical"
                     height={500}
+                    yAxisWidth={100}
+                    maxTickChars={15}
                    xAxisLabel="Number of candidates / approved products"
                   yAxisLabel="Product type"
                     showFilters={true}
@@ -1736,7 +1740,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file. 
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
                   </p>
                 </div>
 
