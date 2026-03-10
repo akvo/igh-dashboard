@@ -9,6 +9,8 @@
  * toggleable) defined in EXTRACT_FIXED_COLUMNS.
  */
 
+import { normalizeProductName } from './filterGroups';
+
 // =========================================================
 // Available (toggleable) columns per tab
 // =========================================================
@@ -21,7 +23,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
     { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
     { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
-    { id: 'product', label: 'Product', accessor: 'product_name' },
+    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
     { id: 'indication', label: 'Indication', accessor: 'indication', type: 'line-clamp' },
     { id: 'target', label: 'Target', accessor: 'target' },
@@ -46,7 +48,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
     { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
-    { id: 'product', label: 'Product', accessor: 'product_name' },
+    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'gha', label: 'Global Health area', accessor: 'global_health_area' },
     { id: 'author', label: 'Author', accessor: 'author' },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date' },
@@ -91,7 +93,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
     { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
-    { id: 'product', label: 'Product', accessor: 'product_name' },
+    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'gha', label: 'Global Health area', accessor: 'global_health_area' },
     { id: 'author', label: 'Author', accessor: 'author' },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date' },
