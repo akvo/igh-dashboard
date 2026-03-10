@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -12,15 +12,13 @@ import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDisease
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import {
-  addMalariaOption,
   expandDiseaseSelection,
   consolidateProductOptionsByName,
   expandProductNameSelection,
   mergeVectorControlChartData,
-  VECTOR_CONTROL_PRODUCT_NAMES,
-  VECTOR_CONTROL_CONSOLIDATED_NAME,
-  MALARIA_GROUP,
+  mergeVectorControlStackedData,
 } from '@/lib/filterGroups';
+import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -94,7 +92,8 @@ export default function PortfolioAnalysis() {
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
-  const { chartData: pipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
+  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
+  const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
   const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, candidateTypeForApi);
   const productTypesData = useMemo(() => mergeVectorControlChartData(rawProductTypesData), [rawProductTypesData]);
@@ -254,148 +253,34 @@ export default function PortfolioAnalysis() {
     setTrialStatusHiddenItems(Object.keys(next).filter(k => !next[k]));
   }, [setTrialStatusHiddenItems]);
 
-  // Health area options from API
-  const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
-    [healthAreas]
-  );
-
   // All product options from API (before cross-filtering), with VC consolidation
   const allProductOptions = useMemo(() => {
     const names = (productsList || []).map(p => p.product_name);
     return consolidateProductOptionsByName(names);
   }, [productsList]);
 
-  // Disease options from API, narrowed to the selected GHA(s) when present
-  const ghaDiseaseOptions = useMemo(() => {
-    const source = diseasesRaw || [];
-    const filtered = healthArea.length > 0
-      ? source.filter(d => healthArea.includes(d.global_health_area))
-      : source;
-    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
-    return addMalariaOption(names);
-  }, [diseasesRaw, healthArea]);
+  const crossFilterData = { healthAreas, diseasesRaw, pairs, allProductOptions };
+  const crossFilterLoading = { healthAreas: healthAreasLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading };
 
-  // Disease↔product cross-filtering via pipeline pairs (Explore tab)
-  // Expand consolidated VC name when filtering product→disease
-  const diseaseOptions = useMemo(() => {
-    if (product.length === 0) return ghaDiseaseOptions;
-    const expandedProduct = expandProductNameSelection(product);
-    const selectedNames = new Set(expandedProduct);
-    const validDiseases = new Set(
-      pairs.filter(p => selectedNames.has(p.product_name))
-           .map(p => p.disease_group_name)
-    );
-    return ghaDiseaseOptions.filter(d => {
-      if (validDiseases.has(d)) return true;
-      if (d === MALARIA_GROUP.label) {
-        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
-      }
-      return false;
-    });
-  }, [product, pairs, ghaDiseaseOptions]);
+  // Explore tab cross-filtered options
+  const { healthAreaOptions, diseaseOptions, productOptions } = useCrossFilteredOptions({
+    data: crossFilterData,
+    selections: { healthArea, disease, product },
+    setters: { setHealthArea, setDisease, setProduct },
+    loading: crossFilterLoading,
+  });
 
-  const productOptions = useMemo(() => {
-    if (disease.length === 0) return allProductOptions;
-    const expandedDisease = expandDiseaseSelection(disease);
-    const validNames = new Set(
-      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
-           .map(p => p.product_name)
-    );
-    return allProductOptions.filter(name => {
-      if (validNames.has(name)) return true;
-      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
-        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
-      }
-      return false;
-    });
-  }, [disease, pairs, allProductOptions]);
-
-  // When GHA or product narrows the disease list, remove invalid selections.
-  // Skip while data is still loading to avoid wiping URL-restored selections.
-  useEffect(() => {
-    if (diseasesLoading || pairsLoading) return;
-    if (disease.length > 0) {
-      const valid = disease.filter(d => diseaseOptions.includes(d));
-      if (valid.length !== disease.length) setDisease(valid);
-    }
-  }, [diseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // When disease narrows the product list, remove invalid selections.
-  // Skip while data is still loading to avoid wiping URL-restored selections.
-  useEffect(() => {
-    if (productsLoading || pairsLoading) return;
-    if (product.length > 0) {
-      const valid = product.filter(p => productOptions.includes(p));
-      if (valid.length !== product.length) setProduct(valid);
-    }
-  }, [productOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Disease options for the Extract tab, cascading from extractHealthArea
-  // (independent of the Explore tab's healthArea filter).
-  const ghaExtractDiseaseOptions = useMemo(() => {
-    const source = diseasesRaw || [];
-    const filtered = extractHealthArea.length > 0
-      ? source.filter(d => extractHealthArea.includes(d.global_health_area))
-      : source;
-    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
-    return addMalariaOption(names);
-  }, [diseasesRaw, extractHealthArea]);
-
-  // Disease↔product cross-filtering for Extract tab (uses product_name)
-  // Expand consolidated VC name when filtering product→disease
-  const extractDiseaseOptions = useMemo(() => {
-    if (extractProduct.length === 0) return ghaExtractDiseaseOptions;
-    const expandedProduct = expandProductNameSelection(extractProduct);
-    const selectedNames = new Set(expandedProduct);
-    const validDiseases = new Set(
-      pairs.filter(p => selectedNames.has(p.product_name))
-           .map(p => p.disease_group_name)
-    );
-    return ghaExtractDiseaseOptions.filter(d => {
-      if (validDiseases.has(d)) return true;
-      if (d === MALARIA_GROUP.label) {
-        return MALARIA_GROUP.members.some(m => validDiseases.has(m));
-      }
-      return false;
-    });
-  }, [extractProduct, pairs, ghaExtractDiseaseOptions]);
-
-  const extractProductOptions = useMemo(() => {
-    if (extractDisease.length === 0) return allProductOptions;
-    const expandedDisease = expandDiseaseSelection(extractDisease);
-    const validNames = new Set(
-      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
-           .map(p => p.product_name)
-    );
-    return allProductOptions.filter(name => {
-      if (validNames.has(name)) return true;
-      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
-        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
-      }
-      return false;
-    });
-  }, [extractDisease, pairs, allProductOptions]);
-
-  // Prune extract disease selections that become invalid when GHA or product narrows.
-  // Skip while data is still loading to avoid wiping URL-restored selections.
-  useEffect(() => {
-    if (diseasesLoading || pairsLoading) return;
-    if (extractDisease.length > 0) {
-      const valid = extractDisease.filter(d => extractDiseaseOptions.includes(d));
-      if (valid.length !== extractDisease.length) setExtractDisease(valid);
-    }
-  }, [extractDiseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Prune extract product selections that become invalid when disease narrows.
-  // Skip while data is still loading to avoid wiping URL-restored selections.
-  useEffect(() => {
-    if (productsLoading || pairsLoading) return;
-    if (extractProduct.length > 0) {
-      const valid = extractProduct.filter(p => extractProductOptions.includes(p));
-      if (valid.length !== extractProduct.length) setExtractProduct(valid);
-    }
-  }, [extractProductOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Extract tab cross-filtered options
+  const {
+    healthAreaOptions: extractHealthAreaOptions,
+    diseaseOptions: extractDiseaseOptions,
+    productOptions: extractProductOptions,
+  } = useCrossFilteredOptions({
+    data: crossFilterData,
+    selections: { healthArea: extractHealthArea, disease: extractDisease, product: extractProduct },
+    setters: { setHealthArea: setExtractHealthArea, setDisease: setExtractDisease, setProduct: setExtractProduct },
+    loading: crossFilterLoading,
+  });
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -928,9 +813,10 @@ export default function PortfolioAnalysis() {
                     phases={pipelinePhases}
                     layout="vertical"
                     height={500}
+                    yAxisWidth={100}
+                    maxTickChars={15}
                     xAxisLabel="Number of candidates / approved products"
                     yAxisLabel="Product type"
-                    yAxisWidth={170}
                     showFilters={true}
                     visiblePhases={pipelineVisiblePhases}
                     onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
@@ -1046,7 +932,7 @@ export default function PortfolioAnalysis() {
                         value={extractHealthArea}
                         onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={healthAreaOptions}
+                        options={extractHealthAreaOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
@@ -1726,7 +1612,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file. 
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
                   </p>
                 </div>
 

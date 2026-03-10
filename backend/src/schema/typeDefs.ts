@@ -367,7 +367,6 @@ export const typeDefs = `#graphql
     intended_use: String
     disease_name: String
     global_health_area: String
-    type_of_guidance: String
     author: String
     publication_date: String
     target_population: String

@@ -11,6 +11,7 @@ import {
   expandProductNameSelection,
   normalizeProductName,
   mergeVectorControlChartData,
+  mergeVectorControlStackedData,
 } from '../../src/lib/filterGroups';
 
 // ── Disease helpers ─────────────────────────────────────────────
@@ -143,6 +144,57 @@ describe('normalizeProductName', () => {
 
   it('leaves other names unchanged', () => {
     expect(normalizeProductName('Vaccines')).toBe('Vaccines');
+  });
+});
+
+describe('mergeVectorControlStackedData', () => {
+  it('returns null/empty as-is', () => {
+    expect(mergeVectorControlStackedData(null)).toBeNull();
+    expect(mergeVectorControlStackedData([])).toEqual([]);
+  });
+
+  it('returns input unchanged when no VC rows', () => {
+    const input = [
+      { category: 'Vaccines', phase1: 5, phase2: 3 },
+      { category: 'Diagnostics', phase1: 2, phase2: 1 },
+    ];
+    expect(mergeVectorControlStackedData(input)).toEqual(input);
+  });
+
+  it('sums phase counts from multiple VC rows into one consolidated row', () => {
+    const input = [
+      { category: 'Vaccines', phase1: 10, phase2: 5 },
+      { category: 'Biological vector control products', phase1: 2, phase2: 1 },
+      { category: 'Chemical vector control products', phase1: 3, phase2: 4 },
+      { category: 'Vector control products', phase1: 1, phase2: 0 },
+      { category: 'Diagnostics', phase1: 7, phase2: 2 },
+    ];
+    const result = mergeVectorControlStackedData(input);
+    expect(result).toHaveLength(3);
+    expect(result.find(r => r.category === 'Vaccines')).toEqual({ category: 'Vaccines', phase1: 10, phase2: 5 });
+    expect(result.find(r => r.category === 'Diagnostics')).toEqual({ category: 'Diagnostics', phase1: 7, phase2: 2 });
+    const vc = result.find(r => r.category === VECTOR_CONTROL_CONSOLIDATED_NAME);
+    expect(vc).toEqual({ category: VECTOR_CONTROL_CONSOLIDATED_NAME, phase1: 6, phase2: 5 });
+  });
+
+  it('preserves non-VC rows unchanged', () => {
+    const input = [
+      { category: 'Vaccines', discovery: 3 },
+      { category: 'Chemical vector control products', discovery: 1 },
+    ];
+    const result = mergeVectorControlStackedData(input);
+    expect(result.find(r => r.category === 'Vaccines')).toEqual({ category: 'Vaccines', discovery: 3 });
+  });
+
+  it('handles partial phase keys across VC rows', () => {
+    const input = [
+      { category: 'Biological vector control products', phase1: 2 },
+      { category: 'Chemical vector control products', phase2: 3 },
+    ];
+    const result = mergeVectorControlStackedData(input);
+    const vc = result.find(r => r.category === VECTOR_CONTROL_CONSOLIDATED_NAME);
+    expect(vc.phase1).toBe(2);
+    expect(vc.phase2).toBe(3);
   });
 });
 

@@ -23,7 +23,6 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names', type: 'line-clamp' },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
     { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
-    { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name' },
     { id: 'indication', label: 'Indication', accessor: 'indication', type: 'line-clamp' },
@@ -47,7 +46,6 @@ export const EXTRACT_TAB_COLUMNS = {
   'rd-priorities': [
     { id: 'title', label: 'Title', accessor: 'priority_name' },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
-    { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
@@ -92,7 +90,6 @@ export const EXTRACT_TAB_COLUMNS = {
   'rd-only': [
     { id: 'title', label: 'Title', accessor: 'priority_name' },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
-    { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
