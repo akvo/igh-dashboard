@@ -261,14 +261,14 @@ export default function Table({
 
   return (
     <div className={`bg-white border border-gray-200 overflow-hidden ${className}`}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full border-collapse">
           <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.accessor}
-                  className="px-4 py-3.5 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200 whitespace-nowrap"
+                  className="px-4 py-3.5 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200 whitespace-nowrap sticky top-0 z-10"
                   style={{ width: column.width, minWidth: column.minWidth }}
                 >
                   {column.header}

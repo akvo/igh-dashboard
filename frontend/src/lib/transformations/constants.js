@@ -67,29 +67,29 @@ export const PHASE_COLORS = {
 // Simplified phase names for display (ordered by sort_order)
 export const SIMPLIFIED_PHASE_NAMES = {
   'Discovery': 'Discovery',
-  'Discovery and preclinical': 'Discovery & Preclinical',
-  'Discovery & Preclinical': 'Discovery & Preclinical',
-  'Discovery & preclinical': 'Discovery & Preclinical',
+  'Discovery and preclinical': 'Discovery & preclinical',
+  'Discovery & Preclinical': 'Discovery & preclinical',
+  'Discovery & preclinical': 'Discovery & preclinical',
   'Primary and secondary screening and optimisation': 'Screening',
   'Preclinical': 'Preclinical',
   'Development': 'Development',
-  'Early development': 'Early Stage',
+  'Early development': 'Early stage',
   'Early development (concept and research)': 'Early Dev',
   'Early development (feasibility and planning)': 'Feasibility',
   'Phase I': 'Phase I',
   'Phase II': 'Phase II',
   'Phase III': 'Phase III',
   'Clinical evaluation': 'Clinical Eval',
-  'Late development': 'Late Stage',
+  'Late development': 'Late stage',
   'Late development (design and development)': 'Late Dev',
   'Late development (clinical validation and launch readiness)': 'Validation',
-  'Regulatory filing': 'Reg Filing',
+  'Regulatory filing': 'Reg filing',
   'PQ listing and regulatory approval': 'PQ/Approval',
   'Approved': 'Approved',
   'Phase IV': 'Phase IV',
-  'Post-marketing surveillance': 'Post-Market Surveillance',
-  'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'Post-Market Safety',
-  'Human safety & efficacy': 'Safety/Efficacy',
+  'Post-marketing surveillance': 'Post-market surveillance',
+  'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'Post-market safety',
+  'Human safety & efficacy': 'Safety/efficacy',
   'Operational research for diagnostics': 'Ops Research',
   'Unclear': 'Unclear',
   'Not applicable': 'N/A',
@@ -101,6 +101,15 @@ export const HEALTH_AREA_DISPLAY_NAMES = {
   'Womens Health': "Women's health",
   'Emerging infectious disease': 'Emerging infectious diseases',
 };
+
+/**
+ * Return the display-friendly health area name, or the original if no mapping exists.
+ * @param {string} name - Raw health area name from the database
+ * @returns {string} Display name
+ */
+export function displayHealthArea(name) {
+  return HEALTH_AREA_DISPLAY_NAMES[name] || name;
+}
 
 // Cache TTL in milliseconds (24 hours)
 export const CACHE_TTL = 24 * 60 * 60 * 1000;

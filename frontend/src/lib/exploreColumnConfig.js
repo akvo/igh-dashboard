@@ -14,6 +14,7 @@
  */
 
 import { normalizeProductName } from './filterGroups';
+import { displayHealthArea } from './transformations/constants';
 
 // =========================================================
 // Candidates (Explore → Aggregated portfolio → Candidates)
@@ -26,7 +27,7 @@ export const CANDIDATE_COLUMNS = [
     csvAccessor: (row) => row.candidate_name || row.alternative_names,
     render: (value) => <div className="text-sm font-medium text-black">{value}</div>,
   },
-  { header: 'GHA', accessor: 'global_health_area' },
+  { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
   { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {
@@ -62,7 +63,7 @@ export const APPROVED_PRODUCT_COLUMNS = [
     csvAccessor: (row) => row.candidate_name || row.alternative_names,
     render: (value) => <div className="text-sm font-medium text-black">{value}</div>,
   },
-  { header: 'GHA', accessor: 'global_health_area' },
+  { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
   { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {

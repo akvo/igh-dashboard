@@ -33,7 +33,7 @@ export function useClinicalTrialStats(globalHealthAreas, diseaseNames, productNa
     (rawData?.statusDistribution || []).map(row => ({
       name: row.status,
       value: row.trialCount,
-    })),
+    })).sort((a, b) => b.value - a.value),
     [rawData?.statusDistribution]
   );
 

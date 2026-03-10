@@ -10,6 +10,7 @@
  */
 
 import { normalizeProductName } from './filterGroups';
+import { displayHealthArea } from './transformations/constants';
 
 // =========================================================
 // Available (toggleable) columns per tab
@@ -20,7 +21,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'type', label: 'Type', accessor: 'candidate_type' },
     { id: 'ighId', label: 'IGH ID', accessor: 'candidateid' },
     { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names', type: 'line-clamp' },
-    { id: 'gha', label: 'Global health area', accessor: 'global_health_area' },
+    { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
     { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
     { id: 'secondaryDisease', label: 'Secondary disease', accessor: 'secondary_disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
@@ -38,7 +39,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'developers', label: 'Developers', accessor: 'developers_agg', type: 'line-clamp' },
     { id: 'knownFunders', label: 'Known Funders', accessor: 'known_funders_agg', type: 'line-clamp' },
     { id: 'keyClinicalTrial', label: 'Key clinical trial', accessor: 'key_clinical_trial', type: 'line-clamp' },
-    { id: 'chiModel', label: 'Controlled human Infection Model', accessor: 'chim_study' },
+    { id: 'chiModel', label: 'Controlled Human Infection Model', accessor: 'chim_study' },
     { id: 'targetPop', label: 'Target population', accessor: 'target_population', type: 'line-clamp' },
     { id: 'platform', label: 'Platform', accessor: 'platform' },
   ],
@@ -49,7 +50,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
-    { id: 'gha', label: 'Global Health area', accessor: 'global_health_area' },
+    { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
     { id: 'author', label: 'Author', accessor: 'author' },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date' },
     { id: 'indication', label: 'Indication', accessor: 'indication', type: 'line-clamp' },
@@ -94,7 +95,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'typeOfGuidance', label: 'Type of guidance', accessor: 'type_of_guidance' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
-    { id: 'gha', label: 'Global Health area', accessor: 'global_health_area' },
+    { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
     { id: 'author', label: 'Author', accessor: 'author' },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date' },
     { id: 'indication', label: 'Indication', accessor: 'indication', type: 'line-clamp' },

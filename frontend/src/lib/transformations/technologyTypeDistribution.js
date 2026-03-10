@@ -21,7 +21,14 @@ export function groupByTechnologyType(data) {
     return acc;
   }, {});
 
-  return Object.values(grouped);
+  return Object.values(grouped).sort((a, b) => {
+    const sumRow = (row) =>
+      Object.entries(row).reduce(
+        (sum, [key, val]) => (key !== 'technology_type' ? sum + (val || 0) : sum),
+        0,
+      );
+    return sumRow(b) - sumRow(a);
+  });
 }
 
 /**

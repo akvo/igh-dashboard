@@ -261,14 +261,15 @@ export default function BarChart({
                     tick={hasLongLabels
                       ? ({ x, y, payload }) => {
                           const label = String(payload.value);
-                          const display = label.length > maxTickChars ? label.slice(0, maxTickChars) + '…' : label;
+                          const limit = Math.max(maxTickChars, 18);
+                          const display = label.length > limit ? label.slice(0, limit) + '…' : label;
                           return (
                             <text
                               x={x}
                               y={y + 8}
                               textAnchor="end"
                               fill="rgba(38, 38, 38, 0.88)"
-                              fontSize={12}
+                              fontSize={11}
                               transform={`rotate(-45, ${x}, ${y + 8})`}
                             >
                               <title>{label}</title>
@@ -278,7 +279,7 @@ export default function BarChart({
                         }
                       : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
                     }
-                    height={hasLongLabels ? 100 : undefined}
+                    height={hasLongLabels ? 120 : undefined}
                   />
                   <YAxis
                     type="number"
