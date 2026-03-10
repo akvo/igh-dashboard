@@ -339,9 +339,9 @@ export default function CrossPipelineAnalytics() {
                   <strong className="text-white">Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
                 </p>
               </div>
-              <button className="px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
+              <a href="https://gfinderdata.impactglobalhealth.org/" target="_blank" rel="noopener noreferrer" className="inline-block px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
                 Explore G-finder data →
-              </button>
+              </a>
             </div>
           </div>
         </div>
