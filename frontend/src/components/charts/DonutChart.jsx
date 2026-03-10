@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
 
 const defaultColors = [
-  '#f9a78d', // Peach/Neonates
-  '#8c4028', // Dark brown/Infants
-  '#fe7449', // Orange/Children
-  '#cbafde', // Light purple/Adolescents
-  '#e3d6c1', // Beige
-  '#f0b456', // Gold/Yellow
-  '#54a5c4', // Teal/Blue
-  '#a78bfa', // Purple
+  '#F0B456', // Gold
+  '#CBAFDE', // Light Purple
+  '#B08888', // Mauve
+  '#E3D6C1', // Beige
+  '#F9A78D', // Peach
+  '#CC9949', // Dark Gold
+  '#6AB085', // Green
+  '#54A5C4', // Blue
 ];
 
 const CustomTooltip = ({ active, payload }) => {
@@ -19,13 +19,13 @@ const CustomTooltip = ({ active, payload }) => {
 
   const data = payload[0];
   const total = data.payload.total;
-  const percentage = ((data.value / total) * 100).toFixed(1);
+  const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : 0;
 
   return (
-    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3">
+    <div className="bg-white border border-black-12 rounded-lg shadow-lg p-3 relative z-50">
       <div className="flex items-center gap-2">
         <span
-          className="w-3 h-3 rounded-full"
+          className="w-3 h-3 rounded-sm"
           style={{ backgroundColor: data.payload.fill }}
         />
         <span className="font-medium text-black">{data.name}</span>
@@ -78,7 +78,8 @@ export default function DonutChart({
 }) {
   const [activeIndex, setActiveIndex] = useState(null);
 
-  const total = data.reduce((sum, item) => sum + item[valueKey], 0);
+  const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
+  const isEmpty = data.length === 0 || total === 0;
 
   const chartData = data.map((item, index) => ({
     ...item,
@@ -108,7 +109,7 @@ export default function DonutChart({
           onMouseLeave={() => setActiveIndex(null)}
         >
           <span
-            className="w-3 h-3 rounded-full flex-shrink-0"
+            className="w-3 h-3 rounded-sm flex-shrink-0"
             style={{ backgroundColor: item.fill }}
           />
           <span
@@ -124,6 +125,43 @@ export default function DonutChart({
   );
 
   const isHorizontal = legendPosition === 'right' || legendPosition === 'left';
+
+  if (isEmpty) {
+    return (
+      <div className="w-full overflow-visible">
+        <div
+          style={{ height }}
+          className="flex items-center justify-center"
+        >
+          <svg
+            width={outerRadius * 2 + 12}
+            height={outerRadius * 2 + 12}
+            viewBox={`0 0 ${outerRadius * 2 + 12} ${outerRadius * 2 + 12}`}
+          >
+            <circle
+              cx={outerRadius + 6}
+              cy={outerRadius + 6}
+              r={(innerRadius + outerRadius) / 2}
+              fill="none"
+              stroke="#E5E7EB"
+              strokeWidth={outerRadius - innerRadius}
+            />
+            <text
+              x={outerRadius + 6}
+              y={outerRadius + 6}
+              textAnchor="middle"
+              dominantBaseline="central"
+              className="text-sm"
+              fill="currentColor"
+              style={{ opacity: 0.48 }}
+            >
+              No data available
+            </text>
+          </svg>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

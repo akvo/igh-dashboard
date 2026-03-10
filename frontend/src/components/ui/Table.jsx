@@ -70,11 +70,27 @@ const Pagination = ({
 }) => {
   const getPageNumbers = () => {
     const pages = [];
-    if (totalPages <= 7) {
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      // Sliding window centred on currentPage
+      let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      let end = start + maxVisible - 1;
+      if (end > totalPages) { end = totalPages; start = Math.max(1, end - maxVisible + 1); }
+
+      // First page + left ellipsis
+      if (start > 1) { pages.push(1); }
+      if (start > 2) { pages.push('...'); }
+
+      for (let i = start; i <= end; i++) pages.push(i);
+
+      // Right ellipsis + last page
+      if (end < totalPages - 1) { pages.push('...'); }
+      if (end < totalPages) { pages.push(totalPages); }
     }
+
     return pages;
   };
 
@@ -98,7 +114,7 @@ const Pagination = ({
               onClick={() => onPageChange(page)}
               className={`w-8 h-8 text-sm rounded border-none cursor-pointer ${
                 currentPage === page
-                  ? 'bg-orange-500 text-white font-medium'
+                  ? 'bg-orange-500 text-black font-medium'
                   : 'bg-transparent text-gray-600 font-normal'
               }`}
             >
@@ -163,6 +179,8 @@ export default function Table({
     setCurrentPage(1);
   };
 
+  const emptyPlaceholder = <span className="text-gray-400 italic">no information available</span>;
+
   // Render cell based on column type
   const renderCell = (row, column) => {
     const value = row[column.accessor];
@@ -198,34 +216,51 @@ export default function Table({
         );
 
       case 'number':
+        if (value == null && value !== 0) return emptyPlaceholder;
         return <span className="tabular-nums">{typeof value === 'number' ? value.toLocaleString() : value}</span>;
 
       case 'date':
-        if (!value) return <span className="text-gray-400">-</span>;
+        if (!value) return emptyPlaceholder;
         return <span className="text-gray-600 tabular-nums">{new Date(value).toLocaleDateString()}</span>;
 
       case 'truncate':
-        return (
+        return value ? (
           <span className="block overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxWidth: column.maxWidth || '200px' }} title={value}>
-            {value || '-'}
+            {value}
           </span>
-        );
+        ) : emptyPlaceholder;
+
+      case 'line-clamp':
+        return value ? (
+          <span
+            className="block overflow-hidden"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: column.lines || 3,
+              WebkitBoxOrient: 'vertical',
+              maxWidth: column.maxWidth || '250px',
+            }}
+            title={value}
+          >
+            {value}
+          </span>
+        ) : emptyPlaceholder;
 
       default:
-        return <span className="text-black">{value ?? '-'}</span>;
+        return value != null ? <span className="text-black">{value}</span> : emptyPlaceholder;
     }
   };
 
   if (data.length === 0) {
     return (
-      <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+      <div className={`bg-white border border-gray-200 overflow-hidden ${className}`}>
         <EmptyState title={emptyState?.title} description={emptyState?.description} onClear={emptyState?.onClear} />
       </div>
     );
   }
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-white border border-gray-200 overflow-hidden ${className}`}>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -248,14 +283,19 @@ export default function Table({
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={`${onRowClick ? 'cursor-pointer' : 'cursor-default'} hover:bg-cream-200 transition-colors`}
               >
-                {columns.map((column) => (
-                  <td
-                    key={column.accessor}
-                    className="px-4 py-4 text-sm align-top border-b border-gray-200 text-black"
-                  >
-                    {renderCell(row, column)}
-                  </td>
-                ))}
+                {columns.map((column) => {
+                  const cellClass = typeof column.cellClassName === 'function'
+                    ? column.cellClassName(row[column.accessor], row)
+                    : (column.cellClassName || '');
+                  return (
+                    <td
+                      key={column.accessor}
+                      className={`px-4 py-4 text-sm align-top border-b border-gray-200 text-black ${cellClass}`}
+                    >
+                      {renderCell(row, column)}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -271,6 +311,16 @@ export default function Table({
           onResultsPerPageChange={handleResultsPerPageChange}
         />
       )}
+    </div>
+  );
+}
+
+// Lightweight wrapper for inline <table> elements that need horizontal scroll.
+// Use this instead of manually adding overflow-x-auto divs.
+export function ScrollableTable({ children, className = '', tableClassName = '' }) {
+  return (
+    <div className={`overflow-x-auto border border-gray-200 ${className}`}>
+      <table className={`w-full ${tableClassName}`}>{children}</table>
     </div>
   );
 }

@@ -104,6 +104,7 @@ describe("Bubble Chart", () => {
       globalHealthAreaSummaries {
         global_health_area
         candidateCount
+        productCount
       }
     }`);
 
@@ -114,6 +115,7 @@ describe("Bubble Chart", () => {
         globalHealthAreaSummaries(candidate_types: $candidateTypes) {
           global_health_area
           candidateCount
+          productCount
         }
       }`,
       { candidateTypes: ["Candidate"] },
@@ -121,15 +123,21 @@ describe("Bubble Chart", () => {
 
     expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
     const filteredTotal = data.globalHealthAreaSummaries.reduce(
-      (sum, r) => sum + r.candidateCount,
+      (sum, r) => sum + r.candidateCount + r.productCount,
       0,
     );
     const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
-      (sum, r) => sum + r.candidateCount,
+      (sum, r) => sum + r.candidateCount + r.productCount,
       0,
     );
+    // Filtering to Candidates only drops productCount to 0, reducing the total
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
+    const filteredProducts = data.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.productCount,
+      0,
+    );
+    expect(filteredProducts).toBe(0);
   });
 
   it("filters by candidate_types=['Product']", async () => {
@@ -139,6 +147,7 @@ describe("Bubble Chart", () => {
       globalHealthAreaSummaries {
         global_health_area
         candidateCount
+        productCount
       }
     }`);
 
@@ -149,6 +158,7 @@ describe("Bubble Chart", () => {
         globalHealthAreaSummaries(candidate_types: $candidateTypes) {
           global_health_area
           candidateCount
+          productCount
         }
       }`,
       { candidateTypes: ["Product"] },
@@ -156,15 +166,21 @@ describe("Bubble Chart", () => {
 
     expect(data.globalHealthAreaSummaries.length).toBeGreaterThan(0);
     const filteredTotal = data.globalHealthAreaSummaries.reduce(
-      (sum, r) => sum + r.candidateCount,
+      (sum, r) => sum + r.candidateCount + r.productCount,
       0,
     );
     const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
+      (sum, r) => sum + r.candidateCount + r.productCount,
+      0,
+    );
+    // Filtering to Products only drops candidateCount to 0, reducing the total
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+    const filteredCandidates = data.globalHealthAreaSummaries.reduce(
       (sum, r) => sum + r.candidateCount,
       0,
     );
-    expect(filteredTotal).toBeGreaterThan(0);
-    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+    expect(filteredCandidates).toBe(0);
   });
 
   it("both types combined closely matches unfiltered baseline", async () => {
@@ -174,6 +190,7 @@ describe("Bubble Chart", () => {
       globalHealthAreaSummaries {
         global_health_area
         candidateCount
+        productCount
       }
     }`);
 
@@ -184,20 +201,18 @@ describe("Bubble Chart", () => {
         globalHealthAreaSummaries(candidate_types: $candidateTypes) {
           global_health_area
           candidateCount
+          productCount
         }
       }`,
       { candidateTypes: ["Candidate", "Product"] },
     );
 
-    // Both types should cover the vast majority of unfiltered candidates.
-    // The unfiltered query doesn't join dim_candidate_core, so candidates
-    // with NULL candidate_type are included there but excluded when filtering.
     const unfilteredTotal = allData.globalHealthAreaSummaries.reduce(
-      (sum, r) => sum + r.candidateCount,
+      (sum, r) => sum + r.candidateCount + r.productCount,
       0,
     );
     const bothTotal = bothData.globalHealthAreaSummaries.reduce(
-      (sum, r) => sum + r.candidateCount,
+      (sum, r) => sum + r.candidateCount + r.productCount,
       0,
     );
 
@@ -371,10 +386,7 @@ describe("Phase Distribution — filters", () => {
       { productKeys },
     );
 
-    const filteredTotal = data.phaseDistribution.reduce(
-      (sum, r) => sum + r.candidateCount,
-      0,
-    );
+    const filteredTotal = data.phaseDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
   });
@@ -410,18 +422,19 @@ describe("Phase Distribution — candidate_type filter", () => {
 });
 
 describe("Lookup Queries", () => {
-  it("diseases returns non-empty array", async () => {
+  it("diseases returns non-empty array of disease group names", async () => {
     const { data } = await query<{
-      diseases: Array<{ disease_key: number; disease_name: string | null }>;
+      diseases: Array<{ disease_group_name: string | null; global_health_area: string | null }>;
     }>(`{
       diseases {
-        disease_key
-        disease_name
+        disease_group_name
+        global_health_area
       }
     }`);
 
     expect(data.diseases.length).toBeGreaterThan(0);
-    expect(data.diseases[0].disease_key).toBeDefined();
+    expect(data.diseases[0].disease_group_name).toBeDefined();
+    expect(typeof data.diseases[0].disease_group_name).toBe("string");
   });
 
   it("phases returns non-empty array", async () => {

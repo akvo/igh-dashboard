@@ -1,68 +1,47 @@
 import { getDatabase } from "../connection.js";
-import type { TemporalSnapshotRow } from "../types.js";
+import type { TemporalSnapshotRow, PipelineFilterPair } from "../types.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TemporalSnapshotFilters {
   years?: number[];
-  disease_key?: number;
+  disease_group_names?: string[];
   global_health_areas?: string[];
   product_keys?: number[];
   candidate_type?: string;
 }
 
-// Maps scalar filter keys to their SQL condition and optional JOIN clause
-const SCALAR_FILTER_MAP: Array<{
-  key: keyof TemporalSnapshotFilters;
-  condition: string;
-  join?: string;
-}> = [
-  { key: "disease_key", condition: "f.disease_key = ?" },
-  {
-    key: "candidate_type",
-    condition: "c.candidate_type = ?",
-    join: "JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key",
-  },
-];
-
-// Maps array filter keys to their SQL column and optional JOIN clause
-const ARRAY_FILTER_MAP: Array<{
-  key: keyof TemporalSnapshotFilters;
-  column: string;
-  join?: string;
-}> = [
-  { key: "years", column: "dt.year" },
-  { key: "product_keys", column: "f.product_key" },
-  {
-    key: "global_health_areas",
-    column: "d.global_health_area",
-    join: "JOIN dim_disease d ON f.disease_key = d.disease_key",
-  },
-];
+const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
 
 function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
   const joins = [
     "JOIN dim_date dt ON f.date_key = dt.date_key",
     "JOIN dim_phase p ON f.phase_key = p.phase_key",
   ];
-  const conditions = ["f.is_active_flag = 1", "dt.year IS NOT NULL", "p.phase_name IS NOT NULL"];
+  const conditions = [PIPELINE_FILTER, "dt.year IS NOT NULL", "p.phase_name IS NOT NULL"];
   const params: (number | string)[] = [];
 
-  for (const { key, column, join } of ARRAY_FILTER_MAP) {
-    const values = filters?.[key] as (number | string)[] | undefined;
-    if (values && values.length > 0) {
-      if (join) joins.push(join);
-      const placeholders = values.map(() => "?").join(", ");
-      conditions.push(`${column} IN (${placeholders})`);
-      params.push(...values);
-    }
-  }
+  addArrayCondition(filters?.years, "dt.year", conditions, params);
+  const diseaseCtx = { joins, join: DISEASE_JOIN };
+  addArrayCondition(
+    filters?.disease_group_names,
+    "d.disease_group_name",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(filters?.product_keys, "f.product_key", conditions, params);
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
 
-  for (const { key, condition, join } of SCALAR_FILTER_MAP) {
-    const value = filters?.[key];
-    if (value != null) {
-      if (join) joins.push(join);
-      conditions.push(condition);
-      params.push(value as number | string);
-    }
+  if (filters?.candidate_type) {
+    joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");
+    conditions.push("c.candidate_type = ?");
+    params.push(filters.candidate_type);
   }
 
   return { joins, conditions, params };
@@ -93,6 +72,28 @@ export function getTemporalSnapshots(filters?: TemporalSnapshotFilters): Tempora
 }
 
 /**
+ * Get distinct (disease_group_name, product_key, product_name) tuples present
+ * in the pipeline.  Used app-wide for client-side disease↔product cross-filtering.
+ */
+export function getPipelineFilterPairs(): PipelineFilterPair[] {
+  const db = getDatabase();
+
+  return db
+    .prepare(
+      `
+    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name
+    FROM fact_pipeline_snapshot f
+    JOIN dim_disease dd ON f.disease_key = dd.disease_key
+    JOIN dim_product dp ON f.product_key = dp.product_key
+    WHERE ${PIPELINE_FILTER}
+      AND dd.disease_group_name IS NOT NULL
+      AND f.product_key IS NOT NULL
+  `,
+    )
+    .all() as PipelineFilterPair[];
+}
+
+/**
  * Get available years in the dataset.
  */
 export function getAvailableYears(): number[] {
@@ -104,7 +105,7 @@ export function getAvailableYears(): number[] {
     SELECT DISTINCT dt.year
     FROM fact_pipeline_snapshot f
     JOIN dim_date dt ON f.date_key = dt.date_key
-    WHERE f.is_active_flag = 1
+    WHERE f.include_in_pipeline = 1
       AND dt.year IS NOT NULL
     ORDER BY dt.year
   `,

@@ -43,6 +43,12 @@ export interface TemporalSnapshotRow {
   candidateCount: number;
 }
 
+export interface PipelineFilterPair {
+  disease_group_name: string;
+  product_key: number;
+  product_name: string;
+}
+
 export interface Product {
   product_key: number;
   product_name: string | null;
@@ -51,7 +57,7 @@ export interface Product {
 export interface CandidateNode {
   candidate_key: number;
   candidate_name: string | null;
-  vin_candidateid: string | null;
+  candidateid: string | null;
   vin_candidate_code: string | null;
   developers_agg: string | null;
 }
@@ -65,6 +71,7 @@ export interface CandidateConnection {
 export interface DimDisease {
   disease_key: number;
   disease_name: string | null;
+  disease_group_name: string | null;
   global_health_area: string | null;
 }
 
@@ -104,6 +111,28 @@ export interface FactClinicalTrialEvent {
   trial_phase: string | null;
   enrollment_count: number | null;
   status: string | null;
+}
+
+export interface ApprovalStatusRow {
+  approval_status: string;
+  candidateCount: number;
+}
+
+export interface WHOPrequalRow {
+  who_prequalification: string;
+  candidateCount: number;
+}
+
+export interface ApprovingAuthorityRow {
+  authority_type: string;
+  who_prequalified: number;
+  no_who_listing: number;
+}
+
+export interface RegulatoryDistribution {
+  approvalStatus: ApprovalStatusRow[];
+  whoPrequalification: WHOPrequalRow[];
+  approvingAuthorities: ApprovingAuthorityRow[];
 }
 
 export interface CandidateDetail extends CandidateNode {

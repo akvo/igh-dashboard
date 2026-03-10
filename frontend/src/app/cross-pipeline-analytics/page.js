@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ChartMenu, Table } from '@/components/ui';
-import { UploadIcon, RefreshIcon, InfoIcon, MoreHorizontalIcon, TrendingUpIcon } from '@/components/icons';
+import { Dropdown, ChartMenu } from '@/components/ui';
+import { UploadIcon, RefreshIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
 import {
   useTemporalSnapshots,
@@ -11,156 +13,162 @@ import {
   useGlobalHealthAreaSummaries,
   useProducts,
   useDiseases,
+  usePipelineFilterPairs,
 } from '@/graphql/hooks';
+import {
+  addMalariaOption,
+  expandDiseaseSelection,
+  consolidateProductOptionsByKey,
+  expandProductKeySelection,
+  MALARIA_GROUP,
+} from '@/lib/filterGroups';
+import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
-  const [selectedHealthArea, setSelectedHealthArea] = useState('');
-  const [selectedDisease, setSelectedDisease] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState('');
+  const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
+  const [selectedDisease, setSelectedDisease] = useUrlState('disease', [], arraySerializer);
+  const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
 
   // Build filter arrays for API
-  const selectedHealthAreas = selectedHealthArea ? [selectedHealthArea] : null;
-  const selectedProductKeys = selectedProduct ? [parseInt(selectedProduct)] : null;
+  const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
+  const expandedProductKeys = expandProductKeySelection(selectedProduct);
+  const selectedProductKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
+  const expandedDiseases = expandDiseaseSelection(selectedDisease);
+  const selectedDiseaseGroupNames = expandedDiseases.length > 0 ? expandedDiseases : null;
 
   // Fetch chart data with filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys);
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
 
-  // Build phase selection state from API phases
-  const [selectedPhases, setSelectedPhases] = useState([]);
+  // Only unselected/hidden phase keys are stored in the URL so that
+  // the default state (all visible) produces a clean URL.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('phide', [], arraySerializer);
 
-  // Initialize selected phases when API data loads
-  useMemo(() => {
-    if (apiPhases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(apiPhases.map(p => p.key));
-    }
-  }, [apiPhases]);
+  const isPhaseVisible = (key) => !hiddenPhases.includes(key);
 
-  // Multi-variable section state (OUT OF SCOPE - keeping hardcoded for now)
-  const [compareDisease, setCompareDisease] = useState(['Malaria', 'HIV', 'Dengue']);
-  const [compareYear, setCompareYear] = useState('2019');
-  const [compareSeveralDiseases, setCompareSeveralDiseases] = useState(true);
-  const [selectedProductTab, setSelectedProductTab] = useState('drugs');
-  const [comparedTo, setComparedTo] = useState('2024');
-  const [multiVarPhases, setMultiVarPhases] = useState(['discovery', 'preClinical', 'phase1', 'phase2', 'phase3', 'approved']);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Build options from API data
   const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => item.name),
+    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
     [healthAreas]
   );
 
-  // Disease options for multi-variable section
-  const diseaseOptions = useMemo(() =>
-    (diseasesList || [])
-      .filter(d => d.name)
-      .map(d => ({ value: d.key, label: d.name })),
-    [diseasesList]
-  );
+  // Disease options from API, narrowed to the selected GHA(s) when present
+  const ghaDiseaseOptions = useMemo(() => {
+    const source = diseasesRaw || [];
+    const filtered = selectedHealthArea.length > 0
+      ? source.filter(d => selectedHealthArea.includes(d.global_health_area))
+      : source;
+    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
+    return addMalariaOption(names);
+  }, [diseasesRaw, selectedHealthArea]);
 
-  // Product options with key-value pairs for filtering
-  const productOptions = useMemo(() =>
-    (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name })),
-    [productsList]
-  );
+  // All product options (before cross-filtering), with VC consolidation
+  const allProductOptions = useMemo(() => {
+    const raw = (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name }));
+    return consolidateProductOptionsByKey(raw);
+  }, [productsList]);
 
-  const yearOptions = useMemo(() =>
-    (availableYears || []).map(y => String(y)),
-    [availableYears]
-  );
+  // Disease↔product cross-filtering via pipeline pairs
+  // (product options may have pipe-separated keys from VC consolidation)
+  const diseaseOptions = useMemo(() => {
+    if (selectedProduct.length === 0) return ghaDiseaseOptions;
+    const pkeys = new Set(expandProductKeySelection(selectedProduct));
+    const validNames = new Set(
+      pairs.filter(p => pkeys.has(String(p.product_key)))
+           .map(p => p.disease_group_name)
+    );
+    return ghaDiseaseOptions.filter(d => {
+      if (validNames.has(d)) return true;
+      if (d === MALARIA_GROUP.label) {
+        return MALARIA_GROUP.members.some(m => validNames.has(m));
+      }
+      return false;
+    });
+  }, [selectedProduct, pairs, ghaDiseaseOptions]);
 
-  // Use API phases with consistent colors
-  const phases = useMemo(() => {
-    if (apiPhases.length > 0) {
-      return apiPhases;
+  const productOptions = useMemo(() => {
+    if (selectedDisease.length === 0) return allProductOptions;
+    const expandedDisease = expandDiseaseSelection(selectedDisease);
+    const validKeys = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => String(p.product_key))
+    );
+    return allProductOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
+  }, [selectedDisease, pairs, allProductOptions]);
+
+  // When GHA or product narrows the disease list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
+  useEffect(() => {
+    if (diseasesLoading || pairsLoading) return;
+    if (selectedDisease.length > 0) {
+      const valid = selectedDisease.filter(d => diseaseOptions.includes(d));
+      if (valid.length !== selectedDisease.length) setSelectedDisease(valid);
     }
-    // Fallback while loading
-    return [
-      { key: 'discovery', label: 'Discovery', color: '#8c4028' },
-      { key: 'pre_clinical', label: 'Pre-clinical', color: '#fe7449' },
-      { key: 'phase_1', label: 'Phase 1', color: '#f9a78d' },
-      { key: 'phase_2', label: 'Phase 2', color: '#ddd6fe' },
-      { key: 'phase_3', label: 'Phase 3', color: '#a78bfa' },
-      { key: 'approved', label: 'Approved', color: '#f0b456' },
-    ];
+  }, [diseaseOptions, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When disease narrows the product list, remove invalid selections.
+  // Skip while data is still loading to avoid wiping URL-restored selections.
+  useEffect(() => {
+    if (productsLoading || pairsLoading) return;
+    if (selectedProduct.length > 0) {
+      const validValues = new Set(productOptions.map(o => o.value));
+      const valid = selectedProduct.filter(p => validValues.has(p));
+      if (valid.length !== selectedProduct.length) setSelectedProduct(valid);
+    }
+  }, [productOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Use API phases with consistent colors, enforcing lifecycle ordering
+  // via sortOrder so the chart and legend always read
+  // Discovery → … → Approved.
+  const phases = useMemo(() => {
+    const source = apiPhases.length > 0
+      ? apiPhases
+      : [
+          { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
+          { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
+          { key: 'phase_1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
+          { key: 'phase_2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
+          { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+          { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
+        ];
+    return [...source].sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity));
   }, [apiPhases]);
 
-  const productTabs = ['All', 'Vaccines', 'Devices', 'Drugs', 'Diagnostics', 'Biologics', 'Dietary supplements', 'VCP', 'Microbicides'];
-
-  // Hardcoded phases for multi-variable section (OUT OF SCOPE - design WIP)
-  const multiVarPhasesConfig = [
-    { id: 'discovery', label: 'Discovery', color: '#8c4028' },
-    { id: 'preClinical', label: 'Pre-clinical', color: '#fe7449' },
-    { id: 'phase1', label: 'Phase 1', color: '#f9a78d' },
-    { id: 'phase2', label: 'Phase 2', color: '#ddd6fe' },
-    { id: 'phase3', label: 'Phase 3', color: '#a78bfa' },
-    { id: 'approved', label: 'Approved', color: '#f0b456' },
-  ];
-
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases((prev) =>
+    setHiddenPhases((prev) =>
       prev.includes(phaseKey) ? prev.filter((key) => key !== phaseKey) : [...prev, phaseKey]
     );
   };
 
+  const hasCrossFilters = selectedHealthArea.length > 0 || selectedDisease.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
+
   const handleResetFilters = () => {
-    setSelectedHealthArea('');
-    setSelectedDisease('');
-    setSelectedProduct('');
-    // Reset phases to all selected
-    setSelectedPhases(phases.map(p => p.key));
+    setSelectedHealthArea([]);
+    setSelectedDisease([]);
+    setSelectedProduct([]);
+    // Reset phases to all visible
+    setHiddenPhases([]);
   };
 
   // Loading state
   const isLoading = temporalLoading || yearsLoading;
 
-  const handleClearCompare = () => {
-    setCompareDisease([]);
-    setCompareYear('');
-  };
-
-  // Check if comparison is selected
-  const hasCompareSelection = compareDisease.length > 0 && compareYear;
-
-  // Dummy comparison data for stat cards
-  const comparisonStats = [
-    { disease: 'HIV', value: 3, change: 60 },
-    { disease: 'Malaria', value: 3, change: 40 },
-    { disease: 'Dengue', value: 0, change: 40 },
-  ];
-
-  // Dummy data for multi-variable chart
-  const multiVarChartData = [
-    { category: 'HIV', discovery: 35, preClinical: 45, phase1: 30, phase2: 25, phase3: 20, approved: 15 },
-    { category: 'Malaria', discovery: 45, preClinical: 55, phase1: 40, phase2: 35, phase3: 30, approved: 25 },
-    { category: 'Dengue', discovery: 15, preClinical: 20, phase1: 15, phase2: 10, phase3: 8, approved: 5 },
-  ];
-
-  // Dummy data for multi-variable table
-  const multiVarTableData = [
-    { disease: 'HIV', preClinical: 2, phase1: 0, phase2: 2, phase3: 1, phase4: 0, approved: 1 },
-    { disease: 'Malaria', preClinical: 0, phase1: 0, phase2: 0, phase3: 1, phase4: 0, approved: 1 },
-    { disease: 'Dengue', preClinical: 1, phase1: 2, phase2: 1, phase3: 1, phase4: 1, approved: 2 },
-  ];
-
-  const handleMultiVarPhaseToggle = (phaseId) => {
-    setMultiVarPhases((prev) =>
-      prev.includes(phaseId) ? prev.filter((id) => id !== phaseId) : [...prev, phaseId]
-    );};
-
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
       <Sidebar activeId="cross-pipeline-analytics" />
 
-      <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+      <main className="flex-1 min-w-0">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className="flex flex-col gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
@@ -170,94 +178,114 @@ export default function CrossPipelineAnalytics() {
                   The Cross-pipeline analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
                 </p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-[#E76A42] bg-[#FE74491F] hover:bg-[#FE74492F] whitespace-nowrap">
-                Share this view
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+              >
+                {shareCopied ? 'Copied!' : 'Share this view'}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
           </div>
 
           {/* Cross-pipeline analytics section */}
-          <div className="bg-white border border-gray-200 p-6 mb-6">
+          <div className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
               <div className="flex items-center gap-3">
                 <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
-                <button className="px-4 py-2 text-sm font-medium text-[#E76A42] border border-[#E76A42] hover:bg-orange-50">
-                  Make custom comparison
-                </button>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-gray-500 mb-4">
               The total volume of the R&D pipeline across the IGH measurement years. Use the filter to zoom into how the pipeline of one disease changed over time and see if the total number of candidates and approved products is increasing year-over-year.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-            {/* Filters */}
-            <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
-              <div className="min-w-[180px]">
-                <Dropdown
-                  label="Global health area"
-                  value={selectedHealthArea}
-                  onChange={setSelectedHealthArea}
-                  placeholder="All"
-                  options={healthAreaOptions}
-                  compact={true}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <Dropdown
-                  label="Diseases"
-                  value={selectedDisease}
-                  onChange={setSelectedDisease}
-                  placeholder="All"
-                  options={diseaseOptions}
-                  compact={true}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <Dropdown
-                  label="Product"
-                  value={selectedProduct}
-                  onChange={setSelectedProduct}
-                  placeholder="All"
-                  options={productOptions}
-                  compact={true}
-                />
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={handleResetFilters}
-                className="flex items-center gap-2 text-sm text-gray-400 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
-              >
-                Reset filters
-              </button>
-            </div>
+            {/* Sticky filters + phase checkboxes */}
+            <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
+              {/* Filters */}
+              <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Global health area"
+                    value={selectedHealthArea}
+                    onChange={setSelectedHealthArea}
+                    placeholder="All"
+                    options={healthAreaOptions}
+                    multiSelect={true}
 
-            {/* Phase checkboxes */}
-            <div className="flex items-center gap-6 py-4 flex-wrap">
-              {phases.map((phase) => (
-                <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                  <span
-                    onClick={() => handlePhaseToggle(phase.key)}
-                    className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.key)
-                        ? 'border-transparent'
-                        : 'border-gray-300 bg-white'
-                    }`}
-                    style={{
-                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
-                    }}
-                  >
-                    {selectedPhases.includes(phase.key) && (
-                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                        <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-sm text-gray-700">{phase.label}</span>
-                </label>
-              ))}
+                    loading={healthAreasLoading}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Disease"
+                    value={selectedDisease}
+                    onChange={setSelectedDisease}
+                    placeholder="All"
+                    options={diseaseOptions}
+                    multiSelect={true}
+
+                    loading={diseasesLoading}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Product"
+                    value={selectedProduct}
+                    onChange={setSelectedProduct}
+                    placeholder="All"
+                    options={productOptions}
+                    multiSelect={true}
+
+                    loading={productsLoading}
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  onClick={handleResetFilters}
+                  disabled={!hasCrossFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
+                    hasCrossFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  Clear
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Phase checkboxes */}
+              <div className="flex items-center gap-6 py-4 flex-wrap">
+                {phases.map((phase) => (
+                  <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
+                    <span
+                      onClick={() => handlePhaseToggle(phase.key)}
+                      className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
+                        isPhaseVisible(phase.key)
+                          ? 'border-transparent'
+                          : 'border-gray-300 bg-white'
+                      }`}
+                      style={{
+                        backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
+                      }}
+                    >
+                      {isPhaseVisible(phase.key) && (
+                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+                          <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </span>
+                    <span className="text-sm text-gray-700">{phase.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Chart */}
@@ -269,205 +297,25 @@ export default function CrossPipelineAnalytics() {
               ) : (
                 <StackedBarChart
                   data={chartData}
-                  phases={phases.filter((p) => selectedPhases.includes(p.key))}
+                  phases={phases}
                   layout="vertical"
                   height={280}
                   xAxisLabel="Amount"
                   yAxisLabel="Years"
                   showFilters={false}
+                  visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
                 />
               )}
             </div>
 
-            {/* Last data update footer */}
-            <div className="mt-6 bg-orange-50 px-4 py-3 flex items-center justify-center gap-2">
-              <InfoIcon className="w-4 h-4 text-orange-500" />
-              <span className="text-sm text-gray-700">Last data update: <strong>12 Jan 2025</strong></span>
-            </div>
           </div>
 
-          {/* Multi-variable temporal overview section */}
-          <div className="bg-white border border-gray-200 p-6 mb-6">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-bold text-black">Multi-variable temporal overview</h3>
-              <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
-            </div>
-            <p className="text-sm text-gray-500 mb-6">
-              Analyze the pipeline its progression by selecting a single disease to track phase-to-phase shifts over time. Alternatively, select multiple diseases to compare pipeline growth and maturity across different disease areas.
-            </p>
-
-            {/* Filters row */}
-            <div className="flex items-end gap-4 pb-6 border-b border-gray-200">
-              <div className="min-w-[180px]">
-                <Dropdown
-                  label="Diseases"
-                  value={compareDisease}
-                  onChange={setCompareDisease}
-                  placeholder="All"
-                  options={diseaseOptions}
-                  multiSelect={true}
-                  compact={true}
-                />
-              </div>
-              <div className="min-w-[180px]">
-                <Dropdown
-                  label="Year"
-                  value={compareYear}
-                  onChange={setCompareYear}
-                  placeholder="All"
-                  options={yearOptions}
-                  compact={true}
-                />
-              </div>
-              <div className="flex items-center gap-3 ml-4">
-                <button
-                  onClick={() => setCompareSeveralDiseases(!compareSeveralDiseases)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    compareSeveralDiseases ? 'bg-orange-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                      compareSeveralDiseases ? 'left-7' : 'left-1'
-                    }`}
-                  />
-                </button>
-                <div>
-                  <div className="text-sm text-gray-700">Compare several diseases</div>
-                  <div className="text-xs text-gray-400">Select if</div>
-                </div>
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={handleClearCompare}
-                className="flex items-center gap-2 text-sm text-gray-400 border border-gray-200 px-4 hover:bg-gray-50 h-[36px]"
-              >
-                Clear
-                <RefreshIcon className="w-4 h-4" />
-              </button>
-              <button className="px-4 h-[36px] text-sm text-gray-400 bg-gray-100 border-none">
-                Apply
-              </button>
-            </div>
-
-            {/* Product tabs and Compared to */}
-            <div className="flex items-center gap-4 py-4 border-b border-gray-200">
-              <div className="flex items-center bg-gray-100 p-1">
-                {productTabs.map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setSelectedProductTab(tab.toLowerCase())}
-                    className={`px-3 py-1.5 text-sm transition-colors cursor-pointer ${
-                      selectedProductTab === tab.toLowerCase()
-                        ? 'bg-white text-black font-medium shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 ml-auto">
-                <span className="text-sm text-gray-600">Compared to</span>
-                <Dropdown
-                  value={comparedTo}
-                  onChange={setComparedTo}
-                  placeholder="All"
-                  options={yearOptions}
-                  compact={true}
-                  className="w-32"
-                />
-              </div>
-            </div>
-
-            {/* Content area */}
-            {!hasCompareSelection ? (
-              <div className="flex flex-col items-center justify-center py-24">
-                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <InfoIcon className="w-6 h-6 text-orange-500" />
-                </div>
-                <h4 className="text-lg font-bold text-black mb-2">Nothing selected</h4>
-                <p className="text-sm text-gray-500 text-center max-w-xs">
-                  Select one or up to three diseases and one year you'd like to compare
-                </p>
-              </div>
-            ) : (
-              <div className="py-6">
-                {/* Stat cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  {comparisonStats.map((item) => (
-                    <div key={item.disease} className="border border-gray-200 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-base font-medium text-black">{item.disease}</h4>
-                        <InfoIcon className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="text-4xl font-bold text-black mb-2">{item.value}</div>
-                      <div className="flex items-center gap-1 text-sm">
-                        <TrendingUpIcon className="w-4 h-4 text-green-500" />
-                        <span className="text-green-500">{item.change}%</span>
-                        <span className="text-gray-500">Year-over-Year</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Phase checkboxes */}
-                <div className="flex items-center gap-6 py-4 border-t border-gray-200">
-                  {multiVarPhasesConfig.map((phase) => (
-                    <label key={phase.id} className="flex items-center gap-2 cursor-pointer">
-                      <span
-                        onClick={() => handleMultiVarPhaseToggle(phase.id)}
-                        className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                          multiVarPhases.includes(phase.id)
-                            ? 'border-transparent'
-                            : 'border-gray-300 bg-white'
-                        }`}
-                        style={{
-                          backgroundColor: multiVarPhases.includes(phase.id) ? phase.color : undefined,
-                        }}
-                      >
-                        {multiVarPhases.includes(phase.id) && (
-                          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                            <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </span>
-                      <span className="text-sm text-gray-700">{phase.label}</span>
-                    </label>
-                  ))}
-                </div>
-
-                {/* Chart */}
-                <div className="mt-4 mb-8">
-                  <StackedBarChart
-                    data={multiVarChartData}
-                    phases={multiVarPhasesConfig.filter((p) => multiVarPhases.includes(p.id)).map((p) => ({ key: p.id, label: p.label, color: p.color }))}
-                    layout="vertical"
-                    height={200}
-                    xAxisLabel="Amount of Candidates/Products"
-                    yAxisLabel="Disease"
-                    showFilters={false}
-                  />
-                </div>
-
-                {/* Data table */}
-                <Table
-                  columns={[
-                    { header: 'Disease', accessor: 'disease' },
-                    { header: 'Pre-clinical', accessor: 'preClinical', type: 'number' },
-                    { header: 'Phase 1', accessor: 'phase1', type: 'number' },
-                    { header: 'Phase 2', accessor: 'phase2', type: 'number' },
-                    { header: 'Phase 3', accessor: 'phase3', type: 'number' },
-                    { header: 'Phase 4', accessor: 'phase4', type: 'number' },
-                    { header: 'Approved', accessor: 'approved', render: (value) => <span className="font-medium text-orange-500">{value}</span> },
-                  ]}
-                  data={multiVarTableData}
-                  pagination={false}
-                />
-              </div>
-            )}
-          </div>
+          {/* Temporal trends & portfolio comparison */}
+          <TemporalTrendsSection
+            diseaseOptions={diseaseOptions}
+            productOptions={productOptions}
+            availableYears={availableYears}
+          />
 
           {/* G-FINDER promotional section */}
           <div className="relative bg-gray-900 overflow-hidden">
@@ -491,7 +339,7 @@ export default function CrossPipelineAnalytics() {
                   <strong className="text-white">Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
                 </p>
               </div>
-              <button className="px-6 py-3 bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors">
+              <button className="px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
                 Explore G-finder data →
               </button>
             </div>

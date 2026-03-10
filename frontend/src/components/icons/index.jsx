@@ -17,6 +17,8 @@ export {
   Menu as MenuIcon,
   Settings as SettingsIcon,
   Filter as FilterIcon,
+  ListFilter as ListFilterIcon,
+  AlignJustify as AlignJustifyIcon,
 
   // Chevrons & Toggles
   ChevronLeft as ChevronLeftIcon,

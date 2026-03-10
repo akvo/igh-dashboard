@@ -134,85 +134,84 @@ export const colors = {
   },
 };
 
-// R&D Phase Colors (for pipeline/stacked bar charts)
+// R&D Phase Colors (for pipeline/stacked bar charts) — aligned to brandbook
 export const phaseColors = {
-  preclinical: '#8c4028',
-  phase1: '#fe7449',
-  phase2: '#fdba74',
-  phase3: '#ddd6fe',
-  phase4: '#f0b456',
-  approved: '#a78bfa',
+  discovery: '#AD5133',
+  preclinical: '#FE7449',
+  phase1: '#F9A78D',
+  phase2: '#B28FC9',
+  phase3: '#CBAFDE',
+  approved: '#F0B456',
 };
 
 // Ordered array for Recharts
 export const phaseColorArray = [
-  '#8c4028', // Pre-clinical
-  '#fe7449', // Phase 1
-  '#fdba74', // Phase 2
-  '#ddd6fe', // Phase 3
-  '#f0b456', // Phase 4
-  '#a78bfa', // Approved
+  '#AD5133', // Discovery
+  '#FE7449', // Pre-clinical
+  '#F9A78D', // Phase 1
+  '#B28FC9', // Phase 2
+  '#CBAFDE', // Phase 3
+  '#F0B456', // Approved
 ];
 
 // Phase labels
 export const phaseLabels = [
+  'Discovery',
   'Pre-clinical',
   'Phase 1',
   'Phase 2',
   'Phase 3',
-  'Phase 4',
   'Approved',
 ];
 
-// Data Visualization - Primary Chart Palette
+// Data Visualization - Primary Chart Palette (from brandbook Frame 3)
 export const chartColors = {
   primary: [
-    '#fe7449', // Orange
-    '#f0b456', // Yellow
-    '#cbafde', // Purple
-    '#b08888', // Brown
-    '#e3d6c1', // Beige
-    '#f9a78d', // Peach
-    '#ffdcd1', // Pink
-    '#cc9949', // Gold
-    '#6ab085', // Teal
-    '#54a5c4', // Blue
-    '#b28fc9', // Violet
+    '#F0B456', // Gold
+    '#CBAFDE', // Light Purple
+    '#B08888', // Mauve
+    '#E3D6C1', // Beige
+    '#F9A78D', // Peach
+    '#FFDCD1', // Light Pink
+    '#CC9949', // Dark Gold
+    '#6AB085', // Green
+    '#54A5C4', // Blue
+    '#B28FC9', // Violet
+    '#AD5133', // Rust
   ],
   secondary: [
     '#875252', // Dark Brown
-    '#bfab8a', // Tan
-    '#ad5133', // Rust
-    '#c8dcd0', // Mint
-    '#a6c4cf', // Sky
-    '#e5c78a', // Cream
-    '#d9cae3', // Lavender
-    '#d6c6c6', // Rose
-    '#f2e8d8', // Sand
+    '#BFAB8A', // Tan
+    '#C8DCD0', // Mint
+    '#A6C4CF', // Sky
+    '#E5C78A', // Cream
+    '#D9CAE3', // Lavender
+    '#D6C6C6', // Rose
+    '#F2E8D8', // Sand
   ],
 };
 
-// Global Health Area Colors
+// Global Health Area Colors (from brandbook palette)
 export const ghaColors = {
-  neglectedDiseases: '#fe7449',
-  womensHealth: '#fdba74',
-  emergingInfectiousDiseases: '#8c4028',
+  neglectedDiseases: '#AD5133',
+  womensHealth: '#F0B456',
+  emergingInfectiousDiseases: '#54A5C4',
 };
 
-// Bubble chart specific colors
+// Bubble chart specific colors (from brandbook palette)
 export const bubbleColors = {
-  neglectedDiseases: '#fe7449',
-  womensHealth: '#fdba74',
-  emergingInfectiousDiseases: '#8c4028',
+  neglectedDiseases: '#AD5133',
+  womensHealth: '#F0B456',
+  emergingInfectiousDiseases: '#54A5C4',
 };
 
-// Map color scale (for choropleth)
+// Map color scale (for choropleth — from brandbook palette)
 export const mapColorScale = {
   noData: '#f5f5f5',
-  low: '#ffd4c7',
-  medium: '#fe906d',
-  high: '#fe7449',
-  max: '#8c4028',
+  low: '#FFDCD1',
+  medium: '#F9A78D',
+  high: '#F0B456',
+  max: '#AD5133',
 };
 
 // Donut chart default colors

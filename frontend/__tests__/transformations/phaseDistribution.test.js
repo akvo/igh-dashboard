@@ -43,7 +43,7 @@ describe('phaseDistribution transformations', () => {
     it('includes color and simplified label for each phase', () => {
       const phases = extractPhases(sampleData);
 
-      expect(phases[0].color).toBe('#8c4028'); // Discovery color
+      expect(phases[0].color).toBe('#AD5133'); // Discovery color
       expect(phases[0].label).toBe('Discovery');
       expect(phases[2].label).toBe('Phase I');
     });

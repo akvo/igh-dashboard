@@ -6,9 +6,18 @@ import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js"
 import { getPhaseDistribution } from "../db/queries/phaseDistribution.js";
 import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistribution.js";
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
-import { getTemporalSnapshots, getAvailableYears } from "../db/queries/temporal.js";
+import { getTemporalSnapshots, getAvailableYears, getPipelineFilterPairs } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
+import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
+import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";
+import { getProductDistribution } from "../db/queries/productDistribution.js";
+import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
+import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
+import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
+import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
+import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
 import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
+import { getLastSyncDate } from "../db/queries/metadata.js";
 
 // Context type for resolvers
 interface Context {
@@ -18,7 +27,15 @@ interface Context {
 export const resolvers = {
   Query: {
     // KPIs (3 homepage cards)
-    portfolioKPIs: () => getPortfolioKPIs(),
+    portfolioKPIs: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getPortfolioKPIs({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
 
     // Bubble chart
     globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
@@ -46,15 +63,28 @@ export const resolvers = {
       }),
 
     // Map
-    geographicDistribution: (_: unknown, args: { location_scope: string }) =>
-      getGeographicDistribution(args.location_scope),
+    geographicDistribution: (
+      _: unknown,
+      args: {
+        location_scope: string;
+        statuses?: string[];
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+      },
+    ) =>
+      getGeographicDistribution(args.location_scope, args.statuses, {
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
 
     // Cross-pipeline temporal
     temporalSnapshots: (
       _: unknown,
       args: {
         years?: number[];
-        disease_key?: number;
+        disease_group_names?: string[];
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
@@ -62,11 +92,14 @@ export const resolvers = {
     ) =>
       getTemporalSnapshots({
         years: args.years,
-        disease_key: args.disease_key,
+        disease_group_names: args.disease_group_names,
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
       }),
+
+    // Pipeline filter pairs (disease×product) for cross-filtering
+    pipelineFilterPairs: () => getPipelineFilterPairs(),
 
     // Lists with pagination
     candidates: (_: unknown, args: { filter?: CandidateFilter; limit?: number; offset?: number }) =>
@@ -76,6 +109,137 @@ export const resolvers = {
     candidate: (_: unknown, args: { candidate_key: number }) =>
       getCandidateByKey(args.candidate_key),
 
+    // Portfolio analysis - candidates list (paginated)
+    portfolioCandidates: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          candidate_type?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Extract tab - R&D priorities with linked candidates (paginated)
+    rdPrioritiesWithCandidates: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          search?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getRdPrioritiesWithCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Extract tab - R&D priorities only (paginated)
+    rdPriorities: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          search?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getRdPriorities(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Portfolio analysis - clinical trials list (paginated)
+    clinicalTrials: (
+      _: unknown,
+      args: {
+        filter?: {
+          global_health_areas?: string[];
+          disease_names?: string[];
+          product_names?: string[];
+          status?: string;
+        };
+        limit?: number;
+        offset?: number;
+      },
+    ) => getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
+
+    // Portfolio analysis - clinical trial stats (trials tab)
+    clinicalTrialStats: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getClinicalTrialStats({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
+
+    // Portfolio analysis - regulatory distribution (approved products tab)
+    regulatoryDistribution: (
+      _: unknown,
+      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+    ) =>
+      getRegulatoryDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+      }),
+
+    // Portfolio analysis - product distribution (donut chart)
+    productDistribution: (
+      _: unknown,
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
+    ) =>
+      getProductDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio analysis - product phase distribution
+    productPhaseDistribution: (
+      _: unknown,
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
+    ) =>
+      getProductPhaseDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
+
+    // Portfolio analysis - technology type distribution
+    technologyTypeDistribution: (
+      _: unknown,
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        candidate_type?: string;
+      },
+    ) =>
+      getTechnologyTypeDistribution({
+        global_health_areas: args.global_health_areas,
+        disease_names: args.disease_names,
+        product_names: args.product_names,
+        candidate_type: args.candidate_type,
+      }),
+
     // Filter dropdowns
     diseases: () => getDiseases(),
     phases: () => getPhases(),
@@ -83,6 +247,7 @@ export const resolvers = {
     countries: () => getCountries(),
     availableYears: () => getAvailableYears(),
     locationScopes: () => getLocationScopes(),
+    lastSyncDate: () => getLastSyncDate(),
   },
 
   // Resolve nested relationships on DimCandidateCore

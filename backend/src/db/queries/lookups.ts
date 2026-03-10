@@ -11,20 +11,24 @@ import type {
 } from "../types.js";
 
 /**
- * Get all diseases for filter dropdown.
+ * Get diseases (grouped by disease_group_name) that have at least one candidate in the pipeline.
  */
-export function getDiseases(): DimDisease[] {
+export function getDiseases(): Pick<DimDisease, "disease_group_name" | "global_health_area">[] {
   const db = getDatabase();
 
   return db
     .prepare(
       `
-    SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
-    FROM dim_disease
-    ORDER BY disease_name
+    SELECT DISTINCT d.disease_group_name, d.global_health_area
+    FROM dim_disease d
+    JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
+    WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
+      AND d.disease_group_name IS NOT NULL
+    ORDER BY d.disease_group_name
   `,
     )
-    .all() as DimDisease[];
+    .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
 }
 
 /**
@@ -36,7 +40,7 @@ export function getDiseaseByKey(disease_key: number): DimDisease | null {
   const disease = db
     .prepare(
       `
-    SELECT disease_key, vin_diseaseid, disease_name, global_health_area, disease_type
+    SELECT disease_key, diseaseid, disease_name, global_health_area, disease_type
     FROM dim_disease
     WHERE disease_key = ?
   `,
@@ -95,6 +99,7 @@ export function getProducts(): DimProduct[] {
     FROM dim_product p
     JOIN fact_pipeline_snapshot f ON p.product_key = f.product_key
     WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
     ORDER BY p.product_name
   `,
     )
@@ -165,7 +170,7 @@ export function getPrioritiesByCandidateKey(candidate_key: number): DimPriority[
   return db
     .prepare(
       `
-    SELECT p.priority_key, p.vin_rdpriorityid, p.priority_name, p.indication, p.intended_use
+    SELECT p.priority_key, p.rdpriorityid, p.priority_name, p.indication, p.intended_use
     FROM dim_priority p
     JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
     WHERE bp.candidate_key = ?

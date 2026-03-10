@@ -2,6 +2,6 @@
   "name": "igh-dashboard",
   "private": true,
   "scripts": {
-    "check:all": "cd frontend && npm test && cd ../backend && npm test && npm run check"
+    "check:all": "cd frontend && npm test && cd ../backend && npm run test:all && npm run check"
   }
 }

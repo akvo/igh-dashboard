@@ -42,7 +42,7 @@ describe("getCandidates — pagination", () => {
       Array.from({ length: 20 }, (_, i) => ({
         candidate_key: i + 1,
         candidate_name: `Candidate ${i + 1}`,
-        vin_candidateid: null,
+        candidateid: null,
         vin_candidate_code: null,
         developers_agg: null,
       })),
@@ -60,7 +60,7 @@ describe("getCandidates — pagination", () => {
       Array.from({ length: 5 }, (_, i) => ({
         candidate_key: i + 1,
         candidate_name: `Candidate ${i + 1}`,
-        vin_candidateid: null,
+        candidateid: null,
         vin_candidate_code: null,
         developers_agg: null,
       })),
@@ -111,7 +111,7 @@ describe("getCandidateByKey", () => {
     const mockCandidate = {
       candidate_key: 42,
       candidate_name: "Test Candidate",
-      vin_candidateid: "VIN-42",
+      candidateid: "VIN-42",
       vin_candidate_code: "TC",
       developers_agg: "Org A",
     };

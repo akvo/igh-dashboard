@@ -1,21 +1,44 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, memo } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 
 const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
+// Module-level cache so the CDN fetch happens exactly once per browser session,
+// surviving component unmounts and page navigations.
+let geoDataCache = null;
+let geoDataPromise = null;
+
+function fetchGeoData() {
+  if (geoDataCache) return Promise.resolve(geoDataCache);
+  if (!geoDataPromise) {
+    geoDataPromise = fetch(geoUrl)
+      .then((r) => r.json())
+      .then((topology) => {
+        geoDataCache = feature(topology, topology.objects.countries);
+        return geoDataCache;
+      })
+      .catch((error) => {
+        geoDataPromise = null; // allow retry on failure
+        console.error('Error loading map data:', error);
+        return null;
+      });
+  }
+  return geoDataPromise;
+}
+
 const defaultColorScale = [
-  '#fff1ed',
-  '#ffd4c7',
-  '#f9a78d',
-  '#fe7449',
-  '#b45234',
-  '#8c4028',
+  '#FFDCD1',
+  '#F9A78D',
+  '#E3D6C1',
+  '#F0B456',
+  '#CC9949',
+  '#AD5133',
 ];
 
-export default function WorldMap({
+function WorldMap({
   data = {},
   colorScale = defaultColorScale,
   height = 400,
@@ -34,13 +57,7 @@ export default function WorldMap({
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
 
   useEffect(() => {
-    fetch(geoUrl)
-      .then((response) => response.json())
-      .then((topology) => {
-        const countries = feature(topology, topology.objects.countries);
-        setGeoData(countries);
-      })
-      .catch((error) => console.error('Error loading map data:', error));
+    fetchGeoData().then((data) => { if (data) setGeoData(data); });
   }, []);
 
   useEffect(() => {
@@ -200,3 +217,5 @@ export default function WorldMap({
     </div>
   );
 }
+
+export default memo(WorldMap);

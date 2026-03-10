@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo } from 'react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
+import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import { TextLink } from '@/components/ui/Button';
 import {
   BubbleChart,
@@ -23,7 +26,15 @@ import {
   useTemporalSnapshots,
   useProducts,
   useAvailableYears,
+  useLastSyncDate,
+  usePhases,
+  useDiseases,
 } from '@/graphql/hooks';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import {
+  consolidateProductOptionsByKey,
+  expandProductKeySelection,
+} from '@/lib/filterGroups';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -31,91 +42,88 @@ const candidateTypeOptions = [
   { label: 'Approved products', value: 'Product' },
 ];
 
-// R&D stage options for filtering
-const rdStageOptions = [
-  'Pre-clinical',
-  'Phase 1',
-  'Phase 2',
-  'Phase 3',
-  'Phase 4',
-  'Approved',
-];
-
 // Global health area options for cross-pipeline filter
 const globalHealthAreaOptions = [
   { label: 'Neglected diseases', value: 'Neglected disease' },
-  { label: "Women's health", value: 'Sexual & reproductive health' },
+  { label: "Women's health", value: 'Womens Health' },
   { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
 ];
 
-// Map R&D stage display names to actual DB phase_name values
-const stageToPhaseMap = {
-  'Pre-clinical': ['Discovery', 'Primary and secondary screening and optimisation', 'Preclinical'],
-  'Phase 1': ['Phase I'],
-  'Phase 2': ['Phase II'],
-  'Phase 3': ['Phase III'],
-  'Phase 4': ['Phase IV'],
-  'Approved': ['Regulatory filing', 'PQ listing and regulatory approval'],
-};
-
 export default function Home() {
-  const [product, setProduct] = useState([]);
-  const [rdStage, setRdStage] = useState([]);
-  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useState(['Candidate', 'Product']);
-  const [mapTab, setMapTab] = useState('trials');
-  const [chartViewTab, setChartViewTab] = useState('visual');
-  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useState([]);
-  const [crossProduct, setCrossProduct] = useState([]);
+  const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [rdStage, setRdStage] = useUrlState('rdStage', [], arraySerializer);
+  const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
+  const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
+  const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
+  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
+  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
+  // Hidden phase keys for the two StackedBarCharts. Storing hidden
+  // (not visible) keeps the URL short when most phases are shown.
+  const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
+  const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
+  const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
 
+  const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
   const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
   );
   const { products, loading: productsLoading } = useProducts();
+  const { phases, loading: phasesLoading } = usePhases();
+  const { raw: diseasesRaw } = useDiseases();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
-  const { mapData: gqlMapData, loading: mapLoading } = useGeographicDistribution(
+  const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
+  const expandedCrossProduct = expandProductKeySelection(crossProduct);
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
-    crossProduct.length > 0 ? crossProduct : null,
+    expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
   );
 
-  // Convert R&D stage selections to phase names for server-side filtering
-  const selectedPhaseNames = useMemo(() => {
-    if (rdStage.length === 0) return null;
-    return rdStage.flatMap(stage => stageToPhaseMap[stage] || []);
-  }, [rdStage]);
+  // R&D stage dropdown options from DB phases
+  const rdStageOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
 
   // Candidate type distribution with filters
+  // Product keys are strings in state (URL-safe), convert to integers for the API.
+  const expandedProduct = expandProductKeySelection(product);
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    product,
-    selectedPhaseNames,
+    expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
+    rdStage.length > 0 ? rdStage : null,
   );
 
-  // Product options for dropdown (from API)
-  const productOptions = useMemo(() =>
-    products.map(p => ({ label: p.product_name, value: p.product_key })),
-    [products]
-  );
+  // Product options for dropdown (from API).
+  // Values are strings to stay consistent with URL serialization.
+  const productOptions = useMemo(() => {
+    const raw = products.map(p => ({ label: p.product_name, value: String(p.product_key) }));
+    return consolidateProductOptionsByKey(raw);
+  }, [products]);
 
-  // Download CSV function
-  const downloadCSV = useCallback((data, filename) => {
-    const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).join(','));
-    const csv = [headers, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${filename}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, []);
+  // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
+  const portfolioVisiblePhases = useMemo(() =>
+    portfolioSegments.reduce((acc, p) => ({ ...acc, [p.key]: !portfolioHiddenPhases.includes(p.key) }), {}),
+    [portfolioSegments, portfolioHiddenPhases]
+  );
+  const crossVisiblePhases = useMemo(() =>
+    temporalPhases.reduce((acc, p) => ({ ...acc, [p.key]: !crossHiddenPhases.includes(p.key) }), {}),
+    [temporalPhases, crossHiddenPhases]
+  );
+  const handlePortfolioVisiblePhasesChange = useCallback((next) => {
+    setPortfolioHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setPortfolioHiddenPhases]);
+  const handleCrossVisiblePhasesChange = useCallback((next) => {
+    setCrossHiddenPhases(Object.keys(next).filter(k => !next[k]));
+  }, [setCrossHiddenPhases]);
 
   // Download PNG function using html2canvas
   const downloadPNG = useCallback(async (ref, filename) => {
@@ -143,9 +151,9 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 min-w-0 overflow-x-hidden">
-        <div className="p-4 sm:p-6 lg:p-8 lg:px-10">
+        <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 sm:px-10 -mx-4 sm:-mx-6 lg:-mx-10 -mt-4 sm:-mt-6 lg:-mt-8">
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
                 From discovery to approval: Mapping the global health R&D pipeline
@@ -157,13 +165,25 @@ export default function Home() {
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
               <ClockIcon className="w-4 h-4 text-orange-500" />
               <span className="text-xs text-gray-500">
-                Last updated on <strong className="text-black">12.04.24</strong>
+                {syncDateLoading ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : lastSyncDate ? (
+                  <>Last updated on <strong className="text-black">
+                    {new Date(lastSyncDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </strong></>
+                ) : (
+                  'Last updated date unavailable'
+                )}
               </span>
             </div>
           </div>
 
           {/* Stat Cards - Connected to GraphQL */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {kpisLoading ? (
               <>
                 {[1, 2, 3].map((i) => (
@@ -182,18 +202,20 @@ export default function Home() {
                   value={kpi.value}
                   description={kpi.description}
                   buttonText={kpi.buttonText}
-                  tooltip={kpi.description}
+                  buttonHref={kpi.buttonHref}
+                  onButtonClick={kpi.id === 'diseases' ? () => setDiseasePanelOpen(true) : undefined}
+                  tooltip={kpi.tooltip}
                 />
               ))
             )}
           </div>
 
           {/* Bubble Chart + World Map */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
             {/* Bubble Chart Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div>
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div className="min-w-0">
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
                     Scale of R&D by global health area
                   </h3>
@@ -201,7 +223,7 @@ export default function Home() {
                     Toggle views: Candidates in development | Approved products
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   <Dropdown
                     value={bubbleCandidateTypes}
                     onChange={setBubbleCandidateTypes}
@@ -211,7 +233,16 @@ export default function Home() {
                     compact={true}
                   />
                   <ChartMenu
-                    onDownloadCSV={() => downloadCSV(gqlBubbleData, 'scale-of-rd')}
+                    onDownloadCSV={() => {
+                      const columns = [
+                        { label: 'Global health area', accessor: 'name' },
+                        { label: 'Candidates', accessor: 'value' },
+                        { label: 'Diseases', accessor: 'diseaseCount' },
+                        { label: 'Products', accessor: 'productCount' },
+                      ];
+                      const csv = buildCSV(columns, gqlBubbleData);
+                      downloadCSVFile(csv, 'scale-of-rd');
+                    }}
                     onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-rd')}
                   />
                   <TabSwitcher
@@ -224,7 +255,8 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <div ref={bubbleChartRef}>
+              <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+              <div ref={bubbleChartRef} className="flex-1">
               {bubbleLoading ? (
                 <div className="h-[320px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart...</div>
@@ -240,8 +272,7 @@ export default function Home() {
                   colors={['#fe7449', '#f9a78d', '#8c4028']}
                 />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                <ScrollableTable tableClassName="border-collapse">
                     <thead>
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
@@ -273,14 +304,13 @@ export default function Home() {
                               {item.value.toLocaleString()}
                             </td>
                             <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {((item.value / total) * 100).toFixed(1)}%
+                              {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
                             </td>
                           </tr>
                         );
                       })}
                     </tbody>
-                  </table>
-                </div>
+                </ScrollableTable>
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
@@ -289,7 +319,7 @@ export default function Home() {
             </div>
 
             {/* World Map Card */}
-            <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
@@ -301,13 +331,19 @@ export default function Home() {
                 </div>
                 <ChartMenu
                   onDownloadCSV={() => {
-                    const mapDataArray = Object.entries(gqlMapData).map(([code, value]) => ({ countryCode: code, value }));
-                    downloadCSV(mapDataArray, 'geographic-distribution');
+                    const columns = [
+                      { label: 'Country', accessor: 'country_name' },
+                      { label: 'ISO code', accessor: 'iso_code' },
+                      { label: 'Count', accessor: 'candidateCount' },
+                    ];
+                    const csv = buildCSV(columns, gqlMapDistribution);
+                    downloadCSVFile(csv, 'geographic-distribution');
                   }}
                   onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
                 />
               </div>
-              <div ref={worldMapRef}>
+              <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+              <div ref={worldMapRef} className="flex-1">
                 <div className="mb-4">
                   <TabNav
                     activeTab={mapTab}
@@ -318,7 +354,13 @@ export default function Home() {
                     ]}
                   />
                 </div>
-                <WorldMap data={gqlMapData} height={280} showLegend={false} />
+                {mapLoading ? (
+                  <div className="h-[280px] flex items-center justify-center">
+                    <div className="animate-pulse text-gray-400">Loading map...</div>
+                  </div>
+                ) : (
+                  <WorldMap data={gqlMapData} height={280} showLegend={false} />
+                )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
                 This global heat map illustrates where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
@@ -327,14 +369,14 @@ export default function Home() {
           </div>
 
           {/* Portfolio Overview by Global Health Area */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
                 Portfolio overview by global health area
               </h3>
               <a
-                href="/portfolio"
-                className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
+                href="/portfolio-analysis"
+                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Explore portfolio analysis
               </a>
@@ -342,10 +384,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
                 A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
+            <div className="flex flex-wrap items-end gap-4 mb-4">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Product type"
                   value={product}
@@ -356,7 +399,7 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Select R&D stage"
                   value={rdStage}
@@ -368,19 +411,25 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
+              <div className="flex-1" />
               <button
                 onClick={() => {
                   setProduct([]);
                   setRdStage([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+                disabled={product.length === 0 && rdStage.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  product.length > 0 || rdStage.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Reset filters
               </button>
             </div>
 
             {/* Chart */}
-            {portfolioLoading || productsLoading ? (
+            {portfolioLoading || productsLoading || phasesLoading ? (
               <div className="h-[250px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>
@@ -391,21 +440,26 @@ export default function Home() {
                 layout="vertical"
                 height={250}
                 xAxisLabel="Number of candidates / approved products"
-                yAxisWidth={200}
+                yAxisLabel="Global health area"
+                yAxisWidth={220}
+                maxTickChars={40}
                 showFilters={true}
+                hideXAxisTicks={true}
+                visiblePhases={portfolioVisiblePhases}
+                onVisiblePhasesChange={handlePortfolioVisiblePhasesChange}
               />
             )}
           </div>
 
           {/* Cross-pipeline Analytics */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
                 Cross-pipeline analytics
               </h3>
               <a
-                href="/cross-pipeline"
-                className="inline-flex items-center bg-[#FE74491F] text-[#E76A42] px-4 py-2.5 rounded-lg text-sm font-medium no-underline cursor-pointer hover:bg-[#FE74492F] transition-colors"
+                href="/cross-pipeline-analytics"
+                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Make custom comparison
               </a>
@@ -413,10 +467,11 @@ export default function Home() {
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
             A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
             </p>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-5">
-              <div className="flex-1 min-w-[180px]">
+            <div className="flex flex-wrap items-end gap-4 mb-4">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Global health area"
                   value={crossGlobalHealthArea}
@@ -427,7 +482,7 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
-              <div className="flex-1 min-w-[180px]">
+              <div className="w-[280px]">
                 <Dropdown
                   label="Product type"
                   value={crossProduct}
@@ -438,12 +493,18 @@ export default function Home() {
                   showClearText={true}
                 />
               </div>
+              <div className="flex-1" />
               <button
                 onClick={() => {
                   setCrossGlobalHealthArea([]);
                   setCrossProduct([]);
                 }}
-                className="px-5 py-2.5 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg cursor-pointer whitespace-nowrap font-medium"
+                disabled={crossGlobalHealthArea.length === 0 && crossProduct.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  crossGlobalHealthArea.length > 0 || crossProduct.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
               >
                 Reset filters
               </button>
@@ -461,18 +522,21 @@ export default function Home() {
                 height={220}
                 xAxisLabel="Number of candidates"
                 showFilters={true}
+                hideXAxisTicks={true}
+                visiblePhases={crossVisiblePhases}
+                onVisiblePhasesChange={handleCrossVisiblePhasesChange}
               />
             )}
           </div>
 
 
           {/* Reports and Insights */}
-          <div className="bg-black rounded-2xl p-5 sm:p-8 lg:p-10 mb-10">
+          <div className="bg-black p-5 sm:p-8 lg:p-10 mb-10" style={{ margin: '0 -32px' }}>
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Reports and insights
               </h2>
-              <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white/30 rounded-lg cursor-pointer">
+              <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white cursor-pointer hover:bg-white hover:text-black transition-colors">
                 View all insights
               </button>
             </div>
@@ -481,7 +545,7 @@ export default function Home() {
               given us.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-6">
               {/* Report Card 1 - Top Left (horizontal) */}
               <div className="bg-[#FBF6EB] rounded-xl overflow-hidden flex flex-col sm:flex-row">
                 <div className="h-36 sm:h-auto sm:w-40 shrink-0 relative">
@@ -540,6 +604,12 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <DiseaseListPanel
+        isOpen={diseasePanelOpen}
+        onClose={() => setDiseasePanelOpen(false)}
+        diseases={diseasesRaw}
+      />
     </div>
   );
 }

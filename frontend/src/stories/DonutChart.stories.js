@@ -144,6 +144,28 @@ export const SmallChart = {
   },
 };
 
+export const EmptyData = {
+  args: {
+    data: [],
+    innerRadius: 70,
+    outerRadius: 120,
+    height: 350,
+  },
+};
+
+export const AllZeroValues = {
+  args: {
+    data: [
+      { name: 'Category A', value: 0 },
+      { name: 'Category B', value: 0 },
+      { name: 'Category C', value: 0 },
+    ],
+    innerRadius: 70,
+    outerRadius: 120,
+    height: 350,
+  },
+};
+
 const simpleData = [
   { name: 'Yes', value: 75 },
   { name: 'No', value: 25 },
