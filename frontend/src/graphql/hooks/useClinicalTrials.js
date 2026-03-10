@@ -10,7 +10,7 @@ export function useClinicalTrials(filter, limit = 20, offset = 0, options = {}) 
         global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
         disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
         product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
-        status: filter?.status || undefined,
+        statuses: filter?.statuses?.length > 0 ? filter.statuses : undefined,
       },
       limit,
       offset,

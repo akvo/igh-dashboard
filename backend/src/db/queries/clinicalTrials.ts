@@ -19,10 +19,7 @@ function buildWhere(filter?: ClinicalTrialFilter) {
   addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
 
-  if (filter?.status) {
-    conditions.push("t.status = ?");
-    params.push(filter.status);
-  }
+  addArrayCondition(filter?.statuses, "t.status", conditions, params);
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 

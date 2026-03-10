@@ -402,7 +402,7 @@ export const typeDefs = `#graphql
     global_health_areas: [String!]
     disease_names: [String!]
     product_names: [String!]
-    status: String
+    statuses: [String!]
   }
 
   input RdPriorityFilter {

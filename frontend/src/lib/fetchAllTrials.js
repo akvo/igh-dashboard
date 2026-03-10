@@ -25,7 +25,7 @@ function buildFilterVariables(filter) {
       filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
     product_names:
       filter?.productNames?.length > 0 ? filter.productNames : undefined,
-    status: filter?.status || undefined,
+    statuses: filter?.statuses?.length > 0 ? filter.statuses : undefined,
   };
 }
 

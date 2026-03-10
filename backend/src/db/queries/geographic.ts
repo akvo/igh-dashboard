@@ -21,12 +21,75 @@ export function getGeographicDistribution(
   statuses?: string[],
   filters?: GeographicFilters,
 ): GeographicDistributionRow[] {
+  if (location_scope === "Trial Location") {
+    return getTrialLocationDistribution(statuses, filters);
+  }
+  return getCandidateLocationDistribution(location_scope, statuses, filters);
+}
+
+/**
+ * Trial Location scope: count trials (not candidates) via bridge_trial_geography.
+ * Status filter is correlated — a trial's status is checked on the same row
+ * that determines its country, fixing the uncorrelated join issue.
+ */
+function getTrialLocationDistribution(
+  statuses?: string[],
+  filters?: GeographicFilters,
+): GeographicDistributionRow[] {
   const db = getDatabase();
 
-  // Map Visualization: Geographic distribution of candidates
-  // Counts candidates per country for the given location scope.
-  // When statuses are provided, restrict to candidates that have at least
-  // one clinical trial event matching one of the requested statuses.
+  const joins: string[] = [];
+  const conditions: string[] = [
+    "f.is_active_flag = 1",
+    PIPELINE_FILTER,
+    "g.country_name IS NOT NULL",
+  ];
+  const params: (string | number)[] = [];
+
+  addArrayCondition(statuses, "t.status", conditions, params);
+
+  const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params, diseaseCtx);
+  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+
+  const joinClause = joins.length > 0 ? joins.join("\n    ") + "\n    " : "";
+
+  const rows = db
+    .prepare(
+      `
+    SELECT
+      g.country_key,
+      g.country_name,
+      g.iso_code,
+      'Trial Location' as location_scope,
+      COUNT(DISTINCT t.trial_id) as candidateCount
+    FROM bridge_trial_geography btg
+    JOIN fact_clinical_trial_event t ON btg.trial_key = t.trial_id
+    JOIN dim_geography g ON btg.country_key = g.country_key
+    JOIN fact_pipeline_snapshot f ON t.candidate_key = f.candidate_key
+    ${joinClause}WHERE ${conditions.join("\n      AND ")}
+    GROUP BY g.country_key, g.country_name, g.iso_code
+    ORDER BY candidateCount DESC
+  `,
+    )
+    .all(...params) as GeographicDistributionRow[];
+
+  return rows;
+}
+
+/**
+ * Target Country / Developer Location scopes: count candidates via bridge_candidate_geography.
+ */
+function getCandidateLocationDistribution(
+  location_scope: string,
+  statuses?: string[],
+  filters?: GeographicFilters,
+): GeographicDistributionRow[] {
+  const db = getDatabase();
+
   const joins: string[] = [];
   const conditions: string[] = [
     "bg.location_scope = ?",
@@ -86,6 +149,9 @@ export function getLocationScopes(): string[] {
     SELECT DISTINCT location_scope
     FROM bridge_candidate_geography
     WHERE location_scope IS NOT NULL
+    UNION
+    SELECT 'Trial Location'
+    WHERE EXISTS (SELECT 1 FROM bridge_trial_geography LIMIT 1)
     ORDER BY location_scope
   `,
     )
