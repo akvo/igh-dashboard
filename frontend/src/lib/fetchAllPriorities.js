@@ -7,26 +7,15 @@
  */
 
 import { GET_RD_PRIORITIES_WITH_CANDIDATES, GET_RD_PRIORITIES } from '@/graphql/queries';
+import { buildPriorityFilterVars } from '@/graphql/hooks/useRdPriorities';
 
 const BATCH_SIZE = 100;
-
-function buildFilterVariables(filter) {
-  return {
-    global_health_areas:
-      filter?.globalHealthAreas?.length > 0
-        ? filter.globalHealthAreas
-        : undefined,
-    disease_names:
-      filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
-    search: filter?.search || undefined,
-  };
-}
 
 /**
  * Fetch all priorities with linked candidates (Tab 2).
  */
 export async function fetchAllPrioritiesWithCandidates(client, filter) {
-  const filterVars = buildFilterVariables(filter);
+  const filterVars = buildPriorityFilterVars(filter);
   let allNodes = [];
   let offset = 0;
   let hasMore = true;
@@ -56,7 +45,7 @@ export async function fetchAllPrioritiesWithCandidates(client, filter) {
  * Fetch all priorities without candidate data (Tab 4).
  */
 export async function fetchAllPriorities(client, filter) {
-  const filterVars = buildFilterVariables(filter);
+  const filterVars = buildPriorityFilterVars(filter);
   let allNodes = [];
   let offset = 0;
   let hasMore = true;

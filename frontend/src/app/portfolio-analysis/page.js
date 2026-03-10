@@ -16,7 +16,6 @@ import {
   expandDiseaseSelection,
   consolidateProductOptionsByName,
   expandProductNameSelection,
-  normalizeProductName,
   mergeVectorControlChartData,
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
@@ -26,6 +25,7 @@ import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
 import { EXTRACT_TAB_COLUMNS, EXTRACT_FIXED_COLUMNS, EXTRACT_ROW_KEY } from '@/lib/extractColumnConfig';
+import { CANDIDATE_COLUMNS, APPROVED_PRODUCT_COLUMNS, CLINICAL_TRIAL_COLUMNS, toCSVColumns } from '@/lib/exploreColumnConfig';
 import { createHeatmapScale } from '@/lib/heatmap';
 
 // Clamped cell text with native tooltip for full text on hover
@@ -583,28 +583,7 @@ export default function PortfolioAnalysis() {
         candidateType: 'Candidate',
         search: searchQuery || undefined,
       });
-      const columns = [
-        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
-        { label: 'GHA', accessor: 'global_health_area' },
-        { label: 'Disease', accessor: 'disease_name' },
-        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
-        { label: 'Product', accessor: (row) => normalizeProductName(row.product_name) },
-        { label: 'R&D stage', accessor: 'current_rd_stage' },
-        { label: 'Developers', accessor: 'developers_agg' },
-        { label: 'Indication', accessor: 'indication' },
-        { label: 'Indication type', accessor: 'indication_type' },
-        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
-        { label: 'Target', accessor: 'target' },
-        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
-        { label: 'Technology type', accessor: 'technology_type' },
-        { label: 'Test format', accessor: 'test_format' },
-        { label: 'Preclinical results status', accessor: 'preclinical_results_status' },
-        { label: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
-        { label: 'Preclinical results source', accessor: 'preclinical_results_source' },
-        { label: 'Key features and challenges', accessor: 'key_features' },
-        { label: 'Recent updates', accessor: 'recent_updates' },
-      ];
-      const csv = buildCSV(columns, allRows);
+      const csv = buildCSV(toCSVColumns(CANDIDATE_COLUMNS), allRows);
       downloadCSV(csv, 'selected-candidates');
     } catch (err) {
       console.error('Candidates CSV download failed:', err);
@@ -622,31 +601,7 @@ export default function PortfolioAnalysis() {
         ...globalFilter,
         candidateType: 'Product',
       });
-      const columns = [
-        { label: 'Name', accessor: (row) => row.candidate_name || row.alternative_names },
-        { label: 'GHA', accessor: 'global_health_area' },
-        { label: 'Disease', accessor: 'disease_name' },
-        { label: 'Secondary disease', accessor: 'secondary_disease_name' },
-        { label: 'Product', accessor: (row) => normalizeProductName(row.product_name) },
-        { label: 'R&D stage', accessor: 'current_rd_stage' },
-        { label: 'Developers', accessor: 'developers_agg' },
-        { label: 'Indication', accessor: 'indication' },
-        { label: 'Indication type', accessor: 'indication_type' },
-        { label: 'Health care facility level', accessor: 'healthcare_facility_level' },
-        { label: 'Target', accessor: 'target' },
-        { label: 'Mechanism of action', accessor: 'mechanism_of_action' },
-        { label: 'Technology type', accessor: 'technology_type' },
-        { label: 'Key features and challenges', accessor: 'key_features' },
-        { label: 'Recent updates', accessor: 'recent_updates' },
-        { label: 'Approval status', accessor: 'approval_status' },
-        { label: 'Approving authority', accessor: 'approving_authorities_agg' },
-        { label: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
-        { label: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
-        { label: 'EMA approval status', accessor: 'ema_approval_status' },
-        { label: 'Japanese MHLW approval status', accessor: 'japanese_mhlw_approval_status' },
-        { label: 'US FDA approval status', accessor: 'us_fda_approval_status' },
-      ];
-      const csv = buildCSV(columns, allRows);
+      const csv = buildCSV(toCSVColumns(APPROVED_PRODUCT_COLUMNS), allRows);
       downloadCSV(csv, 'selected-products');
     } catch (err) {
       console.error('Approved products CSV download failed:', err);
@@ -664,23 +619,9 @@ export default function PortfolioAnalysis() {
         globalHealthAreas: healthArea,
         diseaseNames: expandedDisease,
         productNames: expandedProduct,
+        statuses: geoTrialStatus,
       });
-      const columns = [
-        { label: 'CT number', accessor: (row) => row.trial_name || row.clinicaltrialid },
-        { label: 'Candidate / product name', accessor: 'candidate_name' },
-        { label: 'Title', accessor: 'trial_title' },
-        { label: 'Description', accessor: 'description' },
-        { label: 'CT phase', accessor: 'trial_phase' },
-        { label: 'CT status', accessor: 'status' },
-        { label: 'Locations', accessor: 'locations' },
-        { label: 'CT results status', accessor: 'ct_results_status' },
-        { label: 'Start date', accessor: 'start_date' },
-        { label: 'End date', accessor: 'end_date' },
-        { label: 'Sponsor', accessor: 'sponsor' },
-        { label: 'Collaborator', accessor: 'collaborator' },
-        { label: 'Source', accessor: 'source_text' },
-      ];
-      const csv = buildCSV(columns, allRows);
+      const csv = buildCSV(toCSVColumns(CLINICAL_TRIAL_COLUMNS), allRows);
       downloadCSV(csv, 'selected-clinical-trials');
     } catch (err) {
       console.error('Clinical trials CSV download failed:', err);
@@ -688,7 +629,7 @@ export default function PortfolioAnalysis() {
       setTrialsDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, disease, product]);
+  }, [apolloClient, healthArea, disease, product, geoTrialStatus]);
 
   // Download technology types table as CSV. All rows are already loaded
   // client-side so no async fetching is needed — we just build from
@@ -735,7 +676,7 @@ export default function PortfolioAnalysis() {
         { label: fixedCol.label, accessor: fixedCol.accessor },
         ...activeExtractColumns.map((col) => ({
           label: col.label,
-          accessor: col.accessor || (() => ''),
+          accessor: col.csvAccessor || col.accessor || (() => ''),
         })),
       ];
       const csv = buildCSV(columns, allRows);
@@ -1300,6 +1241,7 @@ export default function PortfolioAnalysis() {
                           ...activeExtractColumns.map((col) => ({
                             header: col.label,
                             accessor: col.accessor || col.id,
+                            ...(col.render && { render: col.render }),
                             ...(col.type && { type: col.type, maxWidth: col.maxWidth || '250px' }),
                           })),
                         ]}
@@ -1392,37 +1334,11 @@ export default function PortfolioAnalysis() {
 
                 {/* Table */}
                 <ServerTable
-                  columns={[
-                    {
-                      header: 'Name', accessor: 'candidate_name',
-                      render: (value) => (
-                        <div className="text-sm font-medium text-black">{value}</div>
-                      ),
-                    },
-                    { header: 'GHA', accessor: 'global_health_area' },
-                    { header: 'Disease', accessor: 'disease_name' },
-                    { header: 'Secondary disease', accessor: 'secondary_disease_name' },
-                    { header: 'Product', accessor: 'product_name', render: (v) => normalizeProductName(v) },
-                    {
-                      header: 'R&D stage', accessor: 'current_rd_stage',
-                      render: (value) => (
-                        <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
-                      ),
-                    },
-                    { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
-                    { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
-                    { header: 'Indication type', accessor: 'indication_type' },
-                    { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
-                    { header: 'Target', accessor: 'target' },
-                    { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
-                    { header: 'Technology type', accessor: 'technology_type' },
-                    { header: 'Test format', accessor: 'test_format' },
-                    { header: 'Preclinical results status', accessor: 'preclinical_results_status' },
-                    { header: 'Type of preclinical results', accessor: 'type_of_preclinical_results' },
-                    { header: 'Preclinical results source', accessor: 'preclinical_results_source', type: 'line-clamp', maxWidth: '200px' },
-                    { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
-                    { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
-                  ]}
+                  columns={CANDIDATE_COLUMNS.map((col) =>
+                    col.accessor === 'current_rd_stage'
+                      ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
+                      : col
+                  )}
                   data={candidatesData}
                   rowKey="candidate_key"
                   currentPage={candidatesPage}
@@ -1596,45 +1512,11 @@ export default function PortfolioAnalysis() {
 
                   {/* Table */}
                   <ServerTable
-                    columns={[
-                      {
-                        header: 'Name', accessor: 'candidate_name',
-                        render: (value) => (
-                          <div className="text-sm font-medium text-black">{value}</div>
-                        ),
-                      },
-                      { header: 'GHA', accessor: 'global_health_area' },
-                      { header: 'Disease', accessor: 'disease_name' },
-                      { header: 'Secondary disease', accessor: 'secondary_disease_name' },
-                      { header: 'Product', accessor: 'product_name', render: (v) => normalizeProductName(v) },
-                      {
-                        header: 'R&D stage', accessor: 'current_rd_stage',
-                        render: (value) => (
-                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
-                        ),
-                      },
-                      { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'Indication type', accessor: 'indication_type' },
-                      { header: 'Health care facility level', accessor: 'healthcare_facility_level' },
-                      { header: 'Target', accessor: 'target' },
-                      { header: 'Mechanism of action', accessor: 'mechanism_of_action', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'Technology type', accessor: 'technology_type' },
-                      { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px' },
-                      {
-                        header: 'Approval status', accessor: 'approval_status',
-                        render: (value) => (
-                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
-                        ),
-                      },
-                      { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'National regulatory authority approval status', accessor: 'nra_approval_status' },
-                      { header: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status' },
-                      { header: 'EMA approval status', accessor: 'ema_approval_status' },
-                      { header: 'Japanese MHLW approval status', accessor: 'japanese_mhlw_approval_status' },
-                      { header: 'US FDA approval status', accessor: 'us_fda_approval_status' },
-                    ]}
+                    columns={APPROVED_PRODUCT_COLUMNS.map((col) =>
+                      col.accessor === 'current_rd_stage' || col.accessor === 'approval_status'
+                        ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
+                        : col
+                    )}
                     data={approvedProductsData}
                     rowKey="candidate_key"
                     currentPage={approvedPage}
@@ -1806,34 +1688,11 @@ export default function PortfolioAnalysis() {
 
                   {/* Table */}
                   <ServerTable
-                    columns={[
-                      {
-                        header: 'CT number', accessor: 'clinicaltrialid',
-                        render: (value, row) => <span>{row.trial_name || value}</span>,
-                      },
-                      { header: 'Candidate / product name', accessor: 'candidate_name' },
-                      {
-                        header: 'Title', accessor: 'trial_title',
-                        render: (value) => (
-                          <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>
-                        ),
-                      },
-                      { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px' },
-                      {
-                        header: 'CT phase', accessor: 'trial_phase',
-                        render: (value) => (
-                          <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span>
-                        ),
-                      },
-                      { header: 'CT status', accessor: 'status' },
-                      { header: 'Locations', accessor: 'locations', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'CT results status', accessor: 'ct_results_status' },
-                      { header: 'Start date', accessor: 'start_date' },
-                      { header: 'End date', accessor: 'end_date' },
-                      { header: 'Sponsor', accessor: 'sponsor' },
-                      { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px' },
-                      { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px' },
-                    ]}
+                    columns={CLINICAL_TRIAL_COLUMNS.map((col) =>
+                      col.accessor === 'trial_phase'
+                        ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
+                        : col
+                    )}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
                     currentPage={trialsPage}

@@ -3,17 +3,21 @@
 import { useQuery } from '@apollo/client/react';
 import { GET_PORTFOLIO_CANDIDATES } from '../queries';
 
+export function buildCandidateFilterVars(filter) {
+  return {
+    global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
+    disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
+    product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
+    candidate_type: filter?.candidateType || undefined,
+    phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
+    search: filter?.search || undefined,
+  };
+}
+
 export function usePortfolioCandidates(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_PORTFOLIO_CANDIDATES, {
     variables: {
-      filter: {
-        global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
-        disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
-        product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
-        candidate_type: filter?.candidateType || undefined,
-        phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
-        search: filter?.search || undefined,
-      },
+      filter: buildCandidateFilterVars(filter),
       limit,
       offset,
     },
