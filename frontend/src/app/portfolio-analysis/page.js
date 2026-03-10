@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -58,8 +58,44 @@ export default function PortfolioAnalysis() {
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
   const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [appliedColumnsMap, setAppliedColumnsMap] = useState({});
+
+  // Picker state — local only, not URL-persisted.
+  // Initialized from URL cols so the picker reflects applied columns on load.
+  const [pickerColumnsMap, setPickerColumnsMap] = useState(() => ({
+    'candidates-approved': [...colsCandidates],
+    'rd-priorities': [...colsRdPriorities],
+    'clinical-trials': [...colsClinicalTrials],
+    'rd-only': [...colsRdOnly],
+  }));
+
+  // Applied columns come straight from URL state — the single source of truth.
+  const appliedColumnsMap = {
+    'candidates-approved': colsCandidates,
+    'rd-priorities': colsRdPriorities,
+    'clinical-trials': colsClinicalTrials,
+    'rd-only': colsRdOnly,
+  };
   const appliedColumns = appliedColumnsMap[extractTab] || [];
+
+  // One-time hydration sync: the useState initializer runs during SSR when
+  // URL state is empty. After hydration, copy URL cols into picker state
+  // so the checkboxes reflect applied columns on shared-URL load.
+  const didInitPickerRef = useRef(false);
+  useEffect(() => {
+    if (didInitPickerRef.current) return;
+    const hasUrlCols = colsCandidates.length > 0 || colsRdPriorities.length > 0
+      || colsClinicalTrials.length > 0 || colsRdOnly.length > 0;
+    if (hasUrlCols) {
+      didInitPickerRef.current = true;
+      setPickerColumnsMap({
+        'candidates-approved': [...colsCandidates],
+        'rd-priorities': [...colsRdPriorities],
+        'clinical-trials': [...colsClinicalTrials],
+        'rd-only': [...colsRdOnly],
+      });
+    }
+  }, [colsCandidates, colsRdPriorities, colsClinicalTrials, colsRdOnly]);
+
   const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
   const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
@@ -116,19 +152,18 @@ export default function PortfolioAnalysis() {
   // Per-tab column selection (delegates to active tab's state)
   // =========================================================
   const selectedColumnsMap = {
-    'candidates-approved': colsCandidates,
-    'rd-priorities': colsRdPriorities,
-    'clinical-trials': colsClinicalTrials,
-    'rd-only': colsRdOnly,
-  };
-  const setSelectedColumnsMap = {
-    'candidates-approved': setColsCandidates,
-    'rd-priorities': setColsRdPriorities,
-    'clinical-trials': setColsClinicalTrials,
-    'rd-only': setColsRdOnly,
+    'candidates-approved': pickerColumnsMap['candidates-approved'],
+    'rd-priorities': pickerColumnsMap['rd-priorities'],
+    'clinical-trials': pickerColumnsMap['clinical-trials'],
+    'rd-only': pickerColumnsMap['rd-only'],
   };
   const selectedColumns = selectedColumnsMap[extractTab] || [];
-  const setSelectedColumns = setSelectedColumnsMap[extractTab] || (() => {});
+  const setSelectedColumns = (val) => {
+    setPickerColumnsMap((prev) => ({
+      ...prev,
+      [extractTab]: typeof val === 'function' ? val(prev[extractTab] || []) : val,
+    }));
+  };
 
   // =========================================================
   // Per-tab page state (each tab keeps its own page position)
@@ -375,14 +410,28 @@ export default function PortfolioAnalysis() {
   };
 
   const handleClearColumns = () => {
-    setSelectedColumns([]);
-    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
+    setPickerColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
+    const setter = {
+      'candidates-approved': setColsCandidates,
+      'rd-priorities': setColsRdPriorities,
+      'clinical-trials': setColsClinicalTrials,
+      'rd-only': setColsRdOnly,
+    }[extractTab];
+    if (setter) setter([]);
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
   };
 
   const handleApplyColumns = () => {
-    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [...selectedColumns] }));
+    const cols = pickerColumnsMap[extractTab] || [];
+    // Push to URL state (this IS the applied state now)
+    const setter = {
+      'candidates-approved': setColsCandidates,
+      'rd-priorities': setColsRdPriorities,
+      'clinical-trials': setColsClinicalTrials,
+      'rd-only': setColsRdOnly,
+    }[extractTab];
+    if (setter) setter([...cols]);
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
     setExtractPage(1);
