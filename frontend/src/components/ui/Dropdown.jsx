@@ -62,13 +62,13 @@ const Dropdown = ({
   const selectedValues = multiSelect ? (Array.isArray(value) ? value : []) : value;
 
   const hasValue = multiSelect
-    ? selectedValues.length > 0 && selectedValues.length < options.length
+    ? selectedValues.length > 0 && (selectedValues.length < options.length || options.length <= 1)
     : !!value;
 
   const getDisplayValue = () => {
     if (multiSelect) {
       const count = selectedValues.length;
-      if (count === 0 || count === options.length) {
+      if (count === 0 || (count === options.length && options.length > 1)) {
         return <span className="text-gray-400">{placeholder}</span>;
       }
       const selectedLabels = selectedValues.map((val) => {

@@ -256,11 +256,39 @@ export default function PortfolioAnalysis() {
     setTrialStatusHiddenItems(Object.keys(next).filter(k => !next[k]));
   }, [setTrialStatusHiddenItems]);
 
-  // Health area options from API
-  const healthAreaOptions = useMemo(() =>
-    (healthAreas || []).map(item => ({ value: item.originalName, label: item.name })),
-    [healthAreas]
-  );
+  // Health area options from API, narrowed by disease + product selections
+  const healthAreaOptions = useMemo(() => {
+    const all = (healthAreas || []).map(item => ({ value: item.originalName, label: item.name }));
+    const hasDis = disease.length > 0;
+    const hasProd = product.length > 0;
+    if (!hasDis && !hasProd) return all;
+
+    // GHAs valid by disease selection
+    const disGHAs = hasDis
+      ? new Set((diseasesRaw || [])
+          .filter(d => expandDiseaseSelection(disease).includes(d.disease_group_name))
+          .map(d => d.global_health_area))
+      : null;
+
+    // GHAs valid by product selection
+    let prodGHAs = null;
+    if (hasProd) {
+      const expandedProd = expandProductNameSelection(product);
+      const prodNames = new Set(expandedProd);
+      const validDiseases = new Set(
+        pairs.filter(p => prodNames.has(p.product_name)).map(p => p.disease_group_name)
+      );
+      prodGHAs = new Set((diseasesRaw || [])
+        .filter(d => validDiseases.has(d.disease_group_name))
+        .map(d => d.global_health_area));
+    }
+
+    return all.filter(o => {
+      if (disGHAs && !disGHAs.has(o.value)) return false;
+      if (prodGHAs && !prodGHAs.has(o.value)) return false;
+      return true;
+    });
+  }, [healthAreas, disease, product, diseasesRaw, pairs]);
 
   // All product options from API (before cross-filtering), with VC consolidation
   const allProductOptions = useMemo(() => {
@@ -297,12 +325,16 @@ export default function PortfolioAnalysis() {
     });
   }, [product, pairs, ghaDiseaseOptions]);
 
-  const productOptions = useMemo(() => {
-    if (disease.length === 0) return allProductOptions;
-    const expandedDisease = expandDiseaseSelection(disease);
+  // Products filtered by GHA (via diseases in selected GHA)
+  const ghaProductOptions = useMemo(() => {
+    if (healthArea.length === 0) return allProductOptions;
+    const ghaDiseases = new Set(
+      (diseasesRaw || [])
+        .filter(d => healthArea.includes(d.global_health_area))
+        .map(d => d.disease_group_name)
+    );
     const validNames = new Set(
-      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
-           .map(p => p.product_name)
+      pairs.filter(p => ghaDiseases.has(p.disease_group_name)).map(p => p.product_name)
     );
     return allProductOptions.filter(name => {
       if (validNames.has(name)) return true;
@@ -311,7 +343,23 @@ export default function PortfolioAnalysis() {
       }
       return false;
     });
-  }, [disease, pairs, allProductOptions]);
+  }, [healthArea, diseasesRaw, pairs, allProductOptions]);
+
+  const productOptions = useMemo(() => {
+    if (disease.length === 0) return ghaProductOptions;
+    const expandedDisease = expandDiseaseSelection(disease);
+    const validNames = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return ghaProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
+  }, [disease, pairs, ghaProductOptions]);
 
   // When GHA or product narrows the disease list, remove invalid selections.
   // Skip while data is still loading to avoid wiping URL-restored selections.
@@ -332,6 +380,48 @@ export default function PortfolioAnalysis() {
       if (valid.length !== product.length) setProduct(valid);
     }
   }, [productOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When disease/product narrows the GHA list, remove invalid selections.
+  useEffect(() => {
+    if (healthAreasLoading || diseasesLoading || pairsLoading) return;
+    if (healthArea.length > 0) {
+      const validValues = new Set(healthAreaOptions.map(o => o.value));
+      const valid = healthArea.filter(h => validValues.has(h));
+      if (valid.length !== healthArea.length) setHealthArea(valid);
+    }
+  }, [healthAreaOptions, healthAreasLoading, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Extract tab GHA options, narrowed by extractDisease + extractProduct
+  const extractHealthAreaOptions = useMemo(() => {
+    const all = (healthAreas || []).map(item => ({ value: item.originalName, label: item.name }));
+    const hasDis = extractDisease.length > 0;
+    const hasProd = extractProduct.length > 0;
+    if (!hasDis && !hasProd) return all;
+
+    const disGHAs = hasDis
+      ? new Set((diseasesRaw || [])
+          .filter(d => expandDiseaseSelection(extractDisease).includes(d.disease_group_name))
+          .map(d => d.global_health_area))
+      : null;
+
+    let prodGHAs = null;
+    if (hasProd) {
+      const expandedProd = expandProductNameSelection(extractProduct);
+      const prodNames = new Set(expandedProd);
+      const validDiseases = new Set(
+        pairs.filter(p => prodNames.has(p.product_name)).map(p => p.disease_group_name)
+      );
+      prodGHAs = new Set((diseasesRaw || [])
+        .filter(d => validDiseases.has(d.disease_group_name))
+        .map(d => d.global_health_area));
+    }
+
+    return all.filter(o => {
+      if (disGHAs && !disGHAs.has(o.value)) return false;
+      if (prodGHAs && !prodGHAs.has(o.value)) return false;
+      return true;
+    });
+  }, [healthAreas, extractDisease, extractProduct, diseasesRaw, pairs]);
 
   // Disease options for the Extract tab, cascading from extractHealthArea
   // (independent of the Explore tab's healthArea filter).
@@ -363,12 +453,16 @@ export default function PortfolioAnalysis() {
     });
   }, [extractProduct, pairs, ghaExtractDiseaseOptions]);
 
-  const extractProductOptions = useMemo(() => {
-    if (extractDisease.length === 0) return allProductOptions;
-    const expandedDisease = expandDiseaseSelection(extractDisease);
+  // Products filtered by GHA for Extract tab
+  const ghaExtractProductOptions = useMemo(() => {
+    if (extractHealthArea.length === 0) return allProductOptions;
+    const ghaDiseases = new Set(
+      (diseasesRaw || [])
+        .filter(d => extractHealthArea.includes(d.global_health_area))
+        .map(d => d.disease_group_name)
+    );
     const validNames = new Set(
-      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
-           .map(p => p.product_name)
+      pairs.filter(p => ghaDiseases.has(p.disease_group_name)).map(p => p.product_name)
     );
     return allProductOptions.filter(name => {
       if (validNames.has(name)) return true;
@@ -377,7 +471,23 @@ export default function PortfolioAnalysis() {
       }
       return false;
     });
-  }, [extractDisease, pairs, allProductOptions]);
+  }, [extractHealthArea, diseasesRaw, pairs, allProductOptions]);
+
+  const extractProductOptions = useMemo(() => {
+    if (extractDisease.length === 0) return ghaExtractProductOptions;
+    const expandedDisease = expandDiseaseSelection(extractDisease);
+    const validNames = new Set(
+      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
+           .map(p => p.product_name)
+    );
+    return ghaExtractProductOptions.filter(name => {
+      if (validNames.has(name)) return true;
+      if (name === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+        return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validNames.has(n));
+      }
+      return false;
+    });
+  }, [extractDisease, pairs, ghaExtractProductOptions]);
 
   // Prune extract disease selections that become invalid when GHA or product narrows.
   // Skip while data is still loading to avoid wiping URL-restored selections.
@@ -398,6 +508,16 @@ export default function PortfolioAnalysis() {
       if (valid.length !== extractProduct.length) setExtractProduct(valid);
     }
   }, [extractProductOptions, productsLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When disease/product narrows the Extract GHA list, remove invalid selections.
+  useEffect(() => {
+    if (healthAreasLoading || diseasesLoading || pairsLoading) return;
+    if (extractHealthArea.length > 0) {
+      const validValues = new Set(extractHealthAreaOptions.map(o => o.value));
+      const valid = extractHealthArea.filter(h => validValues.has(h));
+      if (valid.length !== extractHealthArea.length) setExtractHealthArea(valid);
+    }
+  }, [extractHealthAreaOptions, healthAreasLoading, diseasesLoading, pairsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -1049,7 +1169,7 @@ export default function PortfolioAnalysis() {
                         value={extractHealthArea}
                         onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={healthAreaOptions}
+                        options={extractHealthAreaOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
