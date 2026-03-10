@@ -291,7 +291,6 @@ export const GET_RD_PRIORITIES_WITH_CANDIDATES = gql`
         intended_use
         disease_name
         global_health_area
-        type_of_guidance
         author
         publication_date
         target_population
@@ -320,7 +319,6 @@ export const GET_RD_PRIORITIES = gql`
         intended_use
         disease_name
         global_health_area
-        type_of_guidance
         author
         publication_date
         target_population

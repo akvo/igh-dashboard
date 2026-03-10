@@ -1,12 +1,12 @@
-# Extract Custom Data — Unavailable Columns Audit
+# Extract Custom Data — Column Pipeline Status
 
 ## Context
 
-The Extract Custom Data section has 4 tabs, each with a set of toggleable columns defined in `frontend/src/lib/extractColumnConfig.js`. Columns with `accessor: null` appear in the column picker but render empty cells. This document traces each unavailable column through the full data pipeline (Dataverse → Silver → Star Schema → GraphQL → Frontend) to document what data exists and where each column is blocked.
+The Extract Custom Data section has 4 tabs, each with a set of toggleable columns defined in `frontend/src/lib/extractColumnConfig.js`. This document tracks the pipeline status of columns that were previously unavailable.
 
 ## Summary
 
-**28 columns across 4 tabs have `accessor: null`** and render as empty cells.
+All previously blocked columns are now connected through the full pipeline (Dataverse → Silver → Star Schema → GraphQL → Frontend). Some columns have sparse data in the source system — investigating better data sources for sparse columns is a separate follow-up task.
 
 After deduplication (Tabs 2 and 4 share the same R&D Priority fields), there are **24 unique unavailable columns**. Of these:
 - **20 columns** have data in the Silver layer (ranging from <1% to 100% populated) but are not mapped through to the star schema

@@ -45,6 +45,18 @@ export function buildTestCSV(
 // =========================================================
 
 /**
+ * Truncate a line for display, showing context around the diff position.
+ */
+function truncate(line: string, diffPos?: number, maxLen = 120): string {
+  if (line.length <= maxLen) return line;
+  if (diffPos !== undefined && diffPos > maxLen / 2) {
+    const start = diffPos - 40;
+    return `...${line.slice(start, start + maxLen)}...`;
+  }
+  return `${line.slice(0, maxLen)}...`;
+}
+
+/**
  * Compare generated CSV against a fixture file.
  * When `UPDATE_FIXTURES=1` is set, writes the generated CSV to the fixture
  * file instead of comparing.
@@ -71,10 +83,45 @@ export function expectMatchesFixture(
 
   const expected = readFileSync(fixturePath, "utf-8");
   if (csv !== expected) {
+    const expectedLines = expected.split("\n");
+    const actualLines = csv.split("\n");
+    const maxLines = Math.max(expectedLines.length, actualLines.length);
+    const diffLines: string[] = [];
+    const MAX_DIFF_LINES = 20;
+
+    for (let i = 0; i < maxLines && diffLines.length < MAX_DIFF_LINES; i++) {
+      const exp = expectedLines[i];
+      const act = actualLines[i];
+      if (exp === act) continue;
+
+      if (exp === undefined) {
+        diffLines.push(`  Line ${i + 1} added:   ${truncate(act)}`);
+      } else if (act === undefined) {
+        diffLines.push(`  Line ${i + 1} removed: ${truncate(exp)}`);
+      } else {
+        // Find first differing character position for context
+        let pos = 0;
+        while (pos < exp.length && pos < act.length && exp[pos] === act[pos]) pos++;
+        diffLines.push(
+          `  Line ${i + 1} differs at col ${pos + 1}:\n` +
+            `    expected: ${truncate(exp, pos)}\n` +
+            `    actual:   ${truncate(act, pos)}`,
+        );
+      }
+    }
+
+    const totalDiffs = expectedLines.reduce(
+      (n, line, i) => n + (line !== actualLines[i] ? 1 : 0),
+      0,
+    ) + Math.abs(expectedLines.length - actualLines.length);
+
     throw new Error(
       `CSV output does not match fixture ${fixtureFilename}.\n` +
         "Run with UPDATE_FIXTURES=1 to update fixtures.\n" +
-        `Expected ${expected.split("\n").length} lines, got ${csv.split("\n").length} lines.`,
+        `Expected ${expectedLines.length} lines, got ${actualLines.length} lines ` +
+        `(${totalDiffs} line(s) differ).\n\n` +
+        diffLines.join("\n") +
+        (totalDiffs > MAX_DIFF_LINES ? `\n  ... and ${totalDiffs - MAX_DIFF_LINES} more` : ""),
     );
   }
 }
