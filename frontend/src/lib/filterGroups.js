@@ -120,6 +120,31 @@ export function normalizeProductName(name) {
 }
 
 /**
+ * Merge vector control product rows in stacked bar chart data
+ * (array of { category, ...phaseKeys }). Sums each phase key across
+ * matching VC rows into one consolidated row.
+ */
+export function mergeVectorControlStackedData(data) {
+  if (!data || data.length === 0) return data;
+  const merged = {};
+  const rest = [];
+  for (const row of data) {
+    if (VECTOR_CONTROL_PRODUCT_NAMES.includes(row.category)) {
+      for (const [key, val] of Object.entries(row)) {
+        if (key === 'category') continue;
+        merged[key] = (merged[key] || 0) + (val || 0);
+      }
+    } else {
+      rest.push(row);
+    }
+  }
+  if (Object.keys(merged).length > 0) {
+    rest.push({ category: VECTOR_CONTROL_CONSOLIDATED_NAME, ...merged });
+  }
+  return rest;
+}
+
+/**
  * Merge vector control product rows in chart data (array of {name, value}).
  * Sums values for all VC subtypes into one "Vector control products" row.
  */

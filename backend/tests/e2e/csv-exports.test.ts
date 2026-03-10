@@ -124,7 +124,6 @@ interface PriorityWithCandidateNode {
   intended_use: string | null;
   disease_name: string | null;
   global_health_area: string | null;
-  type_of_guidance: string | null;
   author: string | null;
   publication_date: string | null;
   target_population: string | null;
@@ -148,7 +147,6 @@ interface PriorityNode {
   intended_use: string | null;
   disease_name: string | null;
   global_health_area: string | null;
-  type_of_guidance: string | null;
   author: string | null;
   publication_date: string | null;
   target_population: string | null;
@@ -210,7 +208,7 @@ const RD_PRIORITIES_WITH_CANDIDATES_QUERY = `
     rdPrioritiesWithCandidates(filter: $filter, limit: $limit, offset: $offset) {
       nodes {
         priority_key rdpriorityid priority_name indication intended_use
-        disease_name global_health_area type_of_guidance author publication_date
+        disease_name global_health_area author publication_date
         target_population efficacy safety source product_name
         candidate_name current_rd_stage
       }
@@ -225,7 +223,7 @@ const RD_PRIORITIES_QUERY = `
     rdPriorities(filter: $filter, limit: $limit, offset: $offset) {
       nodes {
         priority_key rdpriorityid priority_name indication intended_use
-        disease_name global_health_area type_of_guidance author publication_date
+        disease_name global_health_area author publication_date
         target_population efficacy safety source product_name
       }
       totalCount
@@ -306,7 +304,6 @@ const RD_PRIORITY_WITH_CANDIDATE_CSV_COLUMNS: CSVColumn[] = [
   { label: "Priority ID", accessor: "rdpriorityid" },
   { label: "Title", accessor: "priority_name" },
   { label: "TPP/PPC", accessor: "intended_use" },
-  { label: "Type of guidance", accessor: "type_of_guidance" },
   { label: "Disease", accessor: "disease_name" },
   { label: "Product", accessor: "product_name" },
   { label: "Global Health area", accessor: "global_health_area" },
@@ -326,7 +323,6 @@ const RD_PRIORITY_ONLY_CSV_COLUMNS: CSVColumn[] = [
   { label: "Priority ID", accessor: "rdpriorityid" },
   { label: "Title", accessor: "priority_name" },
   { label: "TPP/PPC", accessor: "intended_use" },
-  { label: "Type of guidance", accessor: "type_of_guidance" },
   { label: "Disease", accessor: "disease_name" },
   { label: "Product", accessor: "product_name" },
   { label: "Global Health area", accessor: "global_health_area" },
@@ -704,7 +700,7 @@ describe("CSV export — rdPrioritiesWithCandidates (R&D Priorities tab)", () =>
     const csv = buildTestCSV(RD_PRIORITY_WITH_CANDIDATE_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
     expect(headerLine).toBe(
-      "Priority ID,Title,TPP/PPC,Type of guidance,Disease,Product," +
+      "Priority ID,Title,TPP/PPC,Disease,Product," +
         "Global Health area,Author,Publication data,Indication," +
         "Intended use,Target population,Efficacy,Safety,Source," +
         "Candidate name,RD Stage",
@@ -753,7 +749,7 @@ describe("CSV export — rdPriorities (R&D Only tab)", () => {
     const csv = buildTestCSV(RD_PRIORITY_ONLY_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
     expect(headerLine).toBe(
-      "Priority ID,Title,TPP/PPC,Type of guidance,Disease,Product," +
+      "Priority ID,Title,TPP/PPC,Disease,Product," +
         "Global Health area,Author,Publication data,Indication," +
         "Intended use,Target population,Efficacy,Safety,Source",
     );

@@ -411,7 +411,6 @@ export interface RdPriorityNode {
   intended_use: string | null;
   disease_name: string | null;
   global_health_area: string | null;
-  type_of_guidance: string | null;
   author: string | null;
   publication_date: string | null;
   target_population: string | null;
