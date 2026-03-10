@@ -301,7 +301,7 @@ export interface ClinicalTrialFilter {
   global_health_areas?: string[];
   disease_names?: string[];
   product_names?: string[];
-  status?: string;
+  statuses?: string[];
 }
 
 export interface ClinicalTrialConnection {

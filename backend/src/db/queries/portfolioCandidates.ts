@@ -110,7 +110,7 @@ export function getPortfolioCandidates(
       FROM dim_candidate_core c
       ${JOINS}
       ${whereClause}
-      ORDER BY c.candidate_name
+      ORDER BY c.candidate_name NULLS LAST
       LIMIT ? OFFSET ?
     )
     SELECT page.*,

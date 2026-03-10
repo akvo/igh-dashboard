@@ -216,7 +216,7 @@ export default function PortfolioAnalysis() {
   const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
-    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct },
+    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );

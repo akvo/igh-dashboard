@@ -84,7 +84,7 @@ export function getRdPrioritiesWithCandidates(
     FROM dim_priority p
     ${joins}
     ${whereClause}
-    ORDER BY p.priority_name
+    ORDER BY p.priority_name NULLS LAST
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as RdPriorityNode[];
@@ -146,7 +146,7 @@ export function getRdPriorities(
     FROM dim_priority p
     ${joins}
     ${whereClause}
-    ORDER BY p.priority_name
+    ORDER BY p.priority_name NULLS LAST
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as RdPriorityNode[];
