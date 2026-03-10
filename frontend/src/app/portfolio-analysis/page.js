@@ -6,6 +6,7 @@ import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
+import DebouncedInput from '@/components/ui/DebouncedInput';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
@@ -42,8 +43,8 @@ export default function PortfolioAnalysis() {
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
   const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
   const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
-  const [trialsSearchQuery, setTrialsSearchQuery] = useState('');
-  const [technologySearchQuery, setTechnologySearchQuery] = useState('');
+  const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
+  const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
   const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
   const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
@@ -250,7 +251,7 @@ export default function PortfolioAnalysis() {
   const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
-    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus },
+    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus, search: trialsSearchQuery || undefined },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
@@ -316,6 +317,9 @@ export default function PortfolioAnalysis() {
     setters: { setHealthArea: setExtractHealthArea, setDisease: setExtractDisease, setProduct: setExtractProduct },
     loading: crossFilterLoading,
   });
+
+  // Reset trials pagination when search query changes.
+  useEffect(() => { setTrialsPage(1); }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -632,15 +636,6 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
-  // Client-side filtering for clinical trials (backend doesn't support search)
-  const filteredTrialsData = useMemo(() => {
-    if (!trialsSearchQuery.trim()) return clinicalTrialsTableData;
-    const q = trialsSearchQuery.toLowerCase();
-    return clinicalTrialsTableData.filter((item) =>
-      [item.trial_name, item.clinicaltrialid, item.candidate_name, item.trial_title, item.description, item.status, item.sponsor, item.locations]
-        .some((val) => val && String(val).toLowerCase().includes(q))
-    );
-  }, [clinicalTrialsTableData, trialsSearchQuery]);
 
   // Client-side filtering for technology types (backend doesn't support search)
   const filteredTechData = useMemo(() => {
@@ -948,7 +943,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={extractSearchQuery}
@@ -1242,7 +1237,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center gap-3 h-[36px]">
                     <div className="relative">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
+                      <DebouncedInput
                         type="text"
                         placeholder="Search item"
                         value={searchQuery}
@@ -1428,7 +1423,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={approvedSearchQuery}
@@ -1601,11 +1596,11 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-3 h-[36px]">
                         <div className="relative">
                           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
+                          <DebouncedInput
                             type="text"
                             placeholder="Search"
                             value={trialsSearchQuery}
-                            onChange={(e) => { setTrialsSearchQuery(e.target.value); setTrialsPage(1); }}
+                            onChange={(e) => { setTrialsSearchQuery(e.target.value); }}
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
@@ -1651,7 +1646,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={technologySearchQuery}

@@ -21,6 +21,14 @@ function buildWhere(filter?: ClinicalTrialFilter) {
 
   addArrayCondition(filter?.statuses, "t.status", conditions, params);
 
+  if (filter?.search) {
+    conditions.push(
+      "(t.trial_name LIKE ? OR t.clinicaltrialid LIKE ? OR c.candidate_name LIKE ? OR t.trial_title LIKE ? OR t.status LIKE ? OR t.sponsor LIKE ?)"
+    );
+    const pattern = `%${filter.search}%`;
+    params.push(pattern, pattern, pattern, pattern, pattern, pattern);
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   return { joins, whereClause, params };
