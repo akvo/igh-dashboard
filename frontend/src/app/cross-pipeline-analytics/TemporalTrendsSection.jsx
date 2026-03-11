@@ -747,6 +747,7 @@ export default function TemporalTrendsSection({
     setAppliedDisease([]);
     setAppliedProduct([]);
     setAppliedYear([]);
+    setHiddenPhases([]);
   };
 
   // Build API filter params (expand composite selections)
@@ -764,15 +765,17 @@ export default function TemporalTrendsSection({
   );
 
   // Sub-section A: phase selection for stacked bar
-  const [selectedPhases, setSelectedPhases] = useState([]);
-  useMemo(() => {
-    if (phases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(phases.map(p => p.key));
-    }
-  }, [phases]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Store hidden (not visible) phases in URL so the default state (all visible)
+  // produces a clean URL with no extra param.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('ttPhide', [], arraySerializer);
+
+  const selectedPhases = useMemo(
+    () => phases.filter(p => !hiddenPhases.includes(p.key)).map(p => p.key),
+    [phases, hiddenPhases]
+  );
 
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases(prev =>
+    setHiddenPhases(prev =>
       prev.includes(phaseKey)
         ? prev.filter(k => k !== phaseKey)
         : [...prev, phaseKey]
