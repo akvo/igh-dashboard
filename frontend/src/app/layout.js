@@ -53,7 +53,7 @@ const navItems = [
   {
     label: 'Insights',
     hasDropdown: true,
-    description: 'Data-driven analysis to inform global health decision-making, policy and investment in R&D for neglected diseases, emerging infectious diseases and maternal health.',
+    description: "Here you will find the analysis and insights to support decisions - whether you're funding research, setting policies, developing products or advocating for change.",
     featured: {
       title: 'Explore our hubs',
       items: [
@@ -92,7 +92,6 @@ const navItems = [
       { label: 'Our Global Advisory Council', href: '/about/advisory-council', description: 'Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.' },
       { label: 'Join Us', href: '/about/join-us', description: 'We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.' },
       { label: 'Contact Us', href: '/about/contact', description: 'Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.' },
-      { label: 'Advocacy Kits', href: '/tools/advocacy-kits', description: 'Join us in creating global health impact with our advocacy and press kits.' },
     ],
   },
   {
@@ -107,10 +106,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
-          <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-            <Header navItems={navItems} />
+          <Header navItems={navItems} />
+          <div style={{ paddingTop: 90 }}>
+            {children}
           </div>
-          {children}
         </ApolloProvider>
       </body>
     </html>
