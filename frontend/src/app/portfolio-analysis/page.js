@@ -321,6 +321,9 @@ export default function PortfolioAnalysis() {
   // Reset trials pagination when search query changes.
   useEffect(() => { setTrialsPage(1); }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Reset technology pagination when search query changes.
+  useEffect(() => { setCurrentPage(1); }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleClearFilters = () => {
     setHealthArea([]);
     setDisease([]);
@@ -1641,7 +1644,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTotalCount} types</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{filteredTechData.length} types</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
@@ -1650,7 +1653,7 @@ export default function PortfolioAnalysis() {
                           type="text"
                           placeholder="Search item"
                           value={technologySearchQuery}
-                          onChange={(e) => { setTechnologySearchQuery(e.target.value); setCurrentPage(1); }}
+                          onChange={(e) => { setTechnologySearchQuery(e.target.value); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -1685,7 +1688,7 @@ export default function PortfolioAnalysis() {
                   data={paginatedTechData}
                   currentPage={currentPage}
                   onPageChange={setCurrentPage}
-                  totalCount={technologyTotalCount}
+                  totalCount={filteredTechData.length}
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
                   loading={technologyLoading}
