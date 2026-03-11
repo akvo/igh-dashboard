@@ -197,7 +197,7 @@ export default function DonutChart({
                 />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} isAnimationActive={false} />
           </PieChart>
         </ResponsiveContainer>
       </div>

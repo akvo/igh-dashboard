@@ -341,6 +341,7 @@ export default function StackedBarChart({
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
                 offset={20}
                 allowEscapeViewBox={{ x: false, y: false }}
+                isAnimationActive={false}
               />
 
               {/* Render ALL phases so Recharts maintains a stable React
