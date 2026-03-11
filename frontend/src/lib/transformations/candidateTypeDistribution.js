@@ -40,7 +40,10 @@ export function groupByHealthArea(data) {
     return acc;
   }, {});
 
-  return Object.values(grouped);
+  return Object.values(grouped).sort((a, b) => {
+    const sum = (row) => (row.candidates || 0) + (row.products || 0);
+    return sum(b) - sum(a);
+  });
 }
 
 /**

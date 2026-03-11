@@ -282,10 +282,10 @@ export default function StackedBarChart({
                       const lineHeight = 14;
                       const startY = y - ((lines.length - 1) * lineHeight) / 2;
                       return (
-                        <text x={x} y={startY} textAnchor="end" fill="rgba(38, 38, 38, 0.88)" fontSize={12}>
+                        <text x={x - 4} y={startY} textAnchor="end" fill="rgba(38, 38, 38, 0.88)" fontSize={12}>
                           <title>{label}</title>
                           {lines.map((line, i) => (
-                            <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight} dominantBaseline="central">
+                            <tspan key={i} x={x - 4} dy={i === 0 ? 0 : lineHeight} dominantBaseline="central">
                               {line}
                             </tspan>
                           ))}
@@ -339,6 +339,8 @@ export default function StackedBarChart({
               <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
+                offset={20}
+                allowEscapeViewBox={{ x: false, y: false }}
               />
 
               {/* Render ALL phases so Recharts maintains a stable React

@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { CloseIcon } from '../icons';
 import { MALARIA_GROUP } from '@/lib/filterGroups';
+import { displayHealthArea } from '@/lib/transformations/constants';
 
 export default function DiseaseListPanel({ isOpen, onClose, diseases = [] }) {
   const grouped = useMemo(() => {
@@ -68,7 +69,7 @@ export default function DiseaseListPanel({ isOpen, onClose, diseases = [] }) {
             );
             return (
               <div key={area} className="mb-6">
-                <h3 className="text-sm font-bold text-black mb-3">{area}</h3>
+                <h3 className="text-sm font-bold text-black mb-3">{displayHealthArea(area)}</h3>
                 {malariaStrains.length > 0 && (
                   <div className="mb-3">
                     <h4 className="text-sm font-semibold text-black mb-1.5">Malaria</h4>

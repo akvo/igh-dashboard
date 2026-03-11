@@ -31,7 +31,7 @@ export function useRegulatoryDistribution(globalHealthAreas, diseaseNames, produ
     (rawData?.approvalStatus || []).map(row => ({
       name: row.approval_status,
       value: row.candidateCount,
-    })),
+    })).sort((a, b) => b.value - a.value),
     [rawData?.approvalStatus]
   );
 
@@ -50,7 +50,7 @@ export function useRegulatoryDistribution(globalHealthAreas, diseaseNames, produ
         : 'National\nRegulatory\nAuthority',
       who_prequalified: row.who_prequalified,
       no_who_listing: row.no_who_listing,
-    })),
+    })).sort((a, b) => (b.who_prequalified + b.no_who_listing) - (a.who_prequalified + a.no_who_listing)),
     [rawData?.approvingAuthorities]
   );
 

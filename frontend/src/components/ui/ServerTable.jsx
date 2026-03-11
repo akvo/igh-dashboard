@@ -259,20 +259,20 @@ export default function ServerTable({
   if (loading) {
     return (
       <div className={className}>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200">
                 {columns.map((column, idx) => (
                   <th
                     key={column.accessor || idx}
-                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap"
+                    className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap sticky top-0 z-10"
                     style={{ width: column.width, minWidth: column.minWidth }}
                   >
                     {column.header}
                   </th>
                 ))}
-                {fitContent && <th className="bg-[#FEF8EE]" />}
+                {fitContent && <th className="bg-[#FEF8EE] sticky top-0 z-10" />}
               </tr>
             </thead>
             <tbody>
@@ -307,20 +307,20 @@ export default function ServerTable({
 
   return (
     <div className={className}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200">
               {columns.map((column, idx) => (
                 <th
                   key={column.accessor || idx}
-                  className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap"
+                  className="text-left py-3 px-4 text-sm font-medium text-gray-600 bg-[#FEF8EE] whitespace-nowrap sticky top-0 z-10"
                   style={{ width: column.width, minWidth: column.minWidth }}
                 >
                   {column.header}
                 </th>
               ))}
-              {fitContent && <th className="bg-[#FEF8EE]" />}
+              {fitContent && <th className="bg-[#FEF8EE] sticky top-0 z-10" />}
             </tr>
           </thead>
           <tbody>
@@ -338,7 +338,7 @@ export default function ServerTable({
                     return (
                       <td
                         key={column.accessor || colIdx}
-                        className={`py-4 px-4 text-sm align-top border-b border-gray-200 text-black ${cellClass}`}
+                        className={`py-4 px-4 text-sm text-left align-top border-b border-gray-200 text-black ${cellClass}`}
                         style={cellStyle}
                       >
                         {renderCell(row, column)}

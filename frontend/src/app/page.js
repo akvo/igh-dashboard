@@ -156,7 +156,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
-                From discovery to approval: Mapping the global health R&D pipeline
+                From discovery to approval: mapping the global health R&D pipeline
               </h1>
               <p className="text-sm text-gray-500">
                 An end-to-end interactive view of the global health R&D pipeline, from investigational candidates to approved products reaching people in need.

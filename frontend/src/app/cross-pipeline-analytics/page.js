@@ -282,7 +282,7 @@ export default function CrossPipelineAnalytics() {
                 </p>
               </div>
               <a href="https://gfinderdata.impactglobalhealth.org/" target="_blank" rel="noopener noreferrer" className="inline-block px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
-                Explore G-finder data →
+                Explore G-FINDER data →
               </a>
             </div>
           </div>

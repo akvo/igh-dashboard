@@ -815,8 +815,8 @@ export default function PortfolioAnalysis() {
                     height={500}
                     yAxisWidth={100}
                     maxTickChars={15}
-                   xAxisLabel="Number of candidates / approved products"
-                  yAxisLabel="Product type"
+                    xAxisLabel="Number of candidates / approved products"
+                    yAxisLabel="Product type"
                     showFilters={true}
                     visiblePhases={pipelineVisiblePhases}
                     onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
@@ -1221,11 +1221,7 @@ export default function PortfolioAnalysis() {
 
                 {/* Table */}
                 <ServerTable
-                  columns={CANDIDATE_COLUMNS.map((col) =>
-                    col.accessor === 'current_rd_stage'
-                      ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
-                      : col
-                  )}
+                  columns={CANDIDATE_COLUMNS}
                   data={candidatesData}
                   rowKey="candidate_key"
                   currentPage={candidatesPage}
@@ -1241,7 +1237,7 @@ export default function PortfolioAnalysis() {
             {/* Approved Product Tab Content */}
             {portfolioTab === 'approved' && (
               <>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 my-4">
                   This view includes summary charts showing approval status, approving authorities, and WHO prequalification, alongside a searchable table of approved products based on current filters. The table provides product‑level details such as name, indication, approval status, approving authorities, WHO prequalification status, and other key attributes.
                 </p>
 
@@ -1262,18 +1258,18 @@ export default function PortfolioAnalysis() {
                     </div>
                     <div className="flex-1">
                       {regulatoryLoading ? (
-                        <div className="h-[200px] flex items-center justify-center">
+                        <div className="h-[280px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !approvalStatusData || approvalStatusData.length === 0 ? (
-                        <div className="h-[200px] flex items-center justify-center">
+                        <div className="h-[280px] flex items-center justify-center">
                           <p className="text-gray-400">No data available</p>
                         </div>
                       ) : (
                         <BarChart
                           data={approvalStatusData}
-                          height={200}
-                          maxTickChars={12}
+                          height={280}
+                          maxTickChars={22}
                           xAxisLabel="Approval status"
                           yAxisLabel="Number of products"
                           visibleItems={approvalVisibleItems}
@@ -1399,11 +1395,7 @@ export default function PortfolioAnalysis() {
 
                   {/* Table */}
                   <ServerTable
-                    columns={APPROVED_PRODUCT_COLUMNS.map((col) =>
-                      col.accessor === 'current_rd_stage' || col.accessor === 'approval_status'
-                        ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
-                        : col
-                    )}
+                    columns={APPROVED_PRODUCT_COLUMNS}
                     data={approvedProductsData}
                     rowKey="candidate_key"
                     currentPage={approvedPage}
@@ -1418,7 +1410,7 @@ export default function PortfolioAnalysis() {
             )}
             {portfolioTab === 'trials' && (
               <>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 my-4">
                   High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
@@ -1477,17 +1469,18 @@ export default function PortfolioAnalysis() {
                     </div>
                     <div className="flex-1 border-t border-gray-100 pt-4">
                       {trialsLoading ? (
-                        <div className="h-[280px] flex items-center justify-center">
+                        <div className="h-[340px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !trialStatusData || trialStatusData.length === 0 ? (
-                        <div className="h-[280px] flex items-center justify-center">
+                        <div className="h-[340px] flex items-center justify-center">
                           <p className="text-gray-400">No data available</p>
                         </div>
                       ) : (
                         <BarChart
                           data={trialStatusData}
-                          height={280}
+                          height={340}
+                          maxTickChars={18}
                           xAxisLabel="Trial status"
                           yAxisLabel="Number of trials"
                           visibleItems={trialStatusVisibleItems}
@@ -1575,11 +1568,7 @@ export default function PortfolioAnalysis() {
 
                   {/* Table */}
                   <ServerTable
-                    columns={CLINICAL_TRIAL_COLUMNS.map((col) =>
-                      col.accessor === 'trial_phase'
-                        ? { ...col, render: (value) => <span className={`px-2 py-1 text-xs rounded ${getRdStageStyle(value)}`}>{value}</span> }
-                        : col
-                    )}
+                    columns={CLINICAL_TRIAL_COLUMNS}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
                     currentPage={trialsPage}
