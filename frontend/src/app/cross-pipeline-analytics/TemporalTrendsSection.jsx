@@ -875,8 +875,7 @@ export default function TemporalTrendsSection({
         <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Track how candidates progress through the R&amp;D cycle over time and compare
-        the maturity of different disease portfolios with each other.
+       Explore how selected portfolios evolve over time in the global health R&amp;D pipeline. Analyse the temporal progression of a single portfolio, by one or more diseases and products, or compare up to four portfolios side by side to identify differences in stage distribution and trajectory.
       </p>
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -945,11 +944,7 @@ export default function TemporalTrendsSection({
             </div>
           </div>
 
-          <p className="text-sm text-gray-500 my-4">
-            Compare how a single portfolio evolved over measurement years.
-            Use the filters above to narrow down to specific diseases, products,
-            or a single year.
-          </p>
+        
 
           {/* Sub-section A: Temporal trends in portfolio composition */}
           <div className="mt-4 mb-4 p-4" style={{ border: '1px solid #26262617' }}>
