@@ -1155,9 +1155,6 @@ export default function PortfolioAnalysis() {
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Aggregated portfolio</h3>
-              <button className="p-2 text-gray-500 hover:bg-gray-100">
-                <MoreHorizontalIcon className="w-5 h-5" />
-              </button>
             </div>
             <p className="text-sm text-gray-500 mb-6">
               The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.

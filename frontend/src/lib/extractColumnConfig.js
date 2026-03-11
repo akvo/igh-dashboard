@@ -82,7 +82,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'description', label: 'Description', accessor: 'description', type: 'line-clamp' },
     { id: 'endDate', label: 'End date', accessor: 'end_date' },
     { id: 'startDate', label: 'Start date', accessor: 'start_date' },
-    { id: 'ctName', label: 'CT name', accessor: 'trial_name' },
+    { id: 'ctName', label: 'CT number', accessor: 'trial_name' },
     { id: 'source', label: 'Source', accessor: 'source_text', type: 'line-clamp' },
     { id: 'ctTitle', label: 'CT title', accessor: 'trial_title', type: 'line-clamp' },
   ],
