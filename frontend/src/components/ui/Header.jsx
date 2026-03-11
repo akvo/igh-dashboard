@@ -33,8 +33,7 @@ const Header = ({
       style={{ backgroundColor: '#000', color: '#fff', minHeight: 90, padding: '0 24px', overflow: 'visible' }}
     >
       <div
-        className="flex items-center justify-between mx-auto w-full"
-        style={{ maxWidth: 1260 }}
+        className="flex items-center justify-between w-full"
       >
         <div className="flex items-center" style={{ gap: 5 }}>
           {logo || <DefaultLogo />}
