@@ -372,7 +372,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         Compare up to four portfolios&mdash;each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&amp;D stages to identify contrasts in growth and progression.
       </p>
 
-      {/* Portfolio selectors — each has Disease + Product */}
+      {/* Portfolio selectors — sticky filter bar */}
+      <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
       <div className="flex items-center gap-4 mb-4">
         <div className="flex-1 grid grid-cols-2 gap-4">
           {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
@@ -420,7 +421,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       </div>
 
       {/* Tags + Year + Clear + Apply — single row */}
-      <div className="flex items-end gap-4 pb-6 mb-2 border-b border-gray-200">
+      <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2 flex-wrap flex-1 min-h-[44px]">
           {appliedPortfolios.map((p, idx) => (
             <span
@@ -467,6 +468,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         >
           Apply
         </button>
+      </div>
       </div>
 
       {/* Sub-section A: Portfolio comparison by R&D stage */}
