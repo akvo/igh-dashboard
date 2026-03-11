@@ -269,8 +269,8 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
 };
 
 const DefaultLogo = () => (
-  <a href="/" className="flex items-center" style={{ height: 44, width: 200 }}>
-    <img src="/logo-white.svg" alt="Impact Global Health" style={{ height: 44 }} />
+  <a href="/" className="flex items-center" style={{ height: 60, width: 240 }}>
+    <img src="/logo-white.svg" alt="Impact Global Health" style={{ height: 60 }} />
   </a>
 );
 
