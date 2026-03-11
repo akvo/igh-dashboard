@@ -13,7 +13,7 @@ import { HEALTH_AREA_DISPLAY_NAMES } from './constants';
 export function extractCandidateTypes() {
   return [
     { key: 'candidates', label: 'Candidates', color: '#fe7449' },
-    { key: 'products', label: 'Products', color: '#f9a78d' },
+    { key: 'products', label: 'Approved products', color: '#f9a78d' },
   ];
 }
 

@@ -721,7 +721,7 @@ export default function PortfolioAnalysis() {
                 </div>
                 <div className="min-w-[220px]">
                   <Dropdown
-                    label="Product"
+                    label="Product type"
                     value={product}
                     onChange={setProduct}
                     placeholder="All"
@@ -836,7 +836,7 @@ export default function PortfolioAnalysis() {
                       placeholder="All"
                       options={[
                         { label: 'Candidates', value: 'Candidate' },
-                        { label: 'Products', value: 'Product' },
+                        { label: 'Approved products', value: 'Product' },
                       ]}
                       multiSelect={true}
                       compact={true}
@@ -889,9 +889,9 @@ export default function PortfolioAnalysis() {
                     <div>
                       <h3 className="text-xl font-bold text-black mb-1">
                         {extractTab === 'candidates-approved' && 'Candidates & approved products'}
-                        {extractTab === 'rd-priorities' && 'R&D Priorities & Candidates'}
-                        {extractTab === 'clinical-trials' && 'Clinical Trials & Candidates'}
-                        {extractTab === 'rd-only' && 'R&D Priorities'}
+                        {extractTab === 'rd-priorities' && 'R&D priorities & candidates'}
+                        {extractTab === 'clinical-trials' && 'Clinical trials & candidates'}
+                        {extractTab === 'rd-only' && 'R&D priorities'}
                       </h3>
                       <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
                       <div style={{ borderBottom: '1px solid #26262617' }} />
@@ -954,7 +954,7 @@ export default function PortfolioAnalysis() {
                     {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
                       <div className="min-w-[180px]">
                         <Dropdown
-                          label="Product"
+                          label="Product type"
                           value={extractProduct}
                           onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
                           placeholder="All"
@@ -1160,7 +1160,7 @@ export default function PortfolioAnalysis() {
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-6">
-              The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the pagelevel filters.
+              The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the page level filters.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1411,7 +1411,7 @@ export default function PortfolioAnalysis() {
             {portfolioTab === 'trials' && (
               <>
               <p className="text-sm text-gray-500 my-4">
-                  High-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
+                  This provides a high-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
                 </p>
                 {/* Two chart cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
@@ -1562,7 +1562,7 @@ export default function PortfolioAnalysis() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">
-                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using a text search box and (filtered results) can be exported as a .csv file. This provides a high-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression.
+                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
                     </p>
                   </div>
 
