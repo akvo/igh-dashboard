@@ -520,7 +520,7 @@ export default function Home() {
                 phases={temporalPhases}
                 layout="vertical"
                 height={220}
-                xAxisLabel="Number of candidates"
+                xAxisLabel="Number of candidates / approved products"
                 showFilters={true}
                 hideXAxisTicks={true}
                 visiblePhases={crossVisiblePhases}
