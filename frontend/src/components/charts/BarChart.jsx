@@ -258,28 +258,27 @@ export default function BarChart({
                     interval={0}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
-                    tick={hasLongLabels
-                      ? ({ x, y, payload }) => {
-                          const label = String(payload.value);
-                          const limit = Math.max(maxTickChars, 18);
-                          const display = label.length > limit ? label.slice(0, limit) + '…' : label;
-                          return (
-                            <text
-                              x={x}
-                              y={y + 8}
-                              textAnchor="end"
-                              fill="rgba(38, 38, 38, 0.88)"
-                              fontSize={11}
-                              transform={`rotate(-45, ${x}, ${y + 8})`}
-                            >
-                              <title>{label}</title>
-                              {display}
-                            </text>
-                          );
-                        }
-                      : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
-                    }
-                    height={hasLongLabels ? 120 : undefined}
+                    tick={({ x, y, payload }) => {
+                      const label = String(payload.value);
+                      const lines = wrapLabel(label, Math.min(maxTickChars, 15));
+                      const lineHeight = 14;
+                      return (
+                        <text
+                          x={x}
+                          y={y + 10}
+                          textAnchor="middle"
+                          fill="rgba(38, 38, 38, 0.88)"
+                          fontSize={12}
+                        >
+                          {lines.map((line, i) => (
+                            <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight}>
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      );
+                    }}
+                    height={80}
                   />
                   <YAxis
                     type="number"

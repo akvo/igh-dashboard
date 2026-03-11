@@ -393,7 +393,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                 </div>
                 <div className="flex-1">
                   <Dropdown
-                    label="Product"
+                    label="Product type"
                     value={portfolios[idx].product}
                     onChange={(val) => handleProductChange(idx, val)}
                     placeholder="All"
@@ -907,7 +907,7 @@ export default function TemporalTrendsSection({
               </div>
               <div className="min-w-[200px]">
                 <Dropdown
-                  label="Product"
+                  label="Product type"
                   value={filterProduct}
                   onChange={setFilterProduct}
                   placeholder="All"
