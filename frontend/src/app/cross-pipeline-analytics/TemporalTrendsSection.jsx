@@ -528,7 +528,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               phases={apiPhases}
               layout="vertical"
               height={220}
-              xAxisLabel="Number of Products"
+              xAxisLabel="Number of candidates / approved products"
               yAxisLabel="Portfolio"
               showFilters={false}
               visiblePhases={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
@@ -546,9 +546,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <p className="text-sm text-gray-500 mb-2">
           Explore the underlying data for the selected portfolios by aggregated R&amp;D stage in the chosen year, enabling detailed comparison of portfolio compositions.
         </p>
-        <p className="text-sm text-gray-400 italic mb-4">
-          How many candidates are present in each research stage for each portfolio?
-        </p>
+       
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {loading ? (
@@ -629,7 +627,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                   layout="horizontal"
                   height={300}
                   xAxisLabel={group}
-                  yAxisLabel={acrossGroups[0][0] === group ? 'Number of Candidates' : ''}
+                  yAxisLabel={acrossGroups[0][0] === group ? 'Number of candidates / approved products' : ''}
                   showFilters={false}
                   yAxisWidth={acrossGroups[0][0] === group ? 50 : 30}
                   visiblePhases={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
@@ -1004,7 +1002,7 @@ export default function TemporalTrendsSection({
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel="Amount of Candidates / Products"
+                  xAxisLabel="Number of candidates / approved products"
                   yAxisLabel="Years"
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
@@ -1037,8 +1035,8 @@ export default function TemporalTrendsSection({
                   series={yearSeries}
                   categoryKey="category"
                   height={380}
-                  xAxisLabel="R&D Stage"
-                  yAxisLabel="Number of Candidates"
+                  xAxisLabel="R&D stage"
+                  yAxisLabel="Number of candidates / approved products"
                   showFilters={true}
                   showBarLabels={true}
                 />

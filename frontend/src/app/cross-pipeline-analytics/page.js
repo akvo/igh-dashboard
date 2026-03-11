@@ -236,7 +236,7 @@ export default function CrossPipelineAnalytics() {
                 </div>
                 <div className="min-w-[220px]">
                   <Dropdown
-                    label="Product"
+                    label="Product type"
                     value={selectedProduct}
                     onChange={setSelectedProduct}
                     placeholder="All"
@@ -300,7 +300,7 @@ export default function CrossPipelineAnalytics() {
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel="Amount"
+                  xAxisLabel="Number of candidates / approved products"
                   yAxisLabel="Years"
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
