@@ -117,7 +117,7 @@ export default function CrossPipelineAnalytics() {
                   Cross-pipeline analytics
                 </h1>
                 <p className="text-sm text-gray-500 max-w-3xl">
-                  The Cross-pipeline analytics page is designed to provide a high-level comparative view of research and development efforts over time and across different pipelines. It allows users to track how candidates progress through the R&D cycle and compare the maturity of different disease portfolios with each other.
+                  Explore how the global health R&D pipeline evolves over time across global health areas, diseases, and product types. Track changes by R&D stage for specific IGH review years, and build custom comparisons by selecting one or multiple portfolios for deeper temporal analysis.
                 </p>
               </div>
               <button
@@ -144,7 +144,7 @@ export default function CrossPipelineAnalytics() {
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              The total volume of the R&D pipeline across the IGH measurement years. Use the filter to zoom into how the pipeline of one disease changed over time and see if the total number of candidates and approved products is increasing year-over-year.
+              Explore the temporal trends in the global health R&D pipeline, tracking how distributions across R&D stages shift over time by global health area, disease, and product, with filters and legend controls to refine the analysis.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -178,7 +178,7 @@ export default function CrossPipelineAnalytics() {
                 </div>
                 <div className="min-w-[220px]">
                   <Dropdown
-                    label="Product"
+                    label="Product type"
                     value={selectedProduct}
                     onChange={setSelectedProduct}
                     placeholder="All"
@@ -242,7 +242,7 @@ export default function CrossPipelineAnalytics() {
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel="Amount"
+                  xAxisLabel="Number of candidates / approved products"
                   yAxisLabel="Years"
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}

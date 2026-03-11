@@ -208,6 +208,7 @@ export default function GroupedBarChart({
               <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
+                isAnimationActive={false}
               />
 
               {filteredSeries.map(s => (

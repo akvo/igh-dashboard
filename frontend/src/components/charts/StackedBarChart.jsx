@@ -303,27 +303,27 @@ export default function StackedBarChart({
                     interval={0}
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
-                    tick={hasLongLabels
-                      ? ({ x, y, payload }) => {
-                          const label = String(payload.value).replace(/\n/g, ' ');
-                          const display = label.length > maxTickChars ? label.slice(0, maxTickChars) + '…' : label;
-                          return (
-                            <text
-                              x={x}
-                              y={y + 8}
-                              textAnchor="end"
-                              fill="rgba(38, 38, 38, 0.88)"
-                              fontSize={12}
-                              transform={`rotate(-45, ${x}, ${y + 8})`}
-                            >
-                              <title>{label}</title>
-                              {display}
-                            </text>
-                          );
-                        }
-                      : { fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12 }
-                    }
-                    height={hasLongLabels ? 80 : undefined}
+                    tick={({ x, y, payload }) => {
+                      const label = String(payload.value).replace(/\n/g, ' ');
+                      const lines = wrapLabel(label, Math.min(maxTickChars, 15));
+                      const lineHeight = 14;
+                      return (
+                        <text
+                          x={x}
+                          y={y + 10}
+                          textAnchor="middle"
+                          fill="rgba(38, 38, 38, 0.88)"
+                          fontSize={12}
+                        >
+                          {lines.map((line, i) => (
+                            <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight}>
+                              {line}
+                            </tspan>
+                          ))}
+                        </text>
+                      );
+                    }}
+                    height={80}
                   />
                   <YAxis
                     type="number"
@@ -341,6 +341,7 @@ export default function StackedBarChart({
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
                 offset={20}
                 allowEscapeViewBox={{ x: false, y: false }}
+                isAnimationActive={false}
               />
 
               {/* Render ALL phases so Recharts maintains a stable React

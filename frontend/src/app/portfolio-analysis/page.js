@@ -6,7 +6,7 @@ import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, FilterIcon } from '@/components/icons';
+import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
@@ -1057,7 +1057,7 @@ export default function PortfolioAnalysis() {
                               </span>
                               <span className="text-sm text-gray-700">{col.label}</span>
                             </div>
-                            <FilterIcon
+                            <ListFilterIcon
                               className={`w-4 h-4 ${isSelected ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
                             />
                           </div>
@@ -1155,9 +1155,6 @@ export default function PortfolioAnalysis() {
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Aggregated portfolio</h3>
-              <button className="p-2 text-gray-500 hover:bg-gray-100">
-                <MoreHorizontalIcon className="w-5 h-5" />
-              </button>
             </div>
             <p className="text-sm text-gray-500 mb-6">
               The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the page level filters.
@@ -1242,7 +1239,7 @@ export default function PortfolioAnalysis() {
                 </p>
 
                 {/* Three chart cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
                   {/* Approval status */}
                   <div className="bg-white border border-gray-200 p-4 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
@@ -1266,15 +1263,19 @@ export default function PortfolioAnalysis() {
                           <p className="text-gray-400">No data available</p>
                         </div>
                       ) : (
-                        <BarChart
-                          data={approvalStatusData}
-                          height={280}
-                          maxTickChars={22}
-                          xAxisLabel="Approval status"
-                          yAxisLabel="Number of products"
-                          visibleItems={approvalVisibleItems}
-                          onVisibleItemsChange={handleApprovalVisibleItemsChange}
-                        />
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (approvalStatusData?.length || 0) * 120) }}>
+                            <BarChart
+                              data={approvalStatusData}
+                              height={280}
+                              maxTickChars={999}
+                              xAxisLabel="Approval status"
+                              yAxisLabel="Number of products"
+                              visibleItems={approvalVisibleItems}
+                              onVisibleItemsChange={handleApprovalVisibleItemsChange}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
@@ -1306,20 +1307,24 @@ export default function PortfolioAnalysis() {
                           <p className="text-gray-400">No data available</p>
                         </div>
                       ) : (
-                        <StackedBarChart
-                          data={approvingAuthoritiesData}
-                          phases={approvingAuthoritiesPhases}
-                          categoryKey="category"
-                          layout="horizontal"
-                          height={200}
-                          xAxisLabel="Authority type"
-                          yAxisLabel="Number of products"
-                          showFilters={true}
-                          barRadius={0}
-                          maxTickChars={15}
-                          visiblePhases={authVisiblePhases}
-                          onVisiblePhasesChange={handleAuthVisiblePhasesChange}
-                        />
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (approvingAuthoritiesData?.length || 0) * 140) }}>
+                            <StackedBarChart
+                              data={approvingAuthoritiesData}
+                              phases={approvingAuthoritiesPhases}
+                              categoryKey="category"
+                              layout="horizontal"
+                              height={280}
+                              maxTickChars={999}
+                              xAxisLabel="Authority type"
+                              yAxisLabel="Number of products"
+                              showFilters={true}
+                              barRadius={0}
+                              visiblePhases={authVisiblePhases}
+                              onVisiblePhasesChange={handleAuthVisiblePhasesChange}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
@@ -1348,7 +1353,7 @@ export default function PortfolioAnalysis() {
                       ) : (
                         <DonutChart
                           data={whoPrequalData}
-                          colors={['#fe7449', '#e3d6c1']}
+                          colors={['#e3d6c1', '#fe7449', '#cbafde']}
                           height={180}
                           innerRadius={50}
                           outerRadius={80}
@@ -1477,15 +1482,19 @@ export default function PortfolioAnalysis() {
                           <p className="text-gray-400">No data available</p>
                         </div>
                       ) : (
-                        <BarChart
-                          data={trialStatusData}
-                          height={340}
-                          maxTickChars={18}
-                          xAxisLabel="Trial status"
-                          yAxisLabel="Number of trials"
-                          visibleItems={trialStatusVisibleItems}
-                          onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
-                        />
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (trialStatusData?.length || 0) * 120) }}>
+                            <BarChart
+                              data={trialStatusData}
+                              height={340}
+                              maxTickChars={999}
+                              xAxisLabel="Trial status"
+                              yAxisLabel="Number of trials"
+                              visibleItems={trialStatusVisibleItems}
+                              onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-4">
