@@ -82,6 +82,11 @@ export default function PortfolioAnalysis() {
   // URL state is empty. After hydration, copy URL cols into picker state
   // so the checkboxes reflect applied columns on shared-URL load.
   const didInitPickerRef = useRef(false);
+
+  // Skip the first search-triggered page reset — during hydration the
+  // search queries transition from '' to their URL value, which would
+  // otherwise wipe out the page param from the shared URL.
+  const didHydrateSearchRef = useRef(false);
   useEffect(() => {
     if (didInitPickerRef.current) return;
     const hasUrlCols = colsCandidates.length > 0 || colsRdPriorities.length > 0
@@ -319,10 +324,21 @@ export default function PortfolioAnalysis() {
   });
 
   // Reset trials pagination when search query changes.
-  useEffect(() => { setTrialsPage(1); }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setTrialsPage(1);
+  }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset technology pagination when search query changes.
-  useEffect(() => { setCurrentPage(1); }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setCurrentPage(1);
+  }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClearFilters = () => {
     setHealthArea([]);
