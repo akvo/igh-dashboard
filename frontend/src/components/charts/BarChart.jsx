@@ -295,6 +295,7 @@ export default function BarChart({
               <Tooltip
                 content={<CustomTooltip />}
                 cursor={{ fill: 'rgba(38, 38, 38, 0.04)' }}
+                isAnimationActive={false}
               />
 
               <Bar
