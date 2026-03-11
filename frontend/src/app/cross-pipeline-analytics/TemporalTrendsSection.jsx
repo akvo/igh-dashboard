@@ -748,6 +748,7 @@ export default function TemporalTrendsSection({
     setAppliedProduct([]);
     setAppliedYear([]);
     setHiddenPhases([]);
+    setHiddenYears([]);
   };
 
   // Build API filter params (expand composite selections)
@@ -783,6 +784,9 @@ export default function TemporalTrendsSection({
   };
 
   // Sub-section B: aggregated grouped bar chart
+  // Store hidden years in URL so default state (all visible) produces a clean URL.
+  const [hiddenYears, setHiddenYears] = useUrlState('ttYhide', [], arraySerializer);
+
   const aggregatedData = useMemo(() => aggregateTemporalPhases(raw), [raw]);
 
   const groupedChartData = useMemo(() => {
@@ -804,6 +808,19 @@ export default function TemporalTrendsSection({
       color: YEAR_COLORS[idx % YEAR_COLORS.length],
     }));
   }, [aggregatedData]);
+
+  const visibleYears = useMemo(
+    () => yearSeries.reduce((acc, s) => ({ ...acc, [s.key]: !hiddenYears.includes(s.key) }), {}),
+    [yearSeries, hiddenYears]
+  );
+
+  const handleYearToggle = (key) => {
+    setHiddenYears(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+  const handleYearSelectAll = () => setHiddenYears([]);
+  const handleYearClearAll = () => setHiddenYears(yearSeries.map(s => s.key));
 
   // Sub-section C: growth table
   const growthTable = useMemo(() => computeGrowthTable(aggregatedData), [aggregatedData]);
@@ -1057,6 +1074,10 @@ export default function TemporalTrendsSection({
                 <GroupedBarChart
                   data={groupedChartData}
                   series={yearSeries}
+                  visibleSeries={visibleYears}
+                  onToggleSeries={handleYearToggle}
+                  onSelectAll={handleYearSelectAll}
+                  onClearAll={handleYearClearAll}
                   categoryKey="category"
                   height={380}
                   xAxisLabel="R&D stage"
