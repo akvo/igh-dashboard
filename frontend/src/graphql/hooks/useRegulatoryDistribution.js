@@ -35,11 +35,15 @@ export function useRegulatoryDistribution(globalHealthAreas, diseaseNames, produ
     [rawData?.approvalStatus]
   );
 
+  // Fixed order so color assignment by index is deterministic:
+  // Yes = tan, No = orange, Unknown = lavender
+  const WHO_PREQUAL_ORDER = ['Yes', 'No', 'Unknown'];
+
   const whoPrequalification = useMemo(() =>
     (rawData?.whoPrequalification || []).map(row => ({
       name: row.who_prequalification,
       value: row.candidateCount,
-    })),
+    })).sort((a, b) => WHO_PREQUAL_ORDER.indexOf(a.name) - WHO_PREQUAL_ORDER.indexOf(b.name)),
     [rawData?.whoPrequalification]
   );
 

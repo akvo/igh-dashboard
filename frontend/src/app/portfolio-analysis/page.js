@@ -1348,7 +1348,7 @@ export default function PortfolioAnalysis() {
                       ) : (
                         <DonutChart
                           data={whoPrequalData}
-                          colors={['#fe7449', '#e3d6c1']}
+                          colors={['#e3d6c1', '#fe7449', '#cbafde']}
                           height={180}
                           innerRadius={50}
                           outerRadius={80}
