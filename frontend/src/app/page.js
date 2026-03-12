@@ -6,7 +6,7 @@ import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
-import { TextLink } from '@/components/ui/Button';
+import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
   StackedBarChart,
@@ -530,78 +530,7 @@ export default function Home() {
           </div>
 
 
-          {/* Reports and Insights */}
-          <div className="bg-black p-5 sm:p-8 lg:p-10 mb-10" style={{ margin: '0 -32px' }}>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-white">
-                Reports and insights
-              </h2>
-              <button className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white cursor-pointer hover:bg-white hover:text-black transition-colors">
-                View all insights
-              </button>
-            </div>
-            <p className="text-sm text-white/60 mb-6">
-              Discover the insights that two decades of global health data have
-              given us.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-6">
-              {/* Report Card 1 - Top Left (horizontal) */}
-              <div className="bg-[#FBF6EB] rounded-xl overflow-hidden flex flex-col sm:flex-row">
-                <div className="h-36 sm:h-auto sm:w-40 shrink-0 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-300 to-yellow-500" />
-                </div>
-                <div className="p-4 sm:p-5 flex-1 flex flex-col">
-                  <h4 className="text-sm font-semibold text-black mb-2">
-                    The ripple effect: how global health R&D delivers for
-                    everyone
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-3">
-                    This report shows how investments in global health R&D
-                    deliver significant health and economic progress for HI...
-                  </p>
-                  <TextLink className="mt-auto">Read more</TextLink>
-                </div>
-              </div>
-
-              {/* Report Card 2 - Right (tall, spans 2 rows) */}
-              <div className="bg-[#FBF6EB] rounded-xl overflow-hidden md:row-span-2 flex flex-col">
-                <div className="h-44 sm:h-56 relative shrink-0">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-800 to-orange-500" />
-                </div>
-                <div className="p-4 sm:p-5 flex-1 flex flex-col">
-                  <h4 className="text-sm sm:text-base font-semibold text-black mb-2">
-                    State of disunion: The impact of US funding cuts on global
-                    health R&D
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-3">
-                    This report offers a quantified assessment of the actual and
-                    potential impact of the 2025 US funding cuts giving a
-                    system-wide, data-driven picture of the ripple effects by...
-                  </p>
-                  <TextLink className="mt-auto">Read more</TextLink>
-                </div>
-              </div>
-
-              {/* Report Card 3 - Bottom Left (horizontal) */}
-              <div className="bg-[#FBF6EB] rounded-xl overflow-hidden flex flex-col sm:flex-row">
-                <div className="h-36 sm:h-auto sm:w-40 shrink-0 relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-400 to-gray-600" />
-                </div>
-                <div className="p-4 sm:p-5 flex-1 flex flex-col">
-                  <h4 className="text-sm font-semibold text-black mb-2">
-                    From malaria research to protecting aging populations: AS01
-                    Adjuvant in Shingrix
-                  </h4>
-                  <p className="text-xs text-gray-500 mb-3">
-                    This case study focuses on the benefits of AS01 adjuvant,
-                    initially advanced through malaria research...
-                  </p>
-                  <TextLink className="mt-auto">Read more</TextLink>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ReportsAndInsights />
         </div>
       </main>
 
