@@ -7,6 +7,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
+import { buildCSV, downloadCSV } from '@/lib/csv';
 import {
   useTemporalSnapshots,
   useAvailableYears,
@@ -140,7 +141,15 @@ export default function CrossPipelineAnalytics() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
               <div className="flex items-center gap-3">
-                <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
+                <ChartMenu onDownloadCSV={() => {
+                  const visiblePhases = phases.filter((p) => isPhaseVisible(p.key));
+                  const columns = [
+                    { label: 'Year', accessor: 'category' },
+                    ...visiblePhases.map((p) => ({ label: p.label, accessor: p.key })),
+                  ];
+                  const csv = buildCSV(columns, chartData);
+                  downloadCSV(csv, 'cross-pipeline-analytics');
+                }} onDownloadPNG={() => {}} />
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
