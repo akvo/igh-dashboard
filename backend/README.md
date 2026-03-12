@@ -182,6 +182,16 @@ export function getPortfolioKPIs() {
 
 **E2E tests** (`tests/e2e/`) run real GraphQL queries against a static snapshot of the database (`tests/star_schema.db`), so results are deterministic regardless of ETL refreshes.
 
+**Updating CSV fixtures:** Some E2E tests compare CSV export output against fixture files in `tests/fixtures/csv/`. When you intentionally change query output, update the fixtures by running:
+
+```bash
+# First, run without the flag to inspect the diff
+npx vitest run tests/e2e/csv-exports.test.ts
+
+# Then, if the changes look correct, re-run to update fixtures
+UPDATE_FIXTURES=1 npx vitest run tests/e2e/csv-exports.test.ts
+```
+
 ## Code Quality
 
 | Command | Description |

@@ -48,6 +48,12 @@ This runs the following in sequence, stopping on the first failure:
 2. Backend unit tests (Vitest)
 3. Backend type checking, linting, and formatting verification (tsc, ESLint, Prettier)
 
+To also update CSV fixture files (after verifying the diffs are correct):
+
+```bash
+UPDATE_FIXTURES=1 npm run check:all
+```
+
 ## Services
 
 | Service  | URL                    | Description             |
