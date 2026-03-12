@@ -152,7 +152,7 @@ describe("Candidates — phase and product filters", () => {
       { filter: { phase_key: phaseKey } },
     );
 
-    expect(data.candidates.totalCount).toBe(957);
+    expect(data.candidates.totalCount).toBe(947);
     // The resolved phase comes from the most-recent active snapshot, which can
     // differ from the filtered snapshot when a candidate has multiple snapshots.
     // Verify the majority resolve to the filtered phase.

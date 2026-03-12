@@ -53,19 +53,19 @@ describe('temporalSnapshots transformations', () => {
 
       expect(grouped).toHaveLength(2);
       expect(grouped[0]).toEqual({
+        category: '2024',
+        discovery: 15,
+        preclinical: 204,
+      });
+      expect(grouped[1]).toEqual({
         category: '2023',
         discovery: 61,
         preclinical: 388,
         phase_i: 265,
       });
-      expect(grouped[1]).toEqual({
-        category: '2024',
-        discovery: 15,
-        preclinical: 204,
-      });
     });
 
-    it('sorts results by year ascending', () => {
+    it('sorts results by year descending', () => {
       const unorderedData = [
         { year: 2025, phase_name: 'Discovery', sort_order: 10, candidateCount: 100 },
         { year: 2020, phase_name: 'Discovery', sort_order: 10, candidateCount: 50 },
@@ -74,7 +74,7 @@ describe('temporalSnapshots transformations', () => {
 
       const grouped = groupByYear(unorderedData);
 
-      expect(grouped.map(g => g.category)).toEqual(['2020', '2023', '2025']);
+      expect(grouped.map(g => g.category)).toEqual(['2025', '2023', '2020']);
     });
   });
 

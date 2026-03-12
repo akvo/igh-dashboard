@@ -21,7 +21,7 @@ describe('candidateTypeDistribution transformations', () => {
 
       expect(segments).toHaveLength(2);
       expect(segments[0]).toEqual({ key: 'candidates', label: 'Candidates', color: '#fe7449' });
-      expect(segments[1]).toEqual({ key: 'products', label: 'Products', color: '#f9a78d' });
+      expect(segments[1]).toEqual({ key: 'products', label: 'Approved products', color: '#f9a78d' });
     });
   });
 
