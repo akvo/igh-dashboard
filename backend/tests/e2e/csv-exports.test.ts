@@ -301,7 +301,6 @@ const TRIAL_CSV_COLUMNS: CSVColumn[] = [
 ];
 
 const RD_PRIORITY_WITH_CANDIDATE_CSV_COLUMNS: CSVColumn[] = [
-  { label: "Priority ID", accessor: "rdpriorityid" },
   { label: "Title", accessor: "priority_name" },
   { label: "TPP/PPC", accessor: "intended_use" },
   { label: "Disease", accessor: "disease_name" },
@@ -320,7 +319,6 @@ const RD_PRIORITY_WITH_CANDIDATE_CSV_COLUMNS: CSVColumn[] = [
 ];
 
 const RD_PRIORITY_ONLY_CSV_COLUMNS: CSVColumn[] = [
-  { label: "Priority ID", accessor: "rdpriorityid" },
   { label: "Title", accessor: "priority_name" },
   { label: "TPP/PPC", accessor: "intended_use" },
   { label: "Disease", accessor: "disease_name" },
@@ -700,7 +698,7 @@ describe("CSV export — rdPrioritiesWithCandidates (R&D Priorities tab)", () =>
     const csv = buildTestCSV(RD_PRIORITY_WITH_CANDIDATE_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
     expect(headerLine).toBe(
-      "Priority ID,Title,TPP/PPC,Disease,Product," +
+      "Title,TPP/PPC,Disease,Product," +
         "Global Health area,Author,Publication data,Indication," +
         "Intended use,Target population,Efficacy,Safety,Source," +
         "Candidate name,RD Stage",
@@ -749,7 +747,7 @@ describe("CSV export — rdPriorities (R&D Only tab)", () => {
     const csv = buildTestCSV(RD_PRIORITY_ONLY_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
     expect(headerLine).toBe(
-      "Priority ID,Title,TPP/PPC,Disease,Product," +
+      "Title,TPP/PPC,Disease,Product," +
         "Global Health area,Author,Publication data,Indication," +
         "Intended use,Target population,Efficacy,Safety,Source",
     );

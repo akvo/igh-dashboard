@@ -19,8 +19,7 @@ import { displayHealthArea } from './transformations/constants';
 export const EXTRACT_TAB_COLUMNS = {
   'candidates-approved': [
     { id: 'type', label: 'Type', accessor: 'candidate_type' },
-    { id: 'ighId', label: 'IGH ID', accessor: 'candidateid' },
-    { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names', type: 'line-clamp' },
+{ id: 'altNames', label: 'Alternative names', accessor: 'alternative_names', type: 'line-clamp' },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
     { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
@@ -44,7 +43,6 @@ export const EXTRACT_TAB_COLUMNS = {
   ],
 
   'rd-priorities': [
-    { id: 'title', label: 'Title', accessor: 'priority_name' },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
@@ -73,8 +71,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'sponsor', label: 'Sponsor', accessor: 'sponsor' },
     { id: 'studyDesign', label: 'Study design', accessor: 'study_design' },
     { id: 'studyType', label: 'Study type', accessor: 'study_type' },
-    { id: 'ctId', label: 'Clinical trial ID', accessor: 'clinicaltrialid' },
-    { id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count' },
+{ id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count' },
     { id: 'rdPhase', label: 'R&D phase', accessor: 'trial_phase' },
     { id: 'ctResultsStatus', label: 'CT results status', accessor: 'ct_results_status' },
     { id: 'ctResultType', label: 'CT result type', accessor: 'ct_results_type' },
@@ -88,7 +85,6 @@ export const EXTRACT_TAB_COLUMNS = {
   ],
 
   'rd-only': [
-    { id: 'title', label: 'Title', accessor: 'priority_name' },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use' },
     { id: 'disease', label: 'Disease', accessor: 'disease_name' },
     { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v) },
@@ -114,16 +110,16 @@ export const EXTRACT_FIXED_COLUMNS = {
     accessor: (row) => row.candidate_name || row.alternative_names,
   },
   'rd-priorities': {
-    label: 'Priority ID',
-    accessor: 'rdpriorityid',
+    label: 'Title',
+    accessor: 'priority_name',
   },
   'clinical-trials': {
     label: 'Candidate name',
     accessor: 'candidate_name',
   },
   'rd-only': {
-    label: 'Priority ID',
-    accessor: 'rdpriorityid',
+    label: 'Title',
+    accessor: 'priority_name',
   },
 };
 
