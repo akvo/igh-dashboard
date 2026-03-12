@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef, memo } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
+import { colors } from '@/lib/theme';
 
 const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
@@ -30,12 +31,16 @@ function fetchGeoData() {
 }
 
 const defaultColorScale = [
-  '#FFDCD1',
-  '#F9A78D',
-  '#E3D6C1',
-  '#F0B456',
-  '#CC9949',
-  '#AD5133',
+  colors.orange[50],
+  colors.orange[100],
+  colors.orange[200],
+  colors.orange[300],
+  colors.orange[400],
+  colors.orange[500],
+  colors.orange[600],
+  colors.orange[700],
+  colors.orange[800],
+  colors.orange[900],
 ];
 
 function WorldMap({
@@ -75,12 +80,12 @@ function WorldMap({
     }
   }, [height]);
 
-  const { minValue, valueRange } = useMemo(() => {
-    const values = Object.values(data).filter((v) => typeof v === 'number');
-    if (values.length === 0) return { minValue: 0, valueRange: 1 };
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    return { minValue: min, valueRange: max - min || 1 };
+  const maxValue = useMemo(() => {
+    let max = 0;
+    for (const v of Object.values(data)) {
+      if (typeof v === 'number' && v > max) max = v;
+    }
+    return max;
   }, [data]);
 
   const projection = useMemo(() => {
@@ -95,11 +100,19 @@ function WorldMap({
   const getColor = (countryId) => {
     const id = String(countryId);
     const value = data[id];
-    if (value === undefined || value === null) return defaultColor;
+    if (!value || maxValue <= 0) return defaultColor;
 
-    const normalizedValue = (value - minValue) / valueRange;
+    // Logarithmic normalization: log(v) / log(max), clamped to [0, 1].
+    // Matches the heatmap table approach — essential because map data is
+    // heavily right-skewed, so linear scaling makes most countries
+    // indistinguishable.
+    const normalized = maxValue > 1
+      ? Math.log(value) / Math.log(maxValue)
+      : 0;
+    const clamped = Math.max(0, Math.min(1, normalized));
+
     const colorIndex = Math.min(
-      Math.floor(normalizedValue * (colorScale.length - 1)),
+      Math.round(clamped * (colorScale.length - 1)),
       colorScale.length - 1
     );
     return colorScale[colorIndex];
