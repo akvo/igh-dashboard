@@ -61,9 +61,9 @@ export function groupByYear(data) {
     return acc;
   }, {});
 
-  // Sort by year
+  // Sort by year descending (latest first)
   return Object.values(grouped).sort((a, b) =>
-    parseInt(a.category) - parseInt(b.category)
+    parseInt(b.category) - parseInt(a.category)
   );
 }
 

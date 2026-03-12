@@ -260,30 +260,48 @@ export default function CrossPipelineAnalytics() {
           />
 
           {/* G-FINDER promotional section */}
-          <div className="relative bg-gray-900 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/90 to-transparent z-10" />
-            <div className="absolute inset-0 opacity-50">
-              <div className="w-full h-full bg-gradient-to-br from-orange-600/20 to-purple-600/20" />
-            </div>
-            <div className="relative z-20 p-8 md:p-12 max-w-2xl">
-              <p className="text-sm text-gray-400 mb-2">12/12/24</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                Tracking global health investments: discover G-FINDER's impact
-              </h2>
-              <p className="text-sm text-gray-300 mb-6">
-                G-FINDER is the gold-standard tracker of R&D funding for new products and technologies for global health. Updated annually, this is the evidence base informing all global health advocacy, investment and policy change.
-              </p>
-              <div className="space-y-2 mb-6">
-                <p className="text-sm text-gray-300">
-                  <strong className="text-white">The case for change:</strong> Explore funding trends over time, where there is innovation and where there are gaps.
-                </p>
-                <p className="text-sm text-gray-300">
-                  <strong className="text-white">Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
-                </p>
+          <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mb-4 sm:-mb-6 lg:-mb-8" style={{ backgroundColor: '#262626', color: '#fff' }}>
+            {/* Image area with overlaid heading */}
+            <div className="relative">
+              <img
+                src="/gfinder.png"
+                alt="G-FINDER"
+                className="block"
+                style={{ width: 'calc(100% - 48px)', marginLeft: 48 }}
+              />
+              {/* Heading overlaid on top-left of image */}
+              <div className="absolute top-0 left-0 p-8 md:p-12">
+                <h2 className="text-3xl md:text-4xl font-bold m-0" style={{ fontFamily: 'var(--font-align), serif', color: '#fff', maxWidth: 450 }}>
+                  Tracking global health investments: discover G-FINDER&apos;s impact
+                </h2>
               </div>
-              <a href="https://gfinderdata.impactglobalhealth.org/" target="_blank" rel="noopener noreferrer" className="inline-block px-6 py-3 bg-orange-500 text-black text-sm font-medium hover:bg-black hover:text-white transition-colors">
-                Explore G-FINDER data →
-              </a>
+            </div>
+
+            {/* Text + CTA below image */}
+            <div style={{ padding: '32px 48px 40px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6">
+                <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
+                  G-FINDER is the gold-standard tracker of R&amp;D funding for new products and technologies for global health. Updated annually, this is the evidence base informing all global health advocacy, investment and policy change.
+                </p>
+                <div className="flex flex-col" style={{ gap: 16 }}>
+                  <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
+                    <strong>The case for change:</strong> Explore funding trends over time, where there is innovation and where there are gaps.
+                  </p>
+                  <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
+                    <strong>Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&amp;D impact.
+                  </p>
+                  <a
+                    href="https://gfinderdata.impactglobalhealth.org/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white transition-colors mt-4"
+                    style={{ padding: '12px 24px', width: 'fit-content' }}
+                  >
+                    Explore G-Finder data
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>

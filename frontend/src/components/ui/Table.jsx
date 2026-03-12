@@ -287,10 +287,14 @@ export default function Table({
                   const cellClass = typeof column.cellClassName === 'function'
                     ? column.cellClassName(row[column.accessor], row)
                     : (column.cellClassName || '');
+                  const cellStyle = typeof column.cellStyle === 'function'
+                    ? column.cellStyle(row[column.accessor], row)
+                    : (column.cellStyle || undefined);
                   return (
                     <td
                       key={column.accessor}
                       className={`px-4 py-4 text-sm align-top border-b border-gray-200 text-black ${cellClass}`}
+                      style={cellStyle}
                     >
                       {renderCell(row, column)}
                     </td>

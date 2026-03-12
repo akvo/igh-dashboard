@@ -34,22 +34,29 @@ const YEAR_COLORS = [
 
 const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
 
-// Compact URL encoding for up to 4 portfolio {disease, product} objects.
-// [{disease:'HIV/AIDS', product:'1|2'}, {disease:'TB', product:'3'}]
-//   → 'HIV/AIDS:1|2,TB:3'
-// Labels are derived from index (Portfolio A, B, ...) — not stored.
+// Compact URL encoding for up to 4 portfolio {disease[], product[]} objects.
+// Uses ';' to join multi-values within each field, ':' between disease/product, ',' between portfolios.
 const portfolioSerializer = {
   serialize: (portfolios) => {
     const parts = portfolios
-      .filter(p => p.disease || p.product)
-      .map(p => `${p.disease || ''}:${p.product || ''}`);
+      .filter(p => (Array.isArray(p.disease) ? p.disease.length > 0 : !!p.disease) ||
+                   (Array.isArray(p.product) ? p.product.length > 0 : !!p.product))
+      .map(p => {
+        const d = Array.isArray(p.disease) ? p.disease.join(';') : (p.disease || '');
+        const pr = Array.isArray(p.product) ? p.product.join(';') : (p.product || '');
+        return `${d}:${pr}`;
+      });
     return parts.length > 0 ? parts.join(',') : null;
   },
   deserialize: (str) => {
     if (!str) return null;
     return str.split(',').map((part, idx) => {
       const [disease = '', product = ''] = part.split(':');
-      return { disease, product, label: PORTFOLIO_LABELS[idx] };
+      return {
+        disease: disease ? disease.split(';') : [],
+        product: product ? product.split(';') : [],
+        label: PORTFOLIO_LABELS[idx],
+      };
     });
   },
 };
@@ -73,13 +80,16 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // Local/pending state — initialized from URL-restored applied values
   const [portfolios, setPortfolios] = useState(() => {
     const initial = [
-      { disease: '', product: '' },
-      { disease: '', product: '' },
-      { disease: '', product: '' },
-      { disease: '', product: '' },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
     ];
     appliedPortfolios.forEach((p, i) => {
-      if (i < 4) initial[i] = { disease: p.disease || '', product: p.product || '' };
+      if (i < 4) initial[i] = {
+        disease: Array.isArray(p.disease) ? p.disease : (p.disease ? [p.disease] : []),
+        product: Array.isArray(p.product) ? p.product : (p.product ? [p.product] : []),
+      };
     });
     return initial;
   });
@@ -95,7 +105,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         setPortfolios(prev => {
           const next = [...prev];
           appliedPortfolios.forEach((p, i) => {
-            if (i < 4) next[i] = { disease: p.disease || '', product: p.product || '' };
+            if (i < 4) next[i] = {
+              disease: Array.isArray(p.disease) ? p.disease : (p.disease ? [p.disease] : []),
+              product: Array.isArray(p.product) ? p.product : (p.product ? [p.product] : []),
+            };
           });
           return next;
         });
@@ -111,8 +124,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // (product options may have pipe-separated keys from VC consolidation)
   const validProducts = useMemo(() => {
     return portfolios.map(p => {
-      if (!p.disease) return null;
-      const expandedDisease = expandDiseaseSelection([p.disease]);
+      if (!p.disease || p.disease.length === 0) return null;
+      const expandedDisease = expandDiseaseSelection(p.disease);
       const validKeys = new Set(
         filterPairs.filter(pair => expandedDisease.includes(pair.disease_group_name))
                    .map(pair => String(pair.product_key))
@@ -123,8 +136,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
   const validDiseases = useMemo(() => {
     return portfolios.map(p => {
-      if (!p.product) return null;
-      const expanded = expandProductKeySelection([p.product]);
+      if (!p.product || p.product.length === 0) return null;
+      const expanded = expandProductKeySelection(p.product);
       const pkeys = new Set(expanded);
       const validNames = new Set(
         filterPairs.filter(pair => pkeys.has(String(pair.product_key)))
@@ -197,21 +210,21 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     const applied = portfolios
       .slice(0, visibleCount)
       .map((p, idx) => ({ ...p, label: PORTFOLIO_LABELS[idx] }))
-      .filter(p => p.disease || p.product);
+      .filter(p => p.disease.length > 0 || p.product.length > 0);
     setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
     setComparePhases([]);
   };
 
-  const hasCompareFilters = portfolios.some(p => p.disease || p.product) || compareYear !== '' ||
+  const hasCompareFilters = portfolios.some(p => p.disease.length > 0 || p.product.length > 0) || compareYear !== '' ||
     appliedPortfolios.length > 0 || appliedCompareYear !== '';
 
   const handleCompareClear = () => {
     setPortfolios([
-      { disease: '', product: '' },
-      { disease: '', product: '' },
-      { disease: '', product: '' },
-      { disease: '', product: '' },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
+      { disease: [], product: [] },
     ]);
     setCompareYear('');
     setAppliedPortfolios([]);
@@ -238,7 +251,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // --- Sub-section A: Stacked bar chart data ---
   const compareChartData = useMemo(() => {
     if (activePortfolios.length === 0 || !targetYear) return [];
-    return activePortfolios.map((portfolio, idx) => {
+    const rows = activePortfolios.map((portfolio, idx) => {
       const raw = results[idx];
       if (!raw) return null;
       const yearData = raw.filter(r => r.year === targetYear);
@@ -249,6 +262,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       });
       return row;
     }).filter(Boolean);
+    // Sort by total count descending (widest bar first)
+    const sum = (row) => apiPhases.reduce((s, p) => s + (row[p.key] || 0), 0);
+    rows.sort((a, b) => sum(b) - sum(a));
+    return rows;
   }, [results, activePortfolios, targetYear, apiPhases]);
 
   // --- Sub-section B: Table ---
@@ -347,7 +364,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       const raw = results[idx];
       if (!raw) return [];
       const aggregated = aggregateTemporalPhases(raw);
-      return aggregated.map(yd => ({
+      return [...aggregated].sort((a, b) => b.year - a.year).map(yd => ({
         category: String(yd.year),
         earlyDevelopment: yd.earlyDevelopment,
         lateDevelopment: yd.lateDevelopment,
@@ -389,6 +406,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     onChange={(val) => handleDiseaseChange(idx, val)}
                     placeholder="All"
                     options={validDiseases[idx] ?? diseaseOptions}
+                    multiSelect={true}
                   />
                 </div>
                 <div className="flex-1">
@@ -398,6 +416,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                     onChange={(val) => handleProductChange(idx, val)}
                     placeholder="All"
                     options={validProducts[idx] ?? productOptions}
+                    multiSelect={true}
                   />
                 </div>
               </div>
