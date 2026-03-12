@@ -34,42 +34,72 @@ const navItems = [
   {
     label: 'Data',
     hasDropdown: true,
+    description: 'Here are the gold-standard databases and data visualizations of R&D funding, approved products and candidates in the pipeline for neglected diseases, emerging infectious diseases and maternal health.',
+    featured: {
+      title: 'G-FINDER',
+      href: 'https://gfinderdata.impactglobalhealth.org/',
+      external: true,
+      description: 'The annual tracker of R&D investment into new drugs, vaccines, diagnostics and vector control products for global health.',
+    },
     items: [
-      { label: 'Pipeline', href: '/data/pipeline' },
-      { label: 'Clinical Trials', href: '/data/trials' },
-      { label: 'Candidates', href: '/data/candidates' },
+      { label: 'Infectious Disease R&D Tracker', href: 'https://www.impactglobalhealth.org/data/infectious-disease', external: true, description: 'Candidates in the pipeline and approved products for global health priorities across neglected diseases and emerging infectious diseases.' },
+      { label: 'Maternal Health Pipeline', href: 'https://www.impactglobalhealth.org/data/maternal-health-pipeline', external: true, description: 'Database profiling medicines, diagnostics, and devices for seven significant pregnancy-related conditions.' },
+      { label: 'Snakebite Envenoming Medicines Database', href: 'https://www.impactglobalhealth.org/data/snakebite-envenoming-medicines-database', external: true, description: 'Database of all snakebite envenoming medicines with direct action on toxins.' },
+      { label: 'Sexually Transmitted Infections Pipeline', href: 'https://www.impactglobalhealth.org/data/sexually-transmitted-infections-pipeline', external: true, description: 'Database of critical products for three STIs with an AMR risk.' },
+      { label: 'Gynaecological Conditions Pipeline', href: 'https://www.impactglobalhealth.org/data/gynaecological-conditions-pipeline', external: true, description: "Database of women's health products for three significant gynaecological conditions." },
+      { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', external: true, description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
     ],
   },
   {
     label: 'Insights',
     hasDropdown: true,
+    description: "Here you will find the analysis and insights to support decisions - whether you're funding research, setting policies, developing products or advocating for change.",
+    featured: {
+      title: 'Explore our hubs',
+      items: [
+        { label: 'The Investment Landscape Hub', href: 'https://www.impactglobalhealth.org/insights/hubs/the-investment-landscape-hub', external: true, description: 'A unique source of data and analysis tracking the funding of global health R&D and the pipeline of products in development. Powered by G-FINDER.' },
+        { label: 'The Impact of Global Health R&D Hub', href: 'https://www.impactglobalhealth.org/insights/hubs/the-impact-of-global-health-rd-hub', external: true, description: 'Global, UK and EU analyses of the health and economic impact of the last two decades of investment in global health R&D.' },
+        { label: "Women's Health Hub", href: 'https://www.impactglobalhealth.org/insights/hubs/womens-health-hub', external: true, description: "This resource hub provides a suite of data, insights and tools to accelerate progress in women's health R&D." },
+      ],
+    },
     items: [
-      { label: 'Visual Insights', href: '/insights/visual' },
-      { label: 'Reports', href: '/insights/reports' },
+      { label: 'Report Library', href: 'https://www.impactglobalhealth.org/insights/report-library', external: true, description: 'Our reports deliver critical insights using the evidence collected through G-FINDER and over two decades of independent analysis.' },
+      { label: 'Health areas', href: 'https://www.impactglobalhealth.org/insights/health-areas', external: true, description: "This quick reference guide gives you a snapshot analysis of the R&D needs and the state of innovation to tackle each disease or condition we cover. It's a handy quick overview of what's needed to impact global health in these areas." },
+      { label: 'Hubs', href: 'https://www.impactglobalhealth.org/insights/hubs', external: true, description: 'Themed collections of all the data, analysis and tools you need to understand the landscape and make smart decisions on global health R&D.' },
+      { label: 'Impact Global Health Dialogues', href: 'https://www.impactglobalhealth.org/insights/dialogues', external: true, description: 'A series of dialogues with global health leaders to co-create an R&D investment roadmap that is fit for the future.' },
     ],
   },
   {
     label: 'Tools',
     hasDropdown: true,
+    description: "We've created some practical frameworks and tools you can use to assess and increase impact in global health.",
+    featured: {
+      title: 'Advocacy Kits',
+      href: 'https://www.impactglobalhealth.org/tools/communications--press-kits',
+      external: true,
+      description: 'Join us in creating global health impact with our advocacy and press kits',
+    },
     items: [
-      { label: 'Search', href: '/tools/search' },
-      { label: 'Compare', href: '/tools/compare' },
-      { label: 'Export', href: '/tools/export' },
+      { label: 'Impact Framework', href: 'https://www.impactglobalhealth.org/tools/impact-framework', external: true, description: 'A global network of experts collaborated for two years to develop this comprehensive set of metrics that create an impact assessment framework for global health R&D.' },
+      { label: '100 Days Mission Scorecard', href: 'https://www.impactglobalhealth.org/tools/100-days-mission-scorecard', external: true, description: 'Is the world ready to deploy a new product to tackle an epidemic within 100 days of an outbreak?' },
     ],
   },
   {
     label: 'About Us',
     hasDropdown: true,
+    description: 'Meet the team working to create a more equitable future through global health innovation and impact.',
     items: [
-      { label: 'Team', href: '/about/team' },
-      { label: 'Mission', href: '/about/mission' },
-      { label: 'Contact', href: '/about/contact' },
+      { label: 'Our Team', href: 'https://www.impactglobalhealth.org/about-us/our-team', external: true, description: 'Meet our diverse international team of experts, who collate and analyse data on global health funding and the innovation pipeline.' },
+      { label: 'Our Global Advisory Council', href: 'https://www.impactglobalhealth.org/about-us/our-global-advisory-council', external: true, description: 'Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.' },
+      { label: 'Join Us', href: 'https://www.impactglobalhealth.org/about-us/join-us', external: true, description: 'We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.' },
+      { label: 'Contact Us', href: 'https://www.impactglobalhealth.org/about-us/contact-us', external: true, description: 'Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.' },
     ],
   },
   {
     label: 'News',
     hasDropdown: false,
-    href: '/news',
+    href: 'https://www.impactglobalhealth.org/news',
+    external: true,
   },
 ];
 
@@ -78,10 +108,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
-          <div style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-            <Header navItems={navItems} />
+          <Header navItems={navItems} />
+          <div style={{ paddingTop: 90 }}>
+            {children}
           </div>
-          {children}
         </ApolloProvider>
       </body>
     </html>
