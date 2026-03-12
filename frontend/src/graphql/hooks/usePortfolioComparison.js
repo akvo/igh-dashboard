@@ -11,14 +11,16 @@ import { expandDiseaseSelection, expandProductKeySelection } from '@/lib/filterG
 function buildQuery(portfolio) {
   if (!portfolio) return { variables: {}, skip: true };
   const variables = {};
-  if (portfolio.disease) {
-    variables.diseaseGroupNames = expandDiseaseSelection([portfolio.disease]);
+  const diseases = Array.isArray(portfolio.disease) ? portfolio.disease : (portfolio.disease ? [portfolio.disease] : []);
+  const products = Array.isArray(portfolio.product) ? portfolio.product : (portfolio.product ? [portfolio.product] : []);
+  if (diseases.length > 0) {
+    variables.diseaseGroupNames = expandDiseaseSelection(diseases);
   }
-  if (portfolio.product) {
-    const keys = expandProductKeySelection([portfolio.product]);
+  if (products.length > 0) {
+    const keys = expandProductKeySelection(products);
     variables.productKeys = keys.map(v => parseInt(v));
   }
-  const skip = !portfolio.disease && !portfolio.product;
+  const skip = diseases.length === 0 && products.length === 0;
   return { variables, skip };
 }
 

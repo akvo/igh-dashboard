@@ -1530,7 +1530,7 @@ export default function PortfolioAnalysis() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
-                    The global heat map shows the country-level distribution of clinical trials, with darker shade  indicating countries with higher number of studies, and can be filtered by clinical trial status.
+                    The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
                   </p>
                   {geoLoading ? (
                     <div className="h-[400px] flex items-center justify-center">
