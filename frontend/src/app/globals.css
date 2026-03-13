@@ -318,3 +318,9 @@ h1 {
 .button-spinner {
   animation: spin 1s linear infinite;
 }
+
+/* Bordered table cells for compare table */
+.compare-table-bordered th,
+.compare-table-bordered td {
+  border: 1px solid #e5e7eb;
+}

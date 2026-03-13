@@ -21,6 +21,7 @@ import {
 } from '@/lib/filterGroups';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
+import { createHeatmapScale } from '@/lib/heatmap';
 
 // Year colors — deliberately distinct from the stage colors
 // (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
@@ -275,47 +276,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   }, [results, activePortfolios, targetYear, apiPhases]);
 
   // --- Sub-section B: Table ---
-  const portfolioCellClass = (value, row) =>
-    row.id !== 'total' ? 'bg-[#FEF0EB]' : '';
-
-  const compareTableColumns = useMemo(() => {
-    if (activePortfolios.length === 0) return [];
-    const cols = [
-      { accessor: 'phase', header: 'Phase', minWidth: '140px' },
-    ];
-    activePortfolios.forEach((portfolio, idx) => {
-      const accessor = `portfolio_${idx}`;
-      cols.push({
-        accessor,
-        header: portfolio.label,
-        cellClassName: portfolioCellClass,
-        render: (value, row) => {
-          const sublabel = row[`${accessor}_label`];
-          return (
-            <div>
-              <div className="font-bold text-gray-900 text-base">{value}</div>
-              {sublabel && <div className="text-sm text-gray-500 mt-0.5">{sublabel}</div>}
-            </div>
-          );
-        },
-      });
-    });
-    cols.push({
-      accessor: 'total',
-      header: 'Total',
-      cellClassName: portfolioCellClass,
-      render: (value, row) => {
-        const sublabel = row.total_label;
-        return (
-          <div>
-            <div className="font-bold text-gray-900 text-base">{value}</div>
-            {sublabel && <div className="text-sm text-gray-500 mt-0.5">{sublabel}</div>}
-          </div>
-        );
-      },
-    });
-    return cols;
-  }, [activePortfolios]);
+  const portfolioAccessors = useMemo(
+    () => activePortfolios.map((_, idx) => `portfolio_${idx}`).concat('total'),
+    [activePortfolios],
+  );
 
   const compareTableData = useMemo(() => {
     if (activePortfolios.length === 0 || !targetYear) return [];
@@ -362,6 +326,50 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     rows.push(totalRow);
     return rows;
   }, [results, activePortfolios, targetYear]);
+
+  const getCompareHeatmap = useMemo(
+    () => createHeatmapScale(compareTableData, portfolioAccessors),
+    [compareTableData, portfolioAccessors],
+  );
+
+  const compareTableColumns = useMemo(() => {
+    if (activePortfolios.length === 0) return [];
+    const cols = [
+      { accessor: 'phase', header: 'Phase', minWidth: '140px' },
+    ];
+    activePortfolios.forEach((portfolio, idx) => {
+      const accessor = `portfolio_${idx}`;
+      cols.push({
+        accessor,
+        header: portfolio.label,
+        cellStyle: (value, row) => row.id !== 'total' ? getCompareHeatmap(value) : {},
+        render: (value, row) => {
+          const sublabel = row[`${accessor}_label`];
+          return (
+            <div>
+              <div className="font-bold text-base">{value || 0}</div>
+              {sublabel && <div className="text-sm mt-0.5" style={{ opacity: 0.7 }}>{sublabel}</div>}
+            </div>
+          );
+        },
+      });
+    });
+    cols.push({
+      accessor: 'total',
+      header: 'Total',
+      cellStyle: (value, row) => row.id !== 'total' ? getCompareHeatmap(value) : {},
+      render: (value, row) => {
+        const sublabel = row.total_label;
+        return (
+          <div>
+            <div className="font-bold text-base">{value || 0}</div>
+            {sublabel && <div className="text-sm mt-0.5" style={{ opacity: 0.7 }}>{sublabel}</div>}
+          </div>
+        );
+      },
+    });
+    return cols;
+  }, [activePortfolios, getCompareHeatmap]);
 
   // --- Sub-section C: Across portfolios ---
   const acrossChartData = useMemo(() => {
@@ -607,6 +615,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
             columns={compareTableColumns}
             data={compareTableData}
             pagination={false}
+            className="compare-table-bordered"
             emptyState={{
               title: 'No data available',
               description: 'Select portfolios and apply to see comparison data.',
