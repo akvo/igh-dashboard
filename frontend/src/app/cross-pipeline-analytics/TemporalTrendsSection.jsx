@@ -378,7 +378,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       const raw = results[idx];
       if (!raw) return [];
       const aggregated = aggregateTemporalPhases(raw);
-      return [...aggregated].sort((a, b) => b.year - a.year).map(yd => ({
+      return [...aggregated].sort((a, b) => a.year - b.year).map(yd => ({
         category: String(yd.year),
         earlyDevelopment: yd.earlyDevelopment,
         lateDevelopment: yd.lateDevelopment,
