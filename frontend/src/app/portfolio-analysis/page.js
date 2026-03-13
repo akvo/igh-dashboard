@@ -634,10 +634,7 @@ export default function PortfolioAnalysis() {
                   Portfolio analysis
                 </h1>
                 <p className="text-sm text-gray-500 max-w-3xl">
-                  Explore the global R&D pipeline for each global health area, disease or product type through two lenses.
-                  Use the Explore visual insights view to analyse portfolio trends through interactive charts and maps,
-                  or switch to the Extract custom details tab to build a filtered data table tailored to your needs and
-                  export your findings as a .csv file for further analysis.
+                Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.
                 </p>
               </div>
               <button
@@ -799,7 +796,7 @@ export default function PortfolioAnalysis() {
                   </button>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-               A global overview of the R&D pipeline by product type and development stage. Each horizontal bar represents a product type, with colour‑coded segments showing how many candidates and approved products sit at each stage of the R&D lifecycle, from discovery and pre‑clinical through clinical phases to approval. Use the filters above to narrow the view by global health area, disease, or product type, and click items in the legend to toggle individual stages on or off and compare where activity is concentrated across the pipeline.
+               A global overview of the R&amp;D pipeline by product type and development stage. Each horizontal bar represents a product type, with colour‑coded segments showing how many candidates and approved products sit at each stage of the R&D lifecycle, from discovery and pre‑clinical through clinical phases to approval. Use the filters above to narrow the view by global health area, disease, or product type, and click items in the legend to toggle individual stages on or off and compare where activity is concentrated across the pipeline.
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -857,7 +854,7 @@ export default function PortfolioAnalysis() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-4">
-                  A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both.
+                  A snapshot of how the R&amp;D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both.
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -892,8 +889,8 @@ export default function PortfolioAnalysis() {
                         {extractTab === 'rd-priorities' && 'R&D priorities & candidates'}
                         {extractTab === 'clinical-trials' && 'Clinical trials & candidates'}
                         {extractTab === 'rd-only' && 'R&D priorities'}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
+                      </h3>The custom table builder enables selection and display of specific columns, filtering by global health area, disease, product type, and R&amp;D stage, and column sorting to support quick exploration and comparison of the most relevant data.
+                      <p className="text-sm text-gray-500 mb-4"></p>
                       <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
                     <div className="flex items-center gap-3">
