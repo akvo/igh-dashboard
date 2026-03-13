@@ -150,9 +150,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                               className="no-underline inline-flex items-center"
                               style={{ fontFamily: 'var(--font-public-sans), sans-serif', fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: 8 }}
                             >
-                              <span style={{ fill: '#fe7449', marginRight: 4 }}>
-                                <svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="#fe7449" /></svg>
-                              </span>
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fe7449" xmlns="http://www.w3.org/2000/svg" className="shrink-0" style={{ marginRight: 4 }}><path d="M5 13.0003L10.9997 12.1426V11.8574L5 10.9997V5H19V10.9997L13.0003 11.8574V12.1426L19 13.0003V19H5V13.0003Z" /></svg>
                               {hub.label}
                               <ArrowIcon className="ml-2" />
                             </a>
@@ -176,11 +174,8 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                           className="no-underline inline-flex items-center"
                           style={{ fontFamily: 'var(--font-public-sans), sans-serif', fontSize: '1rem', fontWeight: 700, color: '#fff', marginBottom: 8 }}
                         >
-                          <span style={{ marginRight: 4 }}>
-                            <svg width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="#fe7449" /></svg>
-                          </span>
                           {featured.title}
-                          {featured.external ? <ExternalIcon /> : <ArrowIcon className="ml-2" />}
+                          <ArrowIcon className="ml-2" />
                         </a>
                         <p className="m-0" style={{ fontSize: '0.875rem', color: '#999' }}>{featured.description}</p>
                       </div>
@@ -242,7 +237,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
         href={href || '#'}
         onClick={(e) => {
           handleToggle(e);
-          if (!hasDropdown && onClick) { e.preventDefault(); onClick(); }
+          if (!hasDropdown && onClick && !href) { e.preventDefault(); onClick(); }
         }}
         className="inline-flex items-center no-underline select-none cursor-pointer"
         style={{
