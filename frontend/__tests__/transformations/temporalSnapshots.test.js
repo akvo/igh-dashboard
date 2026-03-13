@@ -65,7 +65,7 @@ describe('temporalSnapshots transformations', () => {
       });
     });
 
-    it('sorts results by year descending', () => {
+    it('sorts results by year ascending (oldest first)', () => {
       const unorderedData = [
         { year: 2025, phase_name: 'Discovery', sort_order: 10, candidateCount: 100 },
         { year: 2020, phase_name: 'Discovery', sort_order: 10, candidateCount: 50 },
@@ -74,7 +74,7 @@ describe('temporalSnapshots transformations', () => {
 
       const grouped = groupByYear(unorderedData);
 
-      expect(grouped.map(g => g.category)).toEqual(['2025', '2023', '2020']);
+      expect(grouped.map(g => g.category)).toEqual(['2020', '2023', '2025']);
     });
   });
 
