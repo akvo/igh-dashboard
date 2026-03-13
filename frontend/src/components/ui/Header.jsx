@@ -95,7 +95,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
     }
   };
 
-  const menu = isOpen && hasDropdown && items && items.length > 0 && typeof document !== 'undefined'
+  const menu = isOpen && hasDropdown && ((items && items.length > 0) || featured) && typeof document !== 'undefined'
     ? createPortal(
         <div
           ref={menuRef}
@@ -136,7 +136,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                   featured.items ? (
                     <div
                       className="shrink-0"
-                      style={{ backgroundColor: '#262626', color: '#fff', flex: '0 0 400px', padding: 32, marginRight: 32, height: 'max-content' }}
+                      style={{ backgroundColor: '#262626', color: '#fff', flex: items && items.length > 0 ? '0 0 400px' : '1', padding: 32, marginRight: items && items.length > 0 ? 32 : 0, height: 'max-content' }}
                     >
                       <h3 style={{ fontFamily: 'var(--font-align), serif', fontSize: '1.2rem', fontWeight: 700, marginBottom: 20, color: '#fff' }}>
                         {featured.title}
@@ -185,7 +185,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                 )}
 
                 {/* Preview links grid */}
-                <div
+                {items && items.length > 0 && <div
                   className="grid"
                   style={{ flex: 1, gap: '24px 32px', gridTemplateColumns: featured ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', alignContent: 'start' }}
                 >
@@ -207,11 +207,11 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                       )}
                     </div>
                   ))}
-                </div>
+                </div>}
               </div>
             </div>
           ) : (
-            items.map((subItem, index) => (
+            items && items.length > 0 && items.map((subItem, index) => (
               <a
                 key={subItem.label}
                 href={subItem.href || '#'}

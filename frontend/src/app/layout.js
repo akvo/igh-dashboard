@@ -36,18 +36,14 @@ const navItems = [
     hasDropdown: true,
     description: 'Here are the gold-standard databases and data visualizations of R&D funding, approved products and candidates in the pipeline for neglected diseases, emerging infectious diseases and maternal health.',
     featured: {
-      title: 'G-FINDER',
-      href: 'https://gfinderdata.impactglobalhealth.org/',
-      description: 'The annual tracker of R&D investment into new drugs, vaccines, diagnostics and vector control products for global health.',
+      title: 'Our data portals',
+      items: [
+        { label: 'G-FINDER R&D funding portal', href: 'https://gfinderdata.impactglobalhealth.org/', description: 'Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.' },
+        { label: 'Product pipeline portal', href: 'https://pipeline.impactglobalhealth.org', description: 'Our product pipeline portal provides an overview of health products approved or in development across global health areas.' },
+        { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
+      ],
     },
-    items: [
-      { label: 'Infectious Disease R&D Tracker', href: 'https://www.impactglobalhealth.org/data/infectious-disease', description: 'Candidates in the pipeline and approved products for global health priorities across neglected diseases and emerging infectious diseases.' },
-      { label: 'Maternal Health Pipeline', href: 'https://www.impactglobalhealth.org/data/maternal-health-pipeline', description: 'Database profiling medicines, diagnostics, and devices for seven significant pregnancy-related conditions.' },
-      { label: 'Snakebite Envenoming Medicines Database', href: 'https://www.impactglobalhealth.org/data/snakebite-envenoming-medicines-database', description: 'Database of all snakebite envenoming medicines with direct action on toxins.' },
-      { label: 'Sexually Transmitted Infections Pipeline', href: 'https://www.impactglobalhealth.org/data/sexually-transmitted-infections-pipeline', description: 'Database of critical products for three STIs with an AMR risk.' },
-      { label: 'Gynaecological Conditions Pipeline', href: 'https://www.impactglobalhealth.org/data/gynaecological-conditions-pipeline', description: "Database of women's health products for three significant gynaecological conditions." },
-      { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
-    ],
+    items: [],
   },
   {
     label: 'Insights',
