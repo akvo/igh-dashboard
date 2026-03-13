@@ -12,6 +12,19 @@
 
 import { useSyncExternalStore, useCallback } from 'react';
 
+// Coalesce rapid URL updates into a single popstate notification.
+// Deferring to a macrotask lets React finish batching any useState
+// updates (e.g. optimistic input values) before useSyncExternalStore
+// reacts to the URL change — preventing priority conflicts that
+// cause input lag.
+let popstateTimer = null;
+function notifySubscribers() {
+  clearTimeout(popstateTimer);
+  popstateTimer = setTimeout(() => {
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  }, 0);
+}
+
 // ---- External store contract for useSyncExternalStore ----
 
 function subscribe(callback) {
@@ -55,6 +68,12 @@ export function useQueryParams() {
     }
 
     const newSearch = current.toString();
+    const oldSearch = window.location.search.replace(/^\?/, '');
+
+    // Skip entirely when the URL hasn't changed (e.g. resetting page
+    // to 1 when already on page 1) — avoids unnecessary re-renders.
+    if (newSearch === oldSearch) return;
+
     const newUrl = newSearch
       ? `${window.location.pathname}?${newSearch}`
       : window.location.pathname;
@@ -66,8 +85,10 @@ export function useQueryParams() {
     }
 
     // pushState/replaceState do not fire popstate, so we dispatch
-    // it manually to notify all useSyncExternalStore subscribers.
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    // it manually. The notification is deferred to a macrotask so
+    // React can finish batching any in-progress useState updates
+    // before useSyncExternalStore reacts to the URL change.
+    notifySubscribers();
   }, []);
 
   return [params, setParams];

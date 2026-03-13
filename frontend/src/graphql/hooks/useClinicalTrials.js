@@ -9,6 +9,7 @@ export function buildClinicalTrialFilterVars(filter) {
     disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     statuses: filter?.statuses?.length > 0 ? filter.statuses : undefined,
+    search: filter?.search || undefined,
   };
 }
 

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
+import DebouncedInput from '@/components/ui/DebouncedInput';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
@@ -43,8 +44,8 @@ export default function PortfolioAnalysis() {
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
   const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
   const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
-  const [trialsSearchQuery, setTrialsSearchQuery] = useState('');
-  const [technologySearchQuery, setTechnologySearchQuery] = useState('');
+  const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
+  const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
   const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
   const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
@@ -59,8 +60,49 @@ export default function PortfolioAnalysis() {
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
   const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
-  const [appliedColumnsMap, setAppliedColumnsMap] = useState({});
+
+  // Picker state — local only, not URL-persisted.
+  // Initialized from URL cols so the picker reflects applied columns on load.
+  const [pickerColumnsMap, setPickerColumnsMap] = useState(() => ({
+    'candidates-approved': [...colsCandidates],
+    'rd-priorities': [...colsRdPriorities],
+    'clinical-trials': [...colsClinicalTrials],
+    'rd-only': [...colsRdOnly],
+  }));
+
+  // Applied columns come straight from URL state — the single source of truth.
+  const appliedColumnsMap = {
+    'candidates-approved': colsCandidates,
+    'rd-priorities': colsRdPriorities,
+    'clinical-trials': colsClinicalTrials,
+    'rd-only': colsRdOnly,
+  };
   const appliedColumns = appliedColumnsMap[extractTab] || [];
+
+  // One-time hydration sync: the useState initializer runs during SSR when
+  // URL state is empty. After hydration, copy URL cols into picker state
+  // so the checkboxes reflect applied columns on shared-URL load.
+  const didInitPickerRef = useRef(false);
+
+  // Skip the first search-triggered page reset — during hydration the
+  // search queries transition from '' to their URL value, which would
+  // otherwise wipe out the page param from the shared URL.
+  const didHydrateSearchRef = useRef(false);
+  useEffect(() => {
+    if (didInitPickerRef.current) return;
+    const hasUrlCols = colsCandidates.length > 0 || colsRdPriorities.length > 0
+      || colsClinicalTrials.length > 0 || colsRdOnly.length > 0;
+    if (hasUrlCols) {
+      didInitPickerRef.current = true;
+      setPickerColumnsMap({
+        'candidates-approved': [...colsCandidates],
+        'rd-priorities': [...colsRdPriorities],
+        'clinical-trials': [...colsClinicalTrials],
+        'rd-only': [...colsRdOnly],
+      });
+    }
+  }, [colsCandidates, colsRdPriorities, colsClinicalTrials, colsRdOnly]);
+
   const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
   const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
@@ -117,19 +159,18 @@ export default function PortfolioAnalysis() {
   // Per-tab column selection (delegates to active tab's state)
   // =========================================================
   const selectedColumnsMap = {
-    'candidates-approved': colsCandidates,
-    'rd-priorities': colsRdPriorities,
-    'clinical-trials': colsClinicalTrials,
-    'rd-only': colsRdOnly,
-  };
-  const setSelectedColumnsMap = {
-    'candidates-approved': setColsCandidates,
-    'rd-priorities': setColsRdPriorities,
-    'clinical-trials': setColsClinicalTrials,
-    'rd-only': setColsRdOnly,
+    'candidates-approved': pickerColumnsMap['candidates-approved'],
+    'rd-priorities': pickerColumnsMap['rd-priorities'],
+    'clinical-trials': pickerColumnsMap['clinical-trials'],
+    'rd-only': pickerColumnsMap['rd-only'],
   };
   const selectedColumns = selectedColumnsMap[extractTab] || [];
-  const setSelectedColumns = setSelectedColumnsMap[extractTab] || (() => {});
+  const setSelectedColumns = (val) => {
+    setPickerColumnsMap((prev) => ({
+      ...prev,
+      [extractTab]: typeof val === 'function' ? val(prev[extractTab] || []) : val,
+    }));
+  };
 
   // =========================================================
   // Per-tab page state (each tab keeps its own page position)
@@ -216,7 +257,7 @@ export default function PortfolioAnalysis() {
   const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
-    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus },
+    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus, search: trialsSearchQuery || undefined },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
@@ -282,6 +323,23 @@ export default function PortfolioAnalysis() {
     setters: { setHealthArea: setExtractHealthArea, setDisease: setExtractDisease, setProduct: setExtractProduct },
     loading: crossFilterLoading,
   });
+
+  // Reset trials pagination when search query changes.
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setTrialsPage(1);
+  }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset technology pagination when search query changes.
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setCurrentPage(1);
+  }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleClearFilters = () => {
     setHealthArea([]);
@@ -397,14 +455,28 @@ export default function PortfolioAnalysis() {
   };
 
   const handleClearColumns = () => {
-    setSelectedColumns([]);
-    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
+    setPickerColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
+    const setter = {
+      'candidates-approved': setColsCandidates,
+      'rd-priorities': setColsRdPriorities,
+      'clinical-trials': setColsClinicalTrials,
+      'rd-only': setColsRdOnly,
+    }[extractTab];
+    if (setter) setter([]);
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
   };
 
   const handleApplyColumns = () => {
-    setAppliedColumnsMap((prev) => ({ ...prev, [extractTab]: [...selectedColumns] }));
+    const cols = pickerColumnsMap[extractTab] || [];
+    // Push to URL state (this IS the applied state now)
+    const setter = {
+      'candidates-approved': setColsCandidates,
+      'rd-priorities': setColsRdPriorities,
+      'clinical-trials': setColsClinicalTrials,
+      'rd-only': setColsRdOnly,
+    }[extractTab];
+    if (setter) setter([...cols]);
     setExtractSort({ colId: null, direction: null });
     setExtractColumnFilters({});
     setExtractPage(1);
@@ -605,15 +677,6 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
-  // Client-side filtering for clinical trials (backend doesn't support search)
-  const filteredTrialsData = useMemo(() => {
-    if (!trialsSearchQuery.trim()) return clinicalTrialsTableData;
-    const q = trialsSearchQuery.toLowerCase();
-    return clinicalTrialsTableData.filter((item) =>
-      [item.trial_name, item.clinicaltrialid, item.candidate_name, item.trial_title, item.description, item.status, item.sponsor, item.locations]
-        .some((val) => val && String(val).toLowerCase().includes(q))
-    );
-  }, [clinicalTrialsTableData, trialsSearchQuery]);
 
   // Client-side filtering for technology types (backend doesn't support search)
   const filteredTechData = useMemo(() => {
@@ -926,7 +989,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={extractSearchQuery}
@@ -1220,7 +1283,7 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center gap-3 h-[36px]">
                     <div className="relative">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
+                      <DebouncedInput
                         type="text"
                         placeholder="Search item"
                         value={searchQuery}
@@ -1406,7 +1469,7 @@ export default function PortfolioAnalysis() {
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={approvedSearchQuery}
@@ -1581,11 +1644,11 @@ export default function PortfolioAnalysis() {
                       <div className="flex items-center gap-3 h-[36px]">
                         <div className="relative">
                           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
+                          <DebouncedInput
                             type="text"
                             placeholder="Search"
                             value={trialsSearchQuery}
-                            onChange={(e) => { setTrialsSearchQuery(e.target.value); setTrialsPage(1); }}
+                            onChange={(e) => { setTrialsSearchQuery(e.target.value); }}
                             className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
@@ -1626,16 +1689,16 @@ export default function PortfolioAnalysis() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTotalCount} types</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{filteredTechData.length} types</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
                       <div className="relative">
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <DebouncedInput
                           type="text"
                           placeholder="Search item"
                           value={technologySearchQuery}
-                          onChange={(e) => { setTechnologySearchQuery(e.target.value); setCurrentPage(1); }}
+                          onChange={(e) => { setTechnologySearchQuery(e.target.value); }}
                           className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
                         />
                       </div>
@@ -1670,7 +1733,7 @@ export default function PortfolioAnalysis() {
                   data={paginatedTechData}
                   currentPage={currentPage}
                   onPageChange={setCurrentPage}
-                  totalCount={technologyTotalCount}
+                  totalCount={filteredTechData.length}
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
                   loading={technologyLoading}

@@ -42,14 +42,19 @@ export default function GroupedBarChart({
   showFilters = true,
   showBarLabels = false,
   barRadius = 0,
+  visibleSeries: controlledVisible,
+  onToggleSeries,
+  onSelectAll,
+  onClearAll,
 }) {
-  const [visibleSeries, setVisibleSeries] = useState(
+  // Internal state — only used when no controlled visibleSeries is provided
+  const [internalVisible, setInternalVisible] = useState(
     series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})
   );
 
   useEffect(() => {
-    if (series.length > 0) {
-      setVisibleSeries(prev => {
+    if (controlledVisible === undefined && series.length > 0) {
+      setInternalVisible(prev => {
         const next = { ...prev };
         series.forEach(s => {
           if (!(s.key in next)) {
@@ -59,14 +64,21 @@ export default function GroupedBarChart({
         return next;
       });
     }
-  }, [series]);
+  }, [series, controlledVisible]);
 
-  const toggleSeries = (seriesKey) => {
-    setVisibleSeries(prev => ({
-      ...prev,
-      [seriesKey]: !prev[seriesKey],
-    }));
-  };
+  const visibleSeries = controlledVisible ?? internalVisible;
+
+  const toggleSeries = onToggleSeries
+    ? (key) => onToggleSeries(key)
+    : (seriesKey) => setInternalVisible(prev => ({
+        ...prev,
+        [seriesKey]: !prev[seriesKey],
+      }));
+
+  const handleSelectAll = onSelectAll
+    ?? (() => setInternalVisible(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})));
+  const handleClearAll = onClearAll
+    ?? (() => setInternalVisible(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {})));
 
   const filteredSeries = useMemo(
     () => series.filter(s => visibleSeries[s.key]),
@@ -100,7 +112,7 @@ export default function GroupedBarChart({
             <div className="flex gap-1 mr-2">
               <button
                 type="button"
-                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {}))}
+                onClick={handleSelectAll}
                 className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Select all
@@ -108,7 +120,7 @@ export default function GroupedBarChart({
               <span className="text-xs text-black-24">|</span>
               <button
                 type="button"
-                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {}))}
+                onClick={handleClearAll}
                 className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
               >
                 Clear all

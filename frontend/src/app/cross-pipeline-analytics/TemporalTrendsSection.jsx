@@ -797,6 +797,8 @@ export default function TemporalTrendsSection({
     setAppliedDisease([]);
     setAppliedProduct([]);
     setAppliedYear([]);
+    setHiddenPhases([]);
+    setHiddenYears([]);
   };
 
   // Build API filter params (expand composite selections)
@@ -814,15 +816,17 @@ export default function TemporalTrendsSection({
   );
 
   // Sub-section A: phase selection for stacked bar
-  const [selectedPhases, setSelectedPhases] = useState([]);
-  useMemo(() => {
-    if (phases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(phases.map(p => p.key));
-    }
-  }, [phases]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Store hidden (not visible) phases in URL so the default state (all visible)
+  // produces a clean URL with no extra param.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('ttPhide', [], arraySerializer);
+
+  const selectedPhases = useMemo(
+    () => phases.filter(p => !hiddenPhases.includes(p.key)).map(p => p.key),
+    [phases, hiddenPhases]
+  );
 
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases(prev =>
+    setHiddenPhases(prev =>
       prev.includes(phaseKey)
         ? prev.filter(k => k !== phaseKey)
         : [...prev, phaseKey]
@@ -830,6 +834,9 @@ export default function TemporalTrendsSection({
   };
 
   // Sub-section B: aggregated grouped bar chart
+  // Store hidden years in URL so default state (all visible) produces a clean URL.
+  const [hiddenYears, setHiddenYears] = useUrlState('ttYhide', [], arraySerializer);
+
   const aggregatedData = useMemo(() => aggregateTemporalPhases(raw), [raw]);
 
   const groupedChartData = useMemo(() => {
@@ -851,6 +858,19 @@ export default function TemporalTrendsSection({
       color: YEAR_COLORS[idx % YEAR_COLORS.length],
     }));
   }, [aggregatedData]);
+
+  const visibleYears = useMemo(
+    () => yearSeries.reduce((acc, s) => ({ ...acc, [s.key]: !hiddenYears.includes(s.key) }), {}),
+    [yearSeries, hiddenYears]
+  );
+
+  const handleYearToggle = (key) => {
+    setHiddenYears(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+  const handleYearSelectAll = () => setHiddenYears([]);
+  const handleYearClearAll = () => setHiddenYears(yearSeries.map(s => s.key));
 
   // Sub-section C: growth table
   const growthTable = useMemo(() => computeGrowthTable(aggregatedData), [aggregatedData]);
@@ -1117,6 +1137,10 @@ export default function TemporalTrendsSection({
                 <GroupedBarChart
                   data={groupedChartData}
                   series={yearSeries}
+                  visibleSeries={visibleYears}
+                  onToggleSeries={handleYearToggle}
+                  onSelectAll={handleYearSelectAll}
+                  onClearAll={handleYearClearAll}
                   categoryKey="category"
                   height={380}
                   xAxisLabel="R&D stage"
