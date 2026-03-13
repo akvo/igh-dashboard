@@ -62,13 +62,15 @@ const ChartMenu = ({
           >
             Download CSV
           </button>
-          <button
-            type="button"
-            onClick={handleDownloadPNG}
-            className="block w-full px-4 py-2.5 text-sm text-left text-black bg-transparent border-none cursor-pointer hover:bg-gray-50 transition-colors border-t border-gray-100"
-          >
-            Download PNG
-          </button>
+          {onDownloadPNG && (
+            <button
+              type="button"
+              onClick={handleDownloadPNG}
+              className="block w-full px-4 py-2.5 text-sm text-left text-black bg-transparent border-none cursor-pointer hover:bg-gray-50 transition-colors border-t border-gray-100"
+            >
+              Download PNG
+            </button>
+          )}
         </div>,
         document.body
       )

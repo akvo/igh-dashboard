@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
@@ -124,25 +125,6 @@ export default function Home() {
   const handleCrossVisiblePhasesChange = useCallback((next) => {
     setCrossHiddenPhases(Object.keys(next).filter(k => !next[k]));
   }, [setCrossHiddenPhases]);
-
-  // Download PNG function using html2canvas
-  const downloadPNG = useCallback(async (ref, filename) => {
-    if (!ref.current) return;
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(ref.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.png`;
-      a.click();
-    } catch (error) {
-      console.error('Error generating PNG:', error);
-    }
-  }, []);
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
