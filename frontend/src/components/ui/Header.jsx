@@ -203,7 +203,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                         <ArrowIcon className="ml-2" />
                       </a>
                       {subItem.description && (
-                        <p className="m-0" style={{ fontSize: '0.875rem', color: '#666' }}>{subItem.description}</p>
+                        <p className="m-0 text-[0.9375rem] text-gray-600">{subItem.description}</p>
                       )}
                     </div>
                   ))}
