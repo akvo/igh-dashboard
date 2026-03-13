@@ -230,9 +230,10 @@ export default function Home() {
                     onDownloadCSV={() => {
                       const columns = [
                         { label: 'Global health area', accessor: 'name' },
-                        { label: 'Candidates', accessor: 'value' },
+                        { label: 'Total', accessor: 'value' },
+                        { label: 'Candidates in development', accessor: 'candidateCount' },
+                        { label: 'Approved products', accessor: 'productCount' },
                         { label: 'Diseases', accessor: 'diseaseCount' },
-                        { label: 'Products', accessor: 'productCount' },
                       ];
                       const csv = buildCSV(columns, gqlBubbleData);
                       downloadCSVFile(csv, 'scale-of-rd');
@@ -273,7 +274,13 @@ export default function Home() {
                           Health area
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Candidates
+                          Total
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
+                          Candidates in development
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
+                          Approved products
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
                           Share
@@ -296,6 +303,12 @@ export default function Home() {
                             </td>
                             <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
                               {item.value.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
+                              {item.candidateCount.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
+                              {item.productCount.toLocaleString()}
                             </td>
                             <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
                               {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%

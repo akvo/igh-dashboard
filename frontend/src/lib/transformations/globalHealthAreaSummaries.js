@@ -16,6 +16,7 @@ export function transformGlobalHealthAreaSummaries(data) {
   return data.map((item) => ({
     name: HEALTH_AREA_DISPLAY_NAMES[item.global_health_area] || item.global_health_area,
     value: item.candidateCount + item.productCount,
+    candidateCount: item.candidateCount,
     diseaseCount: item.diseaseCount,
     productCount: item.productCount,
     originalName: item.global_health_area,
