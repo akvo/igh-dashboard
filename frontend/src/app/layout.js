@@ -44,11 +44,6 @@ const navItems = [
       ],
     },
     items: [
-      { label: 'Infectious Disease R&D Tracker', href: 'https://www.impactglobalhealth.org/data/infectious-disease', description: 'Candidates in the pipeline and approved products for global health priorities across neglected diseases and emerging infectious diseases.' },
-      { label: 'Maternal Health Pipeline', href: 'https://www.impactglobalhealth.org/data/maternal-health-pipeline', description: 'Database profiling medicines, diagnostics, and devices for seven significant pregnancy-related conditions.' },
-      { label: 'Snakebite Envenoming Medicines Database', href: 'https://www.impactglobalhealth.org/data/snakebite-envenoming-medicines-database', description: 'Database of all snakebite envenoming medicines with direct action on toxins.' },
-      { label: 'Sexually Transmitted Infections Pipeline', href: 'https://www.impactglobalhealth.org/data/sexually-transmitted-infections-pipeline', description: 'Database of critical products for three STIs with an AMR risk.' },
-      { label: 'Gynaecological Conditions Pipeline', href: 'https://www.impactglobalhealth.org/data/gynaecological-conditions-pipeline', description: "Database of women's health products for three significant gynaecological conditions." },
       { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
     ],
   },
@@ -95,6 +90,7 @@ const navItems = [
       { label: 'Our Global Advisory Council', href: 'https://www.impactglobalhealth.org/about-us/our-global-advisory-council', description: 'Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.' },
       { label: 'Join Us', href: 'https://www.impactglobalhealth.org/about-us/join-us', description: 'We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.' },
       { label: 'Contact Us', href: 'https://www.impactglobalhealth.org/about-us/contact-us', description: 'Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.' },
+      { label: 'Advocacy Kits', href: 'https://www.impactglobalhealth.org/tools/communications--press-kits', description: 'Join us in creating global health impact with our advocacy and press kits.' },
     ],
   },
   {
