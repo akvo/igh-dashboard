@@ -478,7 +478,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
           <ChartMenu onDownloadCSV={() => {}} onDownloadPNG={() => {}} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          Compare up to four portfolios &mdash; each defined by a specific combination of disease and product &mdash; in a single year. View how each portfolio is distributed across R&amp;D stages, choose the year of interest, and use the legend to filter stages in or out to focus the comparison on pipeline components most relevant to the analysis.
+          Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&amp;D stages to identify contrasts in growth and progression.
         </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 

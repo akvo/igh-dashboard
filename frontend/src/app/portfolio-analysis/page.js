@@ -808,10 +808,7 @@ export default function PortfolioAnalysis() {
                   Portfolio analysis
                 </h1>
                 <p className="text-sm text-gray-500 max-w-3xl">
-                  Explore the global R&D pipeline for each global health area, disease or product type through two lenses.
-                  Use the Explore visual insights view to analyse portfolio trends through interactive charts and maps,
-                  or switch to the Extract custom details tab to build a filtered data table tailored to your needs and
-                  export your findings as a .csv file for further analysis.
+                  Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.
                 </p>
               </div>
               <button
@@ -1065,7 +1062,7 @@ export default function PortfolioAnalysis() {
                         {extractTab === 'clinical-trials' && 'Clinical Trials & Candidates'}
                         {extractTab === 'rd-only' && 'R&D Priorities'}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-4">Select the columns you would like to include in the overview and click on apply.</p>
+                      <p className="text-sm text-gray-500 mb-4">The custom table builder enables selection and display of specific columns, filtering by global health area, disease, product type, and R&amp;D stage, and column sorting to support quick exploration and comparison of the most relevant data..</p>
                       <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
                     <div className="flex items-center gap-3">
