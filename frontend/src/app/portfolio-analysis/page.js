@@ -11,6 +11,7 @@ import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/ch
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
 import {
   expandDiseaseSelection,
   consolidateProductOptionsByName,
@@ -334,6 +335,27 @@ export default function PortfolioAnalysis() {
       col.label.toLowerCase().includes(search)
     );
   }, [availableColumns, selectedColumns, columnSearchQuery]);
+
+  // Refs for PNG download capture targets
+  const productTypesChartRef = useRef(null);
+  const approvalStatusChartRef = useRef(null);
+  const approvingAuthoritiesChartRef = useRef(null);
+  const whoPrequalChartRef = useRef(null);
+  const ageGroupsChartRef = useRef(null);
+  const trialStatusChartRef = useRef(null);
+  const geoDistributionChartRef = useRef(null);
+  const globalPipelineChartRef = useRef(null);
+
+  const [exportingPNG, setExportingPNG] = useState(false);
+
+  const handleExportPNG = async () => {
+    setExportingPNG(true);
+    try {
+      await downloadPNG(globalPipelineChartRef, 'global-pipeline-overview');
+    } finally {
+      setExportingPNG(false);
+    }
+  };
 
   // Drag-and-drop reordering state
   const draggedColumnRef = useRef(null);
@@ -793,8 +815,12 @@ export default function PortfolioAnalysis() {
               <div className="lg:col-span-2 bg-white border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-black">Global pipeline overview</h3>
-                  <button className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 transition-colors">
-                    Export Visual
+                  <button
+                    onClick={handleExportPNG}
+                    disabled={exportingPNG}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {exportingPNG ? 'Exporting...' : 'Export Visual'}
                     <DownloadIcon className="w-4 h-4" />
                   </button>
                 </div>
@@ -803,6 +829,7 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
+                <div ref={globalPipelineChartRef}>
                 {pipelineLoading ? (
                   <div className="h-[500px] flex items-center justify-center">
                     <div className="animate-pulse text-gray-400">Loading chart data...</div>
@@ -822,6 +849,7 @@ export default function PortfolioAnalysis() {
                     onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
                   />
                 )}
+                </div>
 
               </div>
 
@@ -852,7 +880,7 @@ export default function PortfolioAnalysis() {
                         const csv = buildCSV(columns, productTypesData);
                         downloadCSV(csv, 'product-types');
                       }}
-                      onDownloadPNG={() => console.log('Download PNG')}
+                      onDownloadPNG={() => downloadPNG(productTypesChartRef, 'product-types')}
                     />
                   </div>
                 </div>
@@ -861,6 +889,7 @@ export default function PortfolioAnalysis() {
                 </p>
                 <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
+                <div ref={productTypesChartRef}>
                 {productTypesLoading ? (
                   <div className="h-[500px] flex items-center justify-center">
                     <div className="animate-pulse text-gray-400">Loading chart data...</div>
@@ -876,6 +905,7 @@ export default function PortfolioAnalysis() {
                     legendPosition="top"
                   />
                 )}
+                </div>
               </div>
             </div>
             </>
@@ -1251,9 +1281,9 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, approvalStatusData);
                         downloadCSV(csv, 'approval-status');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(approvalStatusChartRef, 'approval-status')} />
                     </div>
-                    <div className="flex-1">
+                    <div ref={approvalStatusChartRef} className="flex-1">
                       {regulatoryLoading ? (
                         <div className="h-[280px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
@@ -1295,9 +1325,9 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, approvingAuthoritiesData);
                         downloadCSV(csv, 'approving-authorities');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(approvingAuthoritiesChartRef, 'approving-authorities')} />
                     </div>
-                    <div className="flex-1">
+                    <div ref={approvingAuthoritiesChartRef} className="flex-1">
                       {regulatoryLoading ? (
                         <div className="h-[200px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
@@ -1343,9 +1373,9 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, whoPrequalData);
                         downloadCSV(csv, 'who-prequalification');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(whoPrequalChartRef, 'who-prequalification')} />
                     </div>
-                    <div className="flex-1">
+                    <div ref={whoPrequalChartRef} className="flex-1">
                       {regulatoryLoading ? (
                         <div className="h-[180px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
@@ -1431,9 +1461,9 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, ageGroupsData);
                         downloadCSV(csv, 'age-groups-in-clinical-trials');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(ageGroupsChartRef, 'age-groups-in-clinical-trials')} />
                     </div>
-                    <div className="flex-1 border-t border-gray-100 pt-4">
+                    <div ref={ageGroupsChartRef} className="flex-1 border-t border-gray-100 pt-4">
                       {trialsLoading ? (
                         <div className="h-[280px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
@@ -1470,9 +1500,9 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, trialStatusData);
                         downloadCSV(csv, 'clinical-trial-status');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(trialStatusChartRef, 'clinical-trial-status')} />
                     </div>
-                    <div className="flex-1 border-t border-gray-100 pt-4">
+                    <div ref={trialStatusChartRef} className="flex-1 border-t border-gray-100 pt-4">
                       {trialsLoading ? (
                         <div className="h-[340px] flex items-center justify-center">
                           <div className="animate-pulse text-gray-400">Loading...</div>
@@ -1526,12 +1556,13 @@ export default function PortfolioAnalysis() {
                         ];
                         const csv = buildCSV(columns, clinicalTrialsDistribution);
                         downloadCSV(csv, 'geographic-distribution-clinical-trials');
-                      }} onDownloadPNG={() => {}} />
+                      }} onDownloadPNG={() => downloadPNG(geoDistributionChartRef, 'geographic-distribution-clinical-trials')} />
                     </div>
                   </div>
                   <p className="text-sm text-gray-500 mb-6">
                     The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
                   </p>
+                  <div ref={geoDistributionChartRef}>
                   {geoLoading ? (
                     <div className="h-[400px] flex items-center justify-center">
                       <div className="animate-pulse text-gray-400">Loading map...</div>
@@ -1539,6 +1570,7 @@ export default function PortfolioAnalysis() {
                   ) : (
                     <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
                   )}
+                  </div>
                 </div>
 
                 {/* Selected clinical trials section */}

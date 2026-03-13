@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
@@ -8,6 +8,7 @@ import { Dropdown, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon } from '@/components/icons';
 import { StackedBarChart } from '@/components/charts';
 import { buildCSV, downloadCSV } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
 import {
   useTemporalSnapshots,
   useAvailableYears,
@@ -52,6 +53,7 @@ export default function CrossPipelineAnalytics() {
 
   const isPhaseVisible = (key) => !hiddenPhases.includes(key);
 
+  const crossPipelineChartRef = useRef(null);
   const [shareCopied, setShareCopied] = useState(false);
 
   // All product options (before cross-filtering), with VC consolidation
@@ -149,7 +151,7 @@ export default function CrossPipelineAnalytics() {
                   ];
                   const csv = buildCSV(columns, chartData);
                   downloadCSV(csv, 'cross-pipeline-analytics');
-                }} onDownloadPNG={() => {}} />
+                }} onDownloadPNG={() => downloadPNG(crossPipelineChartRef, 'cross-pipeline-analytics')} />
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
@@ -240,7 +242,7 @@ export default function CrossPipelineAnalytics() {
             </div>
 
             {/* Chart */}
-            <div className="mt-4">
+            <div ref={crossPipelineChartRef} className="mt-4">
               {isLoading ? (
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>

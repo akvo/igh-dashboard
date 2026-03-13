@@ -20,6 +20,7 @@ import {
   MALARIA_GROUP,
 } from '@/lib/filterGroups';
 import { buildCSV, downloadCSV } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
 
 // Year colors — deliberately distinct from the stage colors
 // (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
@@ -95,6 +96,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     return initial;
   });
   const [compareYear, setCompareYear] = useState(appliedCompareYear);
+
+  // Refs for PNG download capture targets
+  const portfolioCompareRef = useRef(null);
+  const acrossPortfoliosRef = useRef(null);
 
   // One-time sync: populate local portfolio dropdowns from URL-restored
   // applied values after client hydration.
@@ -505,7 +510,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               ];
               const csv = buildCSV(columns, compareChartData);
               downloadCSV(csv, `portfolio-comparison-rd-stage-${targetYear}`);
-            }} onDownloadPNG={() => {}} />
+            }} onDownloadPNG={() => downloadPNG(portfolioCompareRef, `portfolio-comparison-rd-stage-${targetYear}`)} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
           Compare up to four portfolios &mdash; each defined by a specific combination of disease and product &mdash; in a single year. View how each portfolio is distributed across R&amp;D stages, choose the year of interest, and use the legend to filter stages in or out to focus the comparison on pipeline components most relevant to the analysis.
@@ -547,7 +552,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
           </div>
         )}
 
-        <div className="mt-4">
+        <div ref={portfolioCompareRef} className="mt-4">
           {loading ? (
             <div className="h-[220px] flex items-center justify-center">
               <div className="animate-pulse text-gray-400">Loading chart data...</div>
@@ -625,7 +630,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               ];
               const csv = buildCSV(columns, acrossChartData);
               downloadCSV(csv, 'temporal-trends-aggregated-rd-stages-across-portfolios');
-            }} onDownloadPNG={() => {}} />
+            }} onDownloadPNG={() => downloadPNG(acrossPortfoliosRef, 'temporal-trends-aggregated-rd-stages-across-portfolios')} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
           Explore the temporal trends for each selected portfolio with R&amp;D stages aggregated into early development, late development, and approved products across IGH review years.
@@ -666,7 +671,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         </div>
 
         {/* Grouped charts per disease */}
-        <div className="mt-4 flex gap-0">
+        <div ref={acrossPortfoliosRef} className="mt-4 flex gap-0">
           {loading ? (
             <div className="w-full h-[300px] flex items-center justify-center">
               <div className="animate-pulse text-gray-400">Loading chart data...</div>
@@ -703,6 +708,10 @@ export default function TemporalTrendsSection({
   productOptions = [],
   availableYears = [],
 }) {
+  // Refs for PNG download capture targets
+  const portfolioCompositionRef = useRef(null);
+  const aggregatedStagesRef = useRef(null);
+
   const [activeTab, setActiveTab] = useUrlState('ttTab', 'single', {
     ...stringSerializer, historyMode: 'push',
   });
@@ -1009,7 +1018,7 @@ export default function TemporalTrendsSection({
                 ];
                 const csv = buildCSV(columns, chartData);
                 downloadCSV(csv, 'temporal-trends-portfolio-composition');
-              }} onDownloadPNG={() => {}} />
+              }} onDownloadPNG={() => downloadPNG(portfolioCompositionRef, 'temporal-trends-portfolio-composition')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio, showing how distributions across R&amp;D stages change over time. Filter by disease and product, and use the R&amp;D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis.
@@ -1050,7 +1059,7 @@ export default function TemporalTrendsSection({
             </div>
 
             {/* Stacked bar chart */}
-            <div className="mt-4">
+            <div ref={portfolioCompositionRef} className="mt-4">
               {loading ? (
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
@@ -1083,14 +1092,14 @@ export default function TemporalTrendsSection({
                   ];
                   const csv = buildCSV(columns, groupedChartData);
                   downloadCSV(csv, 'temporal-trends-aggregated-rd-stages');
-                }} onDownloadPNG={() => {}} />
+                }} onDownloadPNG={() => downloadPNG(aggregatedStagesRef, 'temporal-trends-aggregated-rd-stages')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
               Explore the temporal trends in a single portfolio with R&amp;D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&amp;D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-            <div className="mt-4">
+            <div ref={aggregatedStagesRef} className="mt-4">
               {loading ? (
                 <div className="h-[350px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
