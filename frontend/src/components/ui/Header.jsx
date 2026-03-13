@@ -155,7 +155,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                               {hub.external ? <ExternalIcon /> : <ArrowIcon className="ml-2" />}
                             </a>
                             {hub.description && (
-                              <p className="m-0" style={{ fontSize: '0.875rem', color: '#999' }}>{hub.description}</p>
+                              <p className="m-0 text-sm text-white">{hub.description}</p>
                             )}
                           </div>
                         ))}
@@ -178,7 +178,7 @@ const NavItem = ({ label, hasDropdown, href, onClick, items, description, featur
                           {featured.title}
                           <ArrowIcon className="ml-2" />
                         </a>
-                        <p className="m-0" style={{ fontSize: '0.875rem', color: '#999' }}>{featured.description}</p>
+                        <p className="m-0 text-sm text-white">{featured.description}</p>
                       </div>
                     </div>
                   )
