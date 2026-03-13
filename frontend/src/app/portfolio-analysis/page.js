@@ -919,8 +919,8 @@ export default function PortfolioAnalysis() {
                         {extractTab === 'rd-priorities' && 'R&D priorities & candidates'}
                         {extractTab === 'clinical-trials' && 'Clinical trials & candidates'}
                         {extractTab === 'rd-only' && 'R&D priorities'}
-                      </h3>The custom table builder enables selection and display of specific columns, filtering by global health area, disease, product type, and R&amp;D stage, and column sorting to support quick exploration and comparison of the most relevant data.
-                      <p className="text-sm text-gray-500 mb-4"></p>
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-4">The custom table builder enables selection and display of specific columns, filtering by global health area, disease, product type, and R&amp;D stage, and column sorting to support quick exploration and comparison of the most relevant data.</p>
                       <div style={{ borderBottom: '1px solid #26262617' }} />
                     </div>
                     <div className="flex items-center gap-3">

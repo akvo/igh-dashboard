@@ -514,6 +514,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         </div>
         <p className="text-sm text-gray-400 mb-4">
           Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression.
+    </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Phase checkboxes */}
