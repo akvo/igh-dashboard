@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
@@ -29,12 +30,14 @@ import {
   useLastSyncDate,
   usePhases,
   useDiseases,
+  usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import {
   consolidateProductOptionsByKey,
   expandProductKeySelection,
 } from '@/lib/filterGroups';
+import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -42,12 +45,6 @@ const candidateTypeOptions = [
   { label: 'Approved products', value: 'Product' },
 ];
 
-// Global health area options for cross-pipeline filter
-const globalHealthAreaOptions = [
-  { label: 'Neglected diseases', value: 'Neglected disease' },
-  { label: "Women's health", value: 'Womens Health' },
-  { label: 'Emerging infectious diseases', value: 'Emerging infectious disease' },
-];
 
 export default function Home() {
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
@@ -73,7 +70,8 @@ export default function Home() {
   );
   const { products, loading: productsLoading } = useProducts();
   const { phases, loading: phasesLoading } = usePhases();
-  const { raw: diseasesRaw } = useDiseases();
+  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
@@ -104,10 +102,25 @@ export default function Home() {
 
   // Product options for dropdown (from API).
   // Values are strings to stay consistent with URL serialization.
-  const productOptions = useMemo(() => {
+  const allProductOptions = useMemo(() => {
     const raw = products.map(p => ({ label: p.product_name, value: String(p.product_key) }));
     return consolidateProductOptionsByKey(raw);
   }, [products]);
+
+  // Portfolio section uses unfiltered product options (no cross-filtering needed)
+  const productOptions = allProductOptions;
+
+  // Cross-pipeline section: cross-filter GHA ↔ product via the hook
+  const {
+    healthAreaOptions: crossHealthAreaOptions,
+    productOptions: crossProductFilteredOptions,
+  } = useCrossFilteredOptions({
+    data: { healthAreas: gqlBubbleData, diseasesRaw, pairs, allProductOptions },
+    selections: { healthArea: crossGlobalHealthArea, disease: [], product: crossProduct },
+    setters: { setHealthArea: setCrossGlobalHealthArea, setDisease: () => {}, setProduct: setCrossProduct },
+    loading: { healthAreas: bubbleLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
+    mode: 'by-key',
+  });
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const portfolioVisiblePhases = useMemo(() =>
@@ -124,25 +137,6 @@ export default function Home() {
   const handleCrossVisiblePhasesChange = useCallback((next) => {
     setCrossHiddenPhases(Object.keys(next).filter(k => !next[k]));
   }, [setCrossHiddenPhases]);
-
-  // Download PNG function using html2canvas
-  const downloadPNG = useCallback(async (ref, filename) => {
-    if (!ref.current) return;
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(ref.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-      });
-      const url = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename}.png`;
-      a.click();
-    } catch (error) {
-      console.error('Error generating PNG:', error);
-    }
-  }, []);
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -477,9 +471,10 @@ export default function Home() {
                   value={crossGlobalHealthArea}
                   onChange={setCrossGlobalHealthArea}
                   placeholder="All"
-                  options={globalHealthAreaOptions}
+                  options={crossHealthAreaOptions}
                   multiSelect={true}
                   showClearText={true}
+                  loading={bubbleLoading}
                 />
               </div>
               <div className="w-[280px]">
@@ -488,9 +483,10 @@ export default function Home() {
                   value={crossProduct}
                   onChange={setCrossProduct}
                   placeholder="All"
-                  options={productOptions}
+                  options={crossProductFilteredOptions}
                   multiSelect={true}
                   showClearText={true}
+                  loading={productsLoading}
                 />
               </div>
               <div className="flex-1" />
