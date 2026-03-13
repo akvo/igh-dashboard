@@ -75,6 +75,7 @@ const navItems = [
     featured: {
       title: 'Advocacy Kits',
       href: 'https://www.impactglobalhealth.org/tools/communications--press-kits',
+      showIcon: true,
       description: 'Join us in creating global health impact with our advocacy and press kits',
     },
     items: [
