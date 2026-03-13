@@ -40,10 +40,11 @@ const navItems = [
       items: [
         { label: 'G-FINDER R&D funding portal', href: 'https://gfinderdata.impactglobalhealth.org/', description: 'Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.' },
         { label: 'Product pipeline portal', href: 'https://pipeline.impactglobalhealth.org', description: 'Our product pipeline portal provides an overview of health products approved or in development across global health areas.' },
-        { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
       ],
     },
-    items: [],
+    items: [
+      { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
+    ],
   },
   {
     label: 'Insights',
