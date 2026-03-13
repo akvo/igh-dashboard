@@ -36,9 +36,12 @@ const navItems = [
     hasDropdown: true,
     description: 'Here are the gold-standard databases and data visualizations of R&D funding, approved products and candidates in the pipeline for neglected diseases, emerging infectious diseases and maternal health.',
     featured: {
-      title: 'G-FINDER',
-      href: 'https://gfinderdata.impactglobalhealth.org/',
-      description: 'The annual tracker of R&D investment into new drugs, vaccines, diagnostics and vector control products for global health.',
+      title: 'Our data portals',
+      showIcon: false,
+      items: [
+        { label: 'G-FINDER R&D funding portal', href: 'https://gfinderdata.impactglobalhealth.org/', description: 'Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.' },
+        { label: 'Product pipeline portal', href: 'https://pipeline.impactglobalhealth.org/', description: 'Our product pipeline portal provides an overview of health products approved or in development across global health areas.' },
+      ],
     },
     items: [
       { label: 'Infectious Disease R&D Tracker', href: 'https://www.impactglobalhealth.org/data/infectious-disease', description: 'Candidates in the pipeline and approved products for global health priorities across neglected diseases and emerging infectious diseases.' },
