@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   HomeIcon,
@@ -37,6 +37,19 @@ export default function Sidebar({
 }) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showHelpPopup, setShowHelpPopup] = useState(false);
+  const helpRef = useRef(null);
+
+  useEffect(() => {
+    if (!showHelpPopup) return;
+    const handleClickOutside = (e) => {
+      if (helpRef.current && !helpRef.current.contains(e.target)) {
+        setShowHelpPopup(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showHelpPopup]);
 
   const handleItemClick = (item) => {
     if (onNavigate) {
@@ -132,13 +145,60 @@ export default function Sidebar({
           {isExpanded ? (
             <>
               {showHelp && (
-                <Link
-                  href="/help"
-                  className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-hover"
+                <div
+                  ref={helpRef}
+                  className="relative"
                 >
-                  <HelpIcon className="w-5 h-5 text-sidebar-icon group-hover:text-orange-500 transition-colors" strokeWidth={2.5} />
-                  <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">Help</span>
-                </Link>
+                  <button
+                    onClick={() => setShowHelpPopup((prev) => !prev)}
+                    className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
+                  >
+                    <HelpIcon className="w-5 h-5 text-sidebar-icon group-hover:text-orange-500 transition-colors" strokeWidth={2.5} />
+                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">Help</span>
+                  </button>
+                  {showHelpPopup && (
+                    <div
+                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      style={{
+                        bottom: '100%',
+                        left: 0,
+                        marginBottom: 12,
+                        width: 280,
+                        padding: '20px',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {/* Arrow */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: -8,
+                          left: 24,
+                          width: 16,
+                          height: 16,
+                          backgroundColor: '#fff',
+                          transform: 'rotate(45deg)',
+                          boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
+                        }}
+                      />
+                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
+                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
+                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
+                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      </p>
+                      <a
+                        href="mailto:info@impactgh.org"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="2" />
+                          <path d="M22 4L12 13L2 4" />
+                        </svg>
+                        Send email
+                      </a>
+                    </div>
+                  )}
+                </div>
               )}
               <button
                 onClick={() => setIsExpanded(false)}
@@ -149,13 +209,70 @@ export default function Sidebar({
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setIsExpanded(true)}
-              className="w-full p-2 rounded-lg text-sidebar-icon hover:bg-sidebar-hover hover:text-black transition-colors flex justify-center"
-              title="Expand sidebar"
-            >
-              <ChevronsRightIcon className="w-5 h-5" strokeWidth={2.5} />
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              {showHelp && (
+                <div
+                  ref={helpRef}
+                  className="relative"
+                >
+                  <button
+                    onClick={() => setShowHelpPopup((prev) => !prev)}
+                    className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-sidebar-hover transition-colors bg-transparent border-0 cursor-pointer"
+                    title="Help"
+                  >
+                    <HelpIcon className="w-5 h-5 text-sidebar-icon hover:text-orange-500 transition-colors" strokeWidth={2.5} />
+                  </button>
+                  {showHelpPopup && (
+                    <div
+                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      style={{
+                        bottom: '100%',
+                        left: 0,
+                        marginBottom: 12,
+                        width: 280,
+                        padding: '20px',
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: 'absolute',
+                          bottom: -8,
+                          left: 16,
+                          width: 16,
+                          height: 16,
+                          backgroundColor: '#fff',
+                          transform: 'rotate(45deg)',
+                          boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
+                        }}
+                      />
+                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
+                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
+                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
+                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      </p>
+                      <a
+                        href="mailto:info@impactgh.org"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="4" width="20" height="16" rx="2" />
+                          <path d="M22 4L12 13L2 4" />
+                        </svg>
+                        Send email
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+              <button
+                onClick={() => setIsExpanded(true)}
+                className="w-full p-2 rounded-lg text-sidebar-icon hover:bg-sidebar-hover hover:text-black transition-colors flex justify-center"
+                title="Expand sidebar"
+              >
+                <ChevronsRightIcon className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
           )}
         </div>
       </div>
