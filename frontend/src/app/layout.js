@@ -1,8 +1,11 @@
 import { Public_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
+import Script from 'next/script';
 import './globals.css';
 import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
+
+const GA_MEASUREMENT_ID = 'G-NFKNREZSVG';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -103,6 +106,20 @@ const navItems = [
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`if (window.location.hostname === 'pipeline.impactglobalhealth.org') {
+            var s = document.createElement('script');
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}';
+            s.async = true;
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          }`}
+        </Script>
+      </head>
       <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
           <Header navItems={navItems} />

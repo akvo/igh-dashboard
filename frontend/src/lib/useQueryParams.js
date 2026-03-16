@@ -18,11 +18,24 @@ import { useSyncExternalStore, useCallback } from 'react';
 // reacts to the URL change — preventing priority conflicts that
 // cause input lag.
 let popstateTimer = null;
+let gtagTimer = null;
 function notifySubscribers() {
   clearTimeout(popstateTimer);
   popstateTimer = setTimeout(() => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, 0);
+
+  // Send a GA4 page_view for SPA URL changes. Debounced to 1s so rapid
+  // filter changes (e.g. typing in a search box) don't flood analytics.
+  clearTimeout(gtagTimer);
+  gtagTimer = setTimeout(() => {
+    if (typeof window.gtag === 'function' && window.location.hostname === 'pipeline.impactglobalhealth.org') {
+      window.gtag('event', 'page_view', {
+        page_location: window.location.href,
+        page_title: document.title,
+      });
+    }
+  }, 1000);
 }
 
 // ---- External store contract for useSyncExternalStore ----
