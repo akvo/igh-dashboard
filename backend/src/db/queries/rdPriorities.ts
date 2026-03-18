@@ -12,7 +12,47 @@ const MAX_LIMIT = 100;
 // Shared filter builder
 // =========================================================
 
-function buildWhere(filter?: RdPriorityFilter) {
+// Base columns available in both query variants (with and without candidates).
+const BASE_SEARCHABLE_COLUMNS = [
+  "p.priority_name",
+  "p.rdpriorityid",
+  "p.indication",
+  "p.intended_use",
+  "p.author",
+  "p.publication_date",
+  "p.target_population",
+  "p.efficacy",
+  "p.safety",
+  "p.source",
+  "d.disease_group_name",
+  "d.global_health_area",
+  "pr.product_name",
+] as const;
+
+// Additional columns only available when candidate tables are joined.
+const CANDIDATE_SEARCHABLE_COLUMNS = [
+  "c.candidate_name",
+  "c.current_rd_stage",
+] as const;
+
+function addSearchCondition(
+  search: string,
+  conditions: string[],
+  params: (string | number)[],
+  includeCandidateColumns: boolean,
+) {
+  const columns = includeCandidateColumns
+    ? [...BASE_SEARCHABLE_COLUMNS, ...CANDIDATE_SEARCHABLE_COLUMNS]
+    : BASE_SEARCHABLE_COLUMNS;
+  const pattern = `%${search}%`;
+  const orClauses = columns.map((col) => `${col} LIKE ?`).join(" OR ");
+  conditions.push(`(${orClauses})`);
+  for (let i = 0; i < columns.length; i++) {
+    params.push(pattern);
+  }
+}
+
+function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
@@ -20,8 +60,7 @@ function buildWhere(filter?: RdPriorityFilter) {
   addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
 
   if (filter?.search) {
-    conditions.push("(p.priority_name LIKE ? OR p.rdpriorityid LIKE ?)");
-    params.push(`%${filter.search}%`, `%${filter.search}%`);
+    addSearchCondition(filter.search, conditions, params, includeCandidateColumns);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -44,7 +83,7 @@ export function getRdPrioritiesWithCandidates(
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter);
+  const { whereClause, params } = buildWhere(filter, true);
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
