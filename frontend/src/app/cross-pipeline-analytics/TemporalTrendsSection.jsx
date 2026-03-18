@@ -174,25 +174,26 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const allRawData = useMemo(() => results.filter(Boolean).flat(), [results]);
   const apiPhases = useMemo(() => extractTemporalPhases(allRawData), [allRawData]);
 
-  // Compare phase checkboxes — initialized from API phases
-  const [comparePhases, setComparePhases] = useState([]);
-  useMemo(() => {
-    if (apiPhases.length > 0 && comparePhases.length === 0) {
-      setComparePhases(apiPhases.map(p => p.key));
-    }
-  }, [apiPhases]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Compare phase checkboxes — persisted via URL query params
+  const [hiddenComparePhases, setHiddenComparePhases] = useUrlState('ttCPhide', [], arraySerializer);
+  const comparePhases = useMemo(
+    () => apiPhases.filter(p => !hiddenComparePhases.includes(p.key)).map(p => p.key),
+    [apiPhases, hiddenComparePhases]
+  );
   const handleComparePhaseToggle = (key) => {
-    setComparePhases(prev =>
+    setHiddenComparePhases(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
 
-  // Across-portfolios stage checkboxes
-  const [acrossStages, setAcrossStages] = useState(
-    STAGE_SERIES.map(s => s.key)
+  // Across-portfolios stage checkboxes — persisted via URL query params
+  const [hiddenAcrossStages, setHiddenAcrossStages] = useUrlState('ttCShide', [], arraySerializer);
+  const acrossStages = useMemo(
+    () => STAGE_SERIES.filter(s => !hiddenAcrossStages.includes(s.key)).map(s => s.key),
+    [hiddenAcrossStages]
   );
   const handleAcrossStageToggle = (key) => {
-    setAcrossStages(prev =>
+    setHiddenAcrossStages(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
@@ -220,7 +221,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       .filter(p => p.disease.length > 0 || p.product.length > 0);
     setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
-    setComparePhases([]);
+    setHiddenComparePhases([]);
   };
 
   const hasCompareFilters = portfolios.some(p => p.disease.length > 0 || p.product.length > 0) || compareYear !== '' ||
@@ -237,7 +238,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     setAppliedPortfolios([]);
     setAppliedCompareYear('');
     setVisibleCount(2);
-    setComparePhases([]);
+    setHiddenComparePhases([]);
+    setHiddenAcrossStages([]);
   };
 
   const handleAddPortfolio = () => {
@@ -530,9 +532,9 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
           <div className="flex items-center gap-6 py-4 flex-wrap">
             {apiPhases.length >= 3 && (
               <div className="flex gap-1 mr-2">
-                <button type="button" onClick={() => setComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                <button type="button" onClick={() => setHiddenComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
                 <span className="text-xs text-black-24">|</span>
-                <button type="button" onClick={() => setComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+                <button type="button" onClick={() => setHiddenComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
               </div>
             )}
             {apiPhases.map(phase => (
@@ -650,9 +652,9 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <div className="flex items-center gap-6 py-4 flex-wrap">
           {STAGE_SERIES.length >= 3 && (
             <div className="flex gap-1 mr-2">
-              <button type="button" onClick={() => setAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+              <button type="button" onClick={() => setHiddenAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
               <span className="text-xs text-black-24">|</span>
-              <button type="button" onClick={() => setAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+              <button type="button" onClick={() => setHiddenAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
             </div>
           )}
           {STAGE_SERIES.map(stage => (
