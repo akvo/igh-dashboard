@@ -106,9 +106,6 @@ export default function PortfolioAnalysis() {
   const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
   const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
-  const [extractHealthArea, setExtractHealthArea] = useUrlState('extGha', [], arraySerializer);
-  const [extractDisease, setExtractDisease] = useUrlState('extDisease', [], arraySerializer);
-  const [extractProduct, setExtractProduct] = useUrlState('extProduct', [], arraySerializer);
   const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
@@ -196,15 +193,12 @@ export default function PortfolioAnalysis() {
   // Per-tab extract filters and data fetching
   // =========================================================
 
-  // Expand composite selections for extract filters
-  const expandedExtractDisease = expandDiseaseSelection(extractDisease);
-  const expandedExtractProduct = expandProductNameSelection(extractProduct);
-
-  // Candidates & Approved Products (Tab 1) uses the full filter set.
+  // Extract tab reuses the global filter selections (healthArea / expandedDisease / expandedProduct)
+  // so that switching between Explore and Extract tabs shares the same filters.
   const extractCandidatesFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
-    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
     phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
@@ -212,15 +206,15 @@ export default function PortfolioAnalysis() {
   // Priority and trial tabs share GHA + Disease filters but not
   // Product or R&D Stage (those fields don't exist on priorities).
   const extractPriorityFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
     search: extractSearchQuery || undefined,
   };
 
   const extractTrialFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
-    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
   };
 
   // Only fire the hook for the active extract tab to prevent cross-tab data
@@ -312,17 +306,7 @@ export default function PortfolioAnalysis() {
     loading: crossFilterLoading,
   });
 
-  // Extract tab cross-filtered options
-  const {
-    healthAreaOptions: extractHealthAreaOptions,
-    diseaseOptions: extractDiseaseOptions,
-    productOptions: extractProductOptions,
-  } = useCrossFilteredOptions({
-    data: crossFilterData,
-    selections: { healthArea: extractHealthArea, disease: extractDisease, product: extractProduct },
-    setters: { setHealthArea: setExtractHealthArea, setDisease: setExtractDisease, setProduct: setExtractProduct },
-    loading: crossFilterLoading,
-  });
+
 
   // Reset trials pagination when search query changes.
   useEffect(() => {
@@ -342,12 +326,37 @@ export default function PortfolioAnalysis() {
   }, []);
 
   const handleClearFilters = () => {
+    // Global GHA / Disease / Product filters
     setHealthArea([]);
     setDisease([]);
     setProduct([]);
+    // Chart-level filters
+    setProductTypeFilter([]);
+    setGeoTrialStatus([]);
+    // Chart visibility toggles
+    setPipelineHiddenPhases([]);
+    setAuthHiddenPhases([]);
+    setApprovalHiddenItems([]);
+    setTrialStatusHiddenItems([]);
+    // Extract-specific filters
+    setExtractRdStage([]);
+    // Search queries across all sub-tabs
+    setSearchQuery('');
+    setApprovedSearchQuery('');
+    setTrialsSearchQuery('');
+    setTechnologySearchQuery('');
+    setExtractSearchQuery('');
   };
 
-  const hasFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0;
+  const hasFilters =
+    healthArea.length > 0 || disease.length > 0 || product.length > 0 ||
+    productTypeFilter.length > 0 || geoTrialStatus.length > 0 ||
+    pipelineHiddenPhases.length > 0 || authHiddenPhases.length > 0 ||
+    approvalHiddenItems.length > 0 || trialStatusHiddenItems.length > 0 ||
+    extractRdStage.length > 0 ||
+    searchQuery.length > 0 || approvedSearchQuery.length > 0 ||
+    trialsSearchQuery.length > 0 || technologySearchQuery.length > 0 ||
+    extractSearchQuery.length > 0;
 
   // Get KPI values
   const activeCandidates = kpis?.find(k => k.id === 'candidates')?.value || 0;
@@ -540,12 +549,12 @@ export default function PortfolioAnalysis() {
     return data;
   }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
 
-  const hasExtractFilters = extractHealthArea.length > 0 || extractDisease.length > 0 || extractProduct.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
+  const hasExtractFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
 
   const handleResetExtractFilters = () => {
-    setExtractHealthArea([]);
-    setExtractDisease([]);
-    setExtractProduct([]);
+    setHealthArea([]);
+    setDisease([]);
+    setProduct([]);
     setExtractRdStage([]);
     setExtractSearchQuery('');
     setExtractPage(1);
@@ -666,7 +675,7 @@ export default function PortfolioAnalysis() {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, extractTab, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, extractTab, appliedColumns, healthArea, disease, product, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -1019,10 +1028,10 @@ export default function PortfolioAnalysis() {
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Global health area"
-                        value={extractHealthArea}
-                        onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
+                        value={healthArea}
+                        onChange={(v) => { setHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={extractHealthAreaOptions}
+                        options={healthAreaOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
@@ -1031,10 +1040,10 @@ export default function PortfolioAnalysis() {
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Disease"
-                        value={extractDisease}
-                        onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
+                        value={disease}
+                        onChange={(v) => { setDisease(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={extractDiseaseOptions}
+                        options={diseaseOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
@@ -1045,10 +1054,10 @@ export default function PortfolioAnalysis() {
                       <div className="min-w-[180px]">
                         <Dropdown
                           label="Product type"
-                          value={extractProduct}
-                          onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
+                          value={product}
+                          onChange={(v) => { setProduct(v); setExtractPage(1); }}
                           placeholder="All"
-                          options={extractProductOptions}
+                          options={productOptions}
                           multiSelect={true}
                           showAllOption={true}
                           compact={true}
