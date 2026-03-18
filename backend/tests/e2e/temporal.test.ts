@@ -315,9 +315,7 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
       }
     }`);
 
-    const keys = data.pipelineFilterPairs.map(
-      (r) => `${r.disease_group_name}::${r.product_key}`,
-    );
+    const keys = data.pipelineFilterPairs.map((r) => `${r.disease_group_name}::${r.product_key}`);
     const unique = new Set(keys);
     expect(unique.size).toBe(keys.length);
   });

@@ -65,10 +65,7 @@ describe("Trial Location map — counts trials not candidates", () => {
       geographicDistribution: GeographicDistributionRow[];
     }>(MAP_QUERY, { scope: "Trial Location", statuses: ["Active"] });
 
-    const allTotal = allData.geographicDistribution.reduce(
-      (s, r) => s + r.candidateCount,
-      0,
-    );
+    const allTotal = allData.geographicDistribution.reduce((s, r) => s + r.candidateCount, 0);
     const filteredTotal = filteredData.geographicDistribution.reduce(
       (s, r) => s + r.candidateCount,
       0,

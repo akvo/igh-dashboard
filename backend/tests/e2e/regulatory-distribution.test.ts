@@ -163,10 +163,12 @@ describe("Chart totals match KPI", () => {
   });
 
   it("approving authorities total is a subset (≤ KPI)", () => {
-    const sraTotal =
-      baseline.approvingAuthorities.find((r) => r.authority_type === "Stringent Regulatory Authority");
-    const nraTotal =
-      baseline.approvingAuthorities.find((r) => r.authority_type === "National Regulatory Authority");
+    const sraTotal = baseline.approvingAuthorities.find(
+      (r) => r.authority_type === "Stringent Regulatory Authority",
+    );
+    const nraTotal = baseline.approvingAuthorities.find(
+      (r) => r.authority_type === "National Regulatory Authority",
+    );
 
     if (sraTotal) {
       const sraSum = sraTotal.who_prequalified + sraTotal.no_who_listing;

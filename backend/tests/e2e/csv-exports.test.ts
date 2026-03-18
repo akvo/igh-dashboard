@@ -16,11 +16,7 @@
 
 import { describe, it, expect } from "vitest";
 import { query } from "../helpers/graphql.js";
-import {
-  buildTestCSV,
-  expectMatchesFixture,
-  type CSVColumn,
-} from "../helpers/csv.js";
+import { buildTestCSV, expectMatchesFixture, type CSVColumn } from "../helpers/csv.js";
 
 // =========================================================
 // Type definitions (inline, test-scoped)
@@ -350,14 +346,11 @@ async function fetchAllPages<T>(
   let totalCount = 0;
 
   while (hasMore) {
-    const { data } = await query<Record<string, PageInfo & { nodes: T[] }>>(
-      gqlQuery,
-      {
-        filter,
-        limit: batchSize,
-        offset,
-      },
-    );
+    const { data } = await query<Record<string, PageInfo & { nodes: T[] }>>(gqlQuery, {
+      filter,
+      limit: batchSize,
+      offset,
+    });
 
     const result = data[rootField];
     totalCount = result.totalCount;
@@ -457,9 +450,7 @@ describe("CSV export — portfolioCandidates (Candidates tab)", () => {
       portfolioCandidates: CandidateConnection;
     }>(CANDIDATES_QUERY, { limit: 10 });
 
-    const disease = sample.portfolioCandidates.nodes.find(
-      (n) => n.disease_name,
-    )?.disease_name;
+    const disease = sample.portfolioCandidates.nodes.find((n) => n.disease_name)?.disease_name;
     expect(disease).toBeTruthy();
 
     const { data: filtered } = await query<{
@@ -492,20 +483,16 @@ describe("CSV export — portfolioCandidates (Candidates tab)", () => {
     expect(page2.portfolioCandidates.nodes).toHaveLength(pageSize);
 
     // No overlapping keys between pages
-    const page1Keys = new Set(
-      page1.portfolioCandidates.nodes.map((n) => n.candidate_key),
-    );
+    const page1Keys = new Set(page1.portfolioCandidates.nodes.map((n) => n.candidate_key));
     page2.portfolioCandidates.nodes.forEach((n) => {
       expect(page1Keys.has(n.candidate_key)).toBe(false);
     });
   });
 
   it("candidate CSV matches fixture", async () => {
-    const { nodes } = await fetchAllPages<CandidateNode>(
-      CANDIDATES_QUERY,
-      "portfolioCandidates",
-      { candidate_type: "Candidate" },
-    );
+    const { nodes } = await fetchAllPages<CandidateNode>(CANDIDATES_QUERY, "portfolioCandidates", {
+      candidate_type: "Candidate",
+    });
 
     const csv = buildTestCSV(CANDIDATE_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
@@ -520,11 +507,9 @@ describe("CSV export — portfolioCandidates (Candidates tab)", () => {
   });
 
   it("approved products CSV matches fixture", async () => {
-    const { nodes } = await fetchAllPages<CandidateNode>(
-      CANDIDATES_QUERY,
-      "portfolioCandidates",
-      { candidate_type: "Product" },
-    );
+    const { nodes } = await fetchAllPages<CandidateNode>(CANDIDATES_QUERY, "portfolioCandidates", {
+      candidate_type: "Product",
+    });
 
     const csv = buildTestCSV(APPROVED_PRODUCT_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
@@ -568,9 +553,7 @@ describe("CSV export — clinicalTrials (Trials tab)", () => {
     });
 
     expect(filtered.clinicalTrials.totalCount).toBeGreaterThan(0);
-    expect(filtered.clinicalTrials.totalCount).toBeLessThan(
-      allData.clinicalTrials.totalCount,
-    );
+    expect(filtered.clinicalTrials.totalCount).toBeLessThan(allData.clinicalTrials.totalCount);
     filtered.clinicalTrials.nodes.forEach((node) => {
       expect(node.status).toBe("Active");
     });
@@ -619,19 +602,14 @@ describe("CSV export — clinicalTrials (Trials tab)", () => {
 
     expect(page2.clinicalTrials.nodes).toHaveLength(pageSize);
 
-    const page1Ids = new Set(
-      page1.clinicalTrials.nodes.map((n) => n.trial_id),
-    );
+    const page1Ids = new Set(page1.clinicalTrials.nodes.map((n) => n.trial_id));
     page2.clinicalTrials.nodes.forEach((n) => {
       expect(page1Ids.has(n.trial_id)).toBe(false);
     });
   });
 
   it("clinical trials CSV matches fixture", async () => {
-    const { nodes } = await fetchAllPages<TrialNode>(
-      TRIALS_QUERY,
-      "clinicalTrials",
-    );
+    const { nodes } = await fetchAllPages<TrialNode>(TRIALS_QUERY, "clinicalTrials");
 
     const csv = buildTestCSV(TRIAL_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];
@@ -644,11 +622,9 @@ describe("CSV export — clinicalTrials (Trials tab)", () => {
   });
 
   it("active trials CSV matches fixture", async () => {
-    const { nodes } = await fetchAllPages<TrialNode>(
-      TRIALS_QUERY,
-      "clinicalTrials",
-      { statuses: ["Active"] },
-    );
+    const { nodes } = await fetchAllPages<TrialNode>(TRIALS_QUERY, "clinicalTrials", {
+      statuses: ["Active"],
+    });
 
     const csv = buildTestCSV(TRIAL_CSV_COLUMNS, nodes);
     nodes.forEach((node) => {
@@ -733,16 +709,11 @@ describe("CSV export — rdPriorities (R&D Only tab)", () => {
     });
 
     expect(filtered.rdPriorities.totalCount).toBeGreaterThan(0);
-    expect(filtered.rdPriorities.totalCount).toBeLessThanOrEqual(
-      allData.rdPriorities.totalCount,
-    );
+    expect(filtered.rdPriorities.totalCount).toBeLessThanOrEqual(allData.rdPriorities.totalCount);
   });
 
   it("R&D only CSV matches fixture", async () => {
-    const { nodes } = await fetchAllPages<PriorityNode>(
-      RD_PRIORITIES_QUERY,
-      "rdPriorities",
-    );
+    const { nodes } = await fetchAllPages<PriorityNode>(RD_PRIORITIES_QUERY, "rdPriorities");
 
     const csv = buildTestCSV(RD_PRIORITY_ONLY_CSV_COLUMNS, nodes);
     const headerLine = csv.split("\n")[0];

@@ -1,9 +1,5 @@
 import { getDatabase } from "../connection.js";
-import type {
-  RdPriorityNode,
-  RdPriorityFilter,
-  RdPriorityConnection,
-} from "../types.js";
+import type { RdPriorityNode, RdPriorityFilter, RdPriorityConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
@@ -30,10 +26,7 @@ const BASE_SEARCHABLE_COLUMNS = [
 ] as const;
 
 // Additional columns only available when candidate tables are joined.
-const CANDIDATE_SEARCHABLE_COLUMNS = [
-  "c.candidate_name",
-  "c.current_rd_stage",
-] as const;
+const CANDIDATE_SEARCHABLE_COLUMNS = ["c.candidate_name", "c.current_rd_stage"] as const;
 
 function addSearchCondition(
   search: string,
