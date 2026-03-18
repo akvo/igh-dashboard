@@ -53,15 +53,15 @@ describe('temporalSnapshots transformations', () => {
 
       expect(grouped).toHaveLength(2);
       expect(grouped[0]).toEqual({
-        category: '2024',
-        discovery: 15,
-        preclinical: 204,
-      });
-      expect(grouped[1]).toEqual({
         category: '2023',
         discovery: 61,
         preclinical: 388,
         phase_i: 265,
+      });
+      expect(grouped[1]).toEqual({
+        category: '2024',
+        discovery: 15,
+        preclinical: 204,
       });
     });
 
