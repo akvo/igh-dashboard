@@ -29,7 +29,6 @@ export const CANDIDATE_COLUMNS = [
   },
   { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
-  { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {
     header: 'Product',
     accessor: 'product_name',
@@ -65,7 +64,6 @@ export const APPROVED_PRODUCT_COLUMNS = [
   },
   { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
-  { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {
     header: 'Product',
     accessor: 'product_name',
