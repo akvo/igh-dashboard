@@ -1240,6 +1240,13 @@ export default function PortfolioAnalysis() {
                         itemsPerPage={itemsPerPage}
                         fitContent
                         loading={extractLoading}
+                        {...(extractSearchQuery && {
+                          emptyState: {
+                            title: 'No results found',
+                            description: `Your search "${extractSearchQuery}" did not match any results. Please try again or clear the search.`,
+                            onClear: () => { setExtractSearchQuery(''); setExtractPage(1); },
+                          },
+                        })}
                       />
                     )}
                   </div>
@@ -1326,6 +1333,13 @@ export default function PortfolioAnalysis() {
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
                   loading={candidatesLoading}
+                  {...(searchQuery && {
+                    emptyState: {
+                      title: 'No candidates found',
+                      description: `Your search "${searchQuery}" did not match any candidates. Please try again or clear the search.`,
+                      onClear: () => { setSearchQuery(''); setCandidatesPage(1); },
+                    },
+                  })}
                 />
               </div>
             )}
@@ -1508,6 +1522,13 @@ export default function PortfolioAnalysis() {
                     hasNextPage={approvedHasNext}
                     itemsPerPage={itemsPerPage}
                     loading={approvedLoading}
+                    {...(approvedSearchQuery && {
+                      emptyState: {
+                        title: 'No approved products found',
+                        description: `Your search "${approvedSearchQuery}" did not match any approved products. Please try again or clear the search.`,
+                        onClear: () => { setApprovedSearchQuery(''); setApprovedPage(1); },
+                      },
+                    })}
                   />
                 </div>
               </>
@@ -1687,6 +1708,13 @@ export default function PortfolioAnalysis() {
                     hasNextPage={trialsHasNextPage}
                     itemsPerPage={trialsPerPage}
                     loading={trialsListLoading}
+                    {...(trialsSearchQuery && {
+                      emptyState: {
+                        title: 'No clinical trials found',
+                        description: `Your search "${trialsSearchQuery}" did not match any clinical trials. Please try again or clear the search.`,
+                        onClear: () => { setTrialsSearchQuery(''); setTrialsPage(1); },
+                      },
+                    })}
                   />
                 </div>
               </>
@@ -1746,6 +1774,13 @@ export default function PortfolioAnalysis() {
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
                   loading={technologyLoading}
+                  {...(technologySearchQuery && {
+                    emptyState: {
+                      title: 'No technology types found',
+                      description: `Your search "${technologySearchQuery}" did not match any technology types. Please try again or clear the search.`,
+                      onClear: () => { setTechnologySearchQuery(''); setCurrentPage(1); },
+                    },
+                  })}
                 />
               </div>
             )}
