@@ -12,6 +12,7 @@ import {
   BubbleChart,
   StackedBarChart,
   WorldMap,
+  ChartEmptyState,
 } from '@/components/charts';
 import {
   PieChartIcon,
@@ -256,9 +257,7 @@ export default function Home() {
                   <div className="animate-pulse text-gray-400">Loading chart...</div>
                 </div>
               ) : !gqlBubbleData || gqlBubbleData.length === 0 ? (
-                <div className="h-[320px] flex items-center justify-center">
-                  <div className="text-gray-400">No data available</div>
-                </div>
+                <ChartEmptyState variant="bubble" height={320} />
               ) : chartViewTab === 'visual' ? (
                 <BubbleChart
                   data={gqlBubbleData}
