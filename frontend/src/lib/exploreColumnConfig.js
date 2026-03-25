@@ -29,7 +29,6 @@ export const CANDIDATE_COLUMNS = [
   },
   { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
-  { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {
     header: 'Product',
     accessor: 'product_name',
@@ -65,7 +64,6 @@ export const APPROVED_PRODUCT_COLUMNS = [
   },
   { header: 'GHA', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v) },
   { header: 'Disease', accessor: 'disease_name' },
-  { header: 'Secondary disease', accessor: 'secondary_disease_name' },
   {
     header: 'Product',
     accessor: 'product_name',
@@ -98,9 +96,7 @@ export const APPROVED_PRODUCT_COLUMNS = [
 export const CLINICAL_TRIAL_COLUMNS = [
   {
     header: 'CT number',
-    accessor: 'clinicaltrialid',
-    csvAccessor: (row) => row.trial_name || row.clinicaltrialid,
-    render: (value, row) => <span>{row.trial_name || value}</span>,
+    accessor: 'trial_name',
   },
   { header: 'Candidate / product name', accessor: 'candidate_name' },
   { header: 'Title', accessor: 'trial_title', render: (value) => <div className="text-sm font-medium text-black max-w-[300px]">{value}</div> },

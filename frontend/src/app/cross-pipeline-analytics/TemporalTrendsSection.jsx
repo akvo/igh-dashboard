@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
-import { StackedBarChart, GroupedBarChart } from '@/components/charts';
+import { StackedBarChart, GroupedBarChart, ChartEmptyState } from '@/components/charts';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -1095,6 +1095,8 @@ export default function TemporalTrendsSection({
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
                 </div>
+              ) : !chartData || chartData.length === 0 ? (
+                <ChartEmptyState variant="stackedBar" height={280} description="No data available for the selected filters." />
               ) : (
                 <StackedBarChart
                   data={chartData}
@@ -1135,6 +1137,8 @@ export default function TemporalTrendsSection({
                 <div className="h-[350px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
                 </div>
+              ) : !groupedChartData || groupedChartData.length === 0 ? (
+                <ChartEmptyState variant="bar" height={380} description="No data available for the selected filters." />
               ) : (
                 <GroupedBarChart
                   data={groupedChartData}
