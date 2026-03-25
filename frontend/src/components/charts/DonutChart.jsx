@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Sector } from 'recharts';
+import ChartEmptyState from './ChartEmptyState';
 
 const defaultColors = [
   '#F0B456', // Gold
@@ -129,36 +130,7 @@ export default function DonutChart({
   if (isEmpty) {
     return (
       <div className="w-full overflow-visible">
-        <div
-          style={{ height }}
-          className="flex items-center justify-center"
-        >
-          <svg
-            width={outerRadius * 2 + 12}
-            height={outerRadius * 2 + 12}
-            viewBox={`0 0 ${outerRadius * 2 + 12} ${outerRadius * 2 + 12}`}
-          >
-            <circle
-              cx={outerRadius + 6}
-              cy={outerRadius + 6}
-              r={(innerRadius + outerRadius) / 2}
-              fill="none"
-              stroke="#E5E7EB"
-              strokeWidth={outerRadius - innerRadius}
-            />
-            <text
-              x={outerRadius + 6}
-              y={outerRadius + 6}
-              textAnchor="middle"
-              dominantBaseline="central"
-              className="text-sm"
-              fill="currentColor"
-              style={{ opacity: 0.48 }}
-            >
-              No data available
-            </text>
-          </svg>
-        </div>
+        <ChartEmptyState variant="donut" height={height} />
       </div>
     );
   }

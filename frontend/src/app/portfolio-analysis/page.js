@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
 import DebouncedInput from '@/components/ui/DebouncedInput';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
-import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
+import { StackedBarChart, DonutChart, BarChart, WorldMap, ChartEmptyState } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
@@ -1368,9 +1368,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !approvalStatusData || approvalStatusData.length === 0 ? (
-                        <div className="h-[280px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="bar" height={280} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (approvalStatusData?.length || 0) * 120) }}>
@@ -1412,9 +1410,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
-                        <div className="h-[200px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="stackedBar" height={200} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (approvingAuthoritiesData?.length || 0) * 140) }}>
@@ -1553,9 +1549,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !ageGroupsData || ageGroupsData.length === 0 ? (
-                        <div className="h-[280px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="donut" height={280} />
                       ) : (
                         <DonutChart
                           data={ageGroupsData}
@@ -1592,9 +1586,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !trialStatusData || trialStatusData.length === 0 ? (
-                        <div className="h-[340px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="bar" height={340} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (trialStatusData?.length || 0) * 120) }}>
