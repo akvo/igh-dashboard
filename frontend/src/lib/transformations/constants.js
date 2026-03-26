@@ -29,10 +29,10 @@ export const PHASE_CANONICAL_ORDER = {
 };
 
 // Phase color mapping for charts — only 6 key phases appear in charts
-// Brandbook: Discovery #AD5133, Pre-clinical #FE7449, Phase 1 #F9A78D,
+// Screening #875252, Discovery #AD5133, Pre-clinical #FE7449, Phase 1 #F9A78D,
 // Phase 2 #B28FC9, Phase 3 #CBAFDE, Approved #F0B456
 export const PHASE_COLORS = {
-  'Primary and secondary screening and optimisation': '#AD5133',
+  'Primary and secondary screening and optimisation': '#875252',
   'Discovery': '#AD5133',
   'Discovery and preclinical': '#AD5133',
   'Discovery & Preclinical': '#AD5133',
