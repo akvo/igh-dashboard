@@ -39,7 +39,7 @@ export function extractPhases(data) {
     label: SIMPLIFIED_PHASE_NAMES[phase.phase_name] || phase.phase_name,
     fullLabel: phase.phase_name,
     color: PHASE_COLORS[phase.phase_name] || '#cccccc',
-    sortOrder: phase.sort_order,
+    sortOrder: canonicalOrder(phase.phase_name),
   }));
 }
 
@@ -83,12 +83,11 @@ export function transformTemporalSnapshots(data) {
  * Mapping of phase names to 3 aggregated R&D stage categories
  */
 export const AGGREGATE_PHASE_MAPPING = {
+  'Primary and secondary screening and optimisation': 'earlyDevelopment',
   'Discovery': 'earlyDevelopment',
   'Discovery & Preclinical': 'earlyDevelopment',
   'Discovery and preclinical': 'earlyDevelopment',
-  'Discovery & Preclinical': 'earlyDevelopment',
   'Discovery & preclinical': 'earlyDevelopment',
-  'Primary and secondary screening and optimisation': 'earlyDevelopment',
   'Preclinical': 'earlyDevelopment',
   'Development': 'earlyDevelopment',
   'Early development': 'earlyDevelopment',
@@ -98,17 +97,14 @@ export const AGGREGATE_PHASE_MAPPING = {
   'Phase II': 'lateDevelopment',
   'Phase III': 'lateDevelopment',
   'Clinical evaluation': 'lateDevelopment',
+  'Human safety & efficacy': 'lateDevelopment',
+  'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'lateDevelopment',
   'Late development': 'lateDevelopment',
   'Late development (design and development)': 'lateDevelopment',
   'Late development (clinical validation and launch readiness)': 'lateDevelopment',
   'Regulatory filing': 'lateDevelopment',
   'PQ listing and regulatory approval': 'approved',
   'Approved': 'approved',
-  'Phase IV': 'approved',
-  'Post-marketing surveillance': 'approved',
-  'Post-marketing human safety/efficacy studies (without prior clinical studies)': 'approved',
-  'Human safety & efficacy': 'approved',
-  'Operational research for diagnostics': 'approved',
 };
 
 export const AGGREGATE_STAGE_LABELS = {

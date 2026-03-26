@@ -78,10 +78,10 @@ export default function CrossPipelineAnalytics() {
       ? apiPhases
       : [
           { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
-          { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
-          { key: 'phase_1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
-          { key: 'phase_2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
-          { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+          { key: 'pre_clinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 20 },
+          { key: 'phase_1', label: 'Phase 1', color: '#F9A78D', sortOrder: 30 },
+          { key: 'phase_2', label: 'Phase 2', color: '#B28FC9', sortOrder: 40 },
+          { key: 'phase_3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 50 },
           { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
         ];
     return [...source].sort((a, b) => (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity));
