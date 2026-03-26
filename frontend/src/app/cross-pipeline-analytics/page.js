@@ -6,7 +6,7 @@ import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon } from '@/components/icons';
-import { StackedBarChart } from '@/components/charts';
+import { StackedBarChart, ChartLegend } from '@/components/charts';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import {
@@ -215,36 +215,14 @@ export default function CrossPipelineAnalytics() {
               </div>
 
               {/* Phase checkboxes */}
-              <div className="flex items-center gap-6 py-4 flex-wrap">
-                {phases.length >= 3 && (
-                  <div className="flex gap-1 mr-2">
-                    <button type="button" onClick={() => setHiddenPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-                    <span className="text-xs text-black-24">|</span>
-                    <button type="button" onClick={() => setHiddenPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-                  </div>
-                )}
-                {phases.map((phase) => (
-                  <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                    <span
-                      onClick={() => handlePhaseToggle(phase.key)}
-                      className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                        isPhaseVisible(phase.key)
-                          ? 'border-transparent'
-                          : 'border-gray-300 bg-white'
-                      }`}
-                      style={{
-                        backgroundColor: isPhaseVisible(phase.key) ? phase.color : undefined,
-                      }}
-                    >
-                      {isPhaseVisible(phase.key) && (
-                        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                          <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
-                    </span>
-                    <span className="text-sm text-gray-700">{phase.label}</span>
-                  </label>
-                ))}
+              <div className="py-4">
+                <ChartLegend
+                  items={phases}
+                  visibleItems={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
+                  onToggle={handlePhaseToggle}
+                  onSelectAll={() => setHiddenPhases([])}
+                  onClearAll={() => setHiddenPhases(phases.map(p => p.key))}
+                />
               </div>
             </div>
 
