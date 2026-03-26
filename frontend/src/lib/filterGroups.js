@@ -141,6 +141,9 @@ export function mergeVectorControlStackedData(data) {
   if (Object.keys(merged).length > 0) {
     rest.push({ category: VECTOR_CONTROL_CONSOLIDATED_NAME, ...merged });
   }
+  const rowTotal = (row) =>
+    Object.entries(row).reduce((sum, [k, v]) => (k !== 'category' ? sum + (v || 0) : sum), 0);
+  rest.sort((a, b) => rowTotal(b) - rowTotal(a));
   return rest;
 }
 
