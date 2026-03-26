@@ -631,6 +631,13 @@ export default function PortfolioAnalysis() {
           label: phase.label,
           accessor: phase.key,
         })),
+        {
+          label: 'Total',
+          accessor: (row) => {
+            const keys = technologyPhases.map((p) => p.key);
+            return keys.reduce((sum, key) => sum + (row[key] || 0), 0);
+          },
+        },
       ];
       const csv = buildCSV(columns, technologyTableData);
       downloadCSV(csv, 'technology-types');
@@ -1750,6 +1757,14 @@ export default function PortfolioAnalysis() {
                         <span className="tabular-nums text-center block">{value || 0}</span>
                       ),
                     })),
+                    {
+                      header: 'Total',
+                      accessor: '_total',
+                      render: (_, row) => {
+                        const sum = phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0);
+                        return <span className="tabular-nums text-center block font-semibold">{sum}</span>;
+                      },
+                    },
                   ]}
                   data={paginatedTechData}
                   currentPage={currentPage}
