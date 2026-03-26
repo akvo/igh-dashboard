@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
-import { StackedBarChart, GroupedBarChart, ChartEmptyState } from '@/components/charts';
+import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -529,37 +529,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
         {/* Phase checkboxes */}
         {apiPhases.length > 0 && (
-          <div className="flex items-center gap-6 py-4 flex-wrap">
-            {apiPhases.length >= 3 && (
-              <div className="flex gap-1 mr-2">
-                <button type="button" onClick={() => setHiddenComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-                <span className="text-xs text-black-24">|</span>
-                <button type="button" onClick={() => setHiddenComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-              </div>
-            )}
-            {apiPhases.map(phase => (
-              <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                <span
-                  onClick={() => handleComparePhaseToggle(phase.key)}
-                  className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                    comparePhases.includes(phase.key)
-                      ? 'border-transparent'
-                      : 'border-gray-300 bg-white'
-                  }`}
-                  style={{
-                    backgroundColor: comparePhases.includes(phase.key) ? phase.color : undefined,
-                  }}
-                >
-                  {comparePhases.includes(phase.key) && (
-                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                      <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </span>
-                <span className="text-sm text-gray-700">{phase.label}</span>
-              </label>
-            ))}
-          </div>
+          <ChartLegend
+            items={apiPhases}
+            visibleItems={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
+            onToggle={handleComparePhaseToggle}
+            onSelectAll={() => setHiddenComparePhases([])}
+            onClearAll={() => setHiddenComparePhases(apiPhases.map(p => p.key))}
+          />
         )}
 
         <div ref={portfolioCompareRef} className="mt-4">
@@ -649,37 +625,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Stage checkboxes */}
-        <div className="flex items-center gap-6 py-4 flex-wrap">
-          {STAGE_SERIES.length >= 3 && (
-            <div className="flex gap-1 mr-2">
-              <button type="button" onClick={() => setHiddenAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-              <span className="text-xs text-black-24">|</span>
-              <button type="button" onClick={() => setHiddenAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-            </div>
-          )}
-          {STAGE_SERIES.map(stage => (
-            <label key={stage.key} className="flex items-center gap-2 cursor-pointer">
-              <span
-                onClick={() => handleAcrossStageToggle(stage.key)}
-                className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                  acrossStages.includes(stage.key)
-                    ? 'border-transparent'
-                    : 'border-gray-300 bg-white'
-                }`}
-                style={{
-                  backgroundColor: acrossStages.includes(stage.key) ? stage.color : undefined,
-                }}
-              >
-                {acrossStages.includes(stage.key) && (
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                    <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </span>
-              <span className="text-sm text-gray-700">{stage.label}</span>
-            </label>
-          ))}
-        </div>
+        <ChartLegend
+          items={STAGE_SERIES}
+          visibleItems={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
+          onToggle={handleAcrossStageToggle}
+          onSelectAll={() => setHiddenAcrossStages([])}
+          onClearAll={() => setHiddenAcrossStages(STAGE_SERIES.map(s => s.key))}
+        />
 
         {/* Grouped charts per disease */}
         <div ref={acrossPortfoliosRef} className="mt-4 flex gap-0">
@@ -1057,37 +1009,13 @@ export default function TemporalTrendsSection({
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Phase checkboxes */}
-            <div className="flex items-center gap-6 py-4 flex-wrap">
-              {phases.length >= 3 && (
-                <div className="flex gap-1 mr-2">
-                  <button type="button" onClick={() => setSelectedPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-                  <span className="text-xs text-black-24">|</span>
-                  <button type="button" onClick={() => setSelectedPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-                </div>
-              )}
-              {phases.map(phase => (
-                <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                  <span
-                    onClick={() => handlePhaseToggle(phase.key)}
-                    className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.key)
-                        ? 'border-transparent'
-                        : 'border-gray-300 bg-white'
-                    }`}
-                    style={{
-                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
-                    }}
-                  >
-                    {selectedPhases.includes(phase.key) && (
-                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                        <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-sm text-gray-700">{phase.label}</span>
-                </label>
-              ))}
-            </div>
+            <ChartLegend
+              items={phases}
+              visibleItems={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
+              onToggle={handlePhaseToggle}
+              onSelectAll={() => setHiddenPhases([])}
+              onClearAll={() => setHiddenPhases(phases.map(p => p.key))}
+            />
 
             {/* Stacked bar chart */}
             <div ref={portfolioCompositionRef} className="mt-4">

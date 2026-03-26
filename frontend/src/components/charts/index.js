@@ -5,3 +5,4 @@ export { default as BubbleChart } from './BubbleChart';
 export { default as WorldMap } from './WorldMap';
 export { default as GroupedBarChart } from './GroupedBarChart';
 export { default as ChartEmptyState } from './ChartEmptyState';
+export { default as ChartLegend } from './ChartLegend';

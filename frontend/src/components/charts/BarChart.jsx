@@ -12,6 +12,7 @@ import {
   Cell,
 } from 'recharts';
 import { wrapLabel } from '@/lib/chart-utils';
+import ChartLegend from './ChartLegend';
 
 const defaultColors = [
   '#54A5C4', // Blue
@@ -111,76 +112,21 @@ export default function BarChart({
   return (
     <div className="w-full">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6 items-center">
-          {allData.length >= 3 && (
-            <div className="flex gap-1 mr-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {});
-                  if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
-                  else setInternalVisibleItems(next);
-                }}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Select all
-              </button>
-              <span className="text-xs text-black-24">|</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: false }), {});
-                  if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
-                  else setInternalVisibleItems(next);
-                }}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-          {allData.map((item) => (
-            <label
-              key={item[nameKey]}
-              className="flex items-center gap-2 cursor-pointer select-none"
-            >
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={visibleItems[item[nameKey]]}
-                  onChange={() => toggleItem(item[nameKey])}
-                  className="sr-only"
-                />
-                <div
-                  className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-                  style={{
-                    backgroundColor: visibleItems[item[nameKey]]
-                      ? item.fill
-                      : 'transparent',
-                    borderColor: item.fill,
-                  }}
-                >
-                  {visibleItems[item[nameKey]] && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <span className="text-sm text-black-88">{item[nameKey]}</span>
-            </label>
-          ))}
-        </div>
+        <ChartLegend
+          items={allData.map(item => ({ key: item[nameKey], label: item[nameKey], color: item.fill }))}
+          visibleItems={visibleItems}
+          onToggle={toggleItem}
+          onSelectAll={() => {
+            const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: true }), {});
+            if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
+            else setInternalVisibleItems(next);
+          }}
+          onClearAll={() => {
+            const next = allData.reduce((acc, item) => ({ ...acc, [item[nameKey]]: false }), {});
+            if (isControlled && onVisibleItemsChange) onVisibleItemsChange(next);
+            else setInternalVisibleItems(next);
+          }}
+        />
       )}
 
       <div className="flex" style={{ height }}>
