@@ -14,10 +14,10 @@ import { wrapLabel } from '@/lib/chart-utils';
 
 const defaultPhases = [
   { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
-  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
-  { key: 'phase1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
-  { key: 'phase2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
-  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 20 },
+  { key: 'phase1', label: 'Phase 1', color: '#F9A78D', sortOrder: 30 },
+  { key: 'phase2', label: 'Phase 2', color: '#B28FC9', sortOrder: 40 },
+  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 50 },
   { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
 ];
 

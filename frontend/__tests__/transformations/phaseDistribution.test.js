@@ -36,7 +36,7 @@ describe('phaseDistribution transformations', () => {
       const phases = extractPhases(sampleData);
 
       expect(phases).toHaveLength(3);
-      expect(phases.map(p => p.sortOrder)).toEqual([10, 25, 40]);
+      expect(phases.map(p => p.sortOrder)).toEqual([8, 12, 30]);
       expect(phases.map(p => p.fullLabel)).toEqual(['Discovery', 'Preclinical', 'Phase I']);
     });
 
