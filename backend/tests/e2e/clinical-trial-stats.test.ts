@@ -39,9 +39,7 @@ describe("Clinical Trial Stats", () => {
   it("totalTrials equals the Active count from statusDistribution", async () => {
     const { data } = await query<{ clinicalTrialStats: ClinicalTrialStats }>(STATS_QUERY);
 
-    const activeRow = data.clinicalTrialStats.statusDistribution.find(
-      (r) => r.status === "Active",
-    );
+    const activeRow = data.clinicalTrialStats.statusDistribution.find((r) => r.status === "Active");
     expect(activeRow).toBeDefined();
     expect(data.clinicalTrialStats.totalTrials).toBe(activeRow!.trialCount);
   });

@@ -6,7 +6,11 @@ import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js"
 import { getPhaseDistribution } from "../db/queries/phaseDistribution.js";
 import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistribution.js";
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
-import { getTemporalSnapshots, getAvailableYears, getPipelineFilterPairs } from "../db/queries/temporal.js";
+import {
+  getTemporalSnapshots,
+  getAvailableYears,
+  getPipelineFilterPairs,
+} from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
 import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
 import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";

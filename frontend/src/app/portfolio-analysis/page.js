@@ -8,7 +8,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
 import DebouncedInput from '@/components/ui/DebouncedInput';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
-import { StackedBarChart, DonutChart, BarChart, WorldMap } from '@/components/charts';
+import { StackedBarChart, DonutChart, BarChart, WorldMap, ChartEmptyState } from '@/components/charts';
 import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, usePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
@@ -106,9 +106,6 @@ export default function PortfolioAnalysis() {
   const [extractSort, setExtractSort] = useState({ colId: null, direction: null }); // direction: 'asc' | 'desc' | null
   const [extractColumnFilters, setExtractColumnFilters] = useState({});
   const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
-  const [extractHealthArea, setExtractHealthArea] = useUrlState('extGha', [], arraySerializer);
-  const [extractDisease, setExtractDisease] = useUrlState('extDisease', [], arraySerializer);
-  const [extractProduct, setExtractProduct] = useUrlState('extProduct', [], arraySerializer);
   const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
   const [extractDownloading, setExtractDownloading] = useState(false);
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
@@ -196,15 +193,12 @@ export default function PortfolioAnalysis() {
   // Per-tab extract filters and data fetching
   // =========================================================
 
-  // Expand composite selections for extract filters
-  const expandedExtractDisease = expandDiseaseSelection(extractDisease);
-  const expandedExtractProduct = expandProductNameSelection(extractProduct);
-
-  // Candidates & Approved Products (Tab 1) uses the full filter set.
+  // Extract tab reuses the global filter selections (healthArea / expandedDisease / expandedProduct)
+  // so that switching between Explore and Extract tabs shares the same filters.
   const extractCandidatesFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
-    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
     phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
     search: extractSearchQuery || undefined,
   };
@@ -212,15 +206,15 @@ export default function PortfolioAnalysis() {
   // Priority and trial tabs share GHA + Disease filters but not
   // Product or R&D Stage (those fields don't exist on priorities).
   const extractPriorityFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
     search: extractSearchQuery || undefined,
   };
 
   const extractTrialFilter = {
-    globalHealthAreas: extractHealthArea.length > 0 ? extractHealthArea : undefined,
-    diseaseNames: expandedExtractDisease.length > 0 ? expandedExtractDisease : undefined,
-    productNames: expandedExtractProduct.length > 0 ? expandedExtractProduct : undefined,
+    globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
+    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
   };
 
   // Only fire the hook for the active extract tab to prevent cross-tab data
@@ -312,17 +306,7 @@ export default function PortfolioAnalysis() {
     loading: crossFilterLoading,
   });
 
-  // Extract tab cross-filtered options
-  const {
-    healthAreaOptions: extractHealthAreaOptions,
-    diseaseOptions: extractDiseaseOptions,
-    productOptions: extractProductOptions,
-  } = useCrossFilteredOptions({
-    data: crossFilterData,
-    selections: { healthArea: extractHealthArea, disease: extractDisease, product: extractProduct },
-    setters: { setHealthArea: setExtractHealthArea, setDisease: setExtractDisease, setProduct: setExtractProduct },
-    loading: crossFilterLoading,
-  });
+
 
   // Reset trials pagination when search query changes.
   useEffect(() => {
@@ -342,12 +326,37 @@ export default function PortfolioAnalysis() {
   }, []);
 
   const handleClearFilters = () => {
+    // Global GHA / Disease / Product filters
     setHealthArea([]);
     setDisease([]);
     setProduct([]);
+    // Chart-level filters
+    setProductTypeFilter([]);
+    setGeoTrialStatus([]);
+    // Chart visibility toggles
+    setPipelineHiddenPhases([]);
+    setAuthHiddenPhases([]);
+    setApprovalHiddenItems([]);
+    setTrialStatusHiddenItems([]);
+    // Extract-specific filters
+    setExtractRdStage([]);
+    // Search queries across all sub-tabs
+    setSearchQuery('');
+    setApprovedSearchQuery('');
+    setTrialsSearchQuery('');
+    setTechnologySearchQuery('');
+    setExtractSearchQuery('');
   };
 
-  const hasFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0;
+  const hasFilters =
+    healthArea.length > 0 || disease.length > 0 || product.length > 0 ||
+    productTypeFilter.length > 0 || geoTrialStatus.length > 0 ||
+    pipelineHiddenPhases.length > 0 || authHiddenPhases.length > 0 ||
+    approvalHiddenItems.length > 0 || trialStatusHiddenItems.length > 0 ||
+    extractRdStage.length > 0 ||
+    searchQuery.length > 0 || approvedSearchQuery.length > 0 ||
+    trialsSearchQuery.length > 0 || technologySearchQuery.length > 0 ||
+    extractSearchQuery.length > 0;
 
   // Get KPI values
   const activeCandidates = kpis?.find(k => k.id === 'candidates')?.value || 0;
@@ -540,12 +549,12 @@ export default function PortfolioAnalysis() {
     return data;
   }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
 
-  const hasExtractFilters = extractHealthArea.length > 0 || extractDisease.length > 0 || extractProduct.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
+  const hasExtractFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
 
   const handleResetExtractFilters = () => {
-    setExtractHealthArea([]);
-    setExtractDisease([]);
-    setExtractProduct([]);
+    setHealthArea([]);
+    setDisease([]);
+    setProduct([]);
     setExtractRdStage([]);
     setExtractSearchQuery('');
     setExtractPage(1);
@@ -622,6 +631,13 @@ export default function PortfolioAnalysis() {
           label: phase.label,
           accessor: phase.key,
         })),
+        {
+          label: 'Total',
+          accessor: (row) => {
+            const keys = technologyPhases.map((p) => p.key);
+            return keys.reduce((sum, key) => sum + (row[key] || 0), 0);
+          },
+        },
       ];
       const csv = buildCSV(columns, technologyTableData);
       downloadCSV(csv, 'technology-types');
@@ -666,7 +682,7 @@ export default function PortfolioAnalysis() {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, extractTab, appliedColumns, extractHealthArea, extractDisease, extractProduct, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, extractTab, appliedColumns, healthArea, disease, product, extractRdStage, extractSearchQuery]);
 
   // R&D stage options from DB phases
   const rdStageOptions = useMemo(() =>
@@ -1019,10 +1035,10 @@ export default function PortfolioAnalysis() {
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Global health area"
-                        value={extractHealthArea}
-                        onChange={(v) => { setExtractHealthArea(v); setExtractPage(1); }}
+                        value={healthArea}
+                        onChange={(v) => { setHealthArea(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={extractHealthAreaOptions}
+                        options={healthAreaOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
@@ -1031,10 +1047,10 @@ export default function PortfolioAnalysis() {
                     <div className="min-w-[180px]">
                       <Dropdown
                         label="Disease"
-                        value={extractDisease}
-                        onChange={(v) => { setExtractDisease(v); setExtractPage(1); }}
+                        value={disease}
+                        onChange={(v) => { setDisease(v); setExtractPage(1); }}
                         placeholder="All"
-                        options={extractDiseaseOptions}
+                        options={diseaseOptions}
                         multiSelect={true}
                         compact={true}
                         variant="outlined"
@@ -1045,10 +1061,10 @@ export default function PortfolioAnalysis() {
                       <div className="min-w-[180px]">
                         <Dropdown
                           label="Product type"
-                          value={extractProduct}
-                          onChange={(v) => { setExtractProduct(v); setExtractPage(1); }}
+                          value={product}
+                          onChange={(v) => { setProduct(v); setExtractPage(1); }}
                           placeholder="All"
-                          options={extractProductOptions}
+                          options={productOptions}
                           multiSelect={true}
                           showAllOption={true}
                           compact={true}
@@ -1231,6 +1247,11 @@ export default function PortfolioAnalysis() {
                         itemsPerPage={itemsPerPage}
                         fitContent
                         loading={extractLoading}
+                        emptyState={extractSearchQuery ? {
+                          title: 'No results found',
+                          description: `Your search "${extractSearchQuery}" did not match any results. Please try again or clear the search.`,
+                          onClear: () => { setExtractSearchQuery(''); setExtractPage(1); },
+                        } : { title: 'No results available' }}
                       />
                     )}
                   </div>
@@ -1317,6 +1338,11 @@ export default function PortfolioAnalysis() {
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
                   loading={candidatesLoading}
+                  emptyState={searchQuery ? {
+                    title: 'No candidates found',
+                    description: `Your search "${searchQuery}" did not match any candidates. Please try again or clear the search.`,
+                    onClear: () => { setSearchQuery(''); setCandidatesPage(1); },
+                  } : { title: 'No candidates available' }}
                 />
               </div>
             )}
@@ -1349,9 +1375,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !approvalStatusData || approvalStatusData.length === 0 ? (
-                        <div className="h-[280px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="bar" height={280} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (approvalStatusData?.length || 0) * 120) }}>
@@ -1393,9 +1417,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
-                        <div className="h-[200px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="stackedBar" height={200} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (approvingAuthoritiesData?.length || 0) * 140) }}>
@@ -1499,6 +1521,11 @@ export default function PortfolioAnalysis() {
                     hasNextPage={approvedHasNext}
                     itemsPerPage={itemsPerPage}
                     loading={approvedLoading}
+                    emptyState={approvedSearchQuery ? {
+                      title: 'No approved products found',
+                      description: `Your search "${approvedSearchQuery}" did not match any approved products. Please try again or clear the search.`,
+                      onClear: () => { setApprovedSearchQuery(''); setApprovedPage(1); },
+                    } : { title: 'No approved products available' }}
                   />
                 </div>
               </>
@@ -1529,9 +1556,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !ageGroupsData || ageGroupsData.length === 0 ? (
-                        <div className="h-[280px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="donut" height={280} />
                       ) : (
                         <DonutChart
                           data={ageGroupsData}
@@ -1568,9 +1593,7 @@ export default function PortfolioAnalysis() {
                           <div className="animate-pulse text-gray-400">Loading...</div>
                         </div>
                       ) : !trialStatusData || trialStatusData.length === 0 ? (
-                        <div className="h-[340px] flex items-center justify-center">
-                          <p className="text-gray-400">No data available</p>
-                        </div>
+                        <ChartEmptyState variant="bar" height={340} />
                       ) : (
                         <div className="overflow-x-auto">
                           <div style={{ minWidth: Math.max(400, (trialStatusData?.length || 0) * 120) }}>
@@ -1678,6 +1701,11 @@ export default function PortfolioAnalysis() {
                     hasNextPage={trialsHasNextPage}
                     itemsPerPage={trialsPerPage}
                     loading={trialsListLoading}
+                    emptyState={trialsSearchQuery ? {
+                      title: 'No clinical trials found',
+                      description: `Your search "${trialsSearchQuery}" did not match any clinical trials. Please try again or clear the search.`,
+                      onClear: () => { setTrialsSearchQuery(''); setTrialsPage(1); },
+                    } : { title: 'No clinical trials available' }}
                   />
                 </div>
               </>
@@ -1729,6 +1757,14 @@ export default function PortfolioAnalysis() {
                         <span className="tabular-nums text-center block">{value || 0}</span>
                       ),
                     })),
+                    {
+                      header: 'Total',
+                      accessor: '_total',
+                      render: (_, row) => {
+                        const sum = phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0);
+                        return <span className="tabular-nums text-center block font-semibold">{sum}</span>;
+                      },
+                    },
                   ]}
                   data={paginatedTechData}
                   currentPage={currentPage}
@@ -1737,6 +1773,11 @@ export default function PortfolioAnalysis() {
                   hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
                   loading={technologyLoading}
+                  emptyState={technologySearchQuery ? {
+                    title: 'No technology types found',
+                    description: `Your search "${technologySearchQuery}" did not match any technology types. Please try again or clear the search.`,
+                    onClear: () => { setTechnologySearchQuery(''); setCurrentPage(1); },
+                  } : { title: 'No technology types available' }}
                 />
               </div>
             )}
