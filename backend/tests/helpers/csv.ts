@@ -29,14 +29,9 @@ export interface CSVColumn {
   accessor: string;
 }
 
-export function buildTestCSV(
-  columns: CSVColumn[],
-  rows: Record<string, unknown>[],
-): string {
+export function buildTestCSV(columns: CSVColumn[], rows: Record<string, unknown>[]): string {
   const header = columns.map((col) => escapeCell(col.label)).join(",");
-  const body = rows.map((row) =>
-    columns.map((col) => escapeCell(row[col.accessor])).join(","),
-  );
+  const body = rows.map((row) => columns.map((col) => escapeCell(row[col.accessor])).join(","));
   return [header, ...body].join("\n") + "\n";
 }
 
@@ -61,10 +56,7 @@ function truncate(line: string, diffPos?: number, maxLen = 120): string {
  * When `UPDATE_FIXTURES=1` is set, writes the generated CSV to the fixture
  * file instead of comparing.
  */
-export function expectMatchesFixture(
-  csv: string,
-  fixtureFilename: string,
-): void {
+export function expectMatchesFixture(csv: string, fixtureFilename: string): void {
   const fixturePath = path.join(FIXTURES_DIR, fixtureFilename);
   const shouldUpdate = process.env.UPDATE_FIXTURES === "1";
 
@@ -110,10 +102,9 @@ export function expectMatchesFixture(
       }
     }
 
-    const totalDiffs = expectedLines.reduce(
-      (n, line, i) => n + (line !== actualLines[i] ? 1 : 0),
-      0,
-    ) + Math.abs(expectedLines.length - actualLines.length);
+    const totalDiffs =
+      expectedLines.reduce((n, line, i) => n + (line !== actualLines[i] ? 1 : 0), 0) +
+      Math.abs(expectedLines.length - actualLines.length);
 
     throw new Error(
       `CSV output does not match fixture ${fixtureFilename}.\n` +

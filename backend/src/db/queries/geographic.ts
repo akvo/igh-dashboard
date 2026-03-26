@@ -49,7 +49,13 @@ function getTrialLocationDistribution(
   addArrayCondition(statuses, "t.status", conditions, params);
 
   const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };
-  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
   addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
@@ -107,7 +113,13 @@ function getCandidateLocationDistribution(
   // Global filters: health area and disease filter through dim_disease,
   // product filter through dim_product — both joined via fact_pipeline_snapshot.
   const diseaseCtx = { joins, join: "JOIN dim_disease d ON f.disease_key = d.disease_key" };
-  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.global_health_areas,
+    "d.global_health_area",
+    conditions,
+    params,
+    diseaseCtx,
+  );
   addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };

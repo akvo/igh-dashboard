@@ -34,15 +34,9 @@ const SEARCHABLE_COLUMNS = [
   "pr.product_name",
 ] as const;
 
-function addSearchCondition(
-  search: string,
-  conditions: string[],
-  params: (string | number)[],
-) {
+function addSearchCondition(search: string, conditions: string[], params: (string | number)[]) {
   const pattern = `%${search}%`;
-  const orClauses = SEARCHABLE_COLUMNS.map((col) => `${col} LIKE ?`).join(
-    " OR ",
-  );
+  const orClauses = SEARCHABLE_COLUMNS.map((col) => `${col} LIKE ?`).join(" OR ");
   conditions.push(`(${orClauses})`);
   for (let i = 0; i < SEARCHABLE_COLUMNS.length; i++) {
     params.push(pattern);
