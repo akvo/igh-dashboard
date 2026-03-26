@@ -1060,9 +1060,9 @@ export default function TemporalTrendsSection({
             <div className="flex items-center gap-6 py-4 flex-wrap">
               {phases.length >= 3 && (
                 <div className="flex gap-1 mr-2">
-                  <button type="button" onClick={() => setSelectedPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
+                  <button type="button" onClick={() => setHiddenPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
                   <span className="text-xs text-black-24">|</span>
-                  <button type="button" onClick={() => setSelectedPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
+                  <button type="button" onClick={() => setHiddenPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
                 </div>
               )}
               {phases.map(phase => (
