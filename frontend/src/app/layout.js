@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
+import Analytics from '@/components/Analytics';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -103,6 +104,7 @@ const navItems = [
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <Analytics />
       <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
           <Header navItems={navItems} />
