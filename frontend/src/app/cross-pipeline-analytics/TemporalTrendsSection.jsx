@@ -35,7 +35,29 @@ const YEAR_COLORS = [
   '#e3d6c1',
 ];
 
-const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
+const PORTFOLIO_FALLBACK_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
+
+/**
+ * Build a descriptive label for a portfolio from its selections.
+ * e.g. "Chikungunya - Diagnostics", "Malaria", "Vaccines"
+ * Falls back to "Portfolio A" etc. when no selections exist.
+ */
+function buildPortfolioLabel(portfolio, productOptions, fallbackIndex) {
+  const parts = [];
+  if (portfolio.disease && portfolio.disease.length > 0) {
+    parts.push(portfolio.disease.join(', '));
+  }
+  if (portfolio.product && portfolio.product.length > 0) {
+    const productLabels = portfolio.product.map(val => {
+      const opt = productOptions.find(o =>
+        typeof o === 'object' ? o.value === val : o === val
+      );
+      return opt ? (typeof opt === 'object' ? opt.label : opt) : val;
+    });
+    parts.push(productLabels.join(', '));
+  }
+  return parts.length > 0 ? parts.join(' - ') : PORTFOLIO_FALLBACK_LABELS[fallbackIndex] || `Portfolio ${fallbackIndex + 1}`;
+}
 
 // Compact URL encoding for up to 4 portfolio {disease[], product[]} objects.
 // Uses ';' to join multi-values within each field, ':' between disease/product, ',' between portfolios.
@@ -58,7 +80,7 @@ const portfolioSerializer = {
       return {
         disease: disease ? disease.split(';') : [],
         product: product ? product.split(';') : [],
-        label: PORTFOLIO_LABELS[idx],
+        label: PORTFOLIO_FALLBACK_LABELS[idx],
       };
     });
   },
@@ -164,10 +186,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
 
-  // Active portfolios (applied and non-empty)
+  // Active portfolios (applied and non-empty) with descriptive labels
   const activePortfolios = useMemo(
-    () => appliedPortfolios.filter(Boolean),
-    [appliedPortfolios]
+    () => appliedPortfolios.filter(Boolean).map((p, idx) => ({
+      ...p,
+      label: buildPortfolioLabel(p, productOptions, idx),
+    })),
+    [appliedPortfolios, productOptions]
   );
 
   // Extract phases from all portfolio results combined
@@ -217,7 +242,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const handleCompareApply = () => {
     const applied = portfolios
       .slice(0, visibleCount)
-      .map((p, idx) => ({ ...p, label: PORTFOLIO_LABELS[idx] }))
+      .map((p, idx) => ({ ...p, label: buildPortfolioLabel(p, productOptions, idx) }))
       .filter(p => p.disease.length > 0 || p.product.length > 0);
     setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
@@ -409,9 +434,11 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
       <div className="flex items-center gap-4 mb-4">
         <div className="flex-1 grid grid-cols-2 gap-4">
-          {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
+          {PORTFOLIO_FALLBACK_LABELS.slice(0, visibleCount).map((fallbackLabel, idx) => {
+            const currentLabel = buildPortfolioLabel(portfolios[idx], productOptions, idx);
+            return (
             <div
-              key={label}
+              key={fallbackLabel}
               className="bg-[#F7F7F7] rounded px-5 pt-4 pb-2"
             >
               <div className="flex gap-4">
@@ -436,9 +463,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-400 text-right mt-2 mb-0">{label.toLowerCase()}</p>
+              <p className="text-xs text-gray-400 text-right mt-2 mb-0">{currentLabel.toLowerCase()}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
         {visibleCount < 4 && (
           <button
@@ -458,7 +486,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       {/* Tags + Year + Clear + Apply — single row */}
       <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2 flex-wrap flex-1 min-h-[44px]">
-          {appliedPortfolios.map((p, idx) => (
+          {activePortfolios.map((p, idx) => (
             <span
               key={idx}
               className="inline-flex items-center gap-2 pl-4 pr-3 py-1.5 bg-[#E76A42] text-white text-sm font-medium rounded-full"
@@ -548,10 +576,12 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               data={compareChartData}
               phases={apiPhases}
               layout="vertical"
-              height={220}
+              height={Math.max(220, compareChartData.length * 80)}
               xAxisLabel="Number of candidates / approved products"
               yAxisLabel="Portfolio"
               showFilters={false}
+              yAxisWidth={280}
+              maxTickChars={45}
               visiblePhases={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
             />
           ) : (
