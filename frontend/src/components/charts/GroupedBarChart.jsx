@@ -130,7 +130,7 @@ export default function GroupedBarChart({
           </div>
         )}
 
-        <div className="relative flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -156,6 +156,7 @@ export default function GroupedBarChart({
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
                 tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}
+                label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
               />
               <YAxis
                 type="number"
@@ -203,11 +204,6 @@ export default function GroupedBarChart({
             </BarChart>
           </ResponsiveContainer>
 
-          {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64 z-10">
-              {xAxisLabel}
-            </div>
-          )}
         </div>
       </div>
     </div>

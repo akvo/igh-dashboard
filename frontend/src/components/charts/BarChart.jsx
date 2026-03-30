@@ -141,7 +141,7 @@ export default function BarChart({
           </div>
         )}
 
-        <div className="relative flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <RechartsBarChart
               data={chartData}
@@ -170,6 +170,7 @@ export default function BarChart({
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
                     tick={{ fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                    label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
                   />
                   <YAxis
                     type="category"
@@ -225,6 +226,7 @@ export default function BarChart({
                       );
                     }}
                     height={80}
+                    label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
                   />
                   <YAxis
                     type="number"
@@ -259,11 +261,6 @@ export default function BarChart({
             </RechartsBarChart>
           </ResponsiveContainer>
 
-          {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64">
-              {xAxisLabel}
-            </div>
-          )}
         </div>
       </div>
     </div>
