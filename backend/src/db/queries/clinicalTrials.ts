@@ -4,6 +4,45 @@ import { addArrayCondition } from "./filterUtils.js";
 
 const MAX_LIMIT = 100;
 
+// All text columns searchable via the free-text filter.
+// Excluded: enrollment_count (numeric), start/end dates (via dim_date joins).
+const SEARCHABLE_COLUMNS = [
+  // fact_clinical_trial_event (t)
+  "t.trial_name",
+  "t.clinicaltrialid",
+  "t.trial_title",
+  "t.trial_phase",
+  "t.status",
+  "t.description",
+  "t.ct_results_status",
+  "t.collaborator",
+  "t.locations",
+  "t.sponsor",
+  "t.source_text",
+  "t.age_groups",
+  "t.study_type",
+  "t.funder_type",
+  "t.interventions",
+  "t.outcome_measure",
+  "t.sex",
+  "t.study_design",
+  "t.ct_results_type",
+  "t.ct_terminated_reason",
+  // Joined dimensions
+  "c.candidate_name",
+  "d.disease_group_name",
+  "pr.product_name",
+] as const;
+
+function addSearchCondition(search: string, conditions: string[], params: (string | number)[]) {
+  const pattern = `%${search}%`;
+  const orClauses = SEARCHABLE_COLUMNS.map((col) => `${col} LIKE ?`).join(" OR ");
+  conditions.push(`(${orClauses})`);
+  for (let i = 0; i < SEARCHABLE_COLUMNS.length; i++) {
+    params.push(pattern);
+  }
+}
+
 function buildWhere(filter?: ClinicalTrialFilter) {
   const joins = [
     "LEFT JOIN dim_candidate_core c ON t.candidate_key = c.candidate_key",
@@ -20,6 +59,10 @@ function buildWhere(filter?: ClinicalTrialFilter) {
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
 
   addArrayCondition(filter?.statuses, "t.status", conditions, params);
+
+  if (filter?.search) {
+    addSearchCondition(filter.search, conditions, params);
+  }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 

@@ -134,36 +134,6 @@ export const colors = {
   },
 };
 
-// R&D Phase Colors (for pipeline/stacked bar charts) — aligned to brandbook
-export const phaseColors = {
-  discovery: '#AD5133',
-  preclinical: '#FE7449',
-  phase1: '#F9A78D',
-  phase2: '#B28FC9',
-  phase3: '#CBAFDE',
-  approved: '#F0B456',
-};
-
-// Ordered array for Recharts
-export const phaseColorArray = [
-  '#AD5133', // Discovery
-  '#FE7449', // Pre-clinical
-  '#F9A78D', // Phase 1
-  '#B28FC9', // Phase 2
-  '#CBAFDE', // Phase 3
-  '#F0B456', // Approved
-];
-
-// Phase labels
-export const phaseLabels = [
-  'Discovery',
-  'Pre-clinical',
-  'Phase 1',
-  'Phase 2',
-  'Phase 3',
-  'Approved',
-];
-
 // Data Visualization - Primary Chart Palette (from brandbook Frame 3)
 export const chartColors = {
   primary: [
@@ -277,9 +247,6 @@ export const componentTokens = {
 export default {
   typography,
   colors,
-  phaseColors,
-  phaseColorArray,
-  phaseLabels,
   chartColors,
   ghaColors,
   bubbleColors,

@@ -39,7 +39,7 @@ export function extractPhases(data) {
     label: SIMPLIFIED_PHASE_NAMES[phase.phase_name] || phase.phase_name,
     fullLabel: phase.phase_name,
     color: PHASE_COLORS[phase.phase_name] || '#cccccc',
-    sortOrder: phase.sort_order,
+    sortOrder: canonicalOrder(phase.phase_name),
   }));
 }
 

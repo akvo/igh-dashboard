@@ -11,13 +11,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { wrapLabel } from '@/lib/chart-utils';
+import ChartLegend from './ChartLegend';
 
 const defaultPhases = [
   { key: 'discovery', label: 'Discovery', color: '#AD5133', sortOrder: 10 },
-  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 25 },
-  { key: 'phase1', label: 'Phase 1', color: '#F9A78D', sortOrder: 40 },
-  { key: 'phase2', label: 'Phase 2', color: '#B28FC9', sortOrder: 50 },
-  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 60 },
+  { key: 'preClinical', label: 'Pre-clinical', color: '#FE7449', sortOrder: 20 },
+  { key: 'phase1', label: 'Phase 1', color: '#F9A78D', sortOrder: 30 },
+  { key: 'phase2', label: 'Phase 2', color: '#B28FC9', sortOrder: 40 },
+  { key: 'phase3', label: 'Phase 3', color: '#CBAFDE', sortOrder: 50 },
   { key: 'approved', label: 'Approved', color: '#F0B456', sortOrder: 90 },
 ];
 
@@ -156,76 +157,21 @@ export default function StackedBarChart({
   return (
     <div className="w-full overflow-visible">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6 items-center">
-          {sortedPhases.length >= 3 && (
-            <div className="flex gap-1 mr-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: true }), {});
-                  if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
-                  else setInternalVisiblePhases(next);
-                }}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Select all
-              </button>
-              <span className="text-xs text-black-24">|</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: false }), {});
-                  if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
-                  else setInternalVisiblePhases(next);
-                }}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-          {sortedPhases.map((phase) => (
-            <label
-              key={phase.key}
-              className="flex items-center gap-2 cursor-pointer select-none"
-            >
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={!!visiblePhases[phase.key]}
-                  onChange={() => togglePhase(phase.key)}
-                  className="sr-only"
-                />
-                <div
-                  className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-                  style={{
-                    backgroundColor: visiblePhases[phase.key]
-                      ? phase.color
-                      : 'transparent',
-                    borderColor: phase.color,
-                  }}
-                >
-                  {visiblePhases[phase.key] && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <span className="text-sm text-black-88">{phase.label}</span>
-            </label>
-          ))}
-        </div>
+        <ChartLegend
+          items={sortedPhases}
+          visibleItems={visiblePhases}
+          onToggle={togglePhase}
+          onSelectAll={() => {
+            const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: true }), {});
+            if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
+            else setInternalVisiblePhases(next);
+          }}
+          onClearAll={() => {
+            const next = sortedPhases.reduce((acc, p) => ({ ...acc, [p.key]: false }), {});
+            if (isControlled && onVisiblePhasesChange) onVisiblePhasesChange(next);
+            else setInternalVisiblePhases(next);
+          }}
+        />
       )}
 
       <div className="flex" style={{ height }}>
@@ -240,7 +186,7 @@ export default function StackedBarChart({
           </div>
         )}
 
-        <div className="relative flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -269,6 +215,7 @@ export default function StackedBarChart({
                     axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                     tickLine={false}
                     tick={hideXAxisTicks ? false : { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 12 }}
+                    label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
                   />
                   <YAxis
                     type="category"
@@ -324,6 +271,7 @@ export default function StackedBarChart({
                       );
                     }}
                     height={80}
+                    label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
                   />
                   <YAxis
                     type="number"
@@ -361,12 +309,6 @@ export default function StackedBarChart({
               ))}
             </BarChart>
           </ResponsiveContainer>
-
-          {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64 z-10">
-              {xAxisLabel}
-            </div>
-          )}
         </div>
       </div>
     </div>

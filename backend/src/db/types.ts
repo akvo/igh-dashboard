@@ -302,6 +302,7 @@ export interface ClinicalTrialFilter {
   disease_names?: string[];
   product_names?: string[];
   statuses?: string[];
+  search?: string;
 }
 
 export interface ClinicalTrialConnection {

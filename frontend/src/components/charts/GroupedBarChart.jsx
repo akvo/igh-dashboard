@@ -12,6 +12,8 @@ import {
   LabelList,
 } from 'recharts';
 
+import ChartLegend from './ChartLegend';
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
 
@@ -42,14 +44,19 @@ export default function GroupedBarChart({
   showFilters = true,
   showBarLabels = false,
   barRadius = 0,
+  visibleSeries: controlledVisible,
+  onToggleSeries,
+  onSelectAll,
+  onClearAll,
 }) {
-  const [visibleSeries, setVisibleSeries] = useState(
+  // Internal state — only used when no controlled visibleSeries is provided
+  const [internalVisible, setInternalVisible] = useState(
     series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})
   );
 
   useEffect(() => {
-    if (series.length > 0) {
-      setVisibleSeries(prev => {
+    if (controlledVisible === undefined && series.length > 0) {
+      setInternalVisible(prev => {
         const next = { ...prev };
         series.forEach(s => {
           if (!(s.key in next)) {
@@ -59,14 +66,21 @@ export default function GroupedBarChart({
         return next;
       });
     }
-  }, [series]);
+  }, [series, controlledVisible]);
 
-  const toggleSeries = (seriesKey) => {
-    setVisibleSeries(prev => ({
-      ...prev,
-      [seriesKey]: !prev[seriesKey],
-    }));
-  };
+  const visibleSeries = controlledVisible ?? internalVisible;
+
+  const toggleSeries = onToggleSeries
+    ? (key) => onToggleSeries(key)
+    : (seriesKey) => setInternalVisible(prev => ({
+        ...prev,
+        [seriesKey]: !prev[seriesKey],
+      }));
+
+  const handleSelectAll = onSelectAll
+    ?? (() => setInternalVisible(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {})));
+  const handleClearAll = onClearAll
+    ?? (() => setInternalVisible(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {})));
 
   const filteredSeries = useMemo(
     () => series.filter(s => visibleSeries[s.key]),
@@ -95,66 +109,13 @@ export default function GroupedBarChart({
   return (
     <div className="w-full overflow-visible">
       {showFilters && (
-        <div className="flex flex-wrap gap-4 mb-6 items-center">
-          {series.length >= 3 && (
-            <div className="flex gap-1 mr-2">
-              <button
-                type="button"
-                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: true }), {}))}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Select all
-              </button>
-              <span className="text-xs text-black-24">|</span>
-              <button
-                type="button"
-                onClick={() => setVisibleSeries(series.reduce((acc, s) => ({ ...acc, [s.key]: false }), {}))}
-                className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-          {series.map(s => (
-            <label
-              key={s.key}
-              className="flex items-center gap-2 cursor-pointer select-none"
-            >
-              <div className="relative">
-                <input
-                  type="checkbox"
-                  checked={!!visibleSeries[s.key]}
-                  onChange={() => toggleSeries(s.key)}
-                  className="sr-only"
-                />
-                <div
-                  className="w-5 h-5 rounded border-2 flex items-center justify-center transition-colors"
-                  style={{
-                    backgroundColor: visibleSeries[s.key] ? s.color : 'transparent',
-                    borderColor: s.color,
-                  }}
-                >
-                  {visibleSeries[s.key] && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  )}
-                </div>
-              </div>
-              <span className="text-sm text-black-88">{s.label}</span>
-            </label>
-          ))}
-        </div>
+        <ChartLegend
+          items={series}
+          visibleItems={visibleSeries}
+          onToggle={toggleSeries}
+          onSelectAll={handleSelectAll}
+          onClearAll={handleClearAll}
+        />
       )}
 
       <div className="flex" style={{ height }}>
@@ -169,7 +130,7 @@ export default function GroupedBarChart({
           </div>
         )}
 
-        <div className="relative flex-1 min-w-0">
+        <div className="flex-1 min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -195,6 +156,7 @@ export default function GroupedBarChart({
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
                 tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}
+                label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
               />
               <YAxis
                 type="number"
@@ -242,11 +204,6 @@ export default function GroupedBarChart({
             </BarChart>
           </ResponsiveContainer>
 
-          {xAxisLabel && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm text-black-64 z-10">
-              {xAxisLabel}
-            </div>
-          )}
         </div>
       </div>
     </div>

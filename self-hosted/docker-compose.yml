@@ -44,6 +44,7 @@ services:
     network_mode: service:mainnetwork
     environment:
       - DATABASE_PATH=/app/data/star_schema.db
+      - ENABLE_GRAPHQL_PLAYGROUND=${ENABLE_GRAPHQL_PLAYGROUND:-false}
     volumes:
       - ./data:/app/data
     depends_on:

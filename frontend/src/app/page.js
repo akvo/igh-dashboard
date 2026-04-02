@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
@@ -12,6 +12,7 @@ import {
   BubbleChart,
   StackedBarChart,
   WorldMap,
+  ChartEmptyState,
 } from '@/components/charts';
 import {
   PieChartIcon,
@@ -29,6 +30,7 @@ import {
   useAvailableYears,
   useLastSyncDate,
   usePhases,
+  usePhaseDistribution,
   useDiseases,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
@@ -83,15 +85,6 @@ export default function Home() {
     expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
   );
 
-  // R&D stage dropdown options from DB phases
-  const rdStageOptions = useMemo(() =>
-    phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    })),
-    [phases]
-  );
-
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
   const expandedProduct = expandProductKeySelection(product);
@@ -99,6 +92,39 @@ export default function Home() {
     expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
     rdStage.length > 0 ? rdStage : null,
   );
+
+  // Fetch phases filtered by product selection for cross-filtering R&D stage dropdown
+  const productKeysForPhases = useMemo(
+    () => expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : null,
+    [expandedProduct]
+  );
+  const { phases: filteredPhases, loading: filteredPhasesLoading } = usePhaseDistribution(null, productKeysForPhases);
+
+  // R&D stage dropdown options: when a product is selected, only show phases
+  // that have data for that product; otherwise show all phases.
+  const rdStageOptions = useMemo(() => {
+    if (product.length > 0 && filteredPhases.length > 0) {
+      // filteredPhases from usePhaseDistribution: { key, label, fullLabel, color, sortOrder }
+      return filteredPhases.map(p => ({
+        label: SIMPLIFIED_PHASE_NAMES[p.fullLabel] || p.label,
+        value: p.fullLabel,
+      }));
+    }
+    // Default: all phases from usePhases: { key, name, sortOrder }
+    return phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    }));
+  }, [phases, filteredPhases, product]);
+
+  // Prune rdStage selection when options change (e.g. product filter narrows available phases)
+  const rdStageOptionValues = useMemo(() => new Set(rdStageOptions.map(o => o.value)), [rdStageOptions]);
+  useEffect(() => {
+    if (rdStage.length > 0 && rdStageOptionValues.size > 0) {
+      const valid = rdStage.filter(v => rdStageOptionValues.has(v));
+      if (valid.length !== rdStage.length) setRdStage(valid);
+    }
+  }, [rdStageOptionValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Product options for dropdown (from API).
   // Values are strings to stay consistent with URL serialization.
@@ -257,9 +283,7 @@ export default function Home() {
                   <div className="animate-pulse text-gray-400">Loading chart...</div>
                 </div>
               ) : !gqlBubbleData || gqlBubbleData.length === 0 ? (
-                <div className="h-[320px] flex items-center justify-center">
-                  <div className="text-gray-400">No data available</div>
-                </div>
+                <ChartEmptyState variant="bubble" height={320} />
               ) : chartViewTab === 'visual' ? (
                 <BubbleChart
                   data={gqlBubbleData}

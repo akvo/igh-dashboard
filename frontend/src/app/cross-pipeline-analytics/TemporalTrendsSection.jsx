@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
-import { StackedBarChart, GroupedBarChart } from '@/components/charts';
+import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -21,6 +21,7 @@ import {
 } from '@/lib/filterGroups';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
+import { createHeatmapScale } from '@/lib/heatmap';
 
 // Year colors — deliberately distinct from the stage colors
 // (earlyDev=#FE7449, lateDev=#B28FC9, approved=#F0B456) used in
@@ -34,7 +35,29 @@ const YEAR_COLORS = [
   '#e3d6c1',
 ];
 
-const PORTFOLIO_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
+const PORTFOLIO_FALLBACK_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 'Portfolio D'];
+
+/**
+ * Build a descriptive label for a portfolio from its selections.
+ * e.g. "Chikungunya - Diagnostics", "Malaria", "Vaccines"
+ * Falls back to "Portfolio A" etc. when no selections exist.
+ */
+function buildPortfolioLabel(portfolio, productOptions, fallbackIndex) {
+  const parts = [];
+  if (portfolio.disease && portfolio.disease.length > 0) {
+    parts.push(portfolio.disease.join(', '));
+  }
+  if (portfolio.product && portfolio.product.length > 0) {
+    const productLabels = portfolio.product.map(val => {
+      const opt = productOptions.find(o =>
+        typeof o === 'object' ? o.value === val : o === val
+      );
+      return opt ? (typeof opt === 'object' ? opt.label : opt) : val;
+    });
+    parts.push(productLabels.join(', '));
+  }
+  return parts.length > 0 ? parts.join(' - ') : PORTFOLIO_FALLBACK_LABELS[fallbackIndex] || `Portfolio ${fallbackIndex + 1}`;
+}
 
 // Compact URL encoding for up to 4 portfolio {disease[], product[]} objects.
 // Uses ';' to join multi-values within each field, ':' between disease/product, ',' between portfolios.
@@ -57,7 +80,7 @@ const portfolioSerializer = {
       return {
         disease: disease ? disease.split(';') : [],
         product: product ? product.split(';') : [],
-        label: PORTFOLIO_LABELS[idx],
+        label: PORTFOLIO_FALLBACK_LABELS[idx],
       };
     });
   },
@@ -163,35 +186,39 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
 
-  // Active portfolios (applied and non-empty)
+  // Active portfolios (applied and non-empty) with descriptive labels
   const activePortfolios = useMemo(
-    () => appliedPortfolios.filter(Boolean),
-    [appliedPortfolios]
+    () => appliedPortfolios.filter(Boolean).map((p, idx) => ({
+      ...p,
+      label: buildPortfolioLabel(p, productOptions, idx),
+    })),
+    [appliedPortfolios, productOptions]
   );
 
   // Extract phases from all portfolio results combined
   const allRawData = useMemo(() => results.filter(Boolean).flat(), [results]);
   const apiPhases = useMemo(() => extractTemporalPhases(allRawData), [allRawData]);
 
-  // Compare phase checkboxes — initialized from API phases
-  const [comparePhases, setComparePhases] = useState([]);
-  useMemo(() => {
-    if (apiPhases.length > 0 && comparePhases.length === 0) {
-      setComparePhases(apiPhases.map(p => p.key));
-    }
-  }, [apiPhases]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Compare phase checkboxes — persisted via URL query params
+  const [hiddenComparePhases, setHiddenComparePhases] = useUrlState('ttCPhide', [], arraySerializer);
+  const comparePhases = useMemo(
+    () => apiPhases.filter(p => !hiddenComparePhases.includes(p.key)).map(p => p.key),
+    [apiPhases, hiddenComparePhases]
+  );
   const handleComparePhaseToggle = (key) => {
-    setComparePhases(prev =>
+    setHiddenComparePhases(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
 
-  // Across-portfolios stage checkboxes
-  const [acrossStages, setAcrossStages] = useState(
-    STAGE_SERIES.map(s => s.key)
+  // Across-portfolios stage checkboxes — persisted via URL query params
+  const [hiddenAcrossStages, setHiddenAcrossStages] = useUrlState('ttCShide', [], arraySerializer);
+  const acrossStages = useMemo(
+    () => STAGE_SERIES.filter(s => !hiddenAcrossStages.includes(s.key)).map(s => s.key),
+    [hiddenAcrossStages]
   );
   const handleAcrossStageToggle = (key) => {
-    setAcrossStages(prev =>
+    setHiddenAcrossStages(prev =>
       prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
     );
   };
@@ -215,11 +242,11 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   const handleCompareApply = () => {
     const applied = portfolios
       .slice(0, visibleCount)
-      .map((p, idx) => ({ ...p, label: PORTFOLIO_LABELS[idx] }))
+      .map((p, idx) => ({ ...p, label: buildPortfolioLabel(p, productOptions, idx) }))
       .filter(p => p.disease.length > 0 || p.product.length > 0);
     setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
-    setComparePhases([]);
+    setHiddenComparePhases([]);
   };
 
   const hasCompareFilters = portfolios.some(p => p.disease.length > 0 || p.product.length > 0) || compareYear !== '' ||
@@ -236,7 +263,8 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     setAppliedPortfolios([]);
     setAppliedCompareYear('');
     setVisibleCount(2);
-    setComparePhases([]);
+    setHiddenComparePhases([]);
+    setHiddenAcrossStages([]);
   };
 
   const handleAddPortfolio = () => {
@@ -275,47 +303,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
   }, [results, activePortfolios, targetYear, apiPhases]);
 
   // --- Sub-section B: Table ---
-  const portfolioCellClass = (value, row) =>
-    row.id !== 'total' ? 'bg-[#FEF0EB]' : '';
-
-  const compareTableColumns = useMemo(() => {
-    if (activePortfolios.length === 0) return [];
-    const cols = [
-      { accessor: 'phase', header: 'Phase', minWidth: '140px' },
-    ];
-    activePortfolios.forEach((portfolio, idx) => {
-      const accessor = `portfolio_${idx}`;
-      cols.push({
-        accessor,
-        header: portfolio.label,
-        cellClassName: portfolioCellClass,
-        render: (value, row) => {
-          const sublabel = row[`${accessor}_label`];
-          return (
-            <div>
-              <div className="font-bold text-gray-900 text-base">{value}</div>
-              {sublabel && <div className="text-sm text-gray-500 mt-0.5">{sublabel}</div>}
-            </div>
-          );
-        },
-      });
-    });
-    cols.push({
-      accessor: 'total',
-      header: 'Total',
-      cellClassName: portfolioCellClass,
-      render: (value, row) => {
-        const sublabel = row.total_label;
-        return (
-          <div>
-            <div className="font-bold text-gray-900 text-base">{value}</div>
-            {sublabel && <div className="text-sm text-gray-500 mt-0.5">{sublabel}</div>}
-          </div>
-        );
-      },
-    });
-    return cols;
-  }, [activePortfolios]);
+  const portfolioAccessors = useMemo(
+    () => activePortfolios.map((_, idx) => `portfolio_${idx}`).concat('total'),
+    [activePortfolios],
+  );
 
   const compareTableData = useMemo(() => {
     if (activePortfolios.length === 0 || !targetYear) return [];
@@ -363,6 +354,50 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     return rows;
   }, [results, activePortfolios, targetYear]);
 
+  const getCompareHeatmap = useMemo(
+    () => createHeatmapScale(compareTableData, portfolioAccessors),
+    [compareTableData, portfolioAccessors],
+  );
+
+  const compareTableColumns = useMemo(() => {
+    if (activePortfolios.length === 0) return [];
+    const cols = [
+      { accessor: 'phase', header: 'Phase', minWidth: '140px' },
+    ];
+    activePortfolios.forEach((portfolio, idx) => {
+      const accessor = `portfolio_${idx}`;
+      cols.push({
+        accessor,
+        header: portfolio.label,
+        cellStyle: (value, row) => row.id !== 'total' ? getCompareHeatmap(value) : {},
+        render: (value, row) => {
+          const sublabel = row[`${accessor}_label`];
+          return (
+            <div>
+              <div className="font-bold text-base">{value || 0}</div>
+              {sublabel && <div className="text-sm mt-0.5" style={{ opacity: 0.7 }}>{sublabel}</div>}
+            </div>
+          );
+        },
+      });
+    });
+    cols.push({
+      accessor: 'total',
+      header: 'Total',
+      cellStyle: (value, row) => row.id !== 'total' ? getCompareHeatmap(value) : {},
+      render: (value, row) => {
+        const sublabel = row.total_label;
+        return (
+          <div>
+            <div className="font-bold text-base">{value || 0}</div>
+            {sublabel && <div className="text-sm mt-0.5" style={{ opacity: 0.7 }}>{sublabel}</div>}
+          </div>
+        );
+      },
+    });
+    return cols;
+  }, [activePortfolios, getCompareHeatmap]);
+
   // --- Sub-section C: Across portfolios ---
   const acrossChartData = useMemo(() => {
     if (activePortfolios.length === 0) return [];
@@ -370,7 +405,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       const raw = results[idx];
       if (!raw) return [];
       const aggregated = aggregateTemporalPhases(raw);
-      return [...aggregated].sort((a, b) => b.year - a.year).map(yd => ({
+      return [...aggregated].sort((a, b) => a.year - b.year).map(yd => ({
         category: String(yd.year),
         earlyDevelopment: yd.earlyDevelopment,
         lateDevelopment: yd.lateDevelopment,
@@ -399,9 +434,11 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
       <div className="flex items-center gap-4 mb-4">
         <div className="flex-1 grid grid-cols-2 gap-4">
-          {PORTFOLIO_LABELS.slice(0, visibleCount).map((label, idx) => (
+          {PORTFOLIO_FALLBACK_LABELS.slice(0, visibleCount).map((fallbackLabel, idx) => {
+            const currentLabel = buildPortfolioLabel(portfolios[idx], productOptions, idx);
+            return (
             <div
-              key={label}
+              key={fallbackLabel}
               className="bg-[#F7F7F7] rounded px-5 pt-4 pb-2"
             >
               <div className="flex gap-4">
@@ -426,9 +463,10 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-400 text-right mt-2 mb-0">{label.toLowerCase()}</p>
+              <p className="text-xs text-gray-400 text-right mt-2 mb-0">{currentLabel.toLowerCase()}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
         {visibleCount < 4 && (
           <button
@@ -448,7 +486,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
       {/* Tags + Year + Clear + Apply — single row */}
       <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
         <div className="flex items-center gap-2 flex-wrap flex-1 min-h-[44px]">
-          {appliedPortfolios.map((p, idx) => (
+          {activePortfolios.map((p, idx) => (
             <span
               key={idx}
               className="inline-flex items-center gap-2 pl-4 pr-3 py-1.5 bg-[#E76A42] text-white text-sm font-medium rounded-full"
@@ -519,37 +557,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 
         {/* Phase checkboxes */}
         {apiPhases.length > 0 && (
-          <div className="flex items-center gap-6 py-4 flex-wrap">
-            {apiPhases.length >= 3 && (
-              <div className="flex gap-1 mr-2">
-                <button type="button" onClick={() => setComparePhases(apiPhases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-                <span className="text-xs text-black-24">|</span>
-                <button type="button" onClick={() => setComparePhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-              </div>
-            )}
-            {apiPhases.map(phase => (
-              <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                <span
-                  onClick={() => handleComparePhaseToggle(phase.key)}
-                  className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                    comparePhases.includes(phase.key)
-                      ? 'border-transparent'
-                      : 'border-gray-300 bg-white'
-                  }`}
-                  style={{
-                    backgroundColor: comparePhases.includes(phase.key) ? phase.color : undefined,
-                  }}
-                >
-                  {comparePhases.includes(phase.key) && (
-                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                      <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </span>
-                <span className="text-sm text-gray-700">{phase.label}</span>
-              </label>
-            ))}
-          </div>
+          <ChartLegend
+            items={apiPhases}
+            visibleItems={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
+            onToggle={handleComparePhaseToggle}
+            onSelectAll={() => setHiddenComparePhases([])}
+            onClearAll={() => setHiddenComparePhases(apiPhases.map(p => p.key))}
+          />
         )}
 
         <div ref={portfolioCompareRef} className="mt-4">
@@ -562,10 +576,12 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
               data={compareChartData}
               phases={apiPhases}
               layout="vertical"
-              height={220}
+              height={Math.max(220, compareChartData.length * 80)}
               xAxisLabel="Number of candidates / approved products"
               yAxisLabel="Portfolio"
               showFilters={false}
+              yAxisWidth={280}
+              maxTickChars={45}
               visiblePhases={apiPhases.reduce((acc, p) => ({ ...acc, [p.key]: comparePhases.includes(p.key) }), {})}
             />
           ) : (
@@ -607,6 +623,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
             columns={compareTableColumns}
             data={compareTableData}
             pagination={false}
+            className="compare-table-bordered"
             emptyState={{
               title: 'No data available',
               description: 'Select portfolios and apply to see comparison data.',
@@ -638,37 +655,13 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Stage checkboxes */}
-        <div className="flex items-center gap-6 py-4 flex-wrap">
-          {STAGE_SERIES.length >= 3 && (
-            <div className="flex gap-1 mr-2">
-              <button type="button" onClick={() => setAcrossStages(STAGE_SERIES.map(s => s.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-              <span className="text-xs text-black-24">|</span>
-              <button type="button" onClick={() => setAcrossStages([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-            </div>
-          )}
-          {STAGE_SERIES.map(stage => (
-            <label key={stage.key} className="flex items-center gap-2 cursor-pointer">
-              <span
-                onClick={() => handleAcrossStageToggle(stage.key)}
-                className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                  acrossStages.includes(stage.key)
-                    ? 'border-transparent'
-                    : 'border-gray-300 bg-white'
-                }`}
-                style={{
-                  backgroundColor: acrossStages.includes(stage.key) ? stage.color : undefined,
-                }}
-              >
-                {acrossStages.includes(stage.key) && (
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                    <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </span>
-              <span className="text-sm text-gray-700">{stage.label}</span>
-            </label>
-          ))}
-        </div>
+        <ChartLegend
+          items={STAGE_SERIES}
+          visibleItems={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
+          onToggle={handleAcrossStageToggle}
+          onSelectAll={() => setHiddenAcrossStages([])}
+          onClearAll={() => setHiddenAcrossStages(STAGE_SERIES.map(s => s.key))}
+        />
 
         {/* Grouped charts per disease */}
         <div ref={acrossPortfoliosRef} className="mt-4 flex gap-0">
@@ -788,6 +781,8 @@ export default function TemporalTrendsSection({
     setAppliedDisease([]);
     setAppliedProduct([]);
     setAppliedYear([]);
+    setHiddenPhases([]);
+    setHiddenYears([]);
   };
 
   // Build API filter params (expand composite selections)
@@ -805,15 +800,17 @@ export default function TemporalTrendsSection({
   );
 
   // Sub-section A: phase selection for stacked bar
-  const [selectedPhases, setSelectedPhases] = useState([]);
-  useMemo(() => {
-    if (phases.length > 0 && selectedPhases.length === 0) {
-      setSelectedPhases(phases.map(p => p.key));
-    }
-  }, [phases]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Store hidden (not visible) phases in URL so the default state (all visible)
+  // produces a clean URL with no extra param.
+  const [hiddenPhases, setHiddenPhases] = useUrlState('ttPhide', [], arraySerializer);
+
+  const selectedPhases = useMemo(
+    () => phases.filter(p => !hiddenPhases.includes(p.key)).map(p => p.key),
+    [phases, hiddenPhases]
+  );
 
   const handlePhaseToggle = (phaseKey) => {
-    setSelectedPhases(prev =>
+    setHiddenPhases(prev =>
       prev.includes(phaseKey)
         ? prev.filter(k => k !== phaseKey)
         : [...prev, phaseKey]
@@ -821,6 +818,9 @@ export default function TemporalTrendsSection({
   };
 
   // Sub-section B: aggregated grouped bar chart
+  // Store hidden years in URL so default state (all visible) produces a clean URL.
+  const [hiddenYears, setHiddenYears] = useUrlState('ttYhide', [], arraySerializer);
+
   const aggregatedData = useMemo(() => aggregateTemporalPhases(raw), [raw]);
 
   const groupedChartData = useMemo(() => {
@@ -842,6 +842,19 @@ export default function TemporalTrendsSection({
       color: YEAR_COLORS[idx % YEAR_COLORS.length],
     }));
   }, [aggregatedData]);
+
+  const visibleYears = useMemo(
+    () => yearSeries.reduce((acc, s) => ({ ...acc, [s.key]: !hiddenYears.includes(s.key) }), {}),
+    [yearSeries, hiddenYears]
+  );
+
+  const handleYearToggle = (key) => {
+    setHiddenYears(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+  const handleYearSelectAll = () => setHiddenYears([]);
+  const handleYearClearAll = () => setHiddenYears(yearSeries.map(s => s.key));
 
   // Sub-section C: growth table
   const growthTable = useMemo(() => computeGrowthTable(aggregatedData), [aggregatedData]);
@@ -1026,37 +1039,13 @@ export default function TemporalTrendsSection({
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {/* Phase checkboxes */}
-            <div className="flex items-center gap-6 py-4 flex-wrap">
-              {phases.length >= 3 && (
-                <div className="flex gap-1 mr-2">
-                  <button type="button" onClick={() => setSelectedPhases(phases.map(p => p.key))} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Select all</button>
-                  <span className="text-xs text-black-24">|</span>
-                  <button type="button" onClick={() => setSelectedPhases([])} className="text-xs text-orange-500 hover:underline cursor-pointer bg-transparent border-0 p-0">Clear all</button>
-                </div>
-              )}
-              {phases.map(phase => (
-                <label key={phase.key} className="flex items-center gap-2 cursor-pointer">
-                  <span
-                    onClick={() => handlePhaseToggle(phase.key)}
-                    className={`w-5 h-5 border rounded flex items-center justify-center shrink-0 cursor-pointer ${
-                      selectedPhases.includes(phase.key)
-                        ? 'border-transparent'
-                        : 'border-gray-300 bg-white'
-                    }`}
-                    style={{
-                      backgroundColor: selectedPhases.includes(phase.key) ? phase.color : undefined,
-                    }}
-                  >
-                    {selectedPhases.includes(phase.key) && (
-                      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-                        <path d="M1 5L4 8L11 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-sm text-gray-700">{phase.label}</span>
-                </label>
-              ))}
-            </div>
+            <ChartLegend
+              items={phases}
+              visibleItems={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
+              onToggle={handlePhaseToggle}
+              onSelectAll={() => setHiddenPhases([])}
+              onClearAll={() => setHiddenPhases(phases.map(p => p.key))}
+            />
 
             {/* Stacked bar chart */}
             <div ref={portfolioCompositionRef} className="mt-4">
@@ -1064,6 +1053,8 @@ export default function TemporalTrendsSection({
                 <div className="h-[280px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
                 </div>
+              ) : !chartData || chartData.length === 0 ? (
+                <ChartEmptyState variant="stackedBar" height={280} description="No data available for the selected filters." />
               ) : (
                 <StackedBarChart
                   data={chartData}
@@ -1104,10 +1095,16 @@ export default function TemporalTrendsSection({
                 <div className="h-[350px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart data...</div>
                 </div>
+              ) : !groupedChartData || groupedChartData.length === 0 ? (
+                <ChartEmptyState variant="bar" height={380} description="No data available for the selected filters." />
               ) : (
                 <GroupedBarChart
                   data={groupedChartData}
                   series={yearSeries}
+                  visibleSeries={visibleYears}
+                  onToggleSeries={handleYearToggle}
+                  onSelectAll={handleYearSelectAll}
+                  onClearAll={handleYearClearAll}
                   categoryKey="category"
                   height={380}
                   xAxisLabel="R&D stage"

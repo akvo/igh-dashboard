@@ -1,12 +1,17 @@
 import { ApolloServer } from "@apollo/server";
+import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs } from "./schema/typeDefs.js";
 import { resolvers } from "./schema/resolvers.js";
 import { createLoaders } from "./utils/dataloader.js";
 
+const enablePlayground = process.env.ENABLE_GRAPHQL_PLAYGROUND === "true";
+
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  introspection: enablePlayground || process.env.NODE_ENV !== "production",
+  plugins: enablePlayground ? [ApolloServerPluginLandingPageLocalDefault()] : [],
 });
 
 const { url } = await startStandaloneServer(server, {
