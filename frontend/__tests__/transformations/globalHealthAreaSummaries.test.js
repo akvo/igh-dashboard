@@ -27,6 +27,7 @@ describe('globalHealthAreaSummaries transformations', () => {
       expect(result[0]).toEqual({
         name: 'Neglected diseases',
         value: 3625,
+        candidateCount: 3618,
         diseaseCount: 112,
         productCount: 7,
         originalName: 'Neglected disease',
