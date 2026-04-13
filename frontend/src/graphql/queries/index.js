@@ -354,6 +354,16 @@ export const GET_DISEASES = gql`
   }
 `;
 
+// Get secondary diseases
+export const GET_SECONDARY_DISEASES = gql`
+  query GetSecondaryDiseases {
+    secondaryDiseases {
+      disease_group_name
+      global_health_area
+    }
+  }
+`;
+
 // Get all phases
 export const GET_PHASES = gql`
   query GetPhases {

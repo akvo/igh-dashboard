@@ -32,6 +32,30 @@ export function getDiseases(): Pick<DimDisease, "disease_group_name" | "global_h
 }
 
 /**
+ * Get secondary diseases that appear on at least one active pipeline candidate.
+ */
+export function getSecondaryDiseases(): Pick<
+  DimDisease,
+  "disease_group_name" | "global_health_area"
+>[] {
+  const db = getDatabase();
+
+  return db
+    .prepare(
+      `
+    SELECT DISTINCT sd.disease_group_name, sd.global_health_area
+    FROM dim_disease sd
+    JOIN fact_pipeline_snapshot f ON sd.disease_key = f.secondary_disease_key
+    WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
+      AND sd.disease_group_name IS NOT NULL
+    ORDER BY sd.disease_group_name
+  `,
+    )
+    .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
+}
+
+/**
  * Get a disease by key.
  */
 export function getDiseaseByKey(disease_key: number): DimDisease | null {
