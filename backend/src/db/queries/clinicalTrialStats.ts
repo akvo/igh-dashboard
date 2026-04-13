@@ -10,6 +10,7 @@ interface ClinicalTrialStatsFilters {
   global_health_areas?: string[];
   disease_names?: string[];
   product_names?: string[];
+  phase_names?: string[];
 }
 
 const ACTIVE_TRIAL_STATUS = "Active";
@@ -35,6 +36,12 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
 
   const productCtx = { joins, join: "JOIN dim_product pr ON t.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+
+  const phaseCtx = {
+    joins,
+    join: "JOIN fact_pipeline_snapshot fps ON t.candidate_key = fps.candidate_key AND fps.is_active_flag = 1 JOIN dim_phase p ON fps.phase_key = p.phase_key",
+  };
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 
   return { joins, conditions, params };
 }

@@ -33,12 +33,18 @@ export const resolvers = {
     // KPIs (3 homepage cards)
     portfolioKPIs: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getPortfolioKPIs({
         global_health_areas: args.global_health_areas,
         disease_names: args.disease_names,
         product_names: args.product_names,
+        phase_names: args.phase_names,
       }),
 
     // Bubble chart
@@ -75,12 +81,14 @@ export const resolvers = {
         global_health_areas?: string[];
         disease_names?: string[];
         product_names?: string[];
+        phase_names?: string[];
       },
     ) =>
       getGeographicDistribution(args.location_scope, args.statuses, {
         global_health_areas: args.global_health_areas,
         disease_names: args.disease_names,
         product_names: args.product_names,
+        phase_names: args.phase_names,
       }),
 
     // Cross-pipeline temporal
@@ -175,23 +183,35 @@ export const resolvers = {
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getClinicalTrialStats({
         global_health_areas: args.global_health_areas,
         disease_names: args.disease_names,
         product_names: args.product_names,
+        phase_names: args.phase_names,
       }),
 
     // Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getRegulatoryDistribution({
         global_health_areas: args.global_health_areas,
         disease_names: args.disease_names,
         product_names: args.product_names,
+        phase_names: args.phase_names,
       }),
 
     // Portfolio analysis - product distribution (donut chart)
@@ -202,6 +222,7 @@ export const resolvers = {
         disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getProductDistribution({
@@ -209,6 +230,7 @@ export const resolvers = {
         disease_names: args.disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Portfolio analysis - product phase distribution
@@ -219,6 +241,7 @@ export const resolvers = {
         disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getProductPhaseDistribution({
@@ -226,6 +249,7 @@ export const resolvers = {
         disease_names: args.disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Portfolio analysis - technology type distribution
@@ -236,6 +260,7 @@ export const resolvers = {
         disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getTechnologyTypeDistribution({
@@ -243,6 +268,7 @@ export const resolvers = {
         disease_names: args.disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Filter dropdowns

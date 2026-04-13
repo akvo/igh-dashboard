@@ -11,6 +11,7 @@ interface RegulatoryDistributionFilters {
   global_health_areas?: string[];
   disease_names?: string[];
   product_names?: string[];
+  phase_names?: string[];
 }
 
 const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
@@ -38,6 +39,9 @@ function buildFilterClauses(filters?: RegulatoryDistributionFilters) {
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+
+  const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 
   return { joins, conditions, params };
 }

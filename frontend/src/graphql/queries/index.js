@@ -2,8 +2,8 @@ import { gql } from '@apollo/client/core';
 
 // KPI Cards Query
 export const GET_PORTFOLIO_KPIS = gql`
-  query KPICards($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
-    portfolioKPIs(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+  query KPICards($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    portfolioKPIs(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       totalDiseases
       totalCandidates
       approvedProducts
@@ -48,8 +48,8 @@ export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
 
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
-  query GeographicMap($scope: String!, $statuses: [String!], $globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
-    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+  query GeographicMap($scope: String!, $statuses: [String!], $globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       country_key
       country_name
       iso_code
@@ -209,8 +209,8 @@ export const GET_CLINICAL_TRIALS = gql`
 
 // Clinical Trial Stats - Portfolio Analysis (Trials tab)
 export const GET_CLINICAL_TRIAL_STATS = gql`
-  query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
-    clinicalTrialStats(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+  query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    clinicalTrialStats(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       totalTrials
       statusDistribution {
         status
@@ -226,8 +226,8 @@ export const GET_CLINICAL_TRIAL_STATS = gql`
 
 // Regulatory Distribution - Portfolio Analysis (Approved Products tab)
 export const GET_REGULATORY_DISTRIBUTION = gql`
-  query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
-    regulatoryDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames) {
+  query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    regulatoryDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       approvalStatus {
         approval_status
         candidateCount
@@ -247,8 +247,8 @@ export const GET_REGULATORY_DISTRIBUTION = gql`
 
 // Product Distribution - Portfolio Analysis (Donut Chart)
 export const GET_PRODUCT_DISTRIBUTION = gql`
-  query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
-    productDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+  query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    productDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       product_name
       candidateCount
     }
@@ -257,8 +257,8 @@ export const GET_PRODUCT_DISTRIBUTION = gql`
 
 // Product Phase Distribution - Portfolio Analysis (Stacked Bar by Product)
 export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
-  query ProductPhaseDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
-    productPhaseDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+  query ProductPhaseDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    productPhaseDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       product_name
       phase_name
       sort_order
@@ -269,8 +269,8 @@ export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
 
 // Technology Type Distribution - Portfolio Analysis (Technology tab)
 export const GET_TECHNOLOGY_TYPE_DISTRIBUTION = gql`
-  query TechnologyTypeDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $candidateType: String) {
-    technologyTypeDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, candidate_type: $candidateType) {
+  query TechnologyTypeDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    technologyTypeDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       technology_type
       phase_name
       sort_order

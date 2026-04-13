@@ -5,19 +5,21 @@ import { GET_GEOGRAPHIC_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformGeographicDistribution } from '@/lib/transformations';
 
-export function useGeographicDistribution(locationScope = 'Trial Location', statuses, globalHealthAreas, diseaseNames, productNames) {
+export function useGeographicDistribution(locationScope = 'Trial Location', statuses, globalHealthAreas, diseaseNames, productNames, phaseNames) {
   const { actions } = useDashboardStore();
   // Include all filter params in the cache key so each combination gets its own entry
   const effectiveStatuses = statuses?.length > 0 ? statuses : undefined;
   const effectiveGHA = globalHealthAreas?.length > 0 ? globalHealthAreas : undefined;
   const effectiveDiseases = diseaseNames?.length > 0 ? diseaseNames : undefined;
   const effectiveProducts = productNames?.length > 0 ? productNames : undefined;
+  const effectivePhases = phaseNames?.length > 0 ? phaseNames : undefined;
   const cacheKey = getCacheKey('geographicDistribution', {
     locationScope,
     statuses: effectiveStatuses,
     globalHealthAreas: effectiveGHA,
     diseaseNames: effectiveDiseases,
     productNames: effectiveProducts,
+    phaseNames: effectivePhases,
   });
   const cachedData = actions.getCachedData(cacheKey);
 
@@ -28,6 +30,7 @@ export function useGeographicDistribution(locationScope = 'Trial Location', stat
       globalHealthAreas: effectiveGHA,
       diseaseNames: effectiveDiseases,
       productNames: effectiveProducts,
+      phaseNames: effectivePhases,
     },
     skip: !!cachedData,
     fetchPolicy: 'network-only',

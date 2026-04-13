@@ -39,6 +39,7 @@ export default function PortfolioAnalysis() {
   const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
   const [disease, setDisease] = useUrlState('disease', [], arraySerializer);
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
   const [productTypeFilter, setProductTypeFilter] = useUrlState('productType', [], arraySerializer);
   const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
@@ -126,26 +127,28 @@ export default function PortfolioAnalysis() {
   const expandedDisease = expandDiseaseSelection(disease);
   const expandedProduct = expandProductNameSelection(product);
 
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, expandedDisease, expandedProduct);
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, expandedDisease, expandedProduct, rdPhase);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
   const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
-  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
+  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
+  // Separate call without rdPhase to get all available phases for the dropdown
+  const { phases: availablePhases, loading: availablePhasesLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
   const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
-  const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, candidateTypeForApi);
+  const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, rdPhase, candidateTypeForApi);
   const productTypesData = useMemo(() => mergeVectorControlChartData(rawProductTypesData), [rawProductTypesData]);
-  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, expandedDisease, expandedProduct);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
 
   const approvingAuthoritiesPhases = [
     { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
     { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
   ];
-  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, expandedDisease, expandedProduct);
+  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, expandedDisease, expandedProduct, rdPhase);
   const itemsPerPage = 10;
-  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct };
+  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, phaseNames: rdPhase };
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
@@ -193,13 +196,15 @@ export default function PortfolioAnalysis() {
   // Per-tab extract filters and data fetching
   // =========================================================
 
-  // Extract tab reuses the global filter selections (healthArea / expandedDisease / expandedProduct)
+  // Extract tab reuses the global filter selections (healthArea / expandedDisease / expandedProduct / rdPhase)
   // so that switching between Explore and Extract tabs shares the same filters.
+  // The extract-specific R&D Stage dropdown narrows further within the global phase selection.
+  const effectiveExtractPhases = extractRdStage.length > 0 ? extractRdStage : (rdPhase.length > 0 ? rdPhase : undefined);
   const extractCandidatesFilter = {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
     diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
     productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
-    phaseNames: extractRdStage.length > 0 ? extractRdStage : undefined,
+    phaseNames: effectiveExtractPhases,
     search: extractSearchQuery || undefined,
   };
 
@@ -255,8 +260,8 @@ export default function PortfolioAnalysis() {
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, expandedDisease, expandedProduct);
-  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, expandedDisease, expandedProduct);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const pipelineVisiblePhases = useMemo(() =>
@@ -326,10 +331,11 @@ export default function PortfolioAnalysis() {
   }, []);
 
   const handleClearFilters = () => {
-    // Global GHA / Disease / Product filters
+    // Global GHA / Disease / Product / R&D Phase filters
     setHealthArea([]);
     setDisease([]);
     setProduct([]);
+    setRdPhase([]);
     // Chart-level filters
     setProductTypeFilter([]);
     setGeoTrialStatus([]);
@@ -350,6 +356,7 @@ export default function PortfolioAnalysis() {
 
   const hasFilters =
     healthArea.length > 0 || disease.length > 0 || product.length > 0 ||
+    rdPhase.length > 0 ||
     productTypeFilter.length > 0 || geoTrialStatus.length > 0 ||
     pipelineHiddenPhases.length > 0 || authHiddenPhases.length > 0 ||
     approvalHiddenItems.length > 0 || trialStatusHiddenItems.length > 0 ||
@@ -684,7 +691,7 @@ export default function PortfolioAnalysis() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apolloClient, extractTab, appliedColumns, healthArea, disease, product, extractRdStage, extractSearchQuery]);
 
-  // R&D stage options from DB phases
+  // R&D stage options for the Extract tab (always shows all phases)
   const rdStageOptions = useMemo(() =>
     phases.map(p => ({
       label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
@@ -692,6 +699,31 @@ export default function PortfolioAnalysis() {
     })),
     [phases]
   );
+
+  // R&D phase options for the global filter — responsive to GHA/disease/product selection.
+  // When filters narrow the data, only phases present in that subset are shown.
+  const hasGlobalFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0;
+  const rdPhaseOptions = useMemo(() => {
+    if (hasGlobalFilters && availablePhases.length > 0) {
+      return availablePhases.map(p => ({
+        label: SIMPLIFIED_PHASE_NAMES[p.fullLabel] || p.label,
+        value: p.fullLabel,
+      }));
+    }
+    return phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    }));
+  }, [phases, availablePhases, hasGlobalFilters]);
+
+  // Prune rdPhase selection when options change (e.g. product filter narrows available phases)
+  const rdPhaseOptionValues = useMemo(() => new Set(rdPhaseOptions.map(o => o.value)), [rdPhaseOptions]);
+  useEffect(() => {
+    if (rdPhase.length > 0 && rdPhaseOptionValues.size > 0) {
+      const valid = rdPhase.filter(v => rdPhaseOptionValues.has(v));
+      if (valid.length !== rdPhase.length) setRdPhase(valid);
+    }
+  }, [rdPhaseOptionValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // Client-side filtering for technology types (backend doesn't support search)
@@ -734,8 +766,10 @@ export default function PortfolioAnalysis() {
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
                   Portfolio analysis
                 </h1>
-                <p className="text-sm text-gray-500 max-w-3xl">
-                Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.
+                <p className="text-sm text-gray-500">
+                  {activeTab === 'explore'
+                    ? 'Explore the global R&D pipeline across health areas, diseases and product types through two complementary views. Use interactive charts and maps to visualize portfolio trends and apply filters (across the complete visual insights view) or switch to the table view to build a custom dataset and export it as .csv for further analysis.'
+                    : 'Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.'}
                 </p>
               </div>
               <button
@@ -826,6 +860,18 @@ export default function PortfolioAnalysis() {
                     options={productOptions}
                     multiSelect={true}
                     loading={productsLoading}
+                    variant="outlined"
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="R&D phase"
+                    value={rdPhase}
+                    onChange={setRdPhase}
+                    placeholder="All"
+                    options={rdPhaseOptions}
+                    multiSelect={true}
+                    loading={phasesLoading || availablePhasesLoading}
                     variant="outlined"
                   />
                 </div>

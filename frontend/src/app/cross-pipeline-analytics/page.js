@@ -119,7 +119,7 @@ export default function CrossPipelineAnalytics() {
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
                   Cross-pipeline analytics
                 </h1>
-                <p className="text-sm text-gray-500 max-w-3xl">
+                <p className="text-sm text-gray-500">
                   Explore how the global health R&D pipeline evolves over time across global health areas, diseases, and product types. Track changes by R&D stage for specific IGH review years, and build custom comparisons by selecting one or multiple portfolios for deeper temporal analysis.
                 </p>
               </div>
