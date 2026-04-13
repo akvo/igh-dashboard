@@ -739,7 +739,7 @@ export default function PortfolioAnalysis() {
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
                   Portfolio analysis
                 </h1>
-                <p className="text-sm text-gray-500 max-w-4xl">
+                <p className="text-sm text-gray-500">
                   {activeTab === 'explore'
                     ? 'Explore the global R&D pipeline across health areas, diseases and product types through two complementary views. Use interactive charts and maps to visualize portfolio trends and apply filters (across the complete visual insights view) or switch to the table view to build a custom dataset and export it as .csv for further analysis.'
                     : 'Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.'}
