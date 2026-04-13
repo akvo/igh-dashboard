@@ -481,6 +481,7 @@ export const typeDefs = `#graphql
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!
+    secondaryDiseases: [DimDisease!]!
     phases: [DimPhase!]!
     products: [DimProduct!]!
     countries: [DimGeography!]!

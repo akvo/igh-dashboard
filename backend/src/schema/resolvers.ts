@@ -20,7 +20,13 @@ import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
-import { getDiseases, getPhases, getProducts, getCountries } from "../db/queries/lookups.js";
+import {
+  getDiseases,
+  getSecondaryDiseases,
+  getPhases,
+  getProducts,
+  getCountries,
+} from "../db/queries/lookups.js";
 import { getLastSyncDate } from "../db/queries/metadata.js";
 
 // Context type for resolvers
@@ -273,6 +279,7 @@ export const resolvers = {
 
     // Filter dropdowns
     diseases: () => getDiseases(),
+    secondaryDiseases: () => getSecondaryDiseases(),
     phases: () => getPhases(),
     products: () => getProducts(),
     countries: () => getCountries(),
