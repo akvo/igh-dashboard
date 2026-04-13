@@ -33,7 +33,12 @@ export const resolvers = {
     // KPIs (3 homepage cards)
     portfolioKPIs: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; phase_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getPortfolioKPIs({
         global_health_areas: args.global_health_areas,
@@ -178,7 +183,12 @@ export const resolvers = {
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; phase_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getClinicalTrialStats({
         global_health_areas: args.global_health_areas,
@@ -190,7 +200,12 @@ export const resolvers = {
     // Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution: (
       _: unknown,
-      args: { global_health_areas?: string[]; disease_names?: string[]; product_names?: string[]; phase_names?: string[] },
+      args: {
+        global_health_areas?: string[];
+        disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
     ) =>
       getRegulatoryDistribution({
         global_health_areas: args.global_health_areas,
