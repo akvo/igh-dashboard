@@ -7,6 +7,7 @@ interface ProductPhaseDistributionFilters {
   disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
+  phase_names?: string[];
 }
 
 /**
@@ -40,6 +41,7 @@ export function getProductPhaseDistribution(
   );
   addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params);
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params);
 
   if (filters?.candidate_type) {
     joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");

@@ -7,6 +7,7 @@ interface TechnologyTypeDistributionFilters {
   disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
+  phase_names?: string[];
 }
 
 /**
@@ -42,6 +43,7 @@ export function getTechnologyTypeDistribution(
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params);
 
   if (filters?.candidate_type) {
     joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");

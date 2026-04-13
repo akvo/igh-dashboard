@@ -5,9 +5,9 @@ import { GET_PRODUCT_PHASE_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformProductPhaseDistribution } from '@/lib/transformations';
 
-export function useProductPhaseDistribution(globalHealthAreas, diseaseNames, productNames, candidateType) {
+export function useProductPhaseDistribution(globalHealthAreas, diseaseNames, productNames, phaseNames, candidateType) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('productPhaseDistribution', { globalHealthAreas, diseaseNames, productNames, candidateType });
+  const cacheKey = getCacheKey('productPhaseDistribution', { globalHealthAreas, diseaseNames, productNames, phaseNames, candidateType });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PRODUCT_PHASE_DISTRIBUTION, {
@@ -15,6 +15,7 @@ export function useProductPhaseDistribution(globalHealthAreas, diseaseNames, pro
       globalHealthAreas: globalHealthAreas && globalHealthAreas.length > 0 ? globalHealthAreas : undefined,
       diseaseNames: diseaseNames && diseaseNames.length > 0 ? diseaseNames : undefined,
       productNames: productNames && productNames.length > 0 ? productNames : undefined,
+      phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
       candidateType: candidateType || undefined,
     },
     skip: !!cachedData,

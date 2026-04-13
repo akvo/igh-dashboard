@@ -5,9 +5,9 @@ import { GET_PORTFOLIO_KPIS } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformPortfolioKPIs } from '@/lib/transformations';
 
-export function usePortfolioKPIs(globalHealthAreas, diseaseNames, productNames) {
+export function usePortfolioKPIs(globalHealthAreas, diseaseNames, productNames, phaseNames) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('portfolioKPIs', { globalHealthAreas, diseaseNames, productNames });
+  const cacheKey = getCacheKey('portfolioKPIs', { globalHealthAreas, diseaseNames, productNames, phaseNames });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PORTFOLIO_KPIS, {
@@ -15,6 +15,7 @@ export function usePortfolioKPIs(globalHealthAreas, diseaseNames, productNames) 
       globalHealthAreas: globalHealthAreas?.length > 0 ? globalHealthAreas : undefined,
       diseaseNames: diseaseNames?.length > 0 ? diseaseNames : undefined,
       productNames: productNames?.length > 0 ? productNames : undefined,
+      phaseNames: phaseNames?.length > 0 ? phaseNames : undefined,
     },
     skip: !!cachedData,
     fetchPolicy: 'network-only',
