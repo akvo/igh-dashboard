@@ -8,6 +8,7 @@ import type {
   DimPriority,
   FactClinicalTrialEvent,
   CandidateGeography,
+  DiseaseHierarchyRow,
 } from "../types.js";
 
 /**
@@ -53,6 +54,50 @@ export function getSecondaryDiseases(): Pick<
   `,
     )
     .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
+}
+
+/**
+ * Get the disease hierarchy: parent diseases with their child sub-diseases,
+ * grouped by global health area.  The parent name is derived from the first
+ * segment of `disease_name` (before " - "), and child diseases are the
+ * distinct `disease_group_name` values that differ from that parent.
+ * Standalone diseases (no children) appear with child_disease = parent_disease.
+ */
+export function getDiseaseHierarchy(): DiseaseHierarchyRow[] {
+  const db = getDatabase();
+
+  return db
+    .prepare(
+      `
+    WITH active_diseases AS (
+      SELECT DISTINCT
+        d.disease_group_name,
+        d.disease_name,
+        d.global_health_area
+      FROM dim_disease d
+      JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
+      WHERE f.is_active_flag = 1
+        AND f.include_in_pipeline = 1
+        AND d.disease_group_name IS NOT NULL
+        AND d.global_health_area IS NOT NULL
+    ),
+    with_parent AS (
+      SELECT DISTINCT
+        CASE
+          WHEN INSTR(disease_name, ' - ') > 0
+          THEN TRIM(SUBSTR(disease_name, 1, INSTR(disease_name, ' - ') - 1))
+          ELSE TRIM(disease_group_name)
+        END AS parent_disease,
+        disease_group_name AS child_disease,
+        global_health_area
+      FROM active_diseases
+    )
+    SELECT DISTINCT parent_disease, child_disease, global_health_area
+    FROM with_parent
+    ORDER BY global_health_area, parent_disease, child_disease
+  `,
+    )
+    .all() as DiseaseHierarchyRow[];
 }
 
 /**

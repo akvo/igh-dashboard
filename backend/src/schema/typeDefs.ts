@@ -243,6 +243,12 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type DiseaseHierarchyRow {
+    parent_disease: String!
+    child_disease: String!
+    global_health_area: String!
+  }
+
   type PipelineFilterPair {
     disease_group_name: String!
     product_key: Int!
@@ -482,6 +488,7 @@ export const typeDefs = `#graphql
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!
     secondaryDiseases: [DimDisease!]!
+    diseaseHierarchy: [DiseaseHierarchyRow!]!
     phases: [DimPhase!]!
     products: [DimProduct!]!
     countries: [DimGeography!]!

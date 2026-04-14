@@ -364,6 +364,17 @@ export const GET_SECONDARY_DISEASES = gql`
   }
 `;
 
+// Get disease hierarchy (parent → child grouping for disease panel)
+export const GET_DISEASE_HIERARCHY = gql`
+  query GetDiseaseHierarchy {
+    diseaseHierarchy {
+      parent_disease
+      child_disease
+      global_health_area
+    }
+  }
+`;
+
 // Get all phases
 export const GET_PHASES = gql`
   query GetPhases {
