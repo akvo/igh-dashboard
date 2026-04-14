@@ -134,8 +134,6 @@ export default function PortfolioAnalysis() {
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
   const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
-  // Separate call without rdPhase to get all available phases for the dropdown
-  const { phases: availablePhases, loading: availablePhasesLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct);
   const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
   const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, rdPhase, candidateTypeForApi);
@@ -300,14 +298,23 @@ export default function PortfolioAnalysis() {
     return consolidateProductOptionsByName(names);
   }, [productsList]);
 
-  const crossFilterData = { healthAreas, diseasesRaw, pairs, allProductOptions };
+  // All R&D phase options (before cross-filtering)
+  const allPhaseOptions = useMemo(() =>
+    phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
+
+  const crossFilterData = { healthAreas, diseasesRaw, pairs, allProductOptions, allPhaseOptions };
   const crossFilterLoading = { healthAreas: healthAreasLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading };
 
-  // Explore tab cross-filtered options
-  const { healthAreaOptions, diseaseOptions, productOptions } = useCrossFilteredOptions({
+  // Explore tab cross-filtered options (GHA ↔ disease ↔ product ↔ R&D phase)
+  const { healthAreaOptions, diseaseOptions, productOptions, rdPhaseOptions } = useCrossFilteredOptions({
     data: crossFilterData,
-    selections: { healthArea, disease, product },
-    setters: { setHealthArea, setDisease, setProduct },
+    selections: { healthArea, disease, product, rdPhase },
+    setters: { setHealthArea, setDisease, setProduct, setRdPhase },
     loading: crossFilterLoading,
   });
 
@@ -700,30 +707,6 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
-  // R&D phase options for the global filter — responsive to GHA/disease/product selection.
-  // When filters narrow the data, only phases present in that subset are shown.
-  const hasGlobalFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0;
-  const rdPhaseOptions = useMemo(() => {
-    if (hasGlobalFilters && availablePhases.length > 0) {
-      return availablePhases.map(p => ({
-        label: SIMPLIFIED_PHASE_NAMES[p.fullLabel] || p.label,
-        value: p.fullLabel,
-      }));
-    }
-    return phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    }));
-  }, [phases, availablePhases, hasGlobalFilters]);
-
-  // Prune rdPhase selection when options change (e.g. product filter narrows available phases)
-  const rdPhaseOptionValues = useMemo(() => new Set(rdPhaseOptions.map(o => o.value)), [rdPhaseOptions]);
-  useEffect(() => {
-    if (rdPhase.length > 0 && rdPhaseOptionValues.size > 0) {
-      const valid = rdPhase.filter(v => rdPhaseOptionValues.has(v));
-      if (valid.length !== rdPhase.length) setRdPhase(valid);
-    }
-  }, [rdPhaseOptionValues]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // Client-side filtering for technology types (backend doesn't support search)
@@ -871,7 +854,7 @@ export default function PortfolioAnalysis() {
                     placeholder="All"
                     options={rdPhaseOptions}
                     multiSelect={true}
-                    loading={phasesLoading || availablePhasesLoading}
+                    loading={phasesLoading || pairsLoading}
                     variant="outlined"
                   />
                 </div>

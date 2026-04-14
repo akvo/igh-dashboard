@@ -220,6 +220,7 @@ export interface PipelineFilterPair {
   disease_group_name: string;
   product_key: number;
   product_name: string;
+  phase_name: string | null;
 }
 
 export interface CandidateConnection {

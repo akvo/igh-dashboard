@@ -247,6 +247,7 @@ export const typeDefs = `#graphql
     disease_group_name: String!
     product_key: Int!
     product_name: String!
+    phase_name: String
   }
 
   # =============================================================================

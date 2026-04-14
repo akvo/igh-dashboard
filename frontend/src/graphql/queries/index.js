@@ -340,6 +340,7 @@ export const GET_PIPELINE_FILTER_PAIRS = gql`
       disease_group_name
       product_key
       product_name
+      phase_name
     }
   }
 `;
