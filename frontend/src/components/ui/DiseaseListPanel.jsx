@@ -1,111 +1,130 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { CloseIcon } from '../icons';
-import { MALARIA_GROUP } from '@/lib/filterGroups';
 import { displayHealthArea } from '@/lib/transformations/constants';
 
 /**
- * Build a grouped, alphabetically sorted disease map keyed by global health area.
- * Malaria strains are nested under a "Malaria" sub-header.
+ * Build hierarchical structure from flat disease hierarchy rows.
+ * Returns: { [global_health_area]: { [parent_disease]: string[] } }
+ * where the string[] are child diseases (excluding the parent itself).
  */
-function groupDiseases(diseases) {
-  if (!diseases?.length) return {};
-  const map = {};
-  const seen = new Set();
-  for (const d of diseases) {
-    const area = d.global_health_area;
-    const name = d.disease_group_name;
-    const key = `${area}::${name}`;
-    if (!area || !name || seen.has(key)) continue;
-    seen.add(key);
-    if (!map[area]) map[area] = [];
-    map[area].push(name);
+function buildHierarchy(rows) {
+  if (!rows?.length) return {};
+
+  const tree = {};
+  for (const { parent_disease, child_disease, global_health_area } of rows) {
+    if (!tree[global_health_area]) tree[global_health_area] = {};
+    if (!tree[global_health_area][parent_disease]) {
+      tree[global_health_area][parent_disease] = [];
+    }
+    if (child_disease !== parent_disease) {
+      const list = tree[global_health_area][parent_disease];
+      if (!list.includes(child_disease)) {
+        list.push(child_disease);
+      }
+    }
   }
-  for (const area of Object.keys(map)) {
-    map[area].sort((a, b) => a.localeCompare(b));
+
+  // Sort children alphabetically within each parent
+  for (const area of Object.keys(tree)) {
+    for (const parent of Object.keys(tree[area])) {
+      tree[area][parent].sort((a, b) => a.localeCompare(b));
+    }
   }
-  return map;
+
+  return tree;
 }
 
-function DiseaseSection({ title, grouped, onExplore }) {
-  const sortedAreas = useMemo(
-    () => Object.keys(grouped).sort((a, b) => a.localeCompare(b)),
-    [grouped],
-  );
-
-  if (sortedAreas.length === 0) return null;
-
+function DiseaseRow({ name, hasExpander, expanded, onToggle, onExplore }) {
   return (
-    <div className="mb-8">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-        {title}
-      </h3>
-      {sortedAreas.map((area) => {
-        const malariaStrains = MALARIA_GROUP.members.filter(
-          (m) => m !== MALARIA_GROUP.label && grouped[area]?.includes(m),
-        );
-        const otherDiseases = (grouped[area] || []).filter(
-          (name) => !malariaStrains.includes(name),
-        );
-        return (
-          <div key={area} className="mb-5">
-            <h4 className="text-sm font-bold text-black mb-2">{displayHealthArea(area)}</h4>
-            {malariaStrains.length > 0 && (
-              <div className="mb-2">
-                <h5 className="text-sm font-semibold text-black mb-1.5 pl-1">Malaria</h5>
-                <div className="flex flex-col gap-1 pl-3">
-                  {malariaStrains.map((name) => (
-                    <button
-                      key={name}
-                      onClick={() => onExplore(name, area)}
-                      className="group flex items-center justify-between text-sm text-gray-700 hover:text-black hover:bg-gray-50 rounded px-2 py-1.5 -mx-1 transition-colors cursor-pointer bg-transparent border-0 text-left w-full"
-                    >
-                      <span>{name}</span>
-                      <span className="text-xs text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-                        Explore &rarr;
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="flex flex-col gap-1">
-              {otherDiseases.map((name) => (
-                <button
-                  key={name}
-                  onClick={() => onExplore(name)}
-                  className="group flex items-center justify-between text-sm text-gray-700 hover:text-black hover:bg-gray-50 rounded px-2 py-1.5 -mx-1 transition-colors cursor-pointer bg-transparent border-0 text-left w-full"
-                >
-                  <span>{name}</span>
-                  <span className="text-xs text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-                    Explore &rarr;
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })}
+    <div className="flex items-center group">
+      <button
+        onClick={onExplore}
+        className="flex-1 text-left text-sm text-gray-700 hover:text-black py-1.5 px-1 transition-colors cursor-pointer bg-transparent border-0"
+      >
+        {name}
+      </button>
+      {hasExpander && (
+        <button
+          onClick={onToggle}
+          className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-100 rounded transition-colors cursor-pointer bg-transparent border-0 shrink-0"
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+        >
+          <span className="text-sm font-medium leading-none">{expanded ? '−' : '+'}</span>
+        </button>
+      )}
+      {!hasExpander && (
+        <span className="text-xs text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium whitespace-nowrap pr-1">
+          Explore &rarr;
+        </span>
+      )}
     </div>
   );
 }
 
-export default function DiseaseListPanel({ isOpen, onClose, diseases = [], secondaryDiseases = [] }) {
-  const primaryGrouped = useMemo(() => groupDiseases(diseases), [diseases]);
-  const secondaryGrouped = useMemo(() => groupDiseases(secondaryDiseases), [secondaryDiseases]);
+function ParentDiseaseItem({ name, subDiseases, onExplore, globalHealthArea }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasSubDiseases = subDiseases.length > 0;
 
-  const handleExplore = (diseaseName, globalHealthArea) => {
-    onClose();
-    if (diseaseName) {
-      const params = new URLSearchParams();
-      if (globalHealthArea) params.set('gha', globalHealthArea);
-      params.set('disease', diseaseName);
-      window.location.href = `/portfolio-analysis?${params.toString()}`;
-    } else {
-      window.location.href = '/portfolio-analysis';
-    }
-  };
+  // Parent disease names are derived labels — only the child disease_group_names
+  // exist in the pipeline. When exploring a parent, pass all children.
+  const exploreNames = hasSubDiseases ? subDiseases : [name];
+
+  return (
+    <div>
+      <DiseaseRow
+        name={name}
+        hasExpander={hasSubDiseases}
+        expanded={expanded}
+        onToggle={() => setExpanded((prev) => !prev)}
+        onExplore={() => onExplore(exploreNames, globalHealthArea)}
+      />
+      {hasSubDiseases && expanded && (
+        <div className="pl-4 border-l border-gray-100 ml-1 mt-0.5 mb-1">
+          {subDiseases.map((child) => (
+            <div key={child} className="flex items-center group">
+              <button
+                onClick={() => onExplore(child, globalHealthArea)}
+                className="flex-1 text-left text-sm text-gray-500 hover:text-black py-1 px-1 transition-colors cursor-pointer bg-transparent border-0"
+              >
+                {child}
+              </button>
+              <span className="text-xs text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity font-medium whitespace-nowrap pr-1">
+                Explore &rarr;
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
+  const tree = useMemo(() => buildHierarchy(hierarchy), [hierarchy]);
+
+  const sortedAreas = useMemo(
+    () => Object.keys(tree).sort((a, b) => a.localeCompare(b)),
+    [tree],
+  );
+
+  const handleExplore = useCallback(
+    (diseaseNames, globalHealthArea) => {
+      onClose();
+      // diseaseNames can be a single string or an array of names
+      const names = Array.isArray(diseaseNames) ? diseaseNames : [diseaseNames];
+      if (names.length > 0 && names[0]) {
+        const params = new URLSearchParams();
+        if (globalHealthArea) params.set('gha', globalHealthArea);
+        params.set('disease', names.join(','));
+        window.location.href = `/portfolio-analysis?${params.toString()}`;
+      } else {
+        window.location.href = '/portfolio-analysis';
+      }
+    },
+    [onClose],
+  );
 
   return (
     <>
@@ -145,16 +164,31 @@ export default function DiseaseListPanel({ isOpen, onClose, diseases = [], secon
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-73px)] p-6">
-          <DiseaseSection
-            title="Primary diseases"
-            grouped={primaryGrouped}
-            onExplore={handleExplore}
-          />
-          <DiseaseSection
-            title="Secondary diseases"
-            grouped={secondaryGrouped}
-            onExplore={handleExplore}
-          />
+          {sortedAreas.map((area) => {
+            const parents = tree[area];
+            const sortedParents = Object.keys(parents).sort((a, b) =>
+              a.localeCompare(b),
+            );
+
+            return (
+              <div key={area} className="mb-6">
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 pb-1 border-b border-gray-200">
+                  {displayHealthArea(area)}
+                </h4>
+                <div className="flex flex-col">
+                  {sortedParents.map((parent) => (
+                    <ParentDiseaseItem
+                      key={parent}
+                      name={parent}
+                      subDiseases={parents[parent]}
+                      onExplore={handleExplore}
+                      globalHealthArea={area}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </>

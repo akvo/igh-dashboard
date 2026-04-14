@@ -359,6 +359,12 @@ export interface PortfolioCandidateNode {
   rd_stage_2019: string | null;
 }
 
+export interface DiseaseHierarchyRow {
+  parent_disease: string;
+  child_disease: string;
+  global_health_area: string;
+}
+
 export interface PortfolioCandidateFilter {
   global_health_areas?: string[];
   disease_names?: string[];

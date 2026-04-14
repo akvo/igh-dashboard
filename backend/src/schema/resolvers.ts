@@ -23,6 +23,7 @@ import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rd
 import {
   getDiseases,
   getSecondaryDiseases,
+  getDiseaseHierarchy,
   getPhases,
   getProducts,
   getCountries,
@@ -280,6 +281,7 @@ export const resolvers = {
     // Filter dropdowns
     diseases: () => getDiseases(),
     secondaryDiseases: () => getSecondaryDiseases(),
+    diseaseHierarchy: () => getDiseaseHierarchy(),
     phases: () => getPhases(),
     products: () => getProducts(),
     countries: () => getCountries(),

@@ -33,6 +33,7 @@ import {
   usePhaseDistribution,
   useDiseases,
   useSecondaryDiseases,
+  useDiseaseHierarchy,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
@@ -75,6 +76,7 @@ export default function Home() {
   const { phases, loading: phasesLoading } = usePhases();
   const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { raw: secondaryDiseasesRaw } = useSecondaryDiseases();
+  const { hierarchy: diseaseHierarchy } = useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
@@ -572,8 +574,7 @@ export default function Home() {
       <DiseaseListPanel
         isOpen={diseasePanelOpen}
         onClose={() => setDiseasePanelOpen(false)}
-        diseases={diseasesRaw}
-        secondaryDiseases={secondaryDiseasesRaw}
+        hierarchy={diseaseHierarchy}
       />
     </div>
   );
