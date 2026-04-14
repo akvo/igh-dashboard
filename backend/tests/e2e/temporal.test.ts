@@ -285,7 +285,7 @@ describe("Temporal Analysis — year filter", () => {
 });
 
 describe("Pipeline filter pairs (cross-filtering)", () => {
-  it("returns disease×product pairs with product_name", async () => {
+  it("returns disease×product×phase tuples with product_name", async () => {
     const { data } = await query<{
       pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
@@ -293,6 +293,7 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
         disease_group_name
         product_key
         product_name
+        phase_name
       }
     }`);
 
@@ -301,6 +302,8 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
       expect(typeof row.disease_group_name).toBe("string");
       expect(typeof row.product_key).toBe("number");
       expect(typeof row.product_name).toBe("string");
+      // phase_name is nullable (LEFT JOIN)
+      expect(row.phase_name === null || typeof row.phase_name === "string").toBe(true);
     });
   });
 
@@ -312,10 +315,11 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
         disease_group_name
         product_key
         product_name
+        phase_name
       }
     }`);
 
-    const keys = data.pipelineFilterPairs.map((r) => `${r.disease_group_name}::${r.product_key}`);
+    const keys = data.pipelineFilterPairs.map((r) => `${r.disease_group_name}::${r.product_key}::${r.phase_name ?? ""}`);
     const unique = new Set(keys);
     expect(unique.size).toBe(keys.length);
   });
@@ -328,6 +332,7 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
         disease_group_name
         product_key
         product_name
+        phase_name
       }
     }`);
 
