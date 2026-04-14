@@ -81,10 +81,11 @@ export function getPipelineFilterPairs(): PipelineFilterPair[] {
   return db
     .prepare(
       `
-    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name
+    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name, ph.phase_name
     FROM fact_pipeline_snapshot f
     JOIN dim_disease dd ON f.disease_key = dd.disease_key
     JOIN dim_product dp ON f.product_key = dp.product_key
+    LEFT JOIN dim_phase ph ON f.phase_key = ph.phase_key
     WHERE ${PIPELINE_FILTER}
       AND dd.disease_group_name IS NOT NULL
       AND f.product_key IS NOT NULL
