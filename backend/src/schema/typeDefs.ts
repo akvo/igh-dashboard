@@ -286,6 +286,74 @@ export const typeDefs = `#graphql
   }
 
   # =============================================================================
+  # WHO PRIORITY ALIGNMENT PAGE
+  # =============================================================================
+
+  type WhoPriorityAreaShare {
+    global_health_area: String!
+    diseasesWithPriority: Int!
+    diseasesWithNaPriority: Int!
+    diseasesWithoutPriority: Int!
+    totalDiseases: Int!
+    sharePercentage: Float!
+  }
+
+  type WhoPriorityWomenChildrenShare {
+    yes: Int!
+    na: Int!
+    no: Int!
+    total: Int!
+  }
+
+  type WhoPriorityOverview {
+    totalPriorities: Int!
+    diseasesWithPriorityByArea: [WhoPriorityAreaShare!]!
+    womenOrChildrenShare: WhoPriorityWomenChildrenShare!
+  }
+
+  type WhoPriorityDetail {
+    priority_key: Int!
+    rdpriorityid: String
+    priority_name: String
+    indication: String
+    intended_use: String
+    target_population: String
+    disease_key: Int
+    disease_name: String
+    global_health_area: String
+    product_key: Int
+    product_name: String
+  }
+
+  type WhoPriorityPipelineRow {
+    product_name: String!
+    phase_name: String!
+    sort_order: Int!
+    candidateCount: Int!
+  }
+
+  type WhoPriorityOption {
+    priority_key: Int!
+    priority_name: String!
+  }
+
+  type WhoPriorityDiseaseOption {
+    disease_key: Int!
+    disease_name: String!
+  }
+
+  type WhoPriorityProductOption {
+    product_key: Int!
+    product_name: String!
+  }
+
+  type WhoPriorityFilterOptions {
+    priorities: [WhoPriorityOption!]!
+    diseases: [WhoPriorityDiseaseOption!]!
+    products: [WhoPriorityProductOption!]!
+  }
+
+  # =============================================================================
   # CONNECTION TYPES (pagination)
   # =============================================================================
 
@@ -432,6 +500,7 @@ export const typeDefs = `#graphql
     product_names: [String!]
     candidate_type: String
     phase_names: [String!]
+    priority_keys: [Int!]
     search: String
   }
 
@@ -526,6 +595,26 @@ export const typeDefs = `#graphql
 
     # Portfolio analysis - technology type distribution
     technologyTypeDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [TechnologyTypeDistributionRow!]!
+
+    # WHO Priority alignment - overview cards
+    whoPriorityOverview: WhoPriorityOverview!
+
+    # WHO Priority alignment - single priority detail card
+    whoPriorityDetail(priority_key: Int!): WhoPriorityDetail
+
+    # WHO Priority alignment - product x phase pipeline chart
+    whoPriorityPipeline(
+      priority_key: Int
+      disease_key: Int
+      product_key: Int
+    ): [WhoPriorityPipelineRow!]!
+
+    # WHO Priority alignment - cascading filter dropdowns
+    whoPriorityFilterOptions(
+      priority_key: Int
+      disease_key: Int
+      product_key: Int
+    ): WhoPriorityFilterOptions!
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!

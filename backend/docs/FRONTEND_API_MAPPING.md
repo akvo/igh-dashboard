@@ -14,6 +14,7 @@ This document provides frontend engineers with the exact GraphQL queries, respon
 4. [Portfolio by Health Area (Stacked Bar)](#portfolio-by-health-area-stacked-bar)
 5. [Cross-pipeline Analytics (Temporal)](#cross-pipeline-analytics-temporal)
 6. [Filter Options](#filter-options)
+7. [WHO Priority Alignment](#who-priority-alignment)
 
 ---
 
@@ -594,6 +595,301 @@ Handle gracefully by:
 1. Checking for `errors` array in response
 2. Displaying user-friendly error message
 3. Providing retry functionality
+
+---
+
+## WHO Priority Alignment
+
+Powers the **WHO Priority alignment** page (Priorities overview cards,
+Individual priority analysis panel, and the Selected candidates table).
+
+### Priorities Overview (3 cards + 1 stacked bar + 1 donut)
+
+Single round-trip for the entire "Priorities overview" section.
+
+#### Query
+
+```graphql
+query WhoPriorityOverview {
+  whoPriorityOverview {
+    totalPriorities
+    diseasesWithPriorityByArea {
+      global_health_area
+      diseasesWithPriority
+      diseasesWithNaPriority
+      diseasesWithoutPriority
+      totalDiseases
+      sharePercentage
+    }
+    womenOrChildrenShare {
+      yes
+      na
+      no
+      total
+    }
+  }
+}
+```
+
+#### Response
+
+```json
+{
+  "data": {
+    "whoPriorityOverview": {
+      "totalPriorities": 62,
+      "diseasesWithPriorityByArea": [
+        {
+          "global_health_area": "Emerging infectious disease",
+          "diseasesWithPriority": 6,
+          "diseasesWithNaPriority": 1,
+          "diseasesWithoutPriority": 179,
+          "totalDiseases": 186,
+          "sharePercentage": 0.0322
+        },
+        {
+          "global_health_area": "Neglected disease",
+          "diseasesWithPriority": 6,
+          "diseasesWithNaPriority": 0,
+          "diseasesWithoutPriority": 197,
+          "totalDiseases": 203,
+          "sharePercentage": 0.0296
+        },
+        {
+          "global_health_area": "Womens Health",
+          "diseasesWithPriority": 0,
+          "diseasesWithNaPriority": 0,
+          "diseasesWithoutPriority": 59,
+          "totalDiseases": 59,
+          "sharePercentage": 0
+        }
+      ],
+      "womenOrChildrenShare": { "yes": 21, "na": 4, "no": 37, "total": 62 }
+    }
+  }
+}
+```
+
+#### UI Mapping
+
+| Field | UI Element | Notes |
+|-------|------------|-------|
+| `totalPriorities` | "Priorities" big-number card | Integer, excludes stub priorities (empty name) |
+| `diseasesWithPriorityByArea[]` | "Share of diseases with priority" stacked bar (Yes/NA/No per area) | One stack per `global_health_area` |
+| `diseasesWithPriorityByArea[].sharePercentage` | "Share with dedicated priority" mini cards (Neglected / Emerging / Women's) | Already normalized to `[0, 1]` — multiply by 100 for display |
+| `womenOrChildrenShare` | "Share of priorities dedicated to women or children" donut | `yes` = Womens Health area OR target_population matches women/children keywords; `na` = unclassifiable (no Women's Health link, empty target_population); `no` = everything else |
+
+**Keyword list** used for women/children classification (see
+`src/db/queries/whoPriority.ts`): `women`, `woman`, `maternal`, `pregnan`,
+`postpartum`, `child`, `paediatric`, `pediatric`, `infant`, `neonatal`,
+`adolescent`, `girl`, `boy`, `youth`, `young people`. Case-insensitive
+substring match against `target_population`.
+
+**NA semantics**: three states represent "priority data not available /
+cannot be classified" — not the absence of a Yes/No answer.
+
+---
+
+### Individual Priority Detail (3 info cards)
+
+Run after the user picks a priority from the dropdown.
+
+#### Query
+
+```graphql
+query WhoPriorityDetail($key: Int!) {
+  whoPriorityDetail(priority_key: $key) {
+    priority_key
+    priority_name
+    target_population
+    disease_key
+    disease_name
+    global_health_area
+    product_key
+    product_name
+  }
+}
+```
+
+#### Response
+
+```json
+{
+  "data": {
+    "whoPriorityDetail": {
+      "priority_key": 8,
+      "priority_name": "TPP: For next generation drug-susceptibility testing (DST) at peripheral centres",
+      "target_population": "People of all ages in need of evaluation for TB and those requiring drug resistance assessment.",
+      "disease_key": 34,
+      "disease_name": "Tuberculosis",
+      "global_health_area": "Neglected disease",
+      "product_key": 34,
+      "product_name": "Diagnostics"
+    }
+  }
+}
+```
+
+#### UI Mapping
+
+| Field | Card | Notes |
+|-------|------|-------|
+| `priority_name` | "Priority" card body | |
+| `disease_name` | "Disease" card body | `disease_group_name` under the hood |
+| `target_population` | "Target population" card body | May be `null` |
+
+Returns `null` when `priority_key` doesn't exist.
+
+---
+
+### Pipeline for Priority (horizontal stacked bar)
+
+Shape matches `phaseDistribution` (Global pipeline overview) and
+`temporalSnapshots` (Cross-pipeline analytics trend) so the phase legend
++ label rewriting you already do there is reusable.
+
+#### Query
+
+```graphql
+query WhoPriorityPipeline($key: Int) {
+  whoPriorityPipeline(priority_key: $key) {
+    product_name
+    phase_name
+    sort_order
+    candidateCount
+  }
+}
+```
+
+All three filter args (`priority_key`, `disease_key`, `product_key`) are
+optional so the chart can still render under partial selections.
+
+#### Response
+
+```json
+{
+  "data": {
+    "whoPriorityPipeline": [
+      { "product_name": "Vaccines", "phase_name": "Discovery & Preclinical", "sort_order": 10, "candidateCount": 2 },
+      { "product_name": "Vaccines", "phase_name": "Phase I",  "sort_order": 30, "candidateCount": 7 },
+      { "product_name": "Vaccines", "phase_name": "Phase II", "sort_order": 40, "candidateCount": 7 }
+    ]
+  }
+}
+```
+
+#### UI Mapping
+
+| Field | Chart Attribute | Notes |
+|-------|-----------------|-------|
+| `product_name` | Y-axis row | Top-level product name (e.g. `Diagnostics`, `Vaccines`, `Drugs`, `Microbicides`, `Biologics`, `Vector control products` → abbreviate to `VCP` in the legend) |
+| `phase_name` | Stack segment | Raw DB value: `Discovery & Preclinical`, `Phase I/II/III`, `Approved`, etc. Apply the same legend relabel you use on the Global pipeline chart |
+| `sort_order` | Stack order | Ascending = earlier phases first |
+| `candidateCount` | Segment length | `COUNT(DISTINCT candidate_key)` — reconciles with `productPhaseDistribution` |
+
+Returns `[]` when the filter matches no candidates.
+
+---
+
+### Cascading Filter Dropdowns (WHO Priority / Disease / Product)
+
+Single round-trip that returns all three lists filtered to compatible
+values, based on the current selection.
+
+#### Query
+
+```graphql
+query WhoPriorityFilterOptions(
+  $priority: Int
+  $disease: Int
+  $product: Int
+) {
+  whoPriorityFilterOptions(
+    priority_key: $priority
+    disease_key: $disease
+    product_key: $product
+  ) {
+    priorities { priority_key priority_name }
+    diseases { disease_key disease_name }
+    products { product_key product_name }
+  }
+}
+```
+
+Call it once without args to populate the initial dropdowns, then re-call
+after each user selection. Each returned list excludes the current arg
+for its own axis so the selected value stays visible. E.g. passing
+`priority_key: 8` returns the full priority list compatible with the
+selected disease/product (if any) plus priority 8 itself; `diseases` and
+`products` collapse to that priority's linked disease + product.
+
+#### Response
+
+```json
+{
+  "data": {
+    "whoPriorityFilterOptions": {
+      "priorities": [
+        { "priority_key": 8, "priority_name": "TPP: For next generation drug-susceptibility testing (DST) at peripheral centres" }
+      ],
+      "diseases": [
+        { "disease_key": 34, "disease_name": "Tuberculosis" }
+      ],
+      "products": [
+        { "product_key": 34, "product_name": "Diagnostics" }
+      ]
+    }
+  }
+}
+```
+
+---
+
+### Selected Candidates Table
+
+Reuses the existing `portfolioCandidates` query; the new
+`priority_keys` filter scopes the table to candidates linked to a
+selected priority via `bridge_candidate_priority`.
+
+#### Query
+
+```graphql
+query SelectedCandidates($keys: [Int!], $limit: Int, $offset: Int, $search: String) {
+  portfolioCandidates(
+    filter: { priority_keys: $keys, search: $search }
+    limit: $limit
+    offset: $offset
+  ) {
+    totalCount
+    hasNextPage
+    nodes {
+      candidate_key
+      candidateid
+      candidate_name
+      candidate_type
+      global_health_area
+      disease_name
+      secondary_disease_name
+      product_name
+    }
+  }
+}
+```
+
+#### UI Mapping
+
+| Field | Column | Notes |
+|-------|--------|-------|
+| `global_health_area` | "Global health area" | |
+| `candidate_type` | "Type" | e.g. `Candidate`, `Product` (AIM candidate in mock) |
+| `candidateid` | "#ID" | Raw UUID. If the frontend wants a numeric-style label, use `candidate_key` instead |
+| `candidate_name` | "Name" | Renders with an "Explore" affordance |
+| `disease_name` | "Disease" | `disease_group_name` |
+| `secondary_disease_name` | "Owned area" | Null for rows with no secondary disease |
+| `product_name` | "Products" | Top-level product |
+
+All existing `PortfolioCandidateFilter` fields still work alongside
+`priority_keys` (e.g. combine with `search` for the table's search box).
 
 ---
 

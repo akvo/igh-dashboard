@@ -79,6 +79,8 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   );
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
   addArrayCondition(filter?.phase_names, "p.phase_name", conditions, params);
+  // priority_keys requires the bridge join we add unconditionally below via buildJoins.
+  addArrayCondition(filter?.priority_keys, "bcp.priority_key", conditions, params);
 
   if (filter?.candidate_type) {
     conditions.push("c.candidate_type = ?");
@@ -92,7 +94,11 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   return { whereClause: `WHERE ${conditions.join(" AND ")}`, params };
 }
 
-const JOINS = `
+// Only pay for the bridge join when the caller is actually scoping by priority —
+// the Portfolio Analysis / Approved Products tabs never set priority_keys and
+// we don't want to change their row counts (the bridge is many-to-many).
+function buildJoins(filter?: PortfolioCandidateFilter) {
+  const base = `
     JOIN fact_pipeline_snapshot f ON c.candidate_key = f.candidate_key
     LEFT JOIN dim_disease d ON f.disease_key = d.disease_key
     LEFT JOIN dim_product pr ON f.product_key = pr.product_key
@@ -101,6 +107,12 @@ const JOINS = `
     LEFT JOIN dim_product sp ON f.sub_product_key = sp.product_key
     LEFT JOIN dim_candidate_tech t ON f.technology_key = t.technology_key
 `;
+
+  if (filter?.priority_keys && filter.priority_keys.length > 0) {
+    return `${base}    JOIN bridge_candidate_priority bcp ON bcp.candidate_key = c.candidate_key\n`;
+  }
+  return base;
+}
 
 /**
  * Get candidates with flattened dimension data for portfolio tables.
@@ -114,11 +126,12 @@ export function getPortfolioCandidates(
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
   const { whereClause, params } = buildWhere(filter);
+  const joins = buildJoins(filter);
 
   const countSql = `
     SELECT COUNT(DISTINCT c.candidate_key) as total
     FROM dim_candidate_core c
-    ${JOINS}
+    ${joins}
     ${whereClause}
   `;
   const countResult = db.prepare(countSql).get(...params) as { total: number };
@@ -169,7 +182,7 @@ export function getPortfolioCandidates(
         r.japanese_mhlw_approval_status,
         r.us_fda_approval_status
       FROM dim_candidate_core c
-      ${JOINS}
+      ${joins}
       ${whereClause}
       ORDER BY c.candidate_name NULLS LAST
       LIMIT ? OFFSET ?

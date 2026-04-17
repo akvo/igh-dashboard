@@ -412,6 +412,7 @@ export interface PortfolioCandidateFilter {
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
+  priority_keys?: number[];
   search?: string;
 }
 

@@ -25,6 +25,12 @@ import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
 import {
+  getWhoPriorityOverview,
+  getWhoPriorityDetail,
+  getWhoPriorityPipeline,
+  getWhoPriorityFilterOptions,
+} from "../db/queries/whoPriority.js";
+import {
   getDiseases,
   getSecondaryDiseases,
   getDiseaseHierarchy,
@@ -160,6 +166,9 @@ export const resolvers = {
           secondary_disease_names?: string[];
           product_names?: string[];
           candidate_type?: string;
+          phase_names?: string[];
+          priority_keys?: number[];
+          search?: string;
         };
         limit?: number;
         offset?: number;
@@ -312,6 +321,35 @@ export const resolvers = {
         product_names: args.product_names,
         candidate_type: args.candidate_type,
         phase_names: args.phase_names,
+      }),
+
+    // WHO Priority alignment - overview cards
+    whoPriorityOverview: () => getWhoPriorityOverview(),
+
+    // WHO Priority alignment - single priority detail
+    whoPriorityDetail: (_: unknown, args: { priority_key: number }) =>
+      getWhoPriorityDetail(args.priority_key),
+
+    // WHO Priority alignment - product x phase pipeline chart
+    whoPriorityPipeline: (
+      _: unknown,
+      args: { priority_key?: number; disease_key?: number; product_key?: number },
+    ) =>
+      getWhoPriorityPipeline({
+        priority_key: args.priority_key,
+        disease_key: args.disease_key,
+        product_key: args.product_key,
+      }),
+
+    // WHO Priority alignment - cascading filter dropdowns
+    whoPriorityFilterOptions: (
+      _: unknown,
+      args: { priority_key?: number; disease_key?: number; product_key?: number },
+    ) =>
+      getWhoPriorityFilterOptions({
+        priority_key: args.priority_key,
+        disease_key: args.disease_key,
+        product_key: args.product_key,
       }),
 
     // Filter dropdowns
