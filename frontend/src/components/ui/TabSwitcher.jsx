@@ -29,13 +29,13 @@ const TabSwitcher = ({
                 : `${iconOnly ? 'w-8 h-8' : 'px-5 h-8'} text-sm`
               }
               ${isActive
-                ? `bg-white text-black font-medium shadow-sm ${isLarge ? '' : 'rounded'}`
+                ? `bg-[#262626] text-white font-medium shadow-sm hover:bg-[#262626]/88 ${isLarge ? '' : 'rounded'}`
                 : 'bg-transparent text-gray-400 font-normal hover:bg-white/50'
               }`}
           >
             {TabIcon && (
               <TabIcon
-                className={`${isLarge ? 'w-5 h-5' : 'w-[18px] h-[18px]'} ${isActive ? 'text-black' : 'text-gray-400'}`}
+                className={`${isLarge ? 'w-5 h-5' : 'w-[18px] h-[18px]'} ${isActive ? 'text-white' : 'text-gray-400'}`}
                 strokeWidth={2}
               />
             )}
