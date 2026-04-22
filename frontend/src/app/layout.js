@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
 import Analytics from '@/components/Analytics';
+import { ResponsiveGate } from '@/components/layout';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -109,7 +110,7 @@ export default function RootLayout({ children }) {
         <ApolloProvider>
           <Header navItems={navItems} />
           <div style={{ paddingTop: 90 }}>
-            {children}
+            <ResponsiveGate>{children}</ResponsiveGate>
           </div>
         </ApolloProvider>
       </body>
