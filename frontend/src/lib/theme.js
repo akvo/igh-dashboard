@@ -159,6 +159,15 @@ export const chartColors = {
     '#D6C6C6', // Rose
     '#F2E8D8', // Sand
   ],
+  // Bubble chart — one gradual [light, dark] ramp per view tab. Bubbles are
+  // shaded by rank (largest value → darkest end). Endpoints are staged
+  // defaults pending brand sign-off; swap the hexes here when finalised.
+  bubbleRamps: {
+    gha: ['#FFDCD1', '#AD5133'],         // orange/rust — reuses brand
+    ghaType: ['#C9DDF2', '#1F4E79'],     // blue
+    disease: ['#CCE7D8', '#2F6B48'],     // green
+    diseaseType: ['#E3D2F2', '#5B2A86'], // violet
+  },
 };
 
 // Global Health Area Colors (from brandbook palette)

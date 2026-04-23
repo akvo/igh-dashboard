@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { interpolateRgb } from 'd3-interpolate';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
+import { chartColors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, DiseaseListPanel } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, ScrollableTable, Table, DiseaseListPanel } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -23,6 +25,9 @@ import {
 import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
+  useGhaProductTypeSummaries,
+  useDiseaseSummaries,
+  useDiseaseProductTypeSummaries,
   useCandidateTypeDistribution,
   useGeographicDistribution,
   useTemporalSnapshots,
@@ -48,11 +53,21 @@ const candidateTypeOptions = [
   { label: 'Approved products', value: 'Product' },
 ];
 
+// Bubble chart view tabs — each slices the same pipeline data along a
+// different axis. Table columns, color ramp, and fetcher all key off this.
+const bubbleViewTabs = [
+  { value: 'gha', label: 'GHA' },
+  { value: 'ghaType', label: 'GHA and product types' },
+  { value: 'disease', label: 'Diseases' },
+  { value: 'diseaseType', label: 'Disease and product types' },
+];
+
 
 export default function Home() {
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
   const [rdStage, setRdStage] = useUrlState('rdStage', [], arraySerializer);
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
+  const [bubbleView, setBubbleView] = useUrlState('bubbleView', 'gha', stringSerializer);
   const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
   const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
   const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
@@ -68,9 +83,111 @@ export default function Home() {
 
   const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
-    bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes,
+  // The GHA-only summary feeds both the bubble chart (gha view) and the
+  // cross-pipeline dropdown down-page, so it always fetches. The three
+  // expanded views only fetch when their tab is active.
+  const bubbleCandidateArg =
+    bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes;
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(bubbleCandidateArg);
+  const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
+    bubbleCandidateArg,
+    { skip: bubbleView !== 'ghaType' },
   );
+  const { bubbleData: diseaseBubbleData, loading: diseaseBubbleLoading } = useDiseaseSummaries(
+    bubbleCandidateArg,
+    { skip: bubbleView !== 'disease' },
+  );
+  const { bubbleData: diseaseTypeBubbleData, loading: diseaseTypeLoading } = useDiseaseProductTypeSummaries(
+    bubbleCandidateArg,
+    { skip: bubbleView !== 'diseaseType' },
+  );
+
+  // Active-view data + loading switch. Each view owns its column set and
+  // color ramp; the BubbleChart component itself stays view-agnostic.
+  const activeBubbleData = useMemo(() => {
+    switch (bubbleView) {
+      case 'ghaType': return ghaTypeBubbleData;
+      case 'disease': return diseaseBubbleData;
+      case 'diseaseType': return diseaseTypeBubbleData;
+      default: return gqlBubbleData;
+    }
+  }, [bubbleView, gqlBubbleData, ghaTypeBubbleData, diseaseBubbleData, diseaseTypeBubbleData]);
+
+  const activeBubbleLoading =
+    bubbleView === 'gha' ? bubbleLoading
+    : bubbleView === 'ghaType' ? ghaTypeLoading
+    : bubbleView === 'disease' ? diseaseBubbleLoading
+    : diseaseTypeLoading;
+
+  // Per-view gradual color scale: (datum, rank, total) → hex.
+  // rank 0 = smallest, total-1 = largest → darkest shade.
+  const bubbleColorScale = useMemo(() => {
+    const [light, dark] = chartColors.bubbleRamps[bubbleView] || chartColors.bubbleRamps.gha;
+    const interp = interpolateRgb(light, dark);
+    return (_d, rank, total) => interp(total <= 1 ? 1 : rank / (total - 1));
+  }, [bubbleView]);
+
+  const renderBubbleTooltip = useCallback((d) => (
+    <div>
+      <div style={{ fontWeight: 600, marginBottom: 4 }}>{d?.label || d?.name}</div>
+      <div>{(d?.candidateCount ?? 0).toLocaleString()} candidates</div>
+      <div>{(d?.productCount ?? 0).toLocaleString()} approved products</div>
+    </div>
+  ), []);
+
+  // Per-view table column spec, consumed by <Table> (which wants
+  // `header`/`accessor`/`type`) and mapped for CSV export below. The
+  // `share` column's render function reads the pre-computed percentage
+  // baked onto each row in `activeBubbleTableRows`.
+  const bubbleTableColumns = useMemo(() => {
+    const TOTAL = { header: 'Total', accessor: 'value', type: 'number' };
+    const CANDS = { header: 'Candidates in development', accessor: 'candidateCount', type: 'number' };
+    const PRODS = { header: 'Approved products', accessor: 'productCount', type: 'number' };
+    const SHARE = {
+      header: 'Share',
+      accessor: 'share',
+      render: (value) => <span className="tabular-nums">{value}</span>,
+    };
+
+    switch (bubbleView) {
+      case 'ghaType':
+        return [
+          { header: 'Health area', accessor: 'group' },
+          { header: 'Product type', accessor: 'productType' },
+          TOTAL, CANDS, PRODS,
+        ];
+      case 'disease':
+        return [
+          { header: 'Disease', accessor: 'name' },
+          { header: 'Health area', accessor: 'group' },
+          TOTAL, CANDS, PRODS,
+        ];
+      case 'diseaseType':
+        return [
+          { header: 'Disease', accessor: 'disease' },
+          { header: 'Health area', accessor: 'group' },
+          { header: 'Product type', accessor: 'productType' },
+          TOTAL, CANDS, PRODS,
+        ];
+      default: // gha
+        return [
+          { header: 'Health area', accessor: 'name' },
+          TOTAL, CANDS, PRODS, SHARE,
+        ];
+    }
+  }, [bubbleView]);
+
+  // Bake the `share` percentage onto each row so the Table's render
+  // function doesn't need access to the dataset total. Also gives the
+  // CSV export a ready-to-serialize string.
+  const activeBubbleTableRows = useMemo(() => {
+    const total = activeBubbleData.reduce((sum, d) => sum + (d.value || 0), 0);
+    return activeBubbleData.map((row) => ({
+      ...row,
+      share: total > 0 ? `${((row.value / total) * 100).toFixed(1)}%` : '0%',
+      id: row.key || row.name,
+    }));
+  }, [activeBubbleData]);
   const { products, loading: productsLoading } = useProducts();
   const { phases, loading: phasesLoading } = usePhases();
   const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
@@ -247,15 +364,12 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
             {/* Bubble Chart Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col">
-              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                <div className="min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Scale of R&D by global health area
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Toggle views: Candidates in development | Approved products
-                  </p>
-                </div>
+              {/* Title + controls share a single row; description drops
+                  beneath both so it can't push the controls to a new row. */}
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <h3 className="text-base sm:text-lg font-bold text-black min-w-0">
+                  Scale of R&D by global health area
+                </h3>
                 <div className="flex items-center gap-2 shrink-0">
                   <Dropdown
                     value={bubbleCandidateTypes}
@@ -267,17 +381,14 @@ export default function Home() {
                   />
                   <ChartMenu
                     onDownloadCSV={() => {
-                      const columns = [
-                        { label: 'Global health area', accessor: 'name' },
-                        { label: 'Total', accessor: 'value' },
-                        { label: 'Candidates in development', accessor: 'candidateCount' },
-                        { label: 'Approved products', accessor: 'productCount' },
-                        { label: 'Diseases', accessor: 'diseaseCount' },
-                      ];
-                      const csv = buildCSV(columns, gqlBubbleData);
-                      downloadCSVFile(csv, 'scale-of-rd');
+                      const csvColumns = bubbleTableColumns.map((c) => ({
+                        label: c.header,
+                        accessor: c.accessor,
+                      }));
+                      const csv = buildCSV(csvColumns, activeBubbleTableRows);
+                      downloadCSVFile(csv, `scale-of-rd-${bubbleView}`);
                     }}
-                    onDownloadPNG={() => downloadPNG(bubbleChartRef, 'scale-of-rd')}
+                    onDownloadPNG={() => downloadPNG(bubbleChartRef, `scale-of-rd-${bubbleView}`)}
                   />
                   <TabSwitcher
                     activeTab={chartViewTab}
@@ -289,76 +400,42 @@ export default function Home() {
                   />
                 </div>
               </div>
-              <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+              <p className="text-sm text-gray-500 mb-3">
+                Switch between candidates in development and approved products through the dropdown above.
+              </p>
+              <TabNav
+                tabs={bubbleViewTabs}
+                activeTab={bubbleView}
+                onChange={setBubbleView}
+                className="mb-4"
+              />
               <div ref={bubbleChartRef} className="flex-1">
-              {bubbleLoading ? (
+              {activeBubbleLoading ? (
                 <div className="h-[320px] flex items-center justify-center">
                   <div className="animate-pulse text-gray-400">Loading chart...</div>
                 </div>
-              ) : !gqlBubbleData || gqlBubbleData.length === 0 ? (
+              ) : !activeBubbleData || activeBubbleData.length === 0 ? (
                 <ChartEmptyState variant="bubble" height={320} />
               ) : chartViewTab === 'visual' ? (
                 <BubbleChart
-                  data={gqlBubbleData}
-                  height={320}
-                  colors={['#fe7449', '#f9a78d', '#8c4028']}
+                  data={activeBubbleData}
+                  height={380}
+                  colorScale={bubbleColorScale}
+                  tooltip={renderBubbleTooltip}
                 />
               ) : (
-                <ScrollableTable tableClassName="border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Health area
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Total
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Candidates in development
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Approved products
-                        </th>
-                        <th className="px-4 py-3 text-left text-sm font-normal text-black bg-yellow-50 border-b border-gray-200">
-                          Share
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {gqlBubbleData.map((item) => {
-                        const total = gqlBubbleData.reduce(
-                          (sum, d) => sum + d.value,
-                          0
-                        );
-                        return (
-                          <tr
-                            key={item.name}
-                            className="hover:bg-cream-200 transition-colors"
-                          >
-                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200">
-                              {item.name}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {item.value.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {item.candidateCount.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {item.productCount.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-black border-b border-gray-200 tabular-nums">
-                              {total > 0 ? ((item.value / total) * 100).toFixed(1) : 0}%
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                </ScrollableTable>
+                <Table
+                  // Remount on tab change so pagination state resets to page 1
+                  key={bubbleView}
+                  columns={bubbleTableColumns}
+                  data={activeBubbleTableRows}
+                  pagination={true}
+                  defaultResultsPerPage={6}
+                />
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                This bubble chart shows the relative scale of the product development landscape across global health areas. Each bubble represents a global health  area, with its size indicating the number of products in scope. Use the dropdown menu to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
+                This bubble chart shows the relative scale of the product development landscape across global health areas. Each bubble represents a global health area, with its size indicating the number of products in scope. Use the toggle to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
               </p>
             </div>
 

@@ -3,6 +3,9 @@
 export * from './constants';
 export { transformPortfolioKPIs } from './portfolioKPIs';
 export { transformGlobalHealthAreaSummaries } from './globalHealthAreaSummaries';
+export { transformGhaProductTypeSummaries } from './ghaProductTypeSummaries';
+export { transformDiseaseSummaries } from './diseaseSummaries';
+export { transformDiseaseProductTypeSummaries } from './diseaseProductTypeSummaries';
 export {
   phaseNameToKey,
 } from './phaseDistribution';

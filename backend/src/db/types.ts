@@ -188,6 +188,28 @@ export interface GlobalHealthAreaSummary {
   productCount: number;
 }
 
+export interface GhaProductTypeSummary {
+  global_health_area: string;
+  product_type: string;
+  candidateCount: number;
+  productCount: number;
+}
+
+export interface DiseaseSummary {
+  disease_group_name: string;
+  global_health_area: string;
+  candidateCount: number;
+  productCount: number;
+}
+
+export interface DiseaseProductTypeSummary {
+  disease_group_name: string;
+  global_health_area: string;
+  product_type: string;
+  candidateCount: number;
+  productCount: number;
+}
+
 export interface PhaseDistributionRow {
   global_health_area: string;
   phase_name: string;

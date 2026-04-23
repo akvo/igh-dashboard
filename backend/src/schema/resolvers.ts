@@ -3,6 +3,9 @@ import type { DimCandidateCore, CandidateFilter } from "../db/types.js";
 
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
+import { getGhaProductTypeSummaries } from "../db/queries/ghaProductType.js";
+import { getDiseaseSummaries } from "../db/queries/disease.js";
+import { getDiseaseProductTypeSummaries } from "../db/queries/diseaseProductType.js";
 import { getPhaseDistribution } from "../db/queries/phaseDistribution.js";
 import { getCandidateTypeDistribution } from "../db/queries/candidateTypeDistribution.js";
 import { getGeographicDistribution, getLocationScopes } from "../db/queries/geographic.js";
@@ -54,9 +57,18 @@ export const resolvers = {
         phase_names: args.phase_names,
       }),
 
-    // Bubble chart
+    // Bubble chart — four views share the same candidate_types filter shape
     globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
       getGlobalHealthAreaSummaries({ candidate_types: args.candidate_types }),
+
+    ghaProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
+      getGhaProductTypeSummaries({ candidate_types: args.candidate_types }),
+
+    diseaseSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
+      getDiseaseSummaries({ candidate_types: args.candidate_types }),
+
+    diseaseProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
+      getDiseaseProductTypeSummaries({ candidate_types: args.candidate_types }),
 
     // Stacked bar chart
     phaseDistribution: (

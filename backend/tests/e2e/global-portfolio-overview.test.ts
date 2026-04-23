@@ -7,6 +7,9 @@ import { query } from "../helpers/graphql.js";
 import type {
   PortfolioKPIs,
   GlobalHealthAreaSummary,
+  GhaProductTypeSummary,
+  DiseaseSummary,
+  DiseaseProductTypeSummary,
   GeographicDistributionRow,
   PhaseDistributionRow,
   Product,
@@ -221,6 +224,212 @@ describe("Bubble Chart", () => {
     );
     expect(bothTotal).toBeLessThanOrEqual(unfilteredTotal);
     expect(bothTotal).toBeGreaterThan(unfilteredTotal * 0.95);
+  });
+});
+
+describe("Bubble Chart — GHA × Product Type view", () => {
+  it("returns rows with a product_type and counts per (area, product_type) bucket", async () => {
+    const { data } = await query<{
+      ghaProductTypeSummaries: GhaProductTypeSummary[];
+    }>(`{
+      ghaProductTypeSummaries {
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`);
+
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(0);
+    // More rows than the 3-row GHA-only view because we split each area by product type.
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(3);
+    const first = data.ghaProductTypeSummaries[0];
+    expect(typeof first.global_health_area).toBe("string");
+    expect(typeof first.product_type).toBe("string");
+    expect(first.product_type.length).toBeGreaterThan(0);
+    // Every row should have at least one candidate or product counted.
+    data.ghaProductTypeSummaries.forEach((row) => {
+      expect(row.candidateCount + row.productCount).toBeGreaterThan(0);
+    });
+  });
+
+  it("filters by candidate_types=['Candidate'] — zeroes productCount", async () => {
+    const { data } = await query<{
+      ghaProductTypeSummaries: GhaProductTypeSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          product_type
+          candidateCount
+          productCount
+        }
+      }`,
+      { candidateTypes: ["Candidate"] },
+    );
+
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(0);
+    const totalProducts = data.ghaProductTypeSummaries.reduce((s, r) => s + r.productCount, 0);
+    const totalCandidates = data.ghaProductTypeSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    expect(totalProducts).toBe(0);
+    expect(totalCandidates).toBeGreaterThan(0);
+  });
+
+  it("filters by candidate_types=['Product'] — zeroes candidateCount", async () => {
+    const { data } = await query<{
+      ghaProductTypeSummaries: GhaProductTypeSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+          global_health_area
+          product_type
+          candidateCount
+          productCount
+        }
+      }`,
+      { candidateTypes: ["Product"] },
+    );
+
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(0);
+    const totalCandidates = data.ghaProductTypeSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    const totalProducts = data.ghaProductTypeSummaries.reduce((s, r) => s + r.productCount, 0);
+    expect(totalCandidates).toBe(0);
+    expect(totalProducts).toBeGreaterThan(0);
+  });
+});
+
+describe("Bubble Chart — Disease view", () => {
+  it("returns a row per disease_group_name with counts and GHA", async () => {
+    const { data } = await query<{
+      diseaseSummaries: DiseaseSummary[];
+    }>(`{
+      diseaseSummaries {
+        disease_group_name
+        global_health_area
+        candidateCount
+        productCount
+      }
+    }`);
+
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+    data.diseaseSummaries.forEach((row) => {
+      expect(typeof row.disease_group_name).toBe("string");
+      expect(typeof row.global_health_area).toBe("string");
+      expect(row.candidateCount + row.productCount).toBeGreaterThan(0);
+    });
+
+    // Each disease_group_name should be unique within the list (the grouping).
+    const groupNames = data.diseaseSummaries.map((r) => r.disease_group_name);
+    expect(new Set(groupNames).size).toBe(groupNames.length);
+  });
+
+  it("filters by candidate_types=['Candidate'] — zeroes productCount", async () => {
+    const { data } = await query<{
+      diseaseSummaries: DiseaseSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        diseaseSummaries(candidate_types: $candidateTypes) {
+          disease_group_name
+          candidateCount
+          productCount
+        }
+      }`,
+      { candidateTypes: ["Candidate"] },
+    );
+
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+    const totalProducts = data.diseaseSummaries.reduce((s, r) => s + r.productCount, 0);
+    expect(totalProducts).toBe(0);
+  });
+
+  it("filters by candidate_types=['Product'] — zeroes candidateCount", async () => {
+    const { data } = await query<{
+      diseaseSummaries: DiseaseSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        diseaseSummaries(candidate_types: $candidateTypes) {
+          disease_group_name
+          candidateCount
+          productCount
+        }
+      }`,
+      { candidateTypes: ["Product"] },
+    );
+
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+    const totalCandidates = data.diseaseSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    expect(totalCandidates).toBe(0);
+  });
+});
+
+describe("Bubble Chart — Disease × Product Type view", () => {
+  it("returns one row per (disease, product_type) bucket", async () => {
+    const { data } = await query<{
+      diseaseProductTypeSummaries: DiseaseProductTypeSummary[];
+    }>(`{
+      diseaseProductTypeSummaries {
+        disease_group_name
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`);
+
+    expect(data.diseaseProductTypeSummaries.length).toBeGreaterThan(0);
+    data.diseaseProductTypeSummaries.forEach((row) => {
+      expect(typeof row.disease_group_name).toBe("string");
+      expect(typeof row.product_type).toBe("string");
+      expect(row.candidateCount + row.productCount).toBeGreaterThan(0);
+    });
+
+    // Every (disease_group_name, product_type) pair should appear at most once.
+    const keys = data.diseaseProductTypeSummaries.map(
+      (r) => `${r.disease_group_name}|${r.product_type}`,
+    );
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("expands over the Disease-only view — never fewer rows", async () => {
+    const { data: dxp } = await query<{
+      diseaseProductTypeSummaries: DiseaseProductTypeSummary[];
+    }>(`{
+      diseaseProductTypeSummaries { disease_group_name product_type }
+    }`);
+    const { data: diseaseOnly } = await query<{
+      diseaseSummaries: DiseaseSummary[];
+    }>(`{
+      diseaseSummaries { disease_group_name }
+    }`);
+
+    // Each disease can fan out into multiple product types, so (disease × type)
+    // must have at least as many rows as disease-only.
+    expect(dxp.diseaseProductTypeSummaries.length).toBeGreaterThanOrEqual(
+      diseaseOnly.diseaseSummaries.length,
+    );
+  });
+
+  it("filters by candidate_types=['Product'] — zeroes candidateCount", async () => {
+    const { data } = await query<{
+      diseaseProductTypeSummaries: DiseaseProductTypeSummary[];
+    }>(
+      `query ($candidateTypes: [String!]) {
+        diseaseProductTypeSummaries(candidate_types: $candidateTypes) {
+          disease_group_name
+          product_type
+          candidateCount
+          productCount
+        }
+      }`,
+      { candidateTypes: ["Product"] },
+    );
+
+    expect(data.diseaseProductTypeSummaries.length).toBeGreaterThan(0);
+    const totalCandidates = data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount,
+      0,
+    );
+    expect(totalCandidates).toBe(0);
   });
 });
 

@@ -1,5 +1,8 @@
 export { usePortfolioKPIs } from './usePortfolioKPIs';
 export { useGlobalHealthAreaSummaries } from './useGlobalHealthAreaSummaries';
+export { useGhaProductTypeSummaries } from './useGhaProductTypeSummaries';
+export { useDiseaseSummaries } from './useDiseaseSummaries';
+export { useDiseaseProductTypeSummaries } from './useDiseaseProductTypeSummaries';
 export { useCandidateTypeDistribution } from './useCandidateTypeDistribution';
 export { useGeographicDistribution } from './useGeographicDistribution';
 export { useTemporalSnapshots } from './useTemporalSnapshots';
