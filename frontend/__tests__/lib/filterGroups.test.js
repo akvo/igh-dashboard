@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  MALARIA_GROUP,
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
-  expandDiseaseSelection,
-  addMalariaOption,
   consolidateProductOptionsByKey,
   consolidateProductOptionsByName,
   expandProductKeySelection,
@@ -13,61 +10,6 @@ import {
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
 } from '../../src/lib/filterGroups';
-
-// ── Disease helpers ─────────────────────────────────────────────
-
-describe('expandDiseaseSelection', () => {
-  it('returns input unchanged when Malaria is not selected', () => {
-    expect(expandDiseaseSelection(['HIV', 'TB'])).toEqual(['HIV', 'TB']);
-  });
-
-  it('returns input unchanged when empty', () => {
-    expect(expandDiseaseSelection([])).toEqual([]);
-  });
-
-  it('returns null/undefined as-is', () => {
-    expect(expandDiseaseSelection(null)).toBeNull();
-    expect(expandDiseaseSelection(undefined)).toBeUndefined();
-  });
-
-  it('expands Malaria to all members', () => {
-    const result = expandDiseaseSelection(['Malaria']);
-    expect(result).toContain('P. falciparum');
-    expect(result).toContain('P. vivax');
-    expect(result).toContain('Multiple / other malaria strains');
-    // "Malaria" is both the composite label and a member, so it stays
-    expect(result).toContain('Malaria');
-    expect(result).toHaveLength(MALARIA_GROUP.members.length);
-  });
-
-  it('deduplicates when individual strain is also selected', () => {
-    const result = expandDiseaseSelection(['Malaria', 'P. falciparum', 'HIV']);
-    const falciparumCount = result.filter(d => d === 'P. falciparum').length;
-    expect(falciparumCount).toBe(1);
-    expect(result).toContain('HIV');
-    expect(result).toContain('P. vivax');
-  });
-});
-
-describe('addMalariaOption', () => {
-  it('adds Malaria when strain members are present', () => {
-    const result = addMalariaOption(['P. falciparum', 'HIV']);
-    expect(result[0]).toBe('Malaria');
-    expect(result).toContain('P. falciparum');
-    expect(result).toContain('HIV');
-  });
-
-  it('does not add Malaria when no strains present', () => {
-    const result = addMalariaOption(['HIV', 'TB']);
-    expect(result).not.toContain('Malaria');
-  });
-
-  it('does not duplicate Malaria if already present', () => {
-    const result = addMalariaOption(['Malaria', 'P. vivax']);
-    const count = result.filter(d => d === 'Malaria').length;
-    expect(count).toBe(1);
-  });
-});
 
 // ── Product helpers ─────────────────────────────────────────────
 

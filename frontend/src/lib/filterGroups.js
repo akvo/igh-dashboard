@@ -1,14 +1,3 @@
-// Composite disease group: "Malaria" expands to these disease_group_names
-export const MALARIA_GROUP = {
-  label: 'Malaria',
-  members: [
-    'Malaria',
-    'P. falciparum',
-    'P. vivax',
-    'Multiple / other malaria strains',
-  ],
-};
-
 // Separator for joining multiple product keys into one consolidated option
 // value.  Must NOT be a comma — the URL array serializer splits on commas.
 const VC_KEY_SEP = '|';
@@ -21,32 +10,6 @@ export const VECTOR_CONTROL_PRODUCT_NAMES = [
   'Vector control products Reservoir targeted vaccines',
 ];
 export const VECTOR_CONTROL_CONSOLIDATED_NAME = 'Vector control products';
-
-/**
- * Expand a disease selection array: if "Malaria" is selected, replace it
- * with all individual malaria strain names (deduplicating).
- */
-export function expandDiseaseSelection(selected) {
-  if (!selected || selected.length === 0) return selected;
-  if (!selected.includes(MALARIA_GROUP.label)) return selected;
-  const expanded = new Set(selected);
-  expanded.delete(MALARIA_GROUP.label);
-  for (const m of MALARIA_GROUP.members) {
-    expanded.add(m);
-  }
-  return [...expanded];
-}
-
-/**
- * Inject "Malaria" as a composite option into a disease names array
- * if any of the malaria strain members are present.
- */
-export function addMalariaOption(diseaseNames) {
-  const hasAny = diseaseNames.some((d) => MALARIA_GROUP.members.includes(d));
-  if (!hasAny) return diseaseNames;
-  if (diseaseNames.includes(MALARIA_GROUP.label)) return diseaseNames;
-  return [MALARIA_GROUP.label, ...diseaseNames];
-}
 
 /**
  * Consolidate vector control product options (array of {label, value} objects
