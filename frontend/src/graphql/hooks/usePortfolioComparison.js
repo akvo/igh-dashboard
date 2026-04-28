@@ -11,16 +11,36 @@ import { expandDiseaseSelection, expandProductKeySelection } from '@/lib/filterG
 function buildQuery(portfolio) {
   if (!portfolio) return { variables: {}, skip: true };
   const variables = {};
-  const diseases = Array.isArray(portfolio.disease) ? portfolio.disease : (portfolio.disease ? [portfolio.disease] : []);
+  // Comparison portfolios carry primary diseases and (optionally)
+  // secondary diseases. The legacy single `disease` field maps to
+  // `primaryDiseaseNames` -- the comparison UI does not yet expose
+  // a secondary picker, so the secondary list is forwarded only if
+  // the caller has built it.
+  const primaries = Array.isArray(portfolio.primaryDisease)
+    ? portfolio.primaryDisease
+    : (portfolio.primaryDisease ? [portfolio.primaryDisease] : []);
+  const legacyDiseases = Array.isArray(portfolio.disease)
+    ? portfolio.disease
+    : (portfolio.disease ? [portfolio.disease] : []);
+  const allPrimaries = primaries.length > 0
+    ? primaries
+    : expandDiseaseSelection(legacyDiseases);
+  const secondaries = Array.isArray(portfolio.secondaryDisease)
+    ? portfolio.secondaryDisease
+    : (portfolio.secondaryDisease ? [portfolio.secondaryDisease] : []);
   const products = Array.isArray(portfolio.product) ? portfolio.product : (portfolio.product ? [portfolio.product] : []);
-  if (diseases.length > 0) {
-    variables.diseaseGroupNames = expandDiseaseSelection(diseases);
+  if (allPrimaries.length > 0) {
+    variables.primaryDiseaseNames = allPrimaries;
+  }
+  if (secondaries.length > 0) {
+    variables.secondaryDiseaseNames = secondaries;
   }
   if (products.length > 0) {
     const keys = expandProductKeySelection(products);
     variables.productKeys = keys.map(v => parseInt(v));
   }
-  const skip = diseases.length === 0 && products.length === 0;
+  const skip =
+    allPrimaries.length === 0 && secondaries.length === 0 && products.length === 0;
   return { variables, skip };
 }
 

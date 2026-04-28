@@ -6,7 +6,10 @@ import { GET_CLINICAL_TRIALS } from '../queries';
 export function buildClinicalTrialFilterVars(filter) {
   return {
     global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
-    disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
+    primary_disease_names:
+      filter?.primaryDiseaseNames?.length > 0 ? filter.primaryDiseaseNames : undefined,
+    secondary_disease_names:
+      filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     statuses: filter?.statuses?.length > 0 ? filter.statuses : undefined,
     search: filter?.search || undefined,

@@ -5,19 +5,21 @@ import { GET_GEOGRAPHIC_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformGeographicDistribution } from '@/lib/transformations';
 
-export function useGeographicDistribution(locationScope = 'Trial Location', statuses, globalHealthAreas, diseaseNames, productNames, phaseNames) {
+export function useGeographicDistribution(locationScope = 'Trial Location', statuses, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames) {
   const { actions } = useDashboardStore();
   // Include all filter params in the cache key so each combination gets its own entry
   const effectiveStatuses = statuses?.length > 0 ? statuses : undefined;
   const effectiveGHA = globalHealthAreas?.length > 0 ? globalHealthAreas : undefined;
-  const effectiveDiseases = diseaseNames?.length > 0 ? diseaseNames : undefined;
+  const effectivePrimaryDiseases = primaryDiseaseNames?.length > 0 ? primaryDiseaseNames : undefined;
+  const effectiveSecondaryDiseases = secondaryDiseaseNames?.length > 0 ? secondaryDiseaseNames : undefined;
   const effectiveProducts = productNames?.length > 0 ? productNames : undefined;
   const effectivePhases = phaseNames?.length > 0 ? phaseNames : undefined;
   const cacheKey = getCacheKey('geographicDistribution', {
     locationScope,
     statuses: effectiveStatuses,
     globalHealthAreas: effectiveGHA,
-    diseaseNames: effectiveDiseases,
+    primaryDiseaseNames: effectivePrimaryDiseases,
+    secondaryDiseaseNames: effectiveSecondaryDiseases,
     productNames: effectiveProducts,
     phaseNames: effectivePhases,
   });
@@ -28,7 +30,8 @@ export function useGeographicDistribution(locationScope = 'Trial Location', stat
       scope: locationScope,
       statuses: effectiveStatuses,
       globalHealthAreas: effectiveGHA,
-      diseaseNames: effectiveDiseases,
+      primaryDiseaseNames: effectivePrimaryDiseases,
+      secondaryDiseaseNames: effectiveSecondaryDiseases,
       productNames: effectiveProducts,
       phaseNames: effectivePhases,
     },
