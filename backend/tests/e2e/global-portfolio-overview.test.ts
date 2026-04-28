@@ -43,6 +43,18 @@ describe("KPI Cards", () => {
     expect(Number.isInteger(data.portfolioKPIs.totalCandidates)).toBe(true);
     expect(Number.isInteger(data.portfolioKPIs.approvedProducts)).toBe(true);
   });
+
+  it("totalDiseases counts hierarchy leaves (childless primaries + sub-diseases)", async () => {
+    const { data } = await query<{ portfolioKPIs: PortfolioKPIs }>(`{
+      portfolioKPIs { totalDiseases }
+    }`);
+    // Locks the leaf-count semantic. Bounds chosen so:
+    //   - > 50: catches a regression to primary-only (~42).
+    //   - < 80: catches a regression to a UNION of both columns
+    //     (~81), which would over-count parented primaries.
+    expect(data.portfolioKPIs.totalDiseases).toBeGreaterThan(50);
+    expect(data.portfolioKPIs.totalDiseases).toBeLessThan(80);
+  });
 });
 
 describe("Bubble Chart", () => {

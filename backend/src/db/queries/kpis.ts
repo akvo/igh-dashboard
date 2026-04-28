@@ -64,13 +64,20 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
     params: baseParams,
   } = buildKPIFilter(filters);
 
-  // KPI Card: "Number of diseases"
+  // KPI Card: "Diseases covered"
+  //
+  // Counts distinct hierarchy leaves -- the sub-disease name when
+  // one exists, otherwise the primary name. So "Malaria" with three
+  // species contributes three leaves (the species, not the parent);
+  // "Tuberculosis" with no sub-disease contributes one leaf (itself).
+  // Matches the sidebar's "leaf with no `+`" rendering and main's
+  // pre-rename `disease_group_name` count, both globally and per-GHA.
   const needsDiseaseJoinForCount = !baseJoins.some((j) => j.includes("dim_disease"));
   const diseaseJoins = needsDiseaseJoinForCount ? [...baseJoins, DISEASE_JOIN] : baseJoins;
 
   const diseases = db
     .prepare(
-      `SELECT COUNT(DISTINCT d.disease_filter) as count
+      `SELECT COUNT(DISTINCT COALESCE(d.secondary_disease_name, d.disease_filter)) as count
     FROM fact_pipeline_snapshot f
     ${diseaseJoins.join("\n    ")}
     WHERE ${baseConditions.join("\n      AND ")}`,
