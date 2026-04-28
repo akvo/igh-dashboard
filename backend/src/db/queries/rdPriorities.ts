@@ -20,7 +20,7 @@ const BASE_SEARCHABLE_COLUMNS = [
   "p.efficacy",
   "p.safety",
   "p.source",
-  "d.disease_group_name",
+  "d.disease_filter",
   "d.global_health_area",
   "pr.product_name",
 ] as const;
@@ -50,7 +50,8 @@ function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) 
   const params: (string | number)[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
-  addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
+  addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(filter?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
 
   if (filter?.search) {
     addSearchCondition(filter.search, conditions, params, includeCandidateColumns);
@@ -101,7 +102,7 @@ export function getRdPrioritiesWithCandidates(
       p.priority_name,
       p.indication,
       p.intended_use,
-      d.disease_group_name AS disease_name,
+      d.disease_filter AS disease_name,
       d.global_health_area,
       p.author,
       substr(p.publication_date, 1, 10) AS publication_date,
@@ -164,7 +165,7 @@ export function getRdPriorities(
       p.priority_name,
       p.indication,
       p.intended_use,
-      d.disease_group_name AS disease_name,
+      d.disease_filter AS disease_name,
       d.global_health_area,
       p.author,
       substr(p.publication_date, 1, 10) AS publication_date,

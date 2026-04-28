@@ -251,6 +251,8 @@ export interface TemporalSnapshotRow {
 
 export interface PipelineFilterPair {
   disease_group_name: string;
+  disease_filter: string | null;
+  secondary_disease_name: string | null;
   product_key: number;
   product_name: string;
   phase_name: string | null;
@@ -333,7 +335,8 @@ export interface ClinicalTrialNode {
 
 export interface ClinicalTrialFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   statuses?: string[];
   search?: string;
@@ -402,7 +405,8 @@ export interface DiseaseHierarchyRow {
 
 export interface PortfolioCandidateFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
@@ -468,7 +472,8 @@ export interface RdPriorityNode {
 
 export interface RdPriorityFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   search?: string;
 }
 

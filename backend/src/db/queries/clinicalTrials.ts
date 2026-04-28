@@ -30,7 +30,7 @@ const SEARCHABLE_COLUMNS = [
   "t.ct_terminated_reason",
   // Joined dimensions
   "c.candidate_name",
-  "d.disease_group_name",
+  "d.disease_filter",
   "pr.product_name",
 ] as const;
 
@@ -55,7 +55,8 @@ function buildWhere(filter?: ClinicalTrialFilter) {
   const params: (string | number)[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
-  addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
+  addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(filter?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
 
   addArrayCondition(filter?.statuses, "t.status", conditions, params);
@@ -99,7 +100,7 @@ export function getClinicalTrials(
       t.trial_phase,
       t.status,
       c.candidate_name,
-      d.disease_group_name AS disease_name,
+      d.disease_filter AS disease_name,
       pr.product_name,
       dt.full_date as start_date,
       dt2.full_date as end_date,

@@ -4,7 +4,8 @@ import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface KPIFilters {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   phase_names?: string[];
 }
@@ -27,7 +28,20 @@ function buildKPIFilter(filters?: KPIFilters) {
     params,
     diseaseCtx,
   );
-  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.primary_disease_names,
+    "d.disease_filter",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+    diseaseCtx,
+  );
 
   const productJoin = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productJoin);
@@ -56,7 +70,7 @@ export function getPortfolioKPIs(filters?: KPIFilters): PortfolioKPIs {
 
   const diseases = db
     .prepare(
-      `SELECT COUNT(DISTINCT d.disease_group_name) as count
+      `SELECT COUNT(DISTINCT d.disease_filter) as count
     FROM fact_pipeline_snapshot f
     ${diseaseJoins.join("\n    ")}
     WHERE ${baseConditions.join("\n      AND ")}`,

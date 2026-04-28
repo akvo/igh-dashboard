@@ -4,7 +4,8 @@ import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface ProductPhaseDistributionFilters {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
@@ -39,7 +40,20 @@ export function getProductPhaseDistribution(
     params,
     diseaseCtx,
   );
-  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.primary_disease_names,
+    "d.disease_filter",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+    diseaseCtx,
+  );
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params);
   addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params);
 

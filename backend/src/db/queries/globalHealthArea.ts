@@ -33,7 +33,7 @@ export function getGlobalHealthAreaSummaries(
     SELECT
       d.global_health_area,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Candidate' THEN f.candidate_key END) as candidateCount,
-      COUNT(DISTINCT d.disease_group_name) as diseaseCount,
+      COUNT(DISTINCT d.disease_filter) as diseaseCount,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Product' THEN f.candidate_key END) as productCount
     FROM fact_pipeline_snapshot f
     ${joins.join("\n    ")}
