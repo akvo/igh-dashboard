@@ -125,7 +125,13 @@ export function getActivePipelineFilterPairs(): PipelineFilterPair[] {
   return db
     .prepare(
       `
-    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name, ph.phase_name
+    SELECT DISTINCT
+      dd.disease_group_name,
+      dd.disease_filter,
+      dd.secondary_disease_name,
+      f.product_key,
+      dp.product_name,
+      ph.phase_name
     FROM fact_pipeline_snapshot f
     JOIN dim_disease dd ON f.disease_key = dd.disease_key
     JOIN dim_product dp ON f.product_key = dp.product_key

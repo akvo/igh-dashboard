@@ -377,13 +377,18 @@ export const GET_PIPELINE_FILTER_PAIRS = gql`
   }
 `;
 
-// Active-pipeline filter pairs — same shape, but restricted to active candidates
-// of type Candidate/Product. Used by Portfolio Overview / Portfolio Analysis
-// dropdowns to avoid offering options that produce empty charts.
+// Active-pipeline filter pairs — same shape as pipelineFilterPairs, but
+// restricted to active candidates of type Candidate/Product. Used by
+// Portfolio Overview / Portfolio Analysis dropdowns to avoid offering
+// options that produce empty charts. Carries `disease_filter` /
+// `secondary_disease_name` so the hierarchical cross-filter can intersect
+// on either axis.
 export const GET_ACTIVE_PIPELINE_FILTER_PAIRS = gql`
   query ActivePipelineFilterPairs {
     activePipelineFilterPairs {
       disease_group_name
+      disease_filter
+      secondary_disease_name
       product_key
       product_name
       phase_name
