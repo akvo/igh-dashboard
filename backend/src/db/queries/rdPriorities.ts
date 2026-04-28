@@ -51,7 +51,12 @@ function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) 
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(filter?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  addArrayCondition(
+    filter?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
 
   if (filter?.search) {
     addSearchCondition(filter.search, conditions, params, includeCandidateColumns);

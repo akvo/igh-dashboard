@@ -71,7 +71,12 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(filter?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  addArrayCondition(
+    filter?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
   addArrayCondition(filter?.phase_names, "p.phase_name", conditions, params);
 

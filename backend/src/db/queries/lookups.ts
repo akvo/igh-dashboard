@@ -65,7 +65,10 @@ export function getSecondaryDiseases(): Pick<
     ORDER BY d.disease_filter, d.secondary_disease_name
   `,
     )
-    .all() as Pick<DimDisease, "disease_filter" | "secondary_disease_name" | "global_health_area">[];
+    .all() as Pick<
+    DimDisease,
+    "disease_filter" | "secondary_disease_name" | "global_health_area"
+  >[];
 }
 
 /**

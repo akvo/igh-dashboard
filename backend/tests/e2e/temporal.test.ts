@@ -424,9 +424,7 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
 
     // Pick a pair with a non-null disease_filter and verify
     // temporalSnapshots returns data for it.
-    const pair = pairsData.pipelineFilterPairs.find(
-      (p) => p.disease_filter !== null,
-    );
+    const pair = pairsData.pipelineFilterPairs.find((p) => p.disease_filter !== null);
     expect(pair).toBeDefined();
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
