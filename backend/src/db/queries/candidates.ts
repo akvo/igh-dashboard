@@ -153,7 +153,7 @@ export function getCandidateSnapshot(candidate_key: number): FactPipelineSnapsho
       `
     SELECT snapshot_id, candidate_key, product_key, disease_key,
            technology_key, regulatory_key, phase_key, date_key, is_active_flag,
-           include_in_pipeline, secondary_disease_key, sub_product_key
+           include_in_pipeline, sub_product_key
     FROM fact_pipeline_snapshot
     WHERE candidate_key = ?
       AND is_active_flag = 1
