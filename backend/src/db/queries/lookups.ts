@@ -12,56 +12,74 @@ import type {
 } from "../types.js";
 
 /**
- * Get diseases (grouped by disease_group_name) that have at least one candidate in the pipeline.
+ * Primary disease groups (e.g. "Malaria", "Tuberculosis") that
+ * appear on at least one active pipeline candidate. Backs the
+ * top level of the hierarchical disease filter.
  */
-export function getDiseases(): Pick<DimDisease, "disease_group_name" | "global_health_area">[] {
+export function getDiseases(): Pick<DimDisease, "disease_filter" | "global_health_area">[] {
   const db = getDatabase();
 
   return db
     .prepare(
       `
-    SELECT DISTINCT d.disease_group_name, d.global_health_area
+    SELECT DISTINCT d.disease_filter, d.global_health_area
     FROM dim_disease d
     JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
     WHERE f.is_active_flag = 1
       AND f.include_in_pipeline = 1
-      AND d.disease_group_name IS NOT NULL
-    ORDER BY d.disease_group_name
+      AND d.disease_filter IS NOT NULL
+    ORDER BY d.disease_filter
   `,
     )
-    .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
+    .all() as Pick<DimDisease, "disease_filter" | "global_health_area">[];
 }
 
 /**
- * Get secondary diseases that appear on at least one active pipeline candidate.
+ * Secondary diseases (sub-diseases like "P. falciparum") joined to
+ * their parent primary, restricted to those active in the pipeline.
+ *
+ * Returning the parent on every row lets the frontend assemble the
+ * parent -> children tree without a second roundtrip.
+ *
+ * The previous implementation joined `f.secondary_disease_key` to
+ * `dim_disease`, but that fact column had effectively zero signal
+ * (set on 59/9388 candidates, 57 of those self-referring to the
+ * primary) and is now dropped. Authoritative secondaries come
+ * directly from `dim_disease.secondary_disease_name`.
  */
 export function getSecondaryDiseases(): Pick<
   DimDisease,
-  "disease_group_name" | "global_health_area"
+  "disease_filter" | "secondary_disease_name" | "global_health_area"
 >[] {
   const db = getDatabase();
 
   return db
     .prepare(
       `
-    SELECT DISTINCT sd.disease_group_name, sd.global_health_area
-    FROM dim_disease sd
-    JOIN fact_pipeline_snapshot f ON sd.disease_key = f.secondary_disease_key
+    SELECT DISTINCT d.disease_filter, d.secondary_disease_name, d.global_health_area
+    FROM dim_disease d
+    JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
     WHERE f.is_active_flag = 1
       AND f.include_in_pipeline = 1
-      AND sd.disease_group_name IS NOT NULL
-    ORDER BY sd.disease_group_name
+      AND d.secondary_disease_name IS NOT NULL
+    ORDER BY d.disease_filter, d.secondary_disease_name
   `,
     )
-    .all() as Pick<DimDisease, "disease_group_name" | "global_health_area">[];
+    .all() as Pick<DimDisease, "disease_filter" | "secondary_disease_name" | "global_health_area">[];
 }
 
 /**
- * Get the disease hierarchy: parent diseases with their child sub-diseases,
- * grouped by global health area.  The parent name is derived from the first
- * segment of `disease_name` (before " - "), and child diseases are the
- * distinct `disease_group_name` values that differ from that parent.
- * Standalone diseases (no children) appear with child_disease = parent_disease.
+ * Full hierarchy of (primary, secondary, global health area) tuples
+ * for active pipeline diseases.
+ *
+ * Standalone primaries (no children) emit a row where
+ * `secondary_disease = primary_disease`. The sidebar consumes that
+ * shape and renders such rows as leaves without an expand `+` -- it
+ * matches its existing rendering rule with no extra branching.
+ *
+ * Replaces the previous text-parsing of `disease_name` (the first
+ * segment before " - "). The new columns are authoritative, so the
+ * hierarchy no longer depends on naming conventions of the source.
  */
 export function getDiseaseHierarchy(): DiseaseHierarchyRow[] {
   const db = getDatabase();
@@ -69,32 +87,17 @@ export function getDiseaseHierarchy(): DiseaseHierarchyRow[] {
   return db
     .prepare(
       `
-    WITH active_diseases AS (
-      SELECT DISTINCT
-        d.disease_group_name,
-        d.disease_name,
-        d.global_health_area
-      FROM dim_disease d
-      JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
-      WHERE f.is_active_flag = 1
-        AND f.include_in_pipeline = 1
-        AND d.disease_group_name IS NOT NULL
-        AND d.global_health_area IS NOT NULL
-    ),
-    with_parent AS (
-      SELECT DISTINCT
-        CASE
-          WHEN INSTR(disease_name, ' - ') > 0
-          THEN TRIM(SUBSTR(disease_name, 1, INSTR(disease_name, ' - ') - 1))
-          ELSE TRIM(disease_group_name)
-        END AS parent_disease,
-        disease_group_name AS child_disease,
-        global_health_area
-      FROM active_diseases
-    )
-    SELECT DISTINCT parent_disease, child_disease, global_health_area
-    FROM with_parent
-    ORDER BY global_health_area, parent_disease, child_disease
+    SELECT DISTINCT
+      d.disease_filter AS primary_disease,
+      COALESCE(d.secondary_disease_name, d.disease_filter) AS secondary_disease,
+      d.global_health_area
+    FROM dim_disease d
+    JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
+    WHERE f.is_active_flag = 1
+      AND f.include_in_pipeline = 1
+      AND d.disease_filter IS NOT NULL
+      AND d.global_health_area IS NOT NULL
+    ORDER BY d.global_health_area, d.disease_filter, secondary_disease
   `,
     )
     .all() as DiseaseHierarchyRow[];
