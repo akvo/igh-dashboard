@@ -631,19 +631,75 @@ describe("Phase Distribution — candidate_type filter", () => {
 });
 
 describe("Lookup Queries", () => {
-  it("diseases returns non-empty array of disease group names", async () => {
+  it("diseases returns non-empty array of primary disease groups", async () => {
     const { data } = await query<{
-      diseases: Array<{ disease_group_name: string | null; global_health_area: string | null }>;
+      diseases: Array<{ disease_filter: string | null; global_health_area: string | null }>;
     }>(`{
       diseases {
-        disease_group_name
+        disease_filter
         global_health_area
       }
     }`);
 
     expect(data.diseases.length).toBeGreaterThan(0);
-    expect(data.diseases[0].disease_group_name).toBeDefined();
-    expect(typeof data.diseases[0].disease_group_name).toBe("string");
+    expect(data.diseases[0].disease_filter).toBeDefined();
+    expect(typeof data.diseases[0].disease_filter).toBe("string");
+  });
+
+  it("secondaryDiseases returns rows joined to their primary parent", async () => {
+    const { data } = await query<{
+      secondaryDiseases: Array<{
+        disease_filter: string;
+        secondary_disease_name: string;
+        global_health_area: string | null;
+      }>;
+    }>(`{
+      secondaryDiseases {
+        disease_filter
+        secondary_disease_name
+        global_health_area
+      }
+    }`);
+
+    expect(data.secondaryDiseases.length).toBeGreaterThan(0);
+    data.secondaryDiseases.forEach((row) => {
+      expect(typeof row.disease_filter).toBe("string");
+      expect(typeof row.secondary_disease_name).toBe("string");
+    });
+  });
+
+  it("diseaseHierarchy emits self-row for childless primaries", async () => {
+    const { data } = await query<{
+      diseaseHierarchy: Array<{
+        primary_disease: string;
+        secondary_disease: string;
+        global_health_area: string;
+      }>;
+    }>(`{
+      diseaseHierarchy {
+        primary_disease
+        secondary_disease
+        global_health_area
+      }
+    }`);
+
+    expect(data.diseaseHierarchy.length).toBeGreaterThan(0);
+
+    // Some primaries (e.g. "Tuberculosis") have no children. The
+    // sidebar's existing "leaf with no `+`" rule needs them to appear
+    // as a row where secondary == primary.
+    const selfRow = data.diseaseHierarchy.find((r) => r.secondary_disease === r.primary_disease);
+    expect(selfRow).toBeDefined();
+
+    // Some primaries (e.g. "Malaria") have multiple secondaries.
+    const groupedByPrimary = new Map<string, string[]>();
+    for (const row of data.diseaseHierarchy) {
+      const prev = groupedByPrimary.get(row.primary_disease) ?? [];
+      prev.push(row.secondary_disease);
+      groupedByPrimary.set(row.primary_disease, prev);
+    }
+    const branchingPrimary = Array.from(groupedByPrimary.values()).find((cs) => cs.length > 1);
+    expect(branchingPrimary).toBeDefined();
   });
 
   it("phases returns non-empty array", async () => {

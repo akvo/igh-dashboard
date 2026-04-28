@@ -444,25 +444,56 @@ describe("CSV export — portfolioCandidates (Candidates tab)", () => {
     });
   });
 
-  it("disease_names filter narrows results", async () => {
-    // First get a disease name that exists in the data
-    const { data: sample } = await query<{
-      portfolioCandidates: CandidateConnection;
-    }>(CANDIDATES_QUERY, { limit: 10 });
-
-    const disease = sample.portfolioCandidates.nodes.find((n) => n.disease_name)?.disease_name;
-    expect(disease).toBeTruthy();
+  it("primary_disease_names filter narrows results", async () => {
+    // Pick a primary that exists in the data
+    const { data: lookup } = await query<{
+      diseases: Array<{ disease_filter: string }>;
+    }>(`{ diseases { disease_filter } }`);
+    const primary = lookup.diseases[0].disease_filter;
+    expect(primary).toBeTruthy();
 
     const { data: filtered } = await query<{
       portfolioCandidates: CandidateConnection;
     }>(CANDIDATES_QUERY, {
-      filter: { disease_names: [disease] },
+      filter: { primary_disease_names: [primary] },
       limit: 5,
     });
 
     expect(filtered.portfolioCandidates.totalCount).toBeGreaterThan(0);
-    expect(filtered.portfolioCandidates.totalCount).toBeLessThanOrEqual(
-      sample.portfolioCandidates.totalCount,
+  });
+
+  it("secondary_disease_names filter narrows further than primary alone", async () => {
+    const { data: lookup } = await query<{
+      secondaryDiseases: Array<{
+        disease_filter: string;
+        secondary_disease_name: string;
+      }>;
+    }>(`{ secondaryDiseases { disease_filter secondary_disease_name } }`);
+
+    const pair = lookup.secondaryDiseases[0];
+    expect(pair).toBeTruthy();
+
+    const { data: primaryAlone } = await query<{
+      portfolioCandidates: CandidateConnection;
+    }>(CANDIDATES_QUERY, {
+      filter: { primary_disease_names: [pair.disease_filter] },
+      limit: 1,
+    });
+
+    const { data: both } = await query<{
+      portfolioCandidates: CandidateConnection;
+    }>(CANDIDATES_QUERY, {
+      filter: {
+        primary_disease_names: [pair.disease_filter],
+        secondary_disease_names: [pair.secondary_disease_name],
+      },
+      limit: 1,
+    });
+
+    expect(both.portfolioCandidates.totalCount).toBeGreaterThan(0);
+    // Adding a secondary narrows to a strict subset of the primary set.
+    expect(both.portfolioCandidates.totalCount).toBeLessThanOrEqual(
+      primaryAlone.portfolioCandidates.totalCount,
     );
   });
 

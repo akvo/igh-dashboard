@@ -76,7 +76,7 @@ describe("Temporal Analysis", () => {
 });
 
 describe("Temporal Analysis — disease filter", () => {
-  it("filters by disease_group_names", async () => {
+  it("filters by primary_disease_names", async () => {
     const { data: baselineData } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(`{
@@ -94,29 +94,100 @@ describe("Temporal Analysis — disease filter", () => {
     );
 
     const { data: lookupData } = await query<{
-      diseases: Array<{ disease_group_name: string }>;
-    }>(`{ diseases { disease_group_name } }`);
+      diseases: Array<{ disease_filter: string }>;
+    }>(`{ diseases { disease_filter } }`);
 
     expect(lookupData.diseases.length).toBeGreaterThan(0);
-    const diseaseGroupName = lookupData.diseases[0].disease_group_name;
+    const primaryName = lookupData.diseases[0].disease_filter;
 
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(
-      `query ($diseaseGroupNames: [String!]) {
-        temporalSnapshots(disease_group_names: $diseaseGroupNames) {
+      `query ($primaryNames: [String!]) {
+        temporalSnapshots(primary_disease_names: $primaryNames) {
           year
           phase_name
           sort_order
           candidateCount
         }
       }`,
-      { diseaseGroupNames: [diseaseGroupName] },
+      { primaryNames: [primaryName] },
     );
 
     const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
     expect(filteredTotal).toBeGreaterThan(0);
     expect(filteredTotal).toBeLessThan(unfilteredTotal);
+  });
+
+  it("filters by secondary_disease_names alone", async () => {
+    const { data: baselineData } = await query<{
+      temporalSnapshots: TemporalSnapshotRow[];
+    }>(`{ temporalSnapshots { year candidateCount } }`);
+
+    const unfilteredTotal = baselineData.temporalSnapshots.reduce(
+      (sum, r) => sum + r.candidateCount,
+      0,
+    );
+
+    // Cross-primary secondary should still narrow the result.
+    const { data: lookupData } = await query<{
+      secondaryDiseases: Array<{ secondary_disease_name: string }>;
+    }>(`{ secondaryDiseases { secondary_disease_name } }`);
+
+    expect(lookupData.secondaryDiseases.length).toBeGreaterThan(0);
+    const secondary = lookupData.secondaryDiseases[0].secondary_disease_name;
+
+    const { data } = await query<{
+      temporalSnapshots: TemporalSnapshotRow[];
+    }>(
+      `query ($secondaryNames: [String!]) {
+        temporalSnapshots(secondary_disease_names: $secondaryNames) {
+          candidateCount
+        }
+      }`,
+      { secondaryNames: [secondary] },
+    );
+
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(unfilteredTotal);
+  });
+
+  it("filters by primary AND secondary together (AND semantics)", async () => {
+    const { data: lookupData } = await query<{
+      secondaryDiseases: Array<{
+        disease_filter: string;
+        secondary_disease_name: string;
+      }>;
+    }>(`{
+      secondaryDiseases {
+        disease_filter
+        secondary_disease_name
+      }
+    }`);
+
+    expect(lookupData.secondaryDiseases.length).toBeGreaterThan(0);
+    const pair = lookupData.secondaryDiseases[0];
+
+    const { data } = await query<{
+      temporalSnapshots: TemporalSnapshotRow[];
+    }>(
+      `query ($p: [String!], $s: [String!]) {
+        temporalSnapshots(primary_disease_names: $p, secondary_disease_names: $s) {
+          candidateCount
+        }
+      }`,
+      {
+        p: [pair.disease_filter],
+        s: [pair.secondary_disease_name],
+      },
+    );
+
+    // The "AND" semantic narrows to only candidates whose disease has
+    // both the primary AND a secondary in the chosen set. This excludes
+    // NULL-secondary candidates -- documented behavior.
+    const filteredTotal = data.temporalSnapshots.reduce((sum, r) => sum + r.candidateCount, 0);
+    expect(filteredTotal).toBeGreaterThan(0);
   });
 });
 
@@ -289,12 +360,14 @@ describe("Temporal Analysis — year filter", () => {
 });
 
 describe("Pipeline filter pairs (cross-filtering)", () => {
-  it("returns disease×product×phase tuples with product_name", async () => {
+  it("returns disease×product×phase tuples with product_name and the new disease columns", async () => {
     const { data } = await query<{
       pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
       pipelineFilterPairs {
         disease_group_name
+        disease_filter
+        secondary_disease_name
         product_key
         product_name
         phase_name
@@ -304,6 +377,13 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
     expect(data.pipelineFilterPairs.length).toBeGreaterThan(0);
     data.pipelineFilterPairs.forEach((row) => {
       expect(typeof row.disease_group_name).toBe("string");
+      // disease_filter is the authoritative primary; nullable on rows
+      // whose dim_disease.disease_filter is NULL (rare).
+      expect(row.disease_filter === null || typeof row.disease_filter === "string").toBe(true);
+      // secondary_disease_name is nullable -- many rows have no secondary.
+      expect(
+        row.secondary_disease_name === null || typeof row.secondary_disease_name === "string",
+      ).toBe(true);
       expect(typeof row.product_key).toBe("number");
       expect(typeof row.product_name).toBe("string");
       // phase_name is nullable (LEFT JOIN)
@@ -335,28 +415,32 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
       pipelineFilterPairs: PipelineFilterPair[];
     }>(`{
       pipelineFilterPairs {
-        disease_group_name
+        disease_filter
         product_key
         product_name
         phase_name
       }
     }`);
 
-    // Pick a pair and verify temporalSnapshots returns data for it
-    const pair = pairsData.pipelineFilterPairs[0];
+    // Pick a pair with a non-null disease_filter and verify
+    // temporalSnapshots returns data for it.
+    const pair = pairsData.pipelineFilterPairs.find(
+      (p) => p.disease_filter !== null,
+    );
+    expect(pair).toBeDefined();
     const { data } = await query<{
       temporalSnapshots: TemporalSnapshotRow[];
     }>(
-      `query ($diseaseGroupNames: [String!], $productKeys: [Int!]) {
-        temporalSnapshots(disease_group_names: $diseaseGroupNames, product_keys: $productKeys) {
+      `query ($primaryNames: [String!], $productKeys: [Int!]) {
+        temporalSnapshots(primary_disease_names: $primaryNames, product_keys: $productKeys) {
           year
           phase_name
           candidateCount
         }
       }`,
       {
-        diseaseGroupNames: [pair.disease_group_name],
-        productKeys: [pair.product_key],
+        primaryNames: [pair!.disease_filter],
+        productKeys: [pair!.product_key],
       },
     );
 
