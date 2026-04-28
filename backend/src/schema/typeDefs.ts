@@ -17,6 +17,8 @@ export const typeDefs = `#graphql
     disease_group_name: String
     global_health_area: String
     disease_type: String
+    disease_filter: String
+    secondary_disease_name: String
   }
 
   type DimPhase {
@@ -266,13 +268,17 @@ export const typeDefs = `#graphql
   }
 
   type DiseaseHierarchyRow {
-    parent_disease: String!
-    child_disease: String!
+    primary_disease: String!
+    # Equal to primary_disease for childless primaries -- the
+    # sidebar renders such rows as leaves without an expand "+".
+    secondary_disease: String!
     global_health_area: String!
   }
 
   type PipelineFilterPair {
     disease_group_name: String!
+    disease_filter: String
+    secondary_disease_name: String
     product_key: Int!
     product_name: String!
     phase_name: String
@@ -419,7 +425,8 @@ export const typeDefs = `#graphql
 
   input PortfolioCandidateFilter {
     global_health_areas: [String!]
-    disease_names: [String!]
+    primary_disease_names: [String!]
+    secondary_disease_names: [String!]
     product_names: [String!]
     candidate_type: String
     phase_names: [String!]
@@ -428,7 +435,8 @@ export const typeDefs = `#graphql
 
   input ClinicalTrialFilter {
     global_health_areas: [String!]
-    disease_names: [String!]
+    primary_disease_names: [String!]
+    secondary_disease_names: [String!]
     product_names: [String!]
     statuses: [String!]
     search: String
@@ -436,7 +444,8 @@ export const typeDefs = `#graphql
 
   input RdPriorityFilter {
     global_health_areas: [String!]
-    disease_names: [String!]
+    primary_disease_names: [String!]
+    secondary_disease_names: [String!]
     search: String
   }
 
@@ -455,7 +464,7 @@ export const typeDefs = `#graphql
 
   type Query {
     # KPIs (3 homepage cards)
-    portfolioKPIs(global_health_areas: [String!], disease_names: [String!], product_names: [String!], phase_names: [String!]): PortfolioKPIs!
+    portfolioKPIs(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): PortfolioKPIs!
 
     # Bubble chart — four views
     globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
@@ -470,10 +479,10 @@ export const typeDefs = `#graphql
     candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
-    geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!
+    geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], disease_group_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
 
     # Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: [PipelineFilterPair!]!
@@ -502,19 +511,19 @@ export const typeDefs = `#graphql
     rdPriorities(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
 
     # Portfolio analysis - clinical trial stats (trials tab)
-    clinicalTrialStats(global_health_areas: [String!], disease_names: [String!], product_names: [String!], phase_names: [String!]): ClinicalTrialStats!
+    clinicalTrialStats(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): ClinicalTrialStats!
 
     # Portfolio analysis - regulatory distribution (approved products tab)
-    regulatoryDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], phase_names: [String!]): RegulatoryDistribution!
+    regulatoryDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): RegulatoryDistribution!
 
     # Portfolio analysis - product distribution (donut chart)
-    productDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!
+    productDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!
 
     # Portfolio analysis - product phase distribution
-    productPhaseDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductPhaseDistributionRow!]!
+    productPhaseDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductPhaseDistributionRow!]!
 
     # Portfolio analysis - technology type distribution
-    technologyTypeDistribution(global_health_areas: [String!], disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [TechnologyTypeDistributionRow!]!
+    technologyTypeDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [TechnologyTypeDistributionRow!]!
 
     # Filter dropdowns (lookups)
     diseases: [DimDisease!]!
