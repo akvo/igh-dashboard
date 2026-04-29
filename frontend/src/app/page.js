@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
@@ -30,7 +30,6 @@ import {
   useAvailableYears,
   useLastSyncDate,
   usePhases,
-  usePhaseDistribution,
   useDiseases,
   useSecondaryDiseases,
   useDiseaseHierarchy,
@@ -97,39 +96,6 @@ export default function Home() {
     rdStage.length > 0 ? rdStage : null,
   );
 
-  // Fetch phases filtered by product selection for cross-filtering R&D stage dropdown
-  const productKeysForPhases = useMemo(
-    () => expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : null,
-    [expandedProduct]
-  );
-  const { phases: filteredPhases, loading: filteredPhasesLoading } = usePhaseDistribution(null, productKeysForPhases);
-
-  // R&D stage dropdown options: when a product is selected, only show phases
-  // that have data for that product; otherwise show all phases.
-  const rdStageOptions = useMemo(() => {
-    if (product.length > 0 && filteredPhases.length > 0) {
-      // filteredPhases from usePhaseDistribution: { key, label, fullLabel, color, sortOrder }
-      return filteredPhases.map(p => ({
-        label: SIMPLIFIED_PHASE_NAMES[p.fullLabel] || p.label,
-        value: p.fullLabel,
-      }));
-    }
-    // Default: all phases from usePhases: { key, name, sortOrder }
-    return phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    }));
-  }, [phases, filteredPhases, product]);
-
-  // Prune rdStage selection when options change (e.g. product filter narrows available phases)
-  const rdStageOptionValues = useMemo(() => new Set(rdStageOptions.map(o => o.value)), [rdStageOptions]);
-  useEffect(() => {
-    if (rdStage.length > 0 && rdStageOptionValues.size > 0) {
-      const valid = rdStage.filter(v => rdStageOptionValues.has(v));
-      if (valid.length !== rdStage.length) setRdStage(valid);
-    }
-  }, [rdStageOptionValues]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Product options for dropdown (from API).
   // Values are strings to stay consistent with URL serialization.
   const allProductOptions = useMemo(() => {
@@ -137,8 +103,51 @@ export default function Home() {
     return consolidateProductOptionsByKey(raw);
   }, [products]);
 
-  // Portfolio section uses unfiltered product options (no cross-filtering needed)
-  const productOptions = allProductOptions;
+  // Phase options shaped to feed `useCrossFilteredOptions`.
+  // Values are the canonical phase names (matching what the URL stores in
+  // `rdStage`); labels apply the simplified-name override when present.
+  const allPhaseOptions = useMemo(
+    () => phases.map(p => ({
+      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+      value: p.name,
+    })),
+    [phases]
+  );
+
+  // Portfolio section: cross-filter Product type ↔ R&D stage via the hook.
+  // No GHA/disease filters are exposed here — pass empty arrays. Pruning of
+  // stale selections is handled inside the hook.
+  const {
+    productOptions,
+    rdPhaseOptions: rdStageOptions,
+  } = useCrossFilteredOptions({
+    data: {
+      healthAreas: [],
+      diseasesRaw,
+      pairs,
+      allProductOptions,
+      allPhaseOptions,
+    },
+    selections: {
+      healthArea: [],
+      disease: [],
+      product,
+      rdPhase: rdStage,
+    },
+    setters: {
+      setHealthArea: () => {},
+      setDisease: () => {},
+      setProduct,
+      setRdPhase: setRdStage,
+    },
+    loading: {
+      healthAreas: false,
+      diseases: diseasesLoading,
+      products: productsLoading,
+      pairs: pairsLoading,
+    },
+    mode: 'by-key',
+  });
 
   // Cross-pipeline section: cross-filter GHA ↔ product via the hook
   const {
