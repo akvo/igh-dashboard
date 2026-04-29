@@ -4,8 +4,6 @@ export * from './constants';
 export { transformPortfolioKPIs } from './portfolioKPIs';
 export { transformGlobalHealthAreaSummaries } from './globalHealthAreaSummaries';
 export {
-  extractPhases as extractPhaseDistributionPhases,
-  groupByHealthArea,
   phaseNameToKey,
 } from './phaseDistribution';
 export {
