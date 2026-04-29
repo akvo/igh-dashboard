@@ -62,15 +62,3 @@ export function groupByHealthArea(data) {
 
   return Object.values(grouped);
 }
-
-/**
- * Full transformation pipeline for phase distribution
- * @param {Array} data - Raw API response
- * @returns {{ chartData: Array, phases: Array }}
- */
-export function transformPhaseDistribution(data) {
-  return {
-    chartData: groupByHealthArea(data),
-    phases: extractPhases(data),
-  };
-}

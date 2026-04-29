@@ -23,18 +23,6 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
   }
 `;
 
-// Phase Distribution - Portfolio by Health Area (Stacked Bar)
-export const GET_PHASE_DISTRIBUTION = gql`
-  query PhaseDistribution($globalHealthArea: String, $productKeys: [Int!], $candidateType: String) {
-    phaseDistribution(global_health_area: $globalHealthArea, product_keys: $productKeys, candidate_type: $candidateType) {
-      global_health_area
-      phase_name
-      sort_order
-      candidateCount
-    }
-  }
-`;
-
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
   query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {

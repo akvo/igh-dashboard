@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  transformPhaseDistribution,
   extractPhases,
   groupByHealthArea,
   phaseNameToKey,
@@ -77,22 +76,6 @@ describe('phaseDistribution transformations', () => {
         discovery: 15,
         preclinical: 205,
       });
-    });
-  });
-
-  describe('transformPhaseDistribution', () => {
-    it('returns empty chartData and phases for null input', () => {
-      const result = transformPhaseDistribution(null);
-
-      expect(result.chartData).toEqual([]);
-      expect(result.phases).toEqual([]);
-    });
-
-    it('returns both chartData and phases from raw data', () => {
-      const result = transformPhaseDistribution(sampleData);
-
-      expect(result.chartData).toHaveLength(2);
-      expect(result.phases).toHaveLength(3);
     });
   });
 });
