@@ -19,11 +19,12 @@ const diseasesRaw = [
 ];
 
 const pairs = [
-  { product_name: 'Drug A', product_key: 1, disease_group_name: 'HIV' },
-  { product_name: 'Drug B', product_key: 2, disease_group_name: 'P. falciparum' },
-  { product_name: 'Drug C', product_key: 3, disease_group_name: 'TB' },
-  { product_name: 'Biological vector control products', product_key: 4, disease_group_name: 'P. falciparum' },
-  { product_name: 'Chemical vector control products', product_key: 5, disease_group_name: 'P. vivax' },
+  { product_name: 'Drug A', product_key: 1, disease_group_name: 'HIV', phase_name: 'Discovery' },
+  { product_name: 'Drug A', product_key: 1, disease_group_name: 'HIV', phase_name: 'Phase III' },
+  { product_name: 'Drug B', product_key: 2, disease_group_name: 'P. falciparum', phase_name: 'Phase I' },
+  { product_name: 'Drug C', product_key: 3, disease_group_name: 'TB', phase_name: 'Phase III' },
+  { product_name: 'Biological vector control products', product_key: 4, disease_group_name: 'P. falciparum', phase_name: 'Discovery' },
+  { product_name: 'Chemical vector control products', product_key: 5, disease_group_name: 'P. vivax', phase_name: 'Phase II' },
 ];
 
 const noLoading = { healthAreas: false, diseases: false, products: false, pairs: false };
@@ -34,6 +35,7 @@ function makeSetters() {
     setHealthArea: vi.fn(),
     setDisease: vi.fn(),
     setProduct: vi.fn(),
+    setRdPhase: vi.fn(),
   };
 }
 
@@ -381,12 +383,19 @@ describe('useCrossFilteredOptions (by-key)', () => {
     { value: '4|5', label: 'Vector control products' },
   ];
 
+  const allPhaseOptions = [
+    { label: 'Discovery', value: 'Discovery' },
+    { label: 'Phase I', value: 'Phase I' },
+    { label: 'Phase II', value: 'Phase II' },
+    { label: 'Phase III', value: 'Phase III' },
+  ];
+
   function renderByKey(overrides = {}) {
     const setters = makeSetters();
     const result = renderHook(() =>
       useCrossFilteredOptions({
-        data: { healthAreas, diseasesRaw, pairs, allProductOptions },
-        selections: { healthArea: [], disease: [], product: [], ...overrides.selections },
+        data: { healthAreas, diseasesRaw, pairs, allProductOptions, allPhaseOptions },
+        selections: { healthArea: [], disease: [], product: [], rdPhase: [], ...overrides.selections },
         setters,
         loading: { ...noLoading, ...overrides.loading },
         mode: 'by-key',
@@ -697,5 +706,67 @@ describe('useCrossFilteredOptions (by-key)', () => {
     expect(result.current.healthAreaOptions).toEqual([]);
     expect(result.current.diseaseOptions).toEqual([]);
     expect(result.current.productOptions).toEqual([]);
+  });
+
+  // --- rdPhase cross-filtering ---
+
+  it('narrows products when an rdPhase is selected', () => {
+    // Phase III has Drug A (key 1) and Drug C (key 3). Drug B (key 2)
+    // and the two vector control products do not appear in Phase III pairs.
+    const { result } = renderByKey({ selections: { rdPhase: ['Phase III'] } });
+    const values = result.current.productOptions.map(o => o.value);
+    expect(values).toContain('1');
+    expect(values).toContain('3');
+    expect(values).not.toContain('2');
+    expect(values).not.toContain('4|5');
+  });
+
+  it('narrows diseases when an rdPhase is selected', () => {
+    // Phase II only has 'P. vivax' (under Malaria GHA).
+    const { result } = renderByKey({ selections: { rdPhase: ['Phase II'] } });
+    expect(result.current.diseaseOptions).toContain('P. vivax');
+    expect(result.current.diseaseOptions).not.toContain('HIV');
+    expect(result.current.diseaseOptions).not.toContain('TB');
+  });
+
+  it('narrows health areas when an rdPhase is selected', () => {
+    // Phase I only has Drug B (P. falciparum → Malaria).
+    const { result } = renderByKey({ selections: { rdPhase: ['Phase I'] } });
+    const values = result.current.healthAreaOptions.map(o => o.value);
+    expect(values).toEqual(['Malaria']);
+  });
+
+  it('narrows rdPhase options when a product is selected', () => {
+    // Drug A (key 1) appears in Discovery and Phase III.
+    const { result } = renderByKey({ selections: { product: ['1'] } });
+    const phaseValues = result.current.rdPhaseOptions.map(o => o.value);
+    expect(phaseValues).toEqual(expect.arrayContaining(['Discovery', 'Phase III']));
+    expect(phaseValues).not.toContain('Phase I');
+    expect(phaseValues).not.toContain('Phase II');
+  });
+
+  it('prunes invalid rdPhase selections when narrowed by product', () => {
+    // Drug B (key 2) only has Phase I; selecting Phase III should be pruned.
+    const { setters } = renderByKey({
+      selections: { product: ['2'], rdPhase: ['Phase III'] },
+    });
+    expect(setters.setRdPhase).toHaveBeenCalledWith([]);
+  });
+
+  it('keeps valid rdPhase selections when product narrows but overlap exists', () => {
+    // Drug A (key 1) covers Discovery and Phase III; rdPhase=['Discovery']
+    // is still valid → no prune call.
+    const { setters } = renderByKey({
+      selections: { product: ['1'], rdPhase: ['Discovery'] },
+    });
+    expect(setters.setRdPhase).not.toHaveBeenCalled();
+  });
+
+  it('skips rdPhase pruning while pairs are loading', () => {
+    const { setters } = renderByKey({
+      selections: { product: ['2'], rdPhase: ['Phase III'] },
+      loading: { pairs: true },
+    });
+    expect(setters.setRdPhase).not.toHaveBeenCalled();
   });
 });
