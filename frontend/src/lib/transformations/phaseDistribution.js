@@ -42,35 +42,3 @@ export function extractPhases(data) {
     sortOrder: canonicalOrder(phase.phase_name),
   }));
 }
-
-/**
- * Group phase distribution data by health area for stacked bar chart
- * @param {Array} data - Raw API response
- * @returns {Array} Chart-ready grouped data
- */
-export function groupByHealthArea(data) {
-  if (!data || data.length === 0) return [];
-
-  const grouped = data.reduce((acc, row) => {
-    if (!acc[row.global_health_area]) {
-      acc[row.global_health_area] = { category: row.global_health_area };
-    }
-    const key = phaseNameToKey(row.phase_name);
-    acc[row.global_health_area][key] = row.candidateCount;
-    return acc;
-  }, {});
-
-  return Object.values(grouped);
-}
-
-/**
- * Full transformation pipeline for phase distribution
- * @param {Array} data - Raw API response
- * @returns {{ chartData: Array, phases: Array }}
- */
-export function transformPhaseDistribution(data) {
-  return {
-    chartData: groupByHealthArea(data),
-    phases: extractPhases(data),
-  };
-}

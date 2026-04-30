@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  transformPhaseDistribution,
   extractPhases,
-  groupByHealthArea,
   phaseNameToKey,
 } from '@/lib/transformations/phaseDistribution';
 
@@ -46,53 +44,6 @@ describe('phaseDistribution transformations', () => {
       expect(phases[0].color).toBe('#AD5133'); // Discovery color
       expect(phases[0].label).toBe('Discovery');
       expect(phases[2].label).toBe('Phase I');
-    });
-  });
-
-  describe('groupByHealthArea', () => {
-    it('returns empty array for null input', () => {
-      expect(groupByHealthArea(null)).toEqual([]);
-    });
-
-    it('returns empty array for empty array', () => {
-      expect(groupByHealthArea([])).toEqual([]);
-    });
-
-    it('groups data by health area with phase counts', () => {
-      const grouped = groupByHealthArea(sampleData);
-
-      expect(grouped).toHaveLength(2);
-
-      const neglected = grouped.find(g => g.category === 'Neglected disease');
-      expect(neglected).toEqual({
-        category: 'Neglected disease',
-        discovery: 46,
-        preclinical: 183,
-        phase_i: 154,
-      });
-
-      const emerging = grouped.find(g => g.category === 'Emerging infectious disease');
-      expect(emerging).toEqual({
-        category: 'Emerging infectious disease',
-        discovery: 15,
-        preclinical: 205,
-      });
-    });
-  });
-
-  describe('transformPhaseDistribution', () => {
-    it('returns empty chartData and phases for null input', () => {
-      const result = transformPhaseDistribution(null);
-
-      expect(result.chartData).toEqual([]);
-      expect(result.phases).toEqual([]);
-    });
-
-    it('returns both chartData and phases from raw data', () => {
-      const result = transformPhaseDistribution(sampleData);
-
-      expect(result.chartData).toHaveLength(2);
-      expect(result.phases).toHaveLength(3);
     });
   });
 });
