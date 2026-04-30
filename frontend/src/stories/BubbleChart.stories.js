@@ -1,14 +1,11 @@
-import { interpolateRgb } from 'd3-interpolate';
+import { createBubbleColorScale } from '@/lib/bubbleColorScale';
 import BubbleChart from '../components/charts/BubbleChart';
 import { chartColors } from '../lib/theme';
 
 // Shared shader: shade each bubble by its rank within the dataset
 // (largest = darkest). Matches the page-level usage in src/app/page.js.
-function makeRampScale(rampKey) {
-  const [light, dark] = chartColors.bubbleRamps[rampKey];
-  const interp = interpolateRgb(light, dark);
-  return (_d, rank, total) => interp(total <= 1 ? 1 : rank / (total - 1));
-}
+const makeRampScale = (rampKey) =>
+  createBubbleColorScale(chartColors.bubbleRamps[rampKey]);
 
 // A richer tooltip shows the full label plus both count columns — useful
 // to exercise the hover path on small bubbles where the interior label is

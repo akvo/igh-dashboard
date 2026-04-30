@@ -80,8 +80,9 @@ export default function BubbleChart({
   // Legacy categorical colors — used when colorScale is not provided.
   colors = DEFAULT_COLORS,
   // Preferred shader: (datum, rank, total) => hexColor.
-  // rank 0 = smallest bubble, total-1 = largest, so page callers can pass
-  //   (d, rank, total) => interpolateRgb(light, dark)(rank/(total-1))
+  // rank 0 = smallest bubble, total-1 = largest. Page callers usually
+  // build this with `createBubbleColorScale(palette)` from
+  // `@/lib/bubbleColorScale`, which snaps each rank onto a palette stop.
   colorScale,
   height = 400,
   gap = 4,

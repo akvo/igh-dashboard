@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { interpolateRgb } from 'd3-interpolate';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
+import { createBubbleColorScale } from '@/lib/bubbleColorScale';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { chartColors } from '@/lib/theme';
@@ -119,12 +119,12 @@ export default function Home() {
     : bubbleView === 'disease' ? diseaseBubbleLoading
     : diseaseTypeLoading;
 
-  // Per-view gradual color scale: (datum, rank, total) → hex.
-  // rank 0 = smallest, total-1 = largest → darkest shade.
+  // Per-view bubble color scale. The palette is ordered light → dark;
+  // smallest bubble (rank 0) lands on the lightest stop, largest on the
+  // darkest. See `createBubbleColorScale` for the proportional indexing.
   const bubbleColorScale = useMemo(() => {
-    const [light, dark] = chartColors.bubbleRamps[bubbleView] || chartColors.bubbleRamps.gha;
-    const interp = interpolateRgb(light, dark);
-    return (_d, rank, total) => interp(total <= 1 ? 1 : rank / (total - 1));
+    const palette = chartColors.bubbleRamps[bubbleView] || chartColors.bubbleRamps.gha;
+    return createBubbleColorScale(palette);
   }, [bubbleView]);
 
   const renderBubbleTooltip = useCallback((d) => (
