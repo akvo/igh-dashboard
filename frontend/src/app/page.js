@@ -39,6 +39,7 @@ import {
   useSecondaryDiseases,
   useDiseaseHierarchy,
   usePipelineFilterPairs,
+  useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import {
@@ -193,6 +194,11 @@ export default function Home() {
   const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
   const { raw: secondaryDiseasesRaw } = useSecondaryDiseases();
   const { hierarchy: diseaseHierarchy } = useDiseaseHierarchy();
+  // Two pair sources, one per section: Portfolio Overview pulls from the
+  // active-only set so its dropdowns never offer empty-chart combinations;
+  // Cross-pipeline keeps the broader set because its temporal chart
+  // legitimately spans retired snapshots.
+  const { pairs: activePairs, loading: activePairsLoading } = useActivePipelineFilterPairs();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
@@ -241,7 +247,7 @@ export default function Home() {
     data: {
       healthAreas: [],
       diseasesRaw,
-      pairs,
+      pairs: activePairs,
       allProductOptions,
       allPhaseOptions,
     },
@@ -261,7 +267,7 @@ export default function Home() {
       healthAreas: false,
       diseases: diseasesLoading,
       products: productsLoading,
-      pairs: pairsLoading,
+      pairs: activePairsLoading,
     },
     mode: 'by-key',
   });
