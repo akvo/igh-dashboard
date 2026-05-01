@@ -159,6 +159,29 @@ export const chartColors = {
     '#D6C6C6', // Rose
     '#F2E8D8', // Sand
   ],
+  // Bubble chart — one ordered palette per view tab, light → dark.
+  // BubbleChart shades each bubble by rank: the smallest bubble lands
+  // on the lightest stop, the largest on the darkest. With fewer
+  // bubbles than stops the chosen indices spread across the full
+  // range; with more bubbles than stops adjacent ranks share a stop.
+  bubbleRamps: {
+    gha: [
+      '#ffbfab', '#fea285', '#fe906d', '#fe7449',
+      '#e76a42', '#b45234', '#8c4028',
+    ],
+    ghaType: [
+      '#deeef4', '#cee6ef', '#b7dbe8', '#a9d4e4', '#94c9dd',
+      '#87b7c9', '#698f9d', '#516f7a', '#3e545d',
+    ],
+    disease: [
+      '#dcf2e4', '#cbecd7', '#b3e4c5', '#a4deba', '#8dd6a9',
+      '#80c39a', '#649878', '#4e765d', '#3b5a47',
+    ],
+    diseaseType: [
+      '#fae8cb', '#f8ddb1', '#f5cd8e', '#f3c378', '#f0b456',
+      '#daa44e', '#aa803d', '#84632f', '#654c24',
+    ],
+  },
 };
 
 // Global Health Area Colors (from brandbook palette)

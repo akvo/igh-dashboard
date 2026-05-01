@@ -23,6 +23,44 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
   }
 `;
 
+// Bubble Chart — GHA × Product Type view
+export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
+  query BubbleChartGhaProductType($candidateTypes: [String!]) {
+    ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+      global_health_area
+      product_type
+      candidateCount
+      productCount
+    }
+  }
+`;
+
+// Bubble Chart — Disease view
+export const GET_DISEASE_SUMMARIES = gql`
+  query BubbleChartDisease($candidateTypes: [String!]) {
+    diseaseSummaries(candidate_types: $candidateTypes) {
+      disease_group_name
+      global_health_area
+      candidateCount
+      productCount
+    }
+  }
+`;
+
+// Bubble Chart — Disease × Product Type view
+export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
+  query BubbleChartDiseaseProductType($candidateTypes: [String!]) {
+    diseaseProductTypeSummaries(candidate_types: $candidateTypes) {
+      disease_group_name
+      global_health_area
+      product_type
+      candidateCount
+      productCount
+    }
+  }
+`;
+
+
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
   query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {

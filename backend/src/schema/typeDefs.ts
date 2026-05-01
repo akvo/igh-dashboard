@@ -158,6 +158,28 @@ export const typeDefs = `#graphql
     productCount: Int!
   }
 
+  type GhaProductTypeSummary {
+    global_health_area: String!
+    product_type: String!
+    candidateCount: Int!
+    productCount: Int!
+  }
+
+  type DiseaseSummary {
+    disease_group_name: String!
+    global_health_area: String!
+    candidateCount: Int!
+    productCount: Int!
+  }
+
+  type DiseaseProductTypeSummary {
+    disease_group_name: String!
+    global_health_area: String!
+    product_type: String!
+    candidateCount: Int!
+    productCount: Int!
+  }
+
   type PhaseDistributionRow {
     global_health_area: String!
     phase_name: String!
@@ -435,8 +457,11 @@ export const typeDefs = `#graphql
     # KPIs (3 homepage cards)
     portfolioKPIs(global_health_areas: [String!], disease_names: [String!], product_names: [String!], phase_names: [String!]): PortfolioKPIs!
 
-    # Bubble chart
+    # Bubble chart — four views
     globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
+    ghaProductTypeSummaries(candidate_types: [String!]): [GhaProductTypeSummary!]!
+    diseaseSummaries(candidate_types: [String!]): [DiseaseSummary!]!
+    diseaseProductTypeSummaries(candidate_types: [String!]): [DiseaseProductTypeSummary!]!
 
     # Stacked bar chart
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!
