@@ -128,13 +128,26 @@ export default function Home() {
     return createBubbleColorScale(palette);
   }, [bubbleView]);
 
-  const renderBubbleTooltip = useCallback((d) => (
-    <div>
-      <div style={{ fontWeight: 600, marginBottom: 4 }}>{d?.label || d?.name}</div>
-      <div>{(d?.candidateCount ?? 0).toLocaleString()} candidates</div>
-      <div>{(d?.productCount ?? 0).toLocaleString()} approved products</div>
-    </div>
-  ), []);
+  const renderBubbleTooltip = useCallback((d) => {
+    const showCands = bubbleCandidateTypes.includes('Candidate');
+    const showProds = bubbleCandidateTypes.includes('Product');
+    // Hide a row only when exactly one type is selected. Both/neither
+    // selected restores the original two-row tooltip.
+    const isFiltered = showCands !== showProds;
+    const tooltipShowCands = !isFiltered || showCands;
+    const tooltipShowProds = !isFiltered || showProds;
+    return (
+      <div>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>{d?.label || d?.name}</div>
+        {tooltipShowCands && (
+          <div>{(d?.candidateCount ?? 0).toLocaleString()} candidates</div>
+        )}
+        {tooltipShowProds && (
+          <div>{(d?.productCount ?? 0).toLocaleString()} approved products</div>
+        )}
+      </div>
+    );
+  }, [bubbleCandidateTypes]);
 
   // Per-view table column spec, consumed by <Table> (which wants
   // `header`/`accessor`/`type`) and mapped for CSV export below. The
