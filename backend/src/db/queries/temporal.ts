@@ -95,6 +95,39 @@ export function getPipelineFilterPairs(): PipelineFilterPair[] {
 }
 
 /**
+ * Like `getPipelineFilterPairs`, but additionally restricts to rows the
+ * active-pipeline chart aggregations actually count: `is_active_flag = 1`
+ * and `candidate_type IN ('Candidate', 'Product')`.  Used by Portfolio
+ * Overview / Portfolio Analysis dropdowns so that every option offered
+ * to the user resolves to a non-empty chart.
+ *
+ * Schema parity with `getPipelineFilterPairs`: same columns, same
+ * `PipelineFilterPair` row shape — only the WHERE clause differs.
+ * If a column is added to one, add it to the other.
+ */
+export function getActivePipelineFilterPairs(): PipelineFilterPair[] {
+  const db = getDatabase();
+
+  return db
+    .prepare(
+      `
+    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name, ph.phase_name
+    FROM fact_pipeline_snapshot f
+    JOIN dim_disease dd ON f.disease_key = dd.disease_key
+    JOIN dim_product dp ON f.product_key = dp.product_key
+    JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key
+    LEFT JOIN dim_phase ph ON f.phase_key = ph.phase_key
+    WHERE ${PIPELINE_FILTER}
+      AND f.is_active_flag = 1
+      AND c.candidate_type IN ('Candidate', 'Product')
+      AND dd.disease_group_name IS NOT NULL
+      AND f.product_key IS NOT NULL
+  `,
+    )
+    .all() as PipelineFilterPair[];
+}
+
+/**
  * Get available years in the dataset.
  */
 export function getAvailableYears(): number[] {

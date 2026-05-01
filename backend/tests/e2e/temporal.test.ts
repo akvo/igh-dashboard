@@ -4,7 +4,11 @@
 
 import { describe, it, expect } from "vitest";
 import { query } from "../helpers/graphql.js";
-import type { TemporalSnapshotRow, PipelineFilterPair } from "../helpers/types.js";
+import type {
+  TemporalSnapshotRow,
+  PipelineFilterPair,
+  CandidateTypeDistributionRow,
+} from "../helpers/types.js";
 
 describe("Temporal Analysis", () => {
   it("returns available years for selector", async () => {
@@ -357,5 +361,120 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
     );
 
     expect(data.temporalSnapshots.length).toBeGreaterThan(0);
+  });
+});
+
+describe("Active pipeline filter pairs (active-only cross-filtering)", () => {
+  it("returns the same row shape as pipelineFilterPairs", async () => {
+    const { data } = await query<{
+      activePipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      activePipelineFilterPairs {
+        disease_group_name
+        product_key
+        product_name
+        phase_name
+      }
+    }`);
+
+    expect(data.activePipelineFilterPairs.length).toBeGreaterThan(0);
+    data.activePipelineFilterPairs.forEach((row) => {
+      expect(typeof row.disease_group_name).toBe("string");
+      expect(typeof row.product_key).toBe("number");
+      expect(typeof row.product_name).toBe("string");
+      // phase_name is nullable (LEFT JOIN preserved from base query)
+      expect(row.phase_name === null || typeof row.phase_name === "string").toBe(true);
+    });
+  });
+
+  it("returns distinct rows", async () => {
+    const { data } = await query<{
+      activePipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      activePipelineFilterPairs {
+        disease_group_name
+        product_key
+        product_name
+        phase_name
+      }
+    }`);
+
+    const keys = data.activePipelineFilterPairs.map(
+      (r) => `${r.disease_group_name}::${r.product_key}::${r.phase_name ?? ""}`,
+    );
+    const unique = new Set(keys);
+    expect(unique.size).toBe(keys.length);
+  });
+
+  it("is a subset of pipelineFilterPairs", async () => {
+    const { data } = await query<{
+      pipelineFilterPairs: PipelineFilterPair[];
+      activePipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      pipelineFilterPairs {
+        disease_group_name
+        product_key
+        phase_name
+      }
+      activePipelineFilterPairs {
+        disease_group_name
+        product_key
+        phase_name
+      }
+    }`);
+
+    // Active pairs must never exceed the broader set.
+    expect(data.activePipelineFilterPairs.length).toBeLessThanOrEqual(
+      data.pipelineFilterPairs.length,
+    );
+
+    // Every active pair must exist in the broader set.
+    const broadKeys = new Set(
+      data.pipelineFilterPairs.map(
+        (r) => `${r.disease_group_name}::${r.product_key}::${r.phase_name ?? ""}`,
+      ),
+    );
+    data.activePipelineFilterPairs.forEach((r) => {
+      const key = `${r.disease_group_name}::${r.product_key}::${r.phase_name ?? ""}`;
+      expect(broadKeys.has(key)).toBe(true);
+    });
+  });
+
+  it("every (product_key, phase_name) combination produces non-empty candidateTypeDistribution", async () => {
+    // Regression test for the original bug: an option offered in the dropdown
+    // must not produce an empty chart. We sample one pair with a non-null
+    // phase_name and confirm candidateTypeDistribution returns rows.
+    const { data: pairsData } = await query<{
+      activePipelineFilterPairs: PipelineFilterPair[];
+    }>(`{
+      activePipelineFilterPairs {
+        product_key
+        phase_name
+      }
+    }`);
+
+    const sample = pairsData.activePipelineFilterPairs.find((r) => r.phase_name !== null);
+    expect(sample).toBeDefined();
+    if (!sample || sample.phase_name === null) return;
+
+    const { data } = await query<{
+      candidateTypeDistribution: CandidateTypeDistributionRow[];
+    }>(
+      `query ($productKeys: [Int!], $phaseNames: [String!]) {
+        candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+          global_health_area
+          candidate_type
+          candidateCount
+        }
+      }`,
+      {
+        productKeys: [sample.product_key],
+        phaseNames: [sample.phase_name],
+      },
+    );
+
+    expect(data.candidateTypeDistribution.length).toBeGreaterThan(0);
+    const totalCount = data.candidateTypeDistribution.reduce((sum, r) => sum + r.candidateCount, 0);
+    expect(totalCount).toBeGreaterThan(0);
   });
 });

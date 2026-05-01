@@ -13,6 +13,7 @@ import {
   getTemporalSnapshots,
   getAvailableYears,
   getPipelineFilterPairs,
+  getActivePipelineFilterPairs,
 } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
 import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
@@ -131,6 +132,9 @@ export const resolvers = {
 
     // Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: () => getPipelineFilterPairs(),
+
+    // Active-pipeline filter pairs — restricted to active+typed candidates
+    activePipelineFilterPairs: () => getActivePipelineFilterPairs(),
 
     // Lists with pagination
     candidates: (_: unknown, args: { filter?: CandidateFilter; limit?: number; offset?: number }) =>
