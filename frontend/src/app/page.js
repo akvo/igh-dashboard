@@ -128,13 +128,26 @@ export default function Home() {
     return createBubbleColorScale(palette);
   }, [bubbleView]);
 
-  const renderBubbleTooltip = useCallback((d) => (
-    <div>
-      <div style={{ fontWeight: 600, marginBottom: 4 }}>{d?.label || d?.name}</div>
-      <div>{(d?.candidateCount ?? 0).toLocaleString()} candidates</div>
-      <div>{(d?.productCount ?? 0).toLocaleString()} approved products</div>
-    </div>
-  ), []);
+  const renderBubbleTooltip = useCallback((d) => {
+    const showCands = bubbleCandidateTypes.includes('Candidate');
+    const showProds = bubbleCandidateTypes.includes('Product');
+    // Hide a row only when exactly one type is selected. Both/neither
+    // selected restores the original two-row tooltip.
+    const isFiltered = showCands !== showProds;
+    const tooltipShowCands = !isFiltered || showCands;
+    const tooltipShowProds = !isFiltered || showProds;
+    return (
+      <div>
+        <div style={{ fontWeight: 600, marginBottom: 4 }}>{d?.label || d?.name}</div>
+        {tooltipShowCands && (
+          <div>{(d?.candidateCount ?? 0).toLocaleString()} candidates</div>
+        )}
+        {tooltipShowProds && (
+          <div>{(d?.productCount ?? 0).toLocaleString()} approved products</div>
+        )}
+      </div>
+    );
+  }, [bubbleCandidateTypes]);
 
   // Per-view table column spec, consumed by <Table> (which wants
   // `header`/`accessor`/`type`) and mapped for CSV export below. The
@@ -150,33 +163,45 @@ export default function Home() {
       render: (value) => <span className="tabular-nums">{value}</span>,
     };
 
+    // When exactly one type is selected, drop the unselected count column
+    // AND the Total column (which would otherwise duplicate the lone count).
+    // Both/neither selected restores the original [Total, Candidates, Products]
+    // triple. Same XOR rule used by `renderBubbleTooltip`.
+    const showCands = bubbleCandidateTypes.includes('Candidate');
+    const showProds = bubbleCandidateTypes.includes('Product');
+    const isFiltered = showCands !== showProds;
+    const countCols = isFiltered
+      ? (showCands ? [CANDS] : [PRODS])
+      : [TOTAL, CANDS, PRODS];
+
     switch (bubbleView) {
       case 'ghaType':
         return [
           { header: 'Health area', accessor: 'group' },
           { header: 'Product type', accessor: 'productType' },
-          TOTAL, CANDS, PRODS,
+          ...countCols,
         ];
       case 'disease':
         return [
-          { header: 'Disease', accessor: 'name' },
           { header: 'Health area', accessor: 'group' },
-          TOTAL, CANDS, PRODS,
+          { header: 'Disease', accessor: 'name' },
+          ...countCols,
         ];
       case 'diseaseType':
         return [
-          { header: 'Disease', accessor: 'disease' },
           { header: 'Health area', accessor: 'group' },
+          { header: 'Disease', accessor: 'disease' },
           { header: 'Product type', accessor: 'productType' },
-          TOTAL, CANDS, PRODS,
+          ...countCols,
         ];
       default: // gha
         return [
           { header: 'Health area', accessor: 'name' },
-          TOTAL, CANDS, PRODS, SHARE,
+          ...countCols,
+          SHARE,
         ];
     }
-  }, [bubbleView]);
+  }, [bubbleView, bubbleCandidateTypes]);
 
   // Bake the `share` percentage onto each row so the Table's render
   // function doesn't need access to the dataset total. Also gives the
