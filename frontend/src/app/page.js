@@ -163,33 +163,45 @@ export default function Home() {
       render: (value) => <span className="tabular-nums">{value}</span>,
     };
 
+    // When exactly one type is selected, drop the unselected count column
+    // AND the Total column (which would otherwise duplicate the lone count).
+    // Both/neither selected restores the original [Total, Candidates, Products]
+    // triple. Same XOR rule used by `renderBubbleTooltip`.
+    const showCands = bubbleCandidateTypes.includes('Candidate');
+    const showProds = bubbleCandidateTypes.includes('Product');
+    const isFiltered = showCands !== showProds;
+    const countCols = isFiltered
+      ? (showCands ? [CANDS] : [PRODS])
+      : [TOTAL, CANDS, PRODS];
+
     switch (bubbleView) {
       case 'ghaType':
         return [
           { header: 'Health area', accessor: 'group' },
           { header: 'Product type', accessor: 'productType' },
-          TOTAL, CANDS, PRODS,
+          ...countCols,
         ];
       case 'disease':
         return [
-          { header: 'Disease', accessor: 'name' },
           { header: 'Health area', accessor: 'group' },
-          TOTAL, CANDS, PRODS,
+          { header: 'Disease', accessor: 'name' },
+          ...countCols,
         ];
       case 'diseaseType':
         return [
-          { header: 'Disease', accessor: 'disease' },
           { header: 'Health area', accessor: 'group' },
+          { header: 'Disease', accessor: 'disease' },
           { header: 'Product type', accessor: 'productType' },
-          TOTAL, CANDS, PRODS,
+          ...countCols,
         ];
       default: // gha
         return [
           { header: 'Health area', accessor: 'name' },
-          TOTAL, CANDS, PRODS, SHARE,
+          ...countCols,
+          SHARE,
         ];
     }
-  }, [bubbleView]);
+  }, [bubbleView, bubbleCandidateTypes]);
 
   // Bake the `share` percentage onto each row so the Table's render
   // function doesn't need access to the dataset total. Also gives the
