@@ -371,6 +371,20 @@ export const GET_PIPELINE_FILTER_PAIRS = gql`
   }
 `;
 
+// Active-pipeline filter pairs — same shape, but restricted to active candidates
+// of type Candidate/Product. Used by Portfolio Overview / Portfolio Analysis
+// dropdowns to avoid offering options that produce empty charts.
+export const GET_ACTIVE_PIPELINE_FILTER_PAIRS = gql`
+  query ActivePipelineFilterPairs {
+    activePipelineFilterPairs {
+      disease_group_name
+      product_key
+      product_name
+      phase_name
+    }
+  }
+`;
+
 // Get all diseases (grouped by disease_group_name)
 export const GET_DISEASES = gql`
   query GetDiseases {
