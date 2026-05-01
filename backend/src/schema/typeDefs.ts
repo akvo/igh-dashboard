@@ -478,6 +478,11 @@ export const typeDefs = `#graphql
     # Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: [PipelineFilterPair!]!
 
+    # Active-pipeline filter pairs — same shape, but restricted to
+    # is_active_flag=1 and candidate_type IN ('Candidate','Product').
+    # Used by Portfolio Overview dropdowns to avoid empty-chart options.
+    activePipelineFilterPairs: [PipelineFilterPair!]!
+
     # Lists with pagination
     candidates(filter: CandidateFilter, limit: Int, offset: Int): CandidateConnection!
 
