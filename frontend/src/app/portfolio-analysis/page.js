@@ -7,20 +7,18 @@ import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-s
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/components/ui';
 import DebouncedInput from '@/components/ui/DebouncedInput';
-import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
+import { RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap, ChartEmptyState } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useDiseaseHierarchy, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, useActivePipelineFilterPairs } from '@/graphql/hooks';
+import { usePortfolioKPIs, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import {
-  consolidateProductOptionsByName,
-  expandProductNameSelection,
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
 } from '@/lib/filterGroups';
-import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import { useGlobalFilters, GlobalFilterBar, PortfolioPageHeader } from '@/components/portfolio-analysis';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -36,15 +34,29 @@ function CellText({ children }) {
 
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useUrlState('tab', 'explore', { ...stringSerializer, historyMode: 'push' });
-  const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
-  // Disease selection is now hierarchical: `primary` is the
-  // top-level group ("Malaria"), `secondary` is the explicit
-  // sub-disease ("P. falciparum"). See
-  // HierarchicalDiseaseFilter for the implicit/explicit semantics.
-  const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
-  const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
-  const [product, setProduct] = useUrlState('product', [], arraySerializer);
-  const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
+
+  // Global filter selections, options, and the legacy `?disease=`
+  // migration are owned by useGlobalFilters so that all sibling
+  // pages in the Portfolio Analysis group share the exact same
+  // wiring.
+  const {
+    healthArea,
+    primary,
+    secondary,
+    product,
+    rdPhase,
+    expandedProduct,
+    setHealthArea,
+    setPrimary,
+    setSecondary,
+    setProduct,
+    setRdPhase,
+    healthAreaOptions,
+    narrowedHierarchy,
+    productOptions,
+    rdPhaseOptions,
+  } = useGlobalFilters();
+
   const [productTypeFilter, setProductTypeFilter] = useUrlState('productType', [], arraySerializer);
   const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
@@ -118,7 +130,6 @@ export default function PortfolioAnalysis() {
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
   const [technologyDownloading, setTechnologyDownloading] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
   // Hidden phase/item keys for charts with filters (empty = all visible).
   const [pipelineHiddenPhases, setPipelineHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [authHiddenPhases, setAuthHiddenPhases] = useUrlState('ahide', [], arraySerializer);
@@ -127,19 +138,8 @@ export default function PortfolioAnalysis() {
 
   const apolloClient = useApolloClient();
 
-  // Fetch data from API
-  // Expand composite product selections for API calls. Disease no
-  // longer needs an `expand` step -- the hierarchical filter
-  // already produces the canonical primary / secondary lists.
-  const expandedProduct = expandProductNameSelection(product);
-
   const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, primary, secondary, expandedProduct, rdPhase);
-  const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
-  const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
-  const { hierarchy: diseaseHierarchy, loading: hierarchyLoading } = useDiseaseHierarchy();
-  const { pairs, loading: pairsLoading } = useActivePipelineFilterPairs();
-  const { phases, loading: phasesLoading } = usePhases();
+  const { phases } = usePhases();
   const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
   const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
@@ -302,36 +302,6 @@ export default function PortfolioAnalysis() {
     setTrialStatusHiddenItems(Object.keys(next).filter(k => !next[k]));
   }, [setTrialStatusHiddenItems]);
 
-  // All product options from API (before cross-filtering), with VC consolidation
-  const allProductOptions = useMemo(() => {
-    const names = (productsList || []).map(p => p.product_name);
-    return consolidateProductOptionsByName(names);
-  }, [productsList]);
-
-  // All R&D phase options (before cross-filtering)
-  const allPhaseOptions = useMemo(() =>
-    phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    })),
-    [phases]
-  );
-
-  const crossFilterData = { healthAreas, diseaseHierarchy, pairs, allProductOptions, allPhaseOptions };
-  const crossFilterLoading = { healthAreas: healthAreasLoading, diseases: hierarchyLoading || diseasesLoading, products: productsLoading, pairs: pairsLoading };
-
-  // Explore tab cross-filtered options (GHA ↔ disease ↔ product ↔ R&D phase).
-  // `narrowedHierarchy` feeds the HierarchicalDiseaseFilter so the
-  // tree only offers options reachable under the other filters.
-  const { healthAreaOptions, narrowedHierarchy, productOptions, rdPhaseOptions } = useCrossFilteredOptions({
-    data: crossFilterData,
-    selections: { healthArea, primary, secondary, product, rdPhase },
-    setters: { setHealthArea, setPrimary, setSecondary, setProduct, setRdPhase },
-    loading: crossFilterLoading,
-  });
-
-
-
   // Reset trials pagination when search query changes.
   useEffect(() => {
     if (!didHydrateSearchRef.current) return;
@@ -348,42 +318,6 @@ export default function PortfolioAnalysis() {
     const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleClearFilters = () => {
-    // Global GHA / Disease / Product / R&D Phase filters
-    setHealthArea([]);
-    setPrimary([]);
-    setSecondary([]);
-    setProduct([]);
-    setRdPhase([]);
-    // Chart-level filters
-    setProductTypeFilter([]);
-    setGeoTrialStatus([]);
-    // Chart visibility toggles
-    setPipelineHiddenPhases([]);
-    setAuthHiddenPhases([]);
-    setApprovalHiddenItems([]);
-    setTrialStatusHiddenItems([]);
-    // Extract-specific filters
-    setExtractRdStage([]);
-    // Search queries across all sub-tabs
-    setSearchQuery('');
-    setApprovedSearchQuery('');
-    setTrialsSearchQuery('');
-    setTechnologySearchQuery('');
-    setExtractSearchQuery('');
-  };
-
-  const hasFilters =
-    healthArea.length > 0 || primary.length > 0 || secondary.length > 0 || product.length > 0 ||
-    rdPhase.length > 0 ||
-    productTypeFilter.length > 0 || geoTrialStatus.length > 0 ||
-    pipelineHiddenPhases.length > 0 || authHiddenPhases.length > 0 ||
-    approvalHiddenItems.length > 0 || trialStatusHiddenItems.length > 0 ||
-    extractRdStage.length > 0 ||
-    searchQuery.length > 0 || approvedSearchQuery.length > 0 ||
-    trialsSearchQuery.length > 0 || technologySearchQuery.length > 0 ||
-    extractSearchQuery.length > 0;
 
   // Get KPI values
   const activeCandidates = kpis?.find(k => k.id === 'candidates')?.value || 0;
@@ -759,29 +693,14 @@ export default function PortfolioAnalysis() {
           {/* Page Header */}
           <div className={`flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 ${activeTab === 'extract' ? '!pb-0 mb-8' : 'mb-0'}`}>
             {/* Title Row */}
-            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                  Portfolio analysis
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {activeTab === 'explore'
-                    ? 'Explore the global R&D pipeline across health areas, diseases and product types through two complementary views. Use interactive charts and maps to visualize portfolio trends and apply filters (across the complete visual insights view) or switch to the table view to build a custom dataset and export it as .csv for further analysis.'
-                    : 'Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.'}
-                </p>
-              </div>
-              <button
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  setShareCopied(true);
-                  setTimeout(() => setShareCopied(false), 2000);
-                }}
-              >
-                {shareCopied ? 'Copied!' : 'Share this view'}
-                <UploadIcon className="w-4 h-4" />
-              </button>
-            </div>
+            <PortfolioPageHeader
+              title="Portfolio analysis"
+              description={
+                activeTab === 'explore'
+                  ? 'Explore the global R&D pipeline across health areas, diseases and product types through two complementary views. Use interactive charts and maps to visualize portfolio trends and apply filters (across the complete visual insights view) or switch to the table view to build a custom dataset and export it as .csv for further analysis.'
+                  : 'Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps.'
+              }
+            />
 
             {/* Tab Switcher and AI Link */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -822,75 +741,7 @@ export default function PortfolioAnalysis() {
           </div>
 
           {/* Sticky Filters for Explore tab */}
-          {activeTab === 'explore' && (
-            <div className="sticky top-0 z-20 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 mb-8">
-              <div className="flex items-end gap-4">
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Global health area"
-                    value={healthArea}
-                    onChange={setHealthArea}
-                    placeholder="All"
-                    options={healthAreaOptions}
-                    multiSelect={true}
-                    loading={healthAreasLoading}
-                    variant="outlined"
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <HierarchicalDiseaseFilter
-                    label="Disease"
-                    hierarchy={narrowedHierarchy}
-                    primarySelected={primary}
-                    secondarySelected={secondary}
-                    onChange={({ primarySelected, secondarySelected }) => {
-                      setPrimary(primarySelected);
-                      setSecondary(secondarySelected);
-                    }}
-                    placeholder="All"
-                    variant="outlined"
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="Product type"
-                    value={product}
-                    onChange={setProduct}
-                    placeholder="All"
-                    options={productOptions}
-                    multiSelect={true}
-                    loading={productsLoading}
-                    variant="outlined"
-                  />
-                </div>
-                <div className="min-w-[220px]">
-                  <Dropdown
-                    label="R&D phase"
-                    value={rdPhase}
-                    onChange={setRdPhase}
-                    placeholder="All"
-                    options={rdPhaseOptions}
-                    multiSelect={true}
-                    loading={phasesLoading || pairsLoading}
-                    variant="outlined"
-                  />
-                </div>
-                <div className="flex-1" />
-                <button
-                  onClick={handleClearFilters}
-                  disabled={!hasFilters}
-                  className={`flex items-center gap-2 text-sm px-4 h-[44px] whitespace-nowrap border ${
-                    hasFilters
-                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
-                      : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
-                  }`}
-                >
-                  Clear
-                  <RefreshIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          {activeTab === 'explore' && <GlobalFilterBar />}
 
           {/* Content based on active tab */}
           {activeTab === 'explore' ? (
