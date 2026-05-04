@@ -2,11 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useQueryParams } from '@/lib/useQueryParams';
 import {
   HomeIcon,
   ChartIcon,
   RefreshIcon,
   ListIcon,
+  PieChartIcon,
+  LayersIcon,
   BoltIcon,
   GridIcon,
   FileIcon,
@@ -14,6 +18,8 @@ import {
   SearchIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from '../icons';
 
 const defaultMenuItems = [
@@ -21,15 +27,29 @@ const defaultMenuItems = [
     section: 'GENERAL',
     items: [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
-      { id: 'portfolio-analysis', label: 'Portfolio analysis', icon: ChartIcon, href: '/portfolio-analysis' },
+      {
+        id: 'portfolio-analysis',
+        label: 'Portfolio Analysis',
+        icon: ChartIcon,
+        // Parent groups carry a "first child" href used only for
+        // the icon-only collapsed-mode click target. Clicking the
+        // parent in the expanded sidebar toggles the chevron, not
+        // the route.
+        href: '/portfolio-analysis',
+        children: [
+          { id: 'portfolio-analysis-explore', label: 'Portfolio Analysis', icon: PieChartIcon, href: '/portfolio-analysis' },
+          { id: 'portfolio-analysis-extract', label: 'Extract custom details', icon: ListIcon, href: '/portfolio-analysis/extract' },
+          { id: 'portfolio-analysis-aggregated', label: 'Aggregated portfolio', icon: LayersIcon, href: '/portfolio-analysis/aggregated' },
+        ],
+      },
       { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
     ],
-  }
+  },
 ];
 
 export default function Sidebar({
   menuItems = defaultMenuItems,
-  activeId = 'home',
+  activeId,
   onNavigate,
   defaultExpanded = true,
   showSearch = true,
@@ -55,6 +75,77 @@ export default function Sidebar({
     if (onNavigate) {
       onNavigate(item);
     }
+  };
+
+  // =========================================================
+  // Active-state detection and per-group expand state
+  // =========================================================
+  //
+  // Active state derives from the current pathname so each page no
+  // longer needs to pass the right `activeId`. The prop stays as an
+  // optional override for Storybook stories that don't have a
+  // pathname context.
+
+  const pathname = usePathname();
+  // Read query params via the project's reactive store rather than
+  // Next's useSearchParams() — the latter forces a Suspense
+  // boundary around any consumer during static prerender, and the
+  // Sidebar renders on every page in the app.
+  const [params] = useQueryParams();
+
+  const isItemActive = (item) => {
+    if (activeId !== undefined) return activeId === item.id;
+    if (!pathname) return false;
+    return pathname === item.href;
+  };
+
+  const isGroupActive = (group) => {
+    if (!group.children) return false;
+    if (activeId !== undefined) return group.children.some((c) => c.id === activeId);
+    if (!pathname) return false;
+    return group.children.some((c) => pathname === c.href);
+  };
+
+  // Per-group expand state. Initialized open if the current
+  // pathname matches any child route. Session-only state — no
+  // localStorage. Reload always opens the group when on a sub-route.
+  const [expandedGroups, setExpandedGroups] = useState(() => {
+    const initial = {};
+    if (typeof window !== 'undefined') {
+      menuItems.forEach((section) => {
+        section.items.forEach((item) => {
+          if (item.children) {
+            initial[item.id] = item.children.some(
+              (c) => window.location.pathname === c.href,
+            );
+          }
+        });
+      });
+    }
+    return initial;
+  });
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
+  // Sibling-to-sibling navigation within /portfolio-analysis carries
+  // the current query string (minus `tab`, which the page split
+  // retired) so filter and sub-tab state persist across sibling
+  // page swaps. All other navigations carry no query — global
+  // filters live with this feature group, not the whole app.
+  const buildHref = (targetHref) => {
+    const bothInGroup =
+      pathname &&
+      pathname.startsWith('/portfolio-analysis') &&
+      targetHref.startsWith('/portfolio-analysis');
+    if (!bothInGroup) return targetHref;
+    const out = new URLSearchParams();
+    params.forEach((v, k) => {
+      if (k !== 'tab') out.set(k, v);
+    });
+    const qs = out.toString();
+    return qs ? `${targetHref}?${qs}` : targetHref;
   };
 
   return (
@@ -99,38 +190,139 @@ export default function Sidebar({
             <ul className="space-y-1">
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeId === item.id;
+                const hasChildren = Array.isArray(item.children) && item.children.length > 0;
+                const isActive = !hasChildren && isItemActive(item);
+                const isGroupOpen = hasChildren && expandedGroups[item.id];
+                const isGroupHighlighted = hasChildren && isGroupActive(item);
 
+                if (!hasChildren) {
+                  // Leaf item — same rendering as before.
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={buildHref(item.href)}
+                        onClick={() => handleItemClick(item)}
+                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                          isActive
+                            ? 'bg-sidebar-active'
+                            : 'hover:bg-sidebar-hover'
+                        } ${!isExpanded ? 'justify-center' : ''}`}
+                        title={!isExpanded ? item.label : undefined}
+                      >
+                        <Icon
+                          className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                            isActive ? 'text-orange-500' : 'text-sidebar-icon group-hover:text-orange-500'
+                          }`}
+                          strokeWidth={2.5}
+                        />
+                        {isExpanded && (
+                          <span
+                            className={`text-sm transition-colors ${
+                              isActive
+                                ? 'font-semibold text-black'
+                                : 'font-normal text-sidebar-text group-hover:text-black'
+                            }`}
+                          >
+                            {item.label}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                  );
+                }
+
+                // Icon-only collapsed mode: the parent acts as a
+                // direct link to its primary href (typically the
+                // first child). No flyout submenu.
+                if (!isExpanded) {
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={buildHref(item.href)}
+                        className={`group flex items-center justify-center px-3 py-2.5 rounded-lg transition-colors ${
+                          isGroupHighlighted
+                            ? 'bg-sidebar-active'
+                            : 'hover:bg-sidebar-hover'
+                        }`}
+                        title={item.label}
+                      >
+                        <Icon
+                          className={`w-5 h-5 flex-shrink-0 transition-colors ${
+                            isGroupHighlighted
+                              ? 'text-orange-500'
+                              : 'text-sidebar-icon group-hover:text-orange-500'
+                          }`}
+                          strokeWidth={2.5}
+                        />
+                      </Link>
+                    </li>
+                  );
+                }
+
+                // Expanded group: parent is a button that toggles
+                // the chevron-revealed children band. Children
+                // render in a tinted strip with white-card active
+                // styling for the current sub-route.
                 return (
                   <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      onClick={() => handleItemClick(item)}
-                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-sidebar-active'
-                          : 'hover:bg-sidebar-hover'
-                      } ${!isExpanded ? 'justify-center' : ''}`}
-                      title={!isExpanded ? item.label : undefined}
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(item.id)}
+                      aria-expanded={isGroupOpen}
+                      className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
                     >
                       <Icon
-                        className={`w-5 h-5 flex-shrink-0 transition-colors ${
-                          isActive ? 'text-orange-500' : 'text-sidebar-icon group-hover:text-orange-500'
-                        }`}
+                        className="w-5 h-5 flex-shrink-0 transition-colors text-sidebar-icon group-hover:text-orange-500"
                         strokeWidth={2.5}
                       />
-                      {isExpanded && (
-                        <span
-                          className={`text-sm transition-colors ${
-                            isActive
-                              ? 'font-semibold text-black'
-                              : 'font-normal text-sidebar-text group-hover:text-black'
-                          }`}
-                        >
-                          {item.label}
-                        </span>
+                      <span className="flex-1 text-left text-sm font-normal text-sidebar-text group-hover:text-black transition-colors">
+                        {item.label}
+                      </span>
+                      {isGroupOpen ? (
+                        <ChevronUpIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
+                      ) : (
+                        <ChevronDownIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
                       )}
-                    </Link>
+                    </button>
+                    {isGroupOpen && (
+                      <ul className="bg-black/[0.03] rounded-lg mt-1 mb-1 py-1">
+                        {item.children.map((child) => {
+                          const ChildIcon = child.icon;
+                          const childActive = isItemActive(child);
+                          return (
+                            <li key={child.id}>
+                              <Link
+                                href={buildHref(child.href)}
+                                onClick={() => handleItemClick(child)}
+                                className={`group flex items-center gap-3 pl-11 pr-3 py-2.5 rounded-lg transition-colors ${
+                                  childActive
+                                    ? 'bg-white'
+                                    : 'hover:bg-sidebar-hover'
+                                }`}
+                              >
+                                <ChildIcon
+                                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                                    childActive
+                                      ? 'text-orange-500'
+                                      : 'text-sidebar-icon group-hover:text-orange-500'
+                                  }`}
+                                  strokeWidth={2.5}
+                                />
+                                <span
+                                  className={`text-sm transition-colors ${
+                                    childActive
+                                      ? 'font-semibold text-black'
+                                      : 'font-normal text-sidebar-text group-hover:text-black'
+                                  }`}
+                                >
+                                  {child.label}
+                                </span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </li>
                 );
               })}
