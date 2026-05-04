@@ -107,21 +107,24 @@ export default function Sidebar({
   };
 
   // Per-group expand state. Initialized open if the current
-  // pathname matches any child route. Session-only state — no
-  // localStorage. Reload always opens the group when on a sub-route.
+  // pathname matches any child route, OR if an explicit `activeId`
+  // override (Storybook stories) targets a child. Session-only —
+  // no localStorage. Reload always opens the group when on a
+  // sub-route.
   const [expandedGroups, setExpandedGroups] = useState(() => {
     const initial = {};
-    if (typeof window !== 'undefined') {
-      menuItems.forEach((section) => {
-        section.items.forEach((item) => {
-          if (item.children) {
-            initial[item.id] = item.children.some(
-              (c) => window.location.pathname === c.href,
-            );
-          }
-        });
+    menuItems.forEach((section) => {
+      section.items.forEach((item) => {
+        if (!item.children) return;
+        const matchesActiveId =
+          activeId !== undefined &&
+          item.children.some((c) => c.id === activeId);
+        const matchesPathname =
+          typeof window !== 'undefined' &&
+          item.children.some((c) => window.location.pathname === c.href);
+        initial[item.id] = matchesActiveId || matchesPathname;
       });
-    }
+    });
     return initial;
   });
 
