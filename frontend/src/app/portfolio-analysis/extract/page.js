@@ -8,10 +8,13 @@
 // four-up sub-tab navigation (Candidates & approved products,
 // R&D priorities & candidates, Clinical trials & candidates,
 // R&D priorities), a column picker, a server-paginated table,
-// and a CSV export. The page-level filter bar is now shared
-// across the Portfolio Analysis sibling pages via
-// `<GlobalFilterBar/>`; the only filter that lives inside the
-// table card is the candidates-tab-specific R&D Stage dropdown.
+// and a CSV export. Filters live inline inside the table card —
+// the visible set varies per sub-tab (see the conditional
+// dropdowns below). The shared filter URL keys (gha, primary,
+// secondary, product) are still owned by useGlobalFilters so a
+// user navigating between Portfolio Analysis sibling pages keeps
+// their filter selections; the sidebar's sibling-aware query
+// forwarding does the carry-over for free.
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
@@ -25,7 +28,9 @@ import {
   InfoIcon,
   CloudDownloadIcon,
   ListFilterIcon,
+  RefreshIcon,
 } from '@/components/icons';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import {
   usePortfolioCandidates,
   useClinicalTrials,
@@ -45,7 +50,6 @@ import {
 } from '@/lib/extractColumnConfig';
 import {
   useGlobalFilters,
-  GlobalFilterBar,
   PortfolioPageHeader,
 } from '@/components/portfolio-analysis';
 
@@ -57,6 +61,13 @@ export default function ExtractCustomDetailsPage() {
     product,
     rdPhase,
     expandedProduct,
+    setHealthArea,
+    setPrimary,
+    setSecondary,
+    setProduct,
+    healthAreaOptions,
+    narrowedHierarchy,
+    productOptions,
   } = useGlobalFilters();
 
   // =========================================================
@@ -327,6 +338,31 @@ export default function ExtractCustomDetailsPage() {
     );
   };
 
+  // Reset clears the filter values that the user can see on the
+  // current sub-tab — plus the search input — and resets the
+  // active sub-tab's page to 1. We deliberately leave `rdPhase`
+  // alone: it's the global R&D phase URL key (only directly
+  // editable from the Explore page), and clearing it here would
+  // wipe a filter the user did not set from this page. Matches
+  // legacy single-page behavior.
+  const hasExtractFilters =
+    healthArea.length > 0 ||
+    primary.length > 0 ||
+    secondary.length > 0 ||
+    product.length > 0 ||
+    extractRdStage.length > 0 ||
+    extractSearchQuery.length > 0;
+
+  const handleResetExtractFilters = () => {
+    setHealthArea([]);
+    setPrimary([]);
+    setSecondary([]);
+    setProduct([]);
+    setExtractRdStage([]);
+    setExtractSearchQuery('');
+    setExtractPage(1);
+  };
+
   // Fetch all filtered rows for the active extract tab and
   // download as CSV. Batches through the paginated API (max 100
   // per request) so the export includes every matching row, not
@@ -400,8 +436,6 @@ export default function ExtractCustomDetailsPage() {
             </div>
           </div>
 
-          <GlobalFilterBar />
-
           {/* Main content card */}
           <div className="bg-white border border-gray-200">
             {/* Header row */}
@@ -444,27 +478,87 @@ export default function ExtractCustomDetailsPage() {
               </div>
             </div>
 
-            {/* Candidates-tab-specific R&D Stage filter row.
-                The four global filters live in <GlobalFilterBar/>
-                at the top of the page; this is the one extract
-                filter that doesn't fit there. */}
-            {extractTab === 'candidates-approved' && (
-              <div className="px-4 py-4 border-b border-gray-200">
+            {/* Per-sub-tab inline filter row.
+                GHA + Disease are always visible; Product type
+                appears for the candidates and clinical-trials
+                sub-tabs; R&D stage only on candidates-approved.
+                Each onChange resets the active sub-tab's page to
+                1 — matches legacy behavior. */}
+            <div className="sticky top-0 z-20 bg-white px-4 py-4 border-b border-gray-200">
+              <div className="flex flex-wrap items-end gap-4">
                 <div className="min-w-[180px]">
                   <Dropdown
-                    label="R&D stage"
-                    value={extractRdStage}
-                    onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
+                    label="Global health area"
+                    value={healthArea}
+                    onChange={(v) => { setHealthArea(v); setExtractPage(1); }}
                     placeholder="All"
-                    options={rdStageOptions}
+                    options={healthAreaOptions}
                     multiSelect={true}
-                    showAllOption={true}
                     compact={true}
                     variant="outlined"
                   />
                 </div>
+                <div className="min-w-[180px]">
+                  <HierarchicalDiseaseFilter
+                    label="Disease"
+                    hierarchy={narrowedHierarchy}
+                    primarySelected={primary}
+                    secondarySelected={secondary}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      setPrimary(primarySelected);
+                      setSecondary(secondarySelected);
+                      setExtractPage(1);
+                    }}
+                    placeholder="All"
+                    compact={true}
+                    variant="outlined"
+                  />
+                </div>
+                {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
+                  <div className="min-w-[180px]">
+                    <Dropdown
+                      label="Product type"
+                      value={product}
+                      onChange={(v) => { setProduct(v); setExtractPage(1); }}
+                      placeholder="All"
+                      options={productOptions}
+                      multiSelect={true}
+                      showAllOption={true}
+                      compact={true}
+                      variant="outlined"
+                    />
+                  </div>
+                )}
+                {extractTab === 'candidates-approved' && (
+                  <div className="min-w-[180px]">
+                    <Dropdown
+                      label="R&D stage"
+                      value={extractRdStage}
+                      onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
+                      placeholder="All"
+                      options={rdStageOptions}
+                      multiSelect={true}
+                      showAllOption={true}
+                      compact={true}
+                      variant="outlined"
+                    />
+                  </div>
+                )}
+                <div className="flex-1" />
+                <button
+                  onClick={handleResetExtractFilters}
+                  disabled={!hasExtractFilters}
+                  className={`flex items-center gap-2 text-sm px-4 h-[36px] whitespace-nowrap border ${
+                    hasExtractFilters
+                      ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer font-medium'
+                      : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  Reset filters
+                  <RefreshIcon className="w-4 h-4" />
+                </button>
               </div>
-            )}
+            </div>
 
             {/* Two-column layout: column picker (left) + table (right) */}
             <div className="flex">
