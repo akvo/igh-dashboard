@@ -1,0 +1,889 @@
+'use client';
+
+// =========================================================
+// Aggregated portfolio page
+// =========================================================
+//
+// Lifted from the legacy single-page "Aggregated portfolio"
+// section. Renders four sub-tabs that each surface a different
+// view of the filtered portfolio:
+//
+//   - Candidates: server-paginated table with search + CSV export
+//   - Approved products: three summary charts plus a table
+//   - Clinical trials: two summary charts, the geographic map
+//     (with its own status filter), and a trial table
+//   - Technology types: heatmap table with client-side
+//     filtering and pagination
+//
+// All four views share the page-level filters via
+// `<GlobalFilterBar/>` at the top.
+
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
+import Sidebar from '@/components/layout/Sidebar';
+import { Dropdown, ChartMenu, ServerTable } from '@/components/ui';
+import DebouncedInput from '@/components/ui/DebouncedInput';
+import {
+  SearchIcon,
+  CloudDownloadIcon,
+} from '@/components/icons';
+import {
+  StackedBarChart,
+  DonutChart,
+  BarChart,
+  WorldMap,
+  ChartEmptyState,
+} from '@/components/charts';
+import {
+  useRegulatoryDistribution,
+  useClinicalTrialStats,
+  useClinicalTrials,
+  usePortfolioCandidates,
+  useGeographicDistribution,
+  useTechnologyTypeDistribution,
+} from '@/graphql/hooks';
+import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
+import { fetchAllTrials } from '@/lib/fetchAllTrials';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
+import { createHeatmapScale } from '@/lib/heatmap';
+import {
+  CANDIDATE_COLUMNS,
+  APPROVED_PRODUCT_COLUMNS,
+  CLINICAL_TRIAL_COLUMNS,
+  toCSVColumns,
+} from '@/lib/exploreColumnConfig';
+import {
+  useGlobalFilters,
+  GlobalFilterBar,
+  PortfolioPageHeader,
+} from '@/components/portfolio-analysis';
+
+const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
+
+const approvingAuthoritiesPhases = [
+  { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
+  { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
+];
+
+export default function AggregatedPortfolioPage() {
+  const {
+    healthArea,
+    primary,
+    secondary,
+    product,
+    rdPhase,
+    expandedProduct,
+  } = useGlobalFilters();
+
+  // =========================================================
+  // URL-backed aggregated-page state
+  // =========================================================
+
+  const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
+  const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
+  const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
+  const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
+  const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
+  const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
+  const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
+  const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
+  const [currentPage, setCurrentPage] = useUrlState('techPage', 1, numberSerializer);
+  const [authHiddenPhases, setAuthHiddenPhases] = useUrlState('ahide', [], arraySerializer);
+  const [approvalHiddenItems, setApprovalHiddenItems] = useUrlState('apphide', [], arraySerializer);
+  const [trialStatusHiddenItems, setTrialStatusHiddenItems] = useUrlState('tshide', [], arraySerializer);
+  const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
+
+  // =========================================================
+  // Local-only state
+  // =========================================================
+
+  const [candidatesDownloading, setCandidatesDownloading] = useState(false);
+  const [approvedDownloading, setApprovedDownloading] = useState(false);
+  const [trialsDownloading, setTrialsDownloading] = useState(false);
+  const [technologyDownloading, setTechnologyDownloading] = useState(false);
+
+  // Skip the first search-triggered page reset — during hydration
+  // the search queries transition from '' to their URL value,
+  // which would otherwise wipe out the page param from a shared
+  // URL.
+  const didHydrateSearchRef = useRef(false);
+  useEffect(() => {
+    const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setTrialsPage(1);
+  }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!didHydrateSearchRef.current) return;
+    setCurrentPage(1);
+  }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const apolloClient = useApolloClient();
+  const itemsPerPage = 10;
+  const trialsPerPage = 10;
+  const techItemsPerPage = 10;
+
+  const globalFilter = {
+    globalHealthAreas: healthArea,
+    primaryDiseaseNames: primary,
+    secondaryDiseaseNames: secondary,
+    productNames: expandedProduct,
+    phaseNames: rdPhase,
+  };
+
+  // =========================================================
+  // Data hooks
+  // =========================================================
+
+  const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined },
+    itemsPerPage,
+    (candidatesPage - 1) * itemsPerPage,
+  );
+  const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
+    { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined },
+    itemsPerPage,
+    (approvedPage - 1) * itemsPerPage,
+  );
+  const {
+    approvalStatus: approvalStatusData,
+    whoPrequalification: whoPrequalData,
+    approvingAuthorities: approvingAuthoritiesData,
+    loading: regulatoryLoading,
+  } = useRegulatoryDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
+  const {
+    statusDistribution: trialStatusData,
+    ageGroupDistribution: ageGroupsData,
+    loading: trialsLoading,
+  } = useClinicalTrialStats(healthArea, primary, secondary, expandedProduct, rdPhase);
+  const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
+    {
+      globalHealthAreas: healthArea,
+      primaryDiseaseNames: primary,
+      secondaryDiseaseNames: secondary,
+      productNames: expandedProduct,
+      statuses: geoTrialStatus,
+      search: trialsSearchQuery || undefined,
+    },
+    trialsPerPage,
+    (trialsPage - 1) * trialsPerPage,
+  );
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution(
+    'Trial Location', geoTrialStatus, healthArea, primary, secondary, expandedProduct, rdPhase,
+  );
+  const {
+    tableData: technologyTableData,
+    phases: technologyPhases,
+    loading: technologyLoading,
+  } = useTechnologyTypeDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
+
+  // =========================================================
+  // Chart visibility (legend toggles synced to URL)
+  // =========================================================
+
+  const authVisiblePhases = useMemo(
+    () => approvingAuthoritiesPhases.reduce(
+      (acc, p) => ({ ...acc, [p.key]: !authHiddenPhases.includes(p.key) }),
+      {},
+    ),
+    [authHiddenPhases],
+  );
+  const handleAuthVisiblePhasesChange = useCallback((next) => {
+    setAuthHiddenPhases(Object.keys(next).filter((k) => !next[k]));
+  }, [setAuthHiddenPhases]);
+
+  const approvalVisibleItems = useMemo(
+    () => (approvalStatusData || []).reduce(
+      (acc, d) => ({ ...acc, [d.name]: !approvalHiddenItems.includes(d.name) }),
+      {},
+    ),
+    [approvalStatusData, approvalHiddenItems],
+  );
+  const handleApprovalVisibleItemsChange = useCallback((next) => {
+    setApprovalHiddenItems(Object.keys(next).filter((k) => !next[k]));
+  }, [setApprovalHiddenItems]);
+
+  const trialStatusVisibleItems = useMemo(
+    () => (trialStatusData || []).reduce(
+      (acc, d) => ({ ...acc, [d.name]: !trialStatusHiddenItems.includes(d.name) }),
+      {},
+    ),
+    [trialStatusData, trialStatusHiddenItems],
+  );
+  const handleTrialStatusVisibleItemsChange = useCallback((next) => {
+    setTrialStatusHiddenItems(Object.keys(next).filter((k) => !next[k]));
+  }, [setTrialStatusHiddenItems]);
+
+  // =========================================================
+  // Refs for PNG download capture targets
+  // =========================================================
+
+  const approvalStatusChartRef = useRef(null);
+  const approvingAuthoritiesChartRef = useRef(null);
+  const whoPrequalChartRef = useRef(null);
+  const ageGroupsChartRef = useRef(null);
+  const trialStatusChartRef = useRef(null);
+  const geoDistributionChartRef = useRef(null);
+
+  // =========================================================
+  // Technology types: client-side filter + pagination
+  // =========================================================
+  //
+  // Backend doesn't support search for this view; all rows are
+  // already loaded so we filter and paginate client-side.
+
+  const filteredTechData = useMemo(() => {
+    if (!technologySearchQuery.trim()) return technologyTableData;
+    const q = technologySearchQuery.toLowerCase();
+    return technologyTableData.filter((item) =>
+      item.technology_type && item.technology_type.toLowerCase().includes(q),
+    );
+  }, [technologyTableData, technologySearchQuery]);
+
+  const phaseAccessors = technologyPhases.map((p) => p.key);
+  // Heatmap colour scale derived from the full dataset (not the
+  // current page) so colours stay stable across pages.
+  const getHeatmapStyle = useMemo(
+    () => createHeatmapScale(technologyTableData, phaseAccessors),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [technologyTableData, technologyPhases],
+  );
+
+  const techTotalPages = Math.ceil(filteredTechData.length / techItemsPerPage);
+  const paginatedTechData = filteredTechData.slice(
+    (currentPage - 1) * techItemsPerPage,
+    currentPage * techItemsPerPage,
+  );
+
+  // =========================================================
+  // CSV download handlers
+  // =========================================================
+
+  const handleCandidatesDownloadCSV = useCallback(async () => {
+    setCandidatesDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Candidate',
+        search: searchQuery || undefined,
+      });
+      const csv = buildCSV(toCSVColumns(CANDIDATE_COLUMNS), allRows);
+      downloadCSV(csv, 'selected-candidates');
+    } catch (err) {
+      console.error('Candidates CSV download failed:', err);
+    } finally {
+      setCandidatesDownloading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, primary, secondary, product, searchQuery]);
+
+  const handleApprovedDownloadCSV = useCallback(async () => {
+    setApprovedDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        ...globalFilter,
+        candidateType: 'Product',
+      });
+      const csv = buildCSV(toCSVColumns(APPROVED_PRODUCT_COLUMNS), allRows);
+      downloadCSV(csv, 'selected-products');
+    } catch (err) {
+      console.error('Approved products CSV download failed:', err);
+    } finally {
+      setApprovedDownloading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, primary, secondary, product]);
+
+  const handleTrialsDownloadCSV = useCallback(async () => {
+    setTrialsDownloading(true);
+    try {
+      const allRows = await fetchAllTrials(apolloClient, {
+        globalHealthAreas: healthArea,
+        primaryDiseaseNames: primary,
+        secondaryDiseaseNames: secondary,
+        productNames: expandedProduct,
+        statuses: geoTrialStatus,
+      });
+      const csv = buildCSV(toCSVColumns(CLINICAL_TRIAL_COLUMNS), allRows);
+      downloadCSV(csv, 'selected-clinical-trials');
+    } catch (err) {
+      console.error('Clinical trials CSV download failed:', err);
+    } finally {
+      setTrialsDownloading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apolloClient, healthArea, primary, secondary, product, geoTrialStatus]);
+
+  const handleTechnologyDownloadCSV = useCallback(() => {
+    setTechnologyDownloading(true);
+    try {
+      const columns = [
+        { label: 'Name', accessor: 'technology_type' },
+        ...technologyPhases.map((phase) => ({
+          label: phase.label,
+          accessor: phase.key,
+        })),
+        {
+          label: 'Total',
+          accessor: (row) => {
+            const keys = technologyPhases.map((p) => p.key);
+            return keys.reduce((sum, key) => sum + (row[key] || 0), 0);
+          },
+        },
+      ];
+      const csv = buildCSV(columns, technologyTableData);
+      downloadCSV(csv, 'technology-types');
+    } catch (err) {
+      console.error('Technology types CSV download failed:', err);
+    } finally {
+      setTechnologyDownloading(false);
+    }
+  }, [technologyTableData, technologyPhases]);
+
+  return (
+    <div className="flex h-[calc(100vh-74px)] bg-cream-200">
+      <Sidebar />
+
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-0">
+            <PortfolioPageHeader
+              title="Aggregated portfolio"
+              description="The aggregated portfolio lets you deep dive into four key views of the pipeline: active candidates, approved products, clinical trials and technology types. They can be accessed via the tabs below. All views reflect the page level filters."
+            />
+          </div>
+
+          <GlobalFilterBar />
+
+          <div className="bg-white border border-gray-200 p-4">
+            {/* Sub-tabs */}
+            <div className="flex gap-6 border-b border-gray-200">
+              {['candidates', 'approved', 'trials', 'technology'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setPortfolioTab(tab)}
+                  className={`pb-3 text-sm font-medium border-b-2 transition-colors cursor-pointer ${
+                    portfolioTab === tab
+                      ? 'text-black border-black'
+                      : 'text-gray-400 border-transparent hover:text-gray-600'
+                  }`}
+                >
+                  {tab === 'candidates' && 'Candidates'}
+                  {tab === 'approved' && 'Approved products'}
+                  {tab === 'trials' && 'Clinical trials'}
+                  {tab === 'technology' && 'Technology types'}
+                </button>
+              ))}
+            </div>
+
+            {/* Candidates */}
+            {portfolioTab === 'candidates' && (
+              <div className="border border-gray-200 border-t-0">
+                <div className="flex items-center justify-between p-4 pb-0 mb-4">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-xl font-bold text-black leading-none">Selected candidates</h4>
+                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount} candidates</span>
+                  </div>
+                  <div className="flex items-center gap-3 h-[36px]">
+                    <div className="relative">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <DebouncedInput
+                        type="text"
+                        placeholder="Search item"
+                        value={searchQuery}
+                        onChange={(e) => { setSearchQuery(e.target.value); setCandidatesPage(1); }}
+                        className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCandidatesDownloadCSV}
+                      disabled={candidatesDownloading}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                    >
+                      <CloudDownloadIcon className="w-4 h-4" />
+                      {candidatesDownloading ? 'Downloading...' : 'Download CSV'}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-4 px-4">
+                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
+                </p>
+                <ServerTable
+                  columns={CANDIDATE_COLUMNS}
+                  data={candidatesData}
+                  rowKey="candidate_key"
+                  currentPage={candidatesPage}
+                  onPageChange={setCandidatesPage}
+                  totalCount={candidatesTotalCount}
+                  hasNextPage={candidatesHasNext}
+                  itemsPerPage={itemsPerPage}
+                  loading={candidatesLoading}
+                  emptyState={searchQuery ? {
+                    title: 'No candidates found',
+                    description: `Your search "${searchQuery}" did not match any candidates. Please try again or clear the search.`,
+                    onClear: () => { setSearchQuery(''); setCandidatesPage(1); },
+                  } : { title: 'No candidates available' }}
+                />
+              </div>
+            )}
+
+            {/* Approved products */}
+            {portfolioTab === 'approved' && (
+              <>
+                <p className="text-sm text-gray-500 my-4">
+                  This view includes summary charts showing approval status, approving authorities, and WHO prequalification, alongside a searchable table of approved products based on current filters. The table provides product‑level details such as name, indication, approval status, approving authorities, WHO prequalification status, and other key attributes.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
+                  {/* Approval status */}
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-black">Approval status</h4>
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'Approval status', accessor: 'name' },
+                            { label: 'Count', accessor: 'value' },
+                          ];
+                          const csv = buildCSV(columns, approvalStatusData);
+                          downloadCSV(csv, 'approval-status');
+                        }}
+                        onDownloadPNG={() => downloadPNG(approvalStatusChartRef, 'approval-status')}
+                      />
+                    </div>
+                    <div ref={approvalStatusChartRef} className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvalStatusData || approvalStatusData.length === 0 ? (
+                        <ChartEmptyState variant="bar" height={280} />
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (approvalStatusData?.length || 0) * 120) }}>
+                            <BarChart
+                              data={approvalStatusData}
+                              height={280}
+                              maxTickChars={999}
+                              xAxisLabel="Approval status"
+                              yAxisLabel="Number of products"
+                              visibleItems={approvalVisibleItems}
+                              onVisibleItemsChange={handleApprovalVisibleItemsChange}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
+                    </p>
+                  </div>
+
+                  {/* Approving authorities */}
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-black">Approving authorities</h4>
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'Authority type', accessor: (row) => row.category.replace(/\n/g, ' ') },
+                            { label: 'WHO prequalified', accessor: 'who_prequalified' },
+                            { label: 'No formal WHO listing', accessor: 'no_who_listing' },
+                          ];
+                          const csv = buildCSV(columns, approvingAuthoritiesData);
+                          downloadCSV(csv, 'approving-authorities');
+                        }}
+                        onDownloadPNG={() => downloadPNG(approvingAuthoritiesChartRef, 'approving-authorities')}
+                      />
+                    </div>
+                    <div ref={approvingAuthoritiesChartRef} className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[200px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
+                        <ChartEmptyState variant="stackedBar" height={200} />
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (approvingAuthoritiesData?.length || 0) * 140) }}>
+                            <StackedBarChart
+                              data={approvingAuthoritiesData}
+                              phases={approvingAuthoritiesPhases}
+                              categoryKey="category"
+                              layout="horizontal"
+                              height={280}
+                              maxTickChars={999}
+                              xAxisLabel="Authority type"
+                              yAxisLabel="Number of products"
+                              showFilters={true}
+                              barRadius={0}
+                              visiblePhases={authVisiblePhases}
+                              onVisiblePhasesChange={handleAuthVisiblePhasesChange}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      The chart compares the number of approved products by approving authorities, and the quantum of products with WHO prequalification for each authority.
+                    </p>
+                  </div>
+
+                  {/* WHO prequalification */}
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-black">WHO prequalification</h4>
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'WHO prequalification', accessor: 'name' },
+                            { label: 'Count', accessor: 'value' },
+                          ];
+                          const csv = buildCSV(columns, whoPrequalData);
+                          downloadCSV(csv, 'who-prequalification');
+                        }}
+                        onDownloadPNG={() => downloadPNG(whoPrequalChartRef, 'who-prequalification')}
+                      />
+                    </div>
+                    <div ref={whoPrequalChartRef} className="flex-1">
+                      {regulatoryLoading ? (
+                        <div className="h-[180px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : (
+                        <DonutChart
+                          data={whoPrequalData}
+                          colors={['#e3d6c1', '#fe7449', '#cbafde']}
+                          height={180}
+                          innerRadius={50}
+                          outerRadius={80}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Selected products section */}
+                <div className="border border-gray-200">
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-xl font-bold text-black leading-none">Selected products</h4>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount} products</span>
+                    </div>
+                    <div className="flex items-center gap-3 h-[36px]">
+                      <div className="relative">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <DebouncedInput
+                          type="text"
+                          placeholder="Search item"
+                          value={approvedSearchQuery}
+                          onChange={(e) => { setApprovedSearchQuery(e.target.value); setApprovedPage(1); }}
+                          className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <button
+                        onClick={handleApprovedDownloadCSV}
+                        disabled={approvedDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                      >
+                        <CloudDownloadIcon className="w-4 h-4" />
+                        {approvedDownloading ? 'Downloading...' : 'Download CSV'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <ServerTable
+                    columns={APPROVED_PRODUCT_COLUMNS}
+                    data={approvedProductsData}
+                    rowKey="candidate_key"
+                    currentPage={approvedPage}
+                    onPageChange={setApprovedPage}
+                    totalCount={approvedTotalCount}
+                    hasNextPage={approvedHasNext}
+                    itemsPerPage={itemsPerPage}
+                    loading={approvedLoading}
+                    emptyState={approvedSearchQuery ? {
+                      title: 'No approved products found',
+                      description: `Your search "${approvedSearchQuery}" did not match any approved products. Please try again or clear the search.`,
+                      onClear: () => { setApprovedSearchQuery(''); setApprovedPage(1); },
+                    } : { title: 'No approved products available' }}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Clinical trials */}
+            {portfolioTab === 'trials' && (
+              <>
+                <p className="text-sm text-gray-500 my-4">
+                  This provides a high-level overview of studies through an age group chart and a clinical trial status chart, helping users quickly understand patient demographics and trial progression. A global map and detailed table complement these visuals by showing geographic distribution and key trial attributes for deeper exploration and comparison.
+                </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                  {/* Age groups */}
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-black">Age groups in clinical trials</h4>
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'Age group', accessor: 'name' },
+                            { label: 'Count', accessor: 'value' },
+                          ];
+                          const csv = buildCSV(columns, ageGroupsData);
+                          downloadCSV(csv, 'age-groups-in-clinical-trials');
+                        }}
+                        onDownloadPNG={() => downloadPNG(ageGroupsChartRef, 'age-groups-in-clinical-trials')}
+                      />
+                    </div>
+                    <div ref={ageGroupsChartRef} className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[280px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !ageGroupsData || ageGroupsData.length === 0 ? (
+                        <ChartEmptyState variant="donut" height={280} />
+                      ) : (
+                        <DonutChart
+                          data={ageGroupsData}
+                          colors={ageGroupColors}
+                          height={280}
+                          innerRadius={70}
+                          outerRadius={120}
+                          showLegend={true}
+                          legendPosition="bottom"
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
+                    </p>
+                  </div>
+
+                  {/* Trial status */}
+                  <div className="bg-white border border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-black">Clinical trial status</h4>
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'Trial status', accessor: 'name' },
+                            { label: 'Count', accessor: 'value' },
+                          ];
+                          const csv = buildCSV(columns, trialStatusData);
+                          downloadCSV(csv, 'clinical-trial-status');
+                        }}
+                        onDownloadPNG={() => downloadPNG(trialStatusChartRef, 'clinical-trial-status')}
+                      />
+                    </div>
+                    <div ref={trialStatusChartRef} className="flex-1 border-t border-gray-100 pt-4">
+                      {trialsLoading ? (
+                        <div className="h-[340px] flex items-center justify-center">
+                          <div className="animate-pulse text-gray-400">Loading...</div>
+                        </div>
+                      ) : !trialStatusData || trialStatusData.length === 0 ? (
+                        <ChartEmptyState variant="bar" height={340} />
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <div style={{ minWidth: Math.max(400, (trialStatusData?.length || 0) * 120) }}>
+                            <BarChart
+                              data={trialStatusData}
+                              height={340}
+                              maxTickChars={999}
+                              xAxisLabel="Trial status"
+                              yAxisLabel="Number of trials"
+                              visibleItems={trialStatusVisibleItems}
+                              onVisibleItemsChange={handleTrialStatusVisibleItemsChange}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      The clinical trial status chart shows the number of studies at each stage, from ongoing to completed, providing a quick view of overall trial progress across the portfolio.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Geographic distribution */}
+                <div className="bg-white border border-gray-200 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-lg font-bold text-black">Geographic distribution of clinical trials</h4>
+                    <div className="flex items-center gap-2">
+                      <Dropdown
+                        value={geoTrialStatus}
+                        onChange={setGeoTrialStatus}
+                        placeholder="All"
+                        options={['Active', 'Completed', 'Terminated']}
+                        multiSelect={true}
+                        compact={true}
+                        className="w-32"
+                        variant="outlined"
+                      />
+                      <ChartMenu
+                        onDownloadCSV={() => {
+                          const columns = [
+                            { label: 'Country', accessor: 'country_name' },
+                            { label: 'ISO code', accessor: 'iso_code' },
+                            { label: 'Count', accessor: 'candidateCount' },
+                          ];
+                          const csv = buildCSV(columns, clinicalTrialsDistribution);
+                          downloadCSV(csv, 'geographic-distribution-clinical-trials');
+                        }}
+                        onDownloadPNG={() => downloadPNG(geoDistributionChartRef, 'geographic-distribution-clinical-trials')}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 mb-6">
+                    The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
+                  </p>
+                  <div ref={geoDistributionChartRef}>
+                    {geoLoading ? (
+                      <div className="h-[400px] flex items-center justify-center">
+                        <div className="animate-pulse text-gray-400">Loading map...</div>
+                      </div>
+                    ) : (
+                      <WorldMap data={clinicalTrialsMapData} height={400} showLegend={false} />
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected clinical trials section */}
+                <div className="border border-gray-200 mt-6">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-xl font-bold text-black leading-none">Selected clinical trials</h4>
+                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount} Trials</span>
+                      </div>
+                      <div className="flex items-center gap-3 h-[36px]">
+                        <div className="relative">
+                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <DebouncedInput
+                            type="text"
+                            placeholder="Search"
+                            value={trialsSearchQuery}
+                            onChange={(e) => { setTrialsSearchQuery(e.target.value); }}
+                            className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <button
+                          onClick={handleTrialsDownloadCSV}
+                          disabled={trialsDownloading}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                        >
+                          <CloudDownloadIcon className="w-4 h-4" />
+                          {trialsDownloading ? 'Downloading...' : 'Download CSV'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
+                    </p>
+                  </div>
+
+                  <ServerTable
+                    columns={CLINICAL_TRIAL_COLUMNS}
+                    data={clinicalTrialsTableData}
+                    rowKey="trial_id"
+                    currentPage={trialsPage}
+                    onPageChange={setTrialsPage}
+                    totalCount={trialsTotalCount}
+                    hasNextPage={trialsHasNextPage}
+                    itemsPerPage={trialsPerPage}
+                    loading={trialsListLoading}
+                    emptyState={trialsSearchQuery ? {
+                      title: 'No clinical trials found',
+                      description: `Your search "${trialsSearchQuery}" did not match any clinical trials. Please try again or clear the search.`,
+                      onClear: () => { setTrialsSearchQuery(''); setTrialsPage(1); },
+                    } : { title: 'No clinical trials available' }}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Technology types */}
+            {portfolioTab === 'technology' && (
+              <div className="border border-gray-200">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{filteredTechData.length} types</span>
+                    </div>
+                    <div className="flex items-center gap-3 h-[36px]">
+                      <div className="relative">
+                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <DebouncedInput
+                          type="text"
+                          placeholder="Search item"
+                          value={technologySearchQuery}
+                          onChange={(e) => { setTechnologySearchQuery(e.target.value); }}
+                          className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <button
+                        onClick={handleTechnologyDownloadCSV}
+                        disabled={technologyDownloading}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                      >
+                        <CloudDownloadIcon className="w-4 h-4" />
+                        {technologyDownloading ? 'Downloading...' : 'Download CSV'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
+                  </p>
+                </div>
+
+                <ServerTable
+                  columns={[
+                    { header: 'Name', accessor: 'technology_type' },
+                    ...technologyPhases.map((phase) => ({
+                      header: phase.label,
+                      accessor: phase.key,
+                      cellStyle: (value) => getHeatmapStyle(value),
+                      render: (value) => (
+                        <span className="tabular-nums text-center block">{value || 0}</span>
+                      ),
+                    })),
+                    {
+                      header: 'Total',
+                      accessor: '_total',
+                      render: (_, row) => {
+                        const sum = phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0);
+                        return <span className="tabular-nums text-center block font-semibold">{sum}</span>;
+                      },
+                    },
+                  ]}
+                  data={paginatedTechData}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                  totalCount={filteredTechData.length}
+                  hasNextPage={currentPage < techTotalPages}
+                  itemsPerPage={techItemsPerPage}
+                  loading={technologyLoading}
+                  emptyState={technologySearchQuery ? {
+                    title: 'No technology types found',
+                    description: `Your search "${technologySearchQuery}" did not match any technology types. Please try again or clear the search.`,
+                    onClear: () => { setTechnologySearchQuery(''); setCurrentPage(1); },
+                  } : { title: 'No technology types available' }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
