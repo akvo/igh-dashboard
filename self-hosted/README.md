@@ -6,7 +6,6 @@ Deploy the IGH Dashboard on your own server using Docker Compose with Traefik as
 
 - Docker and Docker Compose
 - A domain name pointing to your server
-- The `star_schema.db` SQLite database file
 
 ## Setup
 
@@ -25,17 +24,22 @@ Edit `.env` and set the required values:
 | `TRAEFIK_CERTIFICATESRESOLVERS_MYRESOLVER_ACME_EMAIL` | Email for Let's Encrypt | `admin@example.com` |
 | `APP_PORT` | HTTP port | `80` |
 | `APP_SSL_PORT` | HTTPS port | `443` |
+| `IS_PRODUCTION` | `true` on production hosts only (see below) | `false` |
 
-### 2. Copy the database
+### 2. Database handling
 
-Create the `data/` folder and copy `star_schema.db` from the `backend/` folder into it:
+The `star_schema.db` SQLite file is mounted into the backend container
+at `/app/data/star_schema.db` via the `./data/` directory.
 
-```bash
-mkdir -p data
-cp ../backend/star_schema.db ./data/
-```
-
-This database is mounted into the backend container at `/app/data/star_schema.db`.
+- **Staging (`IS_PRODUCTION=false` or unset):** `install.sh` and
+  `update.sh` automatically copy the bundled
+  `../backend/star_schema.db` into `./data/` on every run, so the
+  staging DB tracks whatever is committed to the repo.
+- **Production (`IS_PRODUCTION=true`):** the scripts skip the copy.
+  The gold `star_schema.db` is delivered by the Airflow pipeline in
+  [`igh-airflow-data-deployment-dag`](../../igh-airflow-data-deployment-dag),
+  which writes `star_schema.db.new` and atomically renames it; the
+  backend hot-reloads on the inode change.
 
 ### 3. Install and start
 
@@ -43,7 +47,9 @@ This database is mounted into the backend container at `/app/data/star_schema.db
 ./install.sh
 ```
 
-This pulls the latest code, builds the Docker images, and starts all services.
+This pulls the latest code, seeds `./data/star_schema.db` when
+`IS_PRODUCTION` is not `true`, builds the Docker images, and starts
+all services.
 
 ## Services
 
