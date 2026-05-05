@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import DiseaseListPanel from '../../src/components/ui/DiseaseListPanel';
 
 // Fixture covers both leaf shapes:
@@ -61,5 +61,21 @@ describe('DiseaseListPanel leaf rows', () => {
     expect(childButton.tagName).toBe('BUTTON');
     expect(childButton.textContent).toContain('P. falciparum');
     expect(childButton.textContent).toContain('Explore');
+  });
+
+  it('does not include "Explore" inside the parent-with-children name button', () => {
+    render(
+      <DiseaseListPanel
+        isOpen={true}
+        onClose={() => {}}
+        hierarchy={HIERARCHY}
+      />,
+    );
+
+    // Querying by exact name avoids matching the +/- toggle button
+    // (which has accessible name "Expand"/"Collapse") and any
+    // descendant leaf rows.
+    const malariaButton = screen.getByRole('button', { name: 'Malaria' });
+    expect(malariaButton.textContent).not.toContain('Explore');
   });
 });
