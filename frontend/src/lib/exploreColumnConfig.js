@@ -107,6 +107,7 @@ export const CLINICAL_TRIAL_COLUMNS = [
   { header: 'CT results status', accessor: 'ct_results_status' },
   { header: 'Start date', accessor: 'start_date' },
   { header: 'End date', accessor: 'end_date' },
+  { header: 'Last updated', accessor: 'last_updated' },
   { header: 'Sponsor', accessor: 'sponsor' },
   { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px' },
   { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px' },
