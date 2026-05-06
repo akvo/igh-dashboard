@@ -71,4 +71,32 @@ describe("Clinical Trial Stats", () => {
       expect(row.candidateCount).toBeGreaterThan(0);
     });
   });
+
+  it("returns last_updated as YYYY-MM-DD or null", async () => {
+    const TRIALS_QUERY = `
+      query {
+        clinicalTrials(limit: 50) {
+          nodes {
+            trial_id
+            last_updated
+          }
+        }
+      }
+    `;
+    const { data } = await query<{
+      clinicalTrials: { nodes: { trial_id: number; last_updated: string | null }[] };
+    }>(TRIALS_QUERY);
+
+    const nodes = data.clinicalTrials.nodes;
+    expect(nodes.length).toBeGreaterThan(0);
+
+    // At least one row in the fixture should have a populated value
+    const populated = nodes.filter((n) => n.last_updated !== null);
+    expect(populated.length).toBeGreaterThan(0);
+
+    // Every populated value matches YYYY-MM-DD
+    for (const n of populated) {
+      expect(n.last_updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
 });
