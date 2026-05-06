@@ -90,6 +90,7 @@ interface TrialNode {
   product_name: string | null;
   start_date: string | null;
   end_date: string | null;
+  last_updated: string | null;
   description: string | null;
   ct_results_status: string | null;
   collaborator: string | null;
@@ -188,7 +189,7 @@ const TRIALS_QUERY = `
     clinicalTrials(filter: $filter, limit: $limit, offset: $offset) {
       nodes {
         trial_id clinicaltrialid trial_name trial_title trial_phase status
-        candidate_name disease_name product_name start_date end_date description
+        candidate_name disease_name product_name start_date end_date last_updated description
         ct_results_status collaborator locations sponsor source_text
         age_groups enrollment_count study_type funder_type interventions
         outcome_measure sex study_design ct_results_type ct_terminated_reason
@@ -291,6 +292,7 @@ const TRIAL_CSV_COLUMNS: CSVColumn[] = [
   { label: "CT results status", accessor: "ct_results_status" },
   { label: "Start date", accessor: "start_date" },
   { label: "End date", accessor: "end_date" },
+  { label: "Last updated", accessor: "last_updated" },
   { label: "Sponsor", accessor: "sponsor" },
   { label: "Collaborator", accessor: "collaborator" },
   { label: "Source", accessor: "source_text" },
@@ -647,7 +649,7 @@ describe("CSV export — clinicalTrials (Trials tab)", () => {
     expect(headerLine).toBe(
       "CT number,Candidate / product name,Title,Description,CT phase," +
         "CT status,Locations,CT results status,Start date,End date," +
-        "Sponsor,Collaborator,Source",
+        "Last updated,Sponsor,Collaborator,Source",
     );
     expectMatchesFixture(csv, "clinical-trials.csv");
   });
