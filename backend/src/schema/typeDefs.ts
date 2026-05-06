@@ -128,6 +128,7 @@ export const typeDefs = `#graphql
     trial_id: Int!
     candidate_key: Int
     start_date_key: Int
+    last_updated_key: Int
     trial_phase: String
     enrollment_count: Int
     status: String
@@ -359,6 +360,7 @@ export const typeDefs = `#graphql
     product_name: String
     start_date: String
     end_date: String
+    last_updated: String
     description: String
     ct_results_status: String
     collaborator: String

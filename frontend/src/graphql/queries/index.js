@@ -210,6 +210,7 @@ export const GET_CLINICAL_TRIALS = gql`
         product_name
         start_date
         end_date
+        last_updated
         description
         ct_results_status
         collaborator
