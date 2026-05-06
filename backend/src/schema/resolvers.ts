@@ -46,14 +46,16 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         phase_names?: string[];
       },
     ) =>
       getPortfolioKPIs({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         phase_names: args.phase_names,
       }),
@@ -99,14 +101,16 @@ export const resolvers = {
         location_scope: string;
         statuses?: string[];
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         phase_names?: string[];
       },
     ) =>
       getGeographicDistribution(args.location_scope, args.statuses, {
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         phase_names: args.phase_names,
       }),
@@ -116,7 +120,8 @@ export const resolvers = {
       _: unknown,
       args: {
         years?: number[];
-        disease_group_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
@@ -124,7 +129,8 @@ export const resolvers = {
     ) =>
       getTemporalSnapshots({
         years: args.years,
-        disease_group_names: args.disease_group_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
@@ -150,7 +156,8 @@ export const resolvers = {
       args: {
         filter?: {
           global_health_areas?: string[];
-          disease_names?: string[];
+          primary_disease_names?: string[];
+          secondary_disease_names?: string[];
           product_names?: string[];
           candidate_type?: string;
         };
@@ -165,7 +172,8 @@ export const resolvers = {
       args: {
         filter?: {
           global_health_areas?: string[];
-          disease_names?: string[];
+          primary_disease_names?: string[];
+          secondary_disease_names?: string[];
           search?: string;
         };
         limit?: number;
@@ -179,7 +187,8 @@ export const resolvers = {
       args: {
         filter?: {
           global_health_areas?: string[];
-          disease_names?: string[];
+          primary_disease_names?: string[];
+          secondary_disease_names?: string[];
           search?: string;
         };
         limit?: number;
@@ -193,7 +202,8 @@ export const resolvers = {
       args: {
         filter?: {
           global_health_areas?: string[];
-          disease_names?: string[];
+          primary_disease_names?: string[];
+          secondary_disease_names?: string[];
           product_names?: string[];
           statuses?: string[];
           search?: string;
@@ -208,14 +218,16 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         phase_names?: string[];
       },
     ) =>
       getClinicalTrialStats({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         phase_names: args.phase_names,
       }),
@@ -225,14 +237,16 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         phase_names?: string[];
       },
     ) =>
       getRegulatoryDistribution({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         phase_names: args.phase_names,
       }),
@@ -242,7 +256,8 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
         phase_names?: string[];
@@ -250,7 +265,8 @@ export const resolvers = {
     ) =>
       getProductDistribution({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
         phase_names: args.phase_names,
@@ -261,7 +277,8 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
         phase_names?: string[];
@@ -269,7 +286,8 @@ export const resolvers = {
     ) =>
       getProductPhaseDistribution({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
         phase_names: args.phase_names,
@@ -280,7 +298,8 @@ export const resolvers = {
       _: unknown,
       args: {
         global_health_areas?: string[];
-        disease_names?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
         product_names?: string[];
         candidate_type?: string;
         phase_names?: string[];
@@ -288,7 +307,8 @@ export const resolvers = {
     ) =>
       getTechnologyTypeDistribution({
         global_health_areas: args.global_health_areas,
-        disease_names: args.disease_names,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
         product_names: args.product_names,
         candidate_type: args.candidate_type,
         phase_names: args.phase_names,

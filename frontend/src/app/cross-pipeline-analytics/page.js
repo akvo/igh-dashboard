@@ -14,38 +14,42 @@ import {
   useAvailableYears,
   useGlobalHealthAreaSummaries,
   useProducts,
-  useDiseases,
+  useDiseaseHierarchy,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import {
-  expandDiseaseSelection,
   consolidateProductOptionsByKey,
   expandProductKeySelection,
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
   const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
-  const [selectedDisease, setSelectedDisease] = useUrlState('disease', [], arraySerializer);
+  // Disease selection is hierarchical: `primary` is the high-level
+  // group ("Malaria"), `secondary` is the explicit sub-disease.
+  const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
+  const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { hierarchy: diseaseHierarchy, loading: diseasesLoading } = useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
 
-  // Build filter arrays for API
+  // Build filter arrays for API. The hierarchical filter already
+  // emits canonical primary / secondary lists -- no expansion step.
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
   const expandedProductKeys = expandProductKeySelection(selectedProduct);
   const selectedProductKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
-  const expandedDiseases = expandDiseaseSelection(selectedDisease);
-  const selectedDiseaseGroupNames = expandedDiseases.length > 0 ? expandedDiseases : null;
+  const selectedPrimary = primary.length > 0 ? primary : null;
+  const selectedSecondary = secondary.length > 0 ? secondary : null;
 
   // Fetch chart data with filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedDiseaseGroupNames);
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedPrimary, selectedSecondary);
 
   // Only unselected/hidden phase keys are stored in the URL so that
   // the default state (all visible) produces a clean URL.
@@ -62,10 +66,10 @@ export default function CrossPipelineAnalytics() {
     return consolidateProductOptionsByKey(raw);
   }, [productsList]);
 
-  const { healthAreaOptions, diseaseOptions, productOptions } = useCrossFilteredOptions({
-    data: { healthAreas, diseasesRaw, pairs, allProductOptions },
-    selections: { healthArea: selectedHealthArea, disease: selectedDisease, product: selectedProduct },
-    setters: { setHealthArea: setSelectedHealthArea, setDisease: setSelectedDisease, setProduct: setSelectedProduct },
+  const { healthAreaOptions, narrowedHierarchy, productOptions } = useCrossFilteredOptions({
+    data: { healthAreas, diseaseHierarchy, pairs, allProductOptions },
+    selections: { healthArea: selectedHealthArea, primary, secondary, product: selectedProduct },
+    setters: { setHealthArea: setSelectedHealthArea, setPrimary, setSecondary, setProduct: setSelectedProduct },
     loading: { healthAreas: healthAreasLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
     mode: 'by-key',
   });
@@ -93,11 +97,12 @@ export default function CrossPipelineAnalytics() {
     );
   };
 
-  const hasCrossFilters = selectedHealthArea.length > 0 || selectedDisease.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
+  const hasCrossFilters = selectedHealthArea.length > 0 || primary.length > 0 || secondary.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
 
   const handleResetFilters = () => {
     setSelectedHealthArea([]);
-    setSelectedDisease([]);
+    setPrimary([]);
+    setSecondary([]);
     setSelectedProduct([]);
     // Reset phases to all visible
     setHiddenPhases([]);
@@ -176,15 +181,16 @@ export default function CrossPipelineAnalytics() {
                   />
                 </div>
                 <div className="min-w-[220px]">
-                  <Dropdown
+                  <HierarchicalDiseaseFilter
                     label="Disease"
-                    value={selectedDisease}
-                    onChange={setSelectedDisease}
+                    hierarchy={narrowedHierarchy}
+                    primarySelected={primary}
+                    secondarySelected={secondary}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      setPrimary(primarySelected);
+                      setSecondary(secondarySelected);
+                    }}
                     placeholder="All"
-                    options={diseaseOptions}
-                    multiSelect={true}
-
-                    loading={diseasesLoading}
                   />
                 </div>
                 <div className="min-w-[220px]">
@@ -250,7 +256,7 @@ export default function CrossPipelineAnalytics() {
 
           {/* Temporal trends & portfolio comparison */}
           <TemporalTrendsSection
-            diseaseOptions={diseaseOptions}
+            narrowedHierarchy={narrowedHierarchy}
             productOptions={productOptions}
             availableYears={availableYears}
           />

@@ -41,8 +41,8 @@ const SEARCHABLE_COLUMNS = [
   "c.countries_approved_agg",
   // Joined dimensions
   "d.global_health_area",
-  "d.disease_group_name",
-  "sd.disease_group_name",
+  "d.disease_filter",
+  "d.secondary_disease_name",
   "pr.product_name",
   "sp.product_name",
   "p.phase_name",
@@ -70,7 +70,13 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   const params: (string | number)[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
-  addArrayCondition(filter?.disease_names, "d.disease_group_name", conditions, params);
+  addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    filter?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
   addArrayCondition(filter?.phase_names, "p.phase_name", conditions, params);
 
@@ -92,7 +98,6 @@ const JOINS = `
     LEFT JOIN dim_product pr ON f.product_key = pr.product_key
     LEFT JOIN dim_phase p ON f.phase_key = p.phase_key
     LEFT JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key
-    LEFT JOIN dim_disease sd ON f.secondary_disease_key = sd.disease_key
     LEFT JOIN dim_product sp ON f.sub_product_key = sp.product_key
     LEFT JOIN dim_candidate_tech t ON f.technology_key = t.technology_key
 `;
@@ -151,8 +156,8 @@ export function getPortfolioCandidates(
         c.key_clinical_trial,
         t.technology_type,
         d.global_health_area,
-        d.disease_group_name AS disease_name,
-        sd.disease_group_name AS secondary_disease_name,
+        d.disease_filter AS disease_name,
+        d.secondary_disease_name AS secondary_disease_name,
         pr.product_name,
         sp.product_name AS sub_product_name,
         p.phase_name,

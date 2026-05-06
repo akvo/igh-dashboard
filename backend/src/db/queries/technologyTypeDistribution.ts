@@ -4,7 +4,8 @@ import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TechnologyTypeDistributionFilters {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
@@ -39,7 +40,20 @@ export function getTechnologyTypeDistribution(
     params,
     diseaseCtx,
   );
-  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.primary_disease_names,
+    "d.disease_filter",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+    diseaseCtx,
+  );
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);

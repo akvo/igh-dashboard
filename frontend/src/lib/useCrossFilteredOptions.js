@@ -1,26 +1,49 @@
 import { useMemo, useEffect } from 'react';
 import {
-  addMalariaOption,
-  expandDiseaseSelection,
   expandProductNameSelection,
   expandProductKeySelection,
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
-  MALARIA_GROUP,
 } from '@/lib/filterGroups';
 
 /**
- * Bidirectional cross-filtering for GHA ↔ disease ↔ product ↔ R&D phase filters.
+ * Bidirectional cross-filtering for GHA <-> primary disease <->
+ * secondary disease <-> product <-> R&D phase.
+ *
+ * The hook reads from `pipelineFilterPairs` (one row per
+ * (disease, product, phase) triple actually present in active
+ * pipeline candidates) and intersects it with the current
+ * selections to produce narrowed option lists for each axis.
+ *
+ * The disease axis is now hierarchical: callers pass
+ * `selections.primary` (an array of primary disease names) and
+ * `selections.secondary` (an array of sub-disease names). Both are
+ * optional and default to empty. The hook returns:
+ *
+ *   - `healthAreaOptions`: GHA dropdown options narrowed by other
+ *     active filters.
+ *   - `narrowedHierarchy`: a subset of the input
+ *     `data.diseaseHierarchy` rows so that
+ *     `<HierarchicalDiseaseFilter hierarchy={narrowedHierarchy}>`
+ *     only shows primaries/secondaries reachable under the other
+ *     active filters.
+ *   - `productOptions`: product dropdown options narrowed by GHA,
+ *     primary, secondary, and phase.
+ *   - `rdPhaseOptions`: phase dropdown options narrowed similarly.
+ *
+ * Pair rows must carry `disease_filter` and `secondary_disease_name`
+ * (added on the backend in this PR). The legacy `disease_group_name`
+ * is no longer consulted.
  *
  * @param {Object} params
- * @param {Object} params.data - { healthAreas, diseasesRaw, pairs, allProductOptions, allPhaseOptions? }
- * @param {Object} params.selections - { healthArea, disease, product, rdPhase? }
- * @param {Object} params.setters - { setHealthArea, setDisease, setProduct, setRdPhase? }
+ * @param {Object} params.data - { healthAreas, diseaseHierarchy, pairs, allProductOptions, allPhaseOptions? }
+ * @param {Object} params.selections - { healthArea, primary?, secondary?, product, rdPhase? }
+ * @param {Object} params.setters - { setHealthArea, setPrimary?, setSecondary?, setProduct, setRdPhase? }
  * @param {Object} params.loading - { healthAreas, diseases, products, pairs }
  * @param {'by-name'|'by-key'} [params.mode='by-name']
  *   - 'by-name': products are plain strings, pairs matched via product_name
  *   - 'by-key': products are {value, label}, pairs matched via product_key
- * @returns {{ healthAreaOptions, diseaseOptions, productOptions, rdPhaseOptions? }}
+ * @returns {{ healthAreaOptions, narrowedHierarchy, productOptions, rdPhaseOptions? }}
  */
 export function useCrossFilteredOptions({
   data,
@@ -29,222 +52,376 @@ export function useCrossFilteredOptions({
   loading,
   mode = 'by-name',
 }) {
-  const { healthAreas, diseasesRaw, pairs, allProductOptions, allPhaseOptions } = data;
-  const { healthArea, disease, product, rdPhase } = selections;
-  const { setHealthArea, setDisease, setProduct, setRdPhase } = setters;
+  const {
+    healthAreas,
+    diseaseHierarchy = [],
+    pairs,
+    allProductOptions,
+    allPhaseOptions,
+  } = data;
+  const {
+    healthArea = [],
+    primary = [],
+    secondary = [],
+    product = [],
+    rdPhase = [],
+  } = selections;
+  const {
+    setHealthArea,
+    setPrimary,
+    setSecondary,
+    setProduct,
+    setRdPhase,
+  } = setters;
 
-  const expandProduct = mode === 'by-key' ? expandProductKeySelection : expandProductNameSelection;
+  const expandProduct =
+    mode === 'by-key' ? expandProductKeySelection : expandProductNameSelection;
 
-  // Products → diseases lookup via pairs
-  function productPairKeys(expandedProduct) {
-    if (mode === 'by-key') {
-      const keys = new Set(expandedProduct);
-      return pairs.filter(p => keys.has(String(p.product_key)));
-    }
-    const names = new Set(expandedProduct);
-    return pairs.filter(p => names.has(p.product_name));
+  // ---------------------------------------------------------
+  // Pair-side helpers
+  // ---------------------------------------------------------
+  //
+  // Most narrowing happens by intersecting `pairs` against the
+  // active filters then projecting some axis out of the survivors.
+  // These helpers centralize the matching rules so each memo below
+  // is small and obvious.
+
+  function pairMatchesPrimary(p, primarySet) {
+    if (primarySet.size === 0) return true;
+    return p.disease_filter && primarySet.has(p.disease_filter);
   }
 
-  // Does a product option belong to a valid set?
-  function productOptionMatches(option, validSet) {
-    if (mode === 'by-key') {
-      return option.value.split('|').some(k => validSet.has(k));
-    }
-    if (validSet.has(option)) return true;
-    if (option === VECTOR_CONTROL_CONSOLIDATED_NAME) {
-      return VECTOR_CONTROL_PRODUCT_NAMES.some(n => validSet.has(n));
-    }
-    return false;
+  function pairMatchesSecondary(p, secondarySet) {
+    if (secondarySet.size === 0) return true;
+    return p.secondary_disease_name && secondarySet.has(p.secondary_disease_name);
   }
 
-  // Valid-set key extractor for product pairs filtered by disease
   function pairProductKey(p) {
     return mode === 'by-key' ? String(p.product_key) : p.product_name;
   }
 
-  // Is a selected product value still present in the options list?
+  function productOptionMatches(option, validSet) {
+    if (mode === 'by-key') {
+      return option.value.split('|').some((k) => validSet.has(k));
+    }
+    if (validSet.has(option)) return true;
+    if (option === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+      return VECTOR_CONTROL_PRODUCT_NAMES.some((n) => validSet.has(n));
+    }
+    return false;
+  }
+
   function isProductValueValid(val, options) {
     if (mode === 'by-key') {
-      return options.some(o => o.value === val);
+      return options.some((o) => o.value === val);
     }
     return options.includes(val);
   }
 
-  // --- Helpers ---
+  // ---------------------------------------------------------
+  // Pre-computed sets
+  // ---------------------------------------------------------
 
-  // Pre-filter pairs by rdPhase when active
-  const hasPhase = rdPhase && rdPhase.length > 0;
-  const phaseFilteredPairs = useMemo(() => {
-    if (!hasPhase) return pairs;
-    const phaseSet = new Set(rdPhase);
-    return pairs.filter(p => p.phase_name && phaseSet.has(p.phase_name));
-  }, [pairs, rdPhase, hasPhase]);
+  const primarySet = useMemo(() => new Set(primary), [primary]);
+  const secondarySet = useMemo(() => new Set(secondary), [secondary]);
+  const productExpanded = useMemo(
+    () => (product.length > 0 ? new Set(expandProduct(product)) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [product],
+  );
+  const phaseSet = useMemo(
+    () => (rdPhase.length > 0 ? new Set(rdPhase) : null),
+    [rdPhase],
+  );
 
-  // --- Memos ---
+  // Pairs after restricting to the active phase and product
+  // selections. These two axes never narrow themselves through this
+  // intermediate filter (otherwise we'd just always return what the
+  // user typed in), so they're applied first and reused.
+  const pairsByPhaseAndProduct = useMemo(() => {
+    let active = pairs || [];
+    if (phaseSet) {
+      active = active.filter((p) => p.phase_name && phaseSet.has(p.phase_name));
+    }
+    if (productExpanded) {
+      active = active.filter((p) =>
+        productExpanded.has(pairProductKey(p)),
+      );
+    }
+    return active;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pairs, phaseSet, productExpanded]);
+
+  // ---------------------------------------------------------
+  // healthAreaOptions
+  // ---------------------------------------------------------
 
   const healthAreaOptions = useMemo(() => {
-    const all = (healthAreas || []).map(item => ({ value: item.originalName, label: item.name }));
-    const hasDis = disease.length > 0;
+    const all = (healthAreas || []).map((item) => ({
+      value: item.originalName,
+      label: item.name,
+    }));
+    const hasPri = primary.length > 0;
+    const hasSec = secondary.length > 0;
     const hasProd = product.length > 0;
-    if (!hasDis && !hasProd && !hasPhase) return all;
+    const hasPhase = rdPhase.length > 0;
+    if (!hasPri && !hasSec && !hasProd && !hasPhase) return all;
 
-    const disGHAs = hasDis
-      ? new Set((diseasesRaw || [])
-          .filter(d => expandDiseaseSelection(disease).includes(d.disease_group_name))
-          .map(d => d.global_health_area))
-      : null;
+    // For each non-trivial axis, derive the set of GHAs the
+    // hierarchy actually reaches under that axis. Then intersect
+    // them with the unfiltered GHA list.
 
-    let prodGHAs = null;
-    if (hasProd) {
-      const matchingPairs = productPairKeys(expandProduct(product));
-      const validDiseases = new Set(matchingPairs.map(p => p.disease_group_name));
-      prodGHAs = new Set((diseasesRaw || [])
-        .filter(d => validDiseases.has(d.disease_group_name))
-        .map(d => d.global_health_area));
+    const fromHierarchy = (predicate) =>
+      new Set(
+        diseaseHierarchy.filter(predicate).map((r) => r.global_health_area),
+      );
+
+    let priGHAs = null;
+    if (hasPri) {
+      priGHAs = fromHierarchy((r) => primarySet.has(r.primary_disease));
+    }
+    let secGHAs = null;
+    if (hasSec) {
+      secGHAs = fromHierarchy((r) => secondarySet.has(r.secondary_disease));
     }
 
-    let phaseGHAs = null;
-    if (hasPhase) {
-      const validDiseases = new Set(phaseFilteredPairs.map(p => p.disease_group_name));
-      phaseGHAs = new Set((diseasesRaw || [])
-        .filter(d => validDiseases.has(d.disease_group_name))
-        .map(d => d.global_health_area));
+    // Product/phase narrow GHAs through the pairs view.
+    let pairGHAs = null;
+    if (hasProd || hasPhase) {
+      const validPrimaries = new Set(
+        pairsByPhaseAndProduct.map((p) => p.disease_filter).filter(Boolean),
+      );
+      pairGHAs = fromHierarchy((r) => validPrimaries.has(r.primary_disease));
     }
 
-    return all.filter(o => {
-      if (disGHAs && !disGHAs.has(o.value)) return false;
-      if (prodGHAs && !prodGHAs.has(o.value)) return false;
-      if (phaseGHAs && !phaseGHAs.has(o.value)) return false;
+    return all.filter((o) => {
+      if (priGHAs && !priGHAs.has(o.value)) return false;
+      if (secGHAs && !secGHAs.has(o.value)) return false;
+      if (pairGHAs && !pairGHAs.has(o.value)) return false;
       return true;
     });
-  }, [healthAreas, disease, product, rdPhase, diseasesRaw, pairs, phaseFilteredPairs, hasPhase]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    healthAreas,
+    diseaseHierarchy,
+    primary,
+    secondary,
+    product,
+    rdPhase,
+    pairsByPhaseAndProduct,
+  ]);
 
-  const ghaDiseaseOptions = useMemo(() => {
-    const source = diseasesRaw || [];
-    const filtered = healthArea.length > 0
-      ? source.filter(d => healthArea.includes(d.global_health_area))
-      : source;
-    const names = [...new Set(filtered.map(d => d.disease_group_name).filter(Boolean))];
-    return addMalariaOption(names);
-  }, [diseasesRaw, healthArea]);
+  // ---------------------------------------------------------
+  // narrowedHierarchy
+  // ---------------------------------------------------------
+  //
+  // Filter `diseaseHierarchy` rows to those still reachable under
+  // the active GHA / product / phase selections. The
+  // HierarchicalDiseaseFilter component renders this as the tree
+  // it offers the user, so primaries with no surviving children
+  // disappear, and so do secondaries whose pair has been ruled out.
 
-  const diseaseOptions = useMemo(() => {
-    let filtered = ghaDiseaseOptions;
+  const narrowedHierarchy = useMemo(() => {
+    const ghaSet = new Set(healthArea);
+    const hasGHA = healthArea.length > 0;
+    const hasProd = product.length > 0;
+    const hasPhase = rdPhase.length > 0;
 
-    // Narrow by product
-    if (product.length > 0) {
-      const matchingPairs = productPairKeys(expandProduct(product));
-      const validNames = new Set(matchingPairs.map(p => p.disease_group_name));
-      filtered = filtered.filter(d => {
-        if (validNames.has(d)) return true;
-        if (d === MALARIA_GROUP.label) return MALARIA_GROUP.members.some(m => validNames.has(m));
-        return false;
+    if (!hasGHA && !hasProd && !hasPhase) return diseaseHierarchy;
+
+    // GHA narrows directly.
+    let rows = hasGHA
+      ? diseaseHierarchy.filter((r) => ghaSet.has(r.global_health_area))
+      : diseaseHierarchy;
+
+    if (hasProd || hasPhase) {
+      const reachablePrimaries = new Set();
+      const reachableSecondaries = new Set();
+      for (const p of pairsByPhaseAndProduct) {
+        if (p.disease_filter) reachablePrimaries.add(p.disease_filter);
+        if (p.secondary_disease_name) {
+          reachableSecondaries.add(p.secondary_disease_name);
+        }
+      }
+      rows = rows.filter((r) => {
+        if (!reachablePrimaries.has(r.primary_disease)) return false;
+        // Self-row (childless primary) is kept iff its primary is
+        // reachable -- there's no secondary to check.
+        if (r.secondary_disease === r.primary_disease) return true;
+        return reachableSecondaries.has(r.secondary_disease);
       });
     }
 
-    // Narrow by rdPhase
-    if (hasPhase) {
-      const validNames = new Set(phaseFilteredPairs.map(p => p.disease_group_name));
-      filtered = filtered.filter(d => {
-        if (validNames.has(d)) return true;
-        if (d === MALARIA_GROUP.label) return MALARIA_GROUP.members.some(m => validNames.has(m));
-        return false;
-      });
-    }
+    return rows;
+  }, [diseaseHierarchy, healthArea, product, rdPhase, pairsByPhaseAndProduct]);
 
-    return filtered;
-  }, [product, rdPhase, pairs, ghaDiseaseOptions, phaseFilteredPairs, hasPhase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const ghaProductOptions = useMemo(() => {
-    if (healthArea.length === 0 && !hasPhase) return allProductOptions;
-
-    let activePairs = hasPhase ? phaseFilteredPairs : pairs;
-
-    if (healthArea.length > 0) {
-      const ghaDiseases = new Set(
-        (diseasesRaw || [])
-          .filter(d => healthArea.includes(d.global_health_area))
-          .map(d => d.disease_group_name)
-      );
-      activePairs = activePairs.filter(p => ghaDiseases.has(p.disease_group_name));
-    }
-
-    const validSet = new Set(activePairs.map(pairProductKey));
-    return allProductOptions.filter(o => productOptionMatches(o, validSet));
-  }, [healthArea, diseasesRaw, pairs, allProductOptions, phaseFilteredPairs, hasPhase]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ---------------------------------------------------------
+  // productOptions
+  // ---------------------------------------------------------
 
   const productOptions = useMemo(() => {
-    if (disease.length === 0) return ghaProductOptions;
-    const expanded = expandDiseaseSelection(disease);
-    const activePairs = hasPhase ? phaseFilteredPairs : pairs;
-    const validSet = new Set(
-      activePairs.filter(p => expanded.includes(p.disease_group_name)).map(pairProductKey)
-    );
-    return ghaProductOptions.filter(o => productOptionMatches(o, validSet));
-  }, [disease, pairs, ghaProductOptions, phaseFilteredPairs, hasPhase]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!allProductOptions) return [];
 
-  // R&D phase options — filtered by GHA, disease, and product selections
+    let active = pairs || [];
+    if (phaseSet) {
+      active = active.filter((p) => p.phase_name && phaseSet.has(p.phase_name));
+    }
+
+    if (healthArea.length > 0) {
+      const ghaSet = new Set(healthArea);
+      const validPrimaries = new Set(
+        diseaseHierarchy
+          .filter((r) => ghaSet.has(r.global_health_area))
+          .map((r) => r.primary_disease),
+      );
+      active = active.filter((p) => validPrimaries.has(p.disease_filter));
+    }
+
+    if (primary.length > 0) {
+      active = active.filter((p) => pairMatchesPrimary(p, primarySet));
+    }
+
+    if (secondary.length > 0) {
+      active = active.filter((p) => pairMatchesSecondary(p, secondarySet));
+    }
+
+    if (
+      healthArea.length === 0 &&
+      primary.length === 0 &&
+      secondary.length === 0 &&
+      !phaseSet
+    ) {
+      return allProductOptions;
+    }
+
+    const validSet = new Set(active.map(pairProductKey));
+    return allProductOptions.filter((o) => productOptionMatches(o, validSet));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    allProductOptions,
+    pairs,
+    healthArea,
+    primary,
+    secondary,
+    phaseSet,
+    primarySet,
+    secondarySet,
+    diseaseHierarchy,
+  ]);
+
+  // ---------------------------------------------------------
+  // rdPhaseOptions
+  // ---------------------------------------------------------
+
   const rdPhaseOptions = useMemo(() => {
     if (!allPhaseOptions) return [];
-    let activePairs = pairs;
+    let active = pairs || [];
 
     if (healthArea.length > 0) {
-      const ghaDiseases = new Set(
-        (diseasesRaw || [])
-          .filter(d => healthArea.includes(d.global_health_area))
-          .map(d => d.disease_group_name)
+      const ghaSet = new Set(healthArea);
+      const validPrimaries = new Set(
+        diseaseHierarchy
+          .filter((r) => ghaSet.has(r.global_health_area))
+          .map((r) => r.primary_disease),
       );
-      activePairs = activePairs.filter(p => ghaDiseases.has(p.disease_group_name));
+      active = active.filter((p) => validPrimaries.has(p.disease_filter));
     }
-    if (disease.length > 0) {
-      const expanded = expandDiseaseSelection(disease);
-      activePairs = activePairs.filter(p => expanded.includes(p.disease_group_name));
+    if (primary.length > 0) {
+      active = active.filter((p) => pairMatchesPrimary(p, primarySet));
     }
-    if (product.length > 0) {
-      const prodPairs = productPairKeys(expandProduct(product));
-      const prodKeys = new Set(prodPairs.map(pairProductKey));
-      activePairs = activePairs.filter(p => prodKeys.has(pairProductKey(p)));
+    if (secondary.length > 0) {
+      active = active.filter((p) => pairMatchesSecondary(p, secondarySet));
+    }
+    if (productExpanded) {
+      active = active.filter((p) => productExpanded.has(pairProductKey(p)));
     }
 
-    const validPhases = new Set(activePairs.map(p => p.phase_name).filter(Boolean));
-    return allPhaseOptions.filter(o => validPhases.has(o.value));
-  }, [allPhaseOptions, pairs, healthArea, disease, product, diseasesRaw]); // eslint-disable-line react-hooks/exhaustive-deps
+    const validPhases = new Set(active.map((p) => p.phase_name).filter(Boolean));
+    return allPhaseOptions.filter((o) => validPhases.has(o.value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    allPhaseOptions,
+    pairs,
+    healthArea,
+    primary,
+    secondary,
+    productExpanded,
+    primarySet,
+    secondarySet,
+    diseaseHierarchy,
+  ]);
 
-  // --- Pruning effects ---
+  // ---------------------------------------------------------
+  // Pruning effects
+  // ---------------------------------------------------------
+  //
+  // When upstream narrowing eliminates a previously valid
+  // selection, drop the stale entries so the chart query doesn't
+  // ask for something that's no longer offered.
 
+  // Primary pruning: a primary is valid iff it appears as
+  // `primary_disease` somewhere in narrowedHierarchy.
   useEffect(() => {
+    if (!setPrimary) return;
     if (loading.diseases || loading.pairs) return;
-    if (disease.length > 0) {
-      const valid = disease.filter(d => diseaseOptions.includes(d));
-      if (valid.length !== disease.length) setDisease(valid);
-    }
-  }, [diseaseOptions, loading.diseases, loading.pairs]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (primary.length === 0) return;
+    const validPrimaries = new Set(
+      narrowedHierarchy.map((r) => r.primary_disease),
+    );
+    const valid = primary.filter((p) => validPrimaries.has(p));
+    if (valid.length !== primary.length) setPrimary(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrowedHierarchy, loading.diseases, loading.pairs]);
+
+  // Secondary pruning: a secondary is valid iff it appears as
+  // `secondary_disease` (and is not the self-row).
+  useEffect(() => {
+    if (!setSecondary) return;
+    if (loading.diseases || loading.pairs) return;
+    if (secondary.length === 0) return;
+    const validSecondaries = new Set(
+      narrowedHierarchy
+        .filter((r) => r.secondary_disease !== r.primary_disease)
+        .map((r) => r.secondary_disease),
+    );
+    const valid = secondary.filter((s) => validSecondaries.has(s));
+    if (valid.length !== secondary.length) setSecondary(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [narrowedHierarchy, loading.diseases, loading.pairs]);
 
   useEffect(() => {
+    if (!setProduct) return;
     if (loading.products || loading.pairs) return;
-    if (product.length > 0) {
-      const valid = product.filter(p => isProductValueValid(p, productOptions));
-      if (valid.length !== product.length) setProduct(valid);
-    }
-  }, [productOptions, loading.products, loading.pairs]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (product.length === 0) return;
+    const valid = product.filter((p) => isProductValueValid(p, productOptions));
+    if (valid.length !== product.length) setProduct(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productOptions, loading.products, loading.pairs]);
 
   useEffect(() => {
+    if (!setHealthArea) return;
     if (loading.healthAreas || loading.diseases || loading.pairs) return;
-    if (healthArea.length > 0) {
-      const validValues = new Set(healthAreaOptions.map(o => o.value));
-      const valid = healthArea.filter(h => validValues.has(h));
-      if (valid.length !== healthArea.length) setHealthArea(valid);
-    }
-  }, [healthAreaOptions, loading.healthAreas, loading.diseases, loading.pairs]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (healthArea.length === 0) return;
+    const validValues = new Set(healthAreaOptions.map((o) => o.value));
+    const valid = healthArea.filter((h) => validValues.has(h));
+    if (valid.length !== healthArea.length) setHealthArea(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [healthAreaOptions, loading.healthAreas, loading.diseases, loading.pairs]);
 
-  // Prune rdPhase when available options narrow
   useEffect(() => {
-    if (!setRdPhase || !rdPhase || rdPhase.length === 0) return;
+    if (!setRdPhase) return;
     if (loading.pairs) return;
-    const validValues = new Set(rdPhaseOptions.map(o => o.value));
-    const valid = rdPhase.filter(v => validValues.has(v));
+    if (rdPhase.length === 0) return;
+    const validValues = new Set(rdPhaseOptions.map((o) => o.value));
+    const valid = rdPhase.filter((v) => validValues.has(v));
     if (valid.length !== rdPhase.length) setRdPhase(valid);
-  }, [rdPhaseOptions, loading.pairs]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdPhaseOptions, loading.pairs]);
 
-  return { healthAreaOptions, diseaseOptions, productOptions, rdPhaseOptions };
+  return {
+    healthAreaOptions,
+    narrowedHierarchy,
+    productOptions,
+    rdPhaseOptions,
+  };
 }

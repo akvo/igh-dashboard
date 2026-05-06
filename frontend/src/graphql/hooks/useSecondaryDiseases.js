@@ -21,8 +21,13 @@ export function useSecondaryDiseases() {
 
   const rawData = cachedData || data?.secondaryDiseases || [];
 
+  // Each row carries the parent primary disease alongside the
+  // secondary, so consumers can build a parent->children map
+  // without a second roundtrip. The simple `{ name }` projection is
+  // preserved for components that just need a flat list of
+  // secondaries; tree consumers should read `raw`.
   return {
-    diseases: rawData.map(d => ({ name: d.disease_group_name })),
+    diseases: rawData.map(d => ({ name: d.secondary_disease_name })),
     loading: loading && !cachedData,
     error,
     raw: rawData,

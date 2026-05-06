@@ -2,25 +2,37 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
-import { expandDiseaseSelection, expandProductKeySelection } from '@/lib/filterGroups';
+import { expandProductKeySelection } from '@/lib/filterGroups';
+
+// Coerce a portfolio field (which the URL encoder may have stored
+// as a string or an array) into a normalized array.
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
 
 /**
- * Build query variables from a portfolio object { disease, product }.
- * Returns { variables, skip } for useQuery.
+ * Build query variables from a portfolio object
+ * `{ primaryDisease, secondaryDisease, product }`.
+ * Returns `{ variables, skip }` for useQuery.
  */
 function buildQuery(portfolio) {
   if (!portfolio) return { variables: {}, skip: true };
   const variables = {};
-  const diseases = Array.isArray(portfolio.disease) ? portfolio.disease : (portfolio.disease ? [portfolio.disease] : []);
-  const products = Array.isArray(portfolio.product) ? portfolio.product : (portfolio.product ? [portfolio.product] : []);
-  if (diseases.length > 0) {
-    variables.diseaseGroupNames = expandDiseaseSelection(diseases);
-  }
+  const primaries = asArray(portfolio.primaryDisease);
+  const secondaries = asArray(portfolio.secondaryDisease);
+  const products = asArray(portfolio.product);
+
+  if (primaries.length > 0) variables.primaryDiseaseNames = primaries;
+  if (secondaries.length > 0) variables.secondaryDiseaseNames = secondaries;
   if (products.length > 0) {
-    const keys = expandProductKeySelection(products);
-    variables.productKeys = keys.map(v => parseInt(v));
+    variables.productKeys = expandProductKeySelection(products).map((v) =>
+      parseInt(v),
+    );
   }
-  const skip = diseases.length === 0 && products.length === 0;
+
+  const skip =
+    primaries.length === 0 && secondaries.length === 0 && products.length === 0;
   return { variables, skip };
 }
 

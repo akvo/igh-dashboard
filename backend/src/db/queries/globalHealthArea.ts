@@ -29,11 +29,14 @@ export function getGlobalHealthAreaSummaries(
     params.push(...filters.candidate_types);
   }
 
+  // `diseaseCount` counts distinct hierarchy leaves per GHA -- the
+  // sub-disease name when one exists, otherwise the primary name.
+  // See `kpis.ts` for the full leaf-semantic explanation.
   const sql = `
     SELECT
       d.global_health_area,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Candidate' THEN f.candidate_key END) as candidateCount,
-      COUNT(DISTINCT d.disease_group_name) as diseaseCount,
+      COUNT(DISTINCT COALESCE(d.secondary_disease_name, d.disease_filter)) as diseaseCount,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Product' THEN f.candidate_key END) as productCount
     FROM fact_pipeline_snapshot f
     ${joins.join("\n    ")}

@@ -25,7 +25,7 @@ interface ClinicalTrialConnection {
 
 const MAP_QUERY = `
   query TrialMap($scope: String!, $statuses: [String!], $gha: [String!], $diseases: [String!]) {
-    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $gha, disease_names: $diseases) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $gha, primary_disease_names: $diseases) {
       country_key
       country_name
       iso_code

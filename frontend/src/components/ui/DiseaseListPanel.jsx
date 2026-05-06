@@ -5,23 +5,24 @@ import { CloseIcon } from '../icons';
 import { displayHealthArea } from '@/lib/transformations/constants';
 
 /**
- * Build hierarchical structure from flat disease hierarchy rows.
- * Returns: { [global_health_area]: { [parent_disease]: string[] } }
- * where the string[] are child diseases (excluding the parent itself).
+ * Build a hierarchical structure from flat disease hierarchy rows.
+ * Returns: { [global_health_area]: { [primary_disease]: string[] } }
+ * where the string[] are sub-diseases (excluding the
+ * self-row sentinel emitted for childless primaries).
  */
 function buildHierarchy(rows) {
   if (!rows?.length) return {};
 
   const tree = {};
-  for (const { parent_disease, child_disease, global_health_area } of rows) {
+  for (const { primary_disease, secondary_disease, global_health_area } of rows) {
     if (!tree[global_health_area]) tree[global_health_area] = {};
-    if (!tree[global_health_area][parent_disease]) {
-      tree[global_health_area][parent_disease] = [];
+    if (!tree[global_health_area][primary_disease]) {
+      tree[global_health_area][primary_disease] = [];
     }
-    if (child_disease !== parent_disease) {
-      const list = tree[global_health_area][parent_disease];
-      if (!list.includes(child_disease)) {
-        list.push(child_disease);
+    if (secondary_disease !== primary_disease) {
+      const list = tree[global_health_area][primary_disease];
+      if (!list.includes(secondary_disease)) {
+        list.push(secondary_disease);
       }
     }
   }
@@ -67,10 +68,6 @@ function ParentDiseaseItem({ name, subDiseases, onExplore, globalHealthArea }) {
   const [expanded, setExpanded] = useState(false);
   const hasSubDiseases = subDiseases.length > 0;
 
-  // Parent disease names are derived labels — only the child disease_group_names
-  // exist in the pipeline. When exploring a parent, pass all children.
-  const exploreNames = hasSubDiseases ? subDiseases : [name];
-
   return (
     <div>
       <DiseaseRow
@@ -78,14 +75,14 @@ function ParentDiseaseItem({ name, subDiseases, onExplore, globalHealthArea }) {
         hasExpander={hasSubDiseases}
         expanded={expanded}
         onToggle={() => setExpanded((prev) => !prev)}
-        onExplore={() => onExplore(exploreNames, globalHealthArea)}
+        onExplore={() => onExplore('primary', name, null, globalHealthArea)}
       />
       {hasSubDiseases && expanded && (
         <div className="pl-4 border-l border-gray-100 ml-1 mt-0.5 mb-1">
           {subDiseases.map((child) => (
             <div key={child} className="flex items-center group">
               <button
-                onClick={() => onExplore(child, globalHealthArea)}
+                onClick={() => onExplore('secondary', child, name, globalHealthArea)}
                 className="flex-1 text-left text-sm text-gray-500 hover:text-black py-1 px-1 transition-colors cursor-pointer bg-transparent border-0"
               >
                 {child}
@@ -109,19 +106,34 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
     [tree],
   );
 
+  // Click handler dispatches to the correct URL parameters depending
+  // on which row was clicked:
+  //
+  //   kind === 'primary' -> ?primary=<name>     (parent click; relies on
+  //                                              implicit "all children"
+  //                                              semantic on the
+  //                                              destination page)
+  //   kind === 'secondary' -> ?primary=<parent>&secondary=<child>
+  //   kind === '' (no name) -> /portfolio-analysis (Find out more)
+  //
+  // `globalHealthArea` is always preserved on `?gha=` so the
+  // destination page hydrates the GHA filter as the user expects.
   const handleExplore = useCallback(
-    (diseaseNames, globalHealthArea) => {
+    (kind, name, primaryParent, globalHealthArea) => {
       onClose();
-      // diseaseNames can be a single string or an array of names
-      const names = Array.isArray(diseaseNames) ? diseaseNames : [diseaseNames];
-      if (names.length > 0 && names[0]) {
-        const params = new URLSearchParams();
-        if (globalHealthArea) params.set('gha', globalHealthArea);
-        params.set('disease', names.join(','));
-        window.location.href = `/portfolio-analysis?${params.toString()}`;
-      } else {
+      if (!kind || !name) {
         window.location.href = '/portfolio-analysis';
+        return;
       }
+      const params = new URLSearchParams();
+      if (globalHealthArea) params.set('gha', globalHealthArea);
+      if (kind === 'primary') {
+        params.set('primary', name);
+      } else if (kind === 'secondary') {
+        if (primaryParent) params.set('primary', primaryParent);
+        params.set('secondary', name);
+      }
+      window.location.href = `/portfolio-analysis?${params.toString()}`;
     },
     [onClose],
   );
@@ -148,7 +160,7 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
           </h2>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => handleExplore('')}
+              onClick={() => handleExplore('', '', null, null)}
               className="text-xs font-medium text-orange-500 hover:text-orange-600 transition-colors cursor-pointer bg-transparent border-0 whitespace-nowrap"
             >
               Find out more &rarr;

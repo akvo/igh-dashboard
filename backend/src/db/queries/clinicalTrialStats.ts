@@ -8,7 +8,8 @@ import { addArrayCondition } from "./filterUtils.js";
 
 interface ClinicalTrialStatsFilters {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   phase_names?: string[];
 }
@@ -32,7 +33,20 @@ function buildFilterClauses(filters?: ClinicalTrialStatsFilters) {
     params,
     diseaseCtx,
   );
-  addArrayCondition(filters?.disease_names, "d.disease_group_name", conditions, params, diseaseCtx);
+  addArrayCondition(
+    filters?.primary_disease_names,
+    "d.disease_filter",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+    diseaseCtx,
+  );
 
   const productCtx = { joins, join: "JOIN dim_product pr ON t.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);

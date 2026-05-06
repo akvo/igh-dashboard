@@ -21,9 +21,11 @@ export function useDiseases() {
 
   const rawData = cachedData || data?.diseases || [];
 
-  // Transform to simple array of disease group names for dropdowns
+  // Transform to simple array shape used by dropdowns. The source
+  // field is now `disease_filter` (authoritative primary disease
+  // group); the consumer-facing `name` key is unchanged.
   const diseases = rawData.map(d => ({
-    name: d.disease_group_name,
+    name: d.disease_filter,
   }));
 
   return {

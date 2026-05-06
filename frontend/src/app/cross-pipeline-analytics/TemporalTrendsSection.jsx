@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -14,11 +15,7 @@ import {
   phaseNameToKey,
   AGGREGATE_STAGE_LABELS,
 } from '@/lib/transformations';
-import {
-  expandDiseaseSelection,
-  expandProductKeySelection,
-  MALARIA_GROUP,
-} from '@/lib/filterGroups';
+import { expandProductKeySelection } from '@/lib/filterGroups';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { createHeatmapScale } from '@/lib/heatmap';
@@ -39,13 +36,17 @@ const PORTFOLIO_FALLBACK_LABELS = ['Portfolio A', 'Portfolio B', 'Portfolio C', 
 
 /**
  * Build a descriptive label for a portfolio from its selections.
- * e.g. "Chikungunya - Diagnostics", "Malaria", "Vaccines"
- * Falls back to "Portfolio A" etc. when no selections exist.
+ * Combines primary diseases, secondary diseases, and product types,
+ * each comma-joined within their own group and dash-joined across
+ * groups. Falls back to "Portfolio A" etc. when no selections exist.
  */
 function buildPortfolioLabel(portfolio, productOptions, fallbackIndex) {
   const parts = [];
-  if (portfolio.disease && portfolio.disease.length > 0) {
-    parts.push(portfolio.disease.join(', '));
+  if (portfolio.primaryDisease && portfolio.primaryDisease.length > 0) {
+    parts.push(portfolio.primaryDisease.join(', '));
+  }
+  if (portfolio.secondaryDisease && portfolio.secondaryDisease.length > 0) {
+    parts.push(portfolio.secondaryDisease.join(', '));
   }
   if (portfolio.product && portfolio.product.length > 0) {
     const productLabels = portfolio.product.map(val => {
@@ -59,26 +60,38 @@ function buildPortfolioLabel(portfolio, productOptions, fallbackIndex) {
   return parts.length > 0 ? parts.join(' - ') : PORTFOLIO_FALLBACK_LABELS[fallbackIndex] || `Portfolio ${fallbackIndex + 1}`;
 }
 
-// Compact URL encoding for up to 4 portfolio {disease[], product[]} objects.
-// Uses ';' to join multi-values within each field, ':' between disease/product, ',' between portfolios.
+// Compact URL encoding for up to 4 portfolio
+// {primaryDisease[], secondaryDisease[], product[]} objects.
+//
+// The encoded form uses three separators, in increasing scope:
+//   ';' joins multi-values WITHIN a single field
+//   ':' separates the three fields (primary : secondary : product)
+//   ',' separates portfolios from each other
+//
+// Empty fields collapse to nothing, e.g. a portfolio with only a
+// primary disease serializes to "Malaria::" (two trailing colons).
 const portfolioSerializer = {
   serialize: (portfolios) => {
     const parts = portfolios
-      .filter(p => (Array.isArray(p.disease) ? p.disease.length > 0 : !!p.disease) ||
-                   (Array.isArray(p.product) ? p.product.length > 0 : !!p.product))
+      .filter(p =>
+        (Array.isArray(p.primaryDisease) && p.primaryDisease.length > 0) ||
+        (Array.isArray(p.secondaryDisease) && p.secondaryDisease.length > 0) ||
+        (Array.isArray(p.product) && p.product.length > 0))
       .map(p => {
-        const d = Array.isArray(p.disease) ? p.disease.join(';') : (p.disease || '');
-        const pr = Array.isArray(p.product) ? p.product.join(';') : (p.product || '');
-        return `${d}:${pr}`;
+        const pd = Array.isArray(p.primaryDisease) ? p.primaryDisease.join(';') : '';
+        const sd = Array.isArray(p.secondaryDisease) ? p.secondaryDisease.join(';') : '';
+        const pr = Array.isArray(p.product) ? p.product.join(';') : '';
+        return `${pd}:${sd}:${pr}`;
       });
     return parts.length > 0 ? parts.join(',') : null;
   },
   deserialize: (str) => {
     if (!str) return null;
     return str.split(',').map((part, idx) => {
-      const [disease = '', product = ''] = part.split(':');
+      const [primary = '', secondary = '', product = ''] = part.split(':');
       return {
-        disease: disease ? disease.split(';') : [],
+        primaryDisease: primary ? primary.split(';') : [],
+        secondaryDisease: secondary ? secondary.split(';') : [],
         product: product ? product.split(';') : [],
         label: PORTFOLIO_FALLBACK_LABELS[idx],
       };
@@ -97,24 +110,33 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
-function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOptions = [], filterPairs = [] }) {
+function ComparePortfoliosTab({
+  narrowedHierarchy = [],
+  productOptions = [],
+  yearOptions = [],
+  filterPairs = [],
+}) {
   const [appliedPortfolios, setAppliedPortfolios] = useUrlState('cpf', [], portfolioSerializer);
   const [appliedCompareYear, setAppliedCompareYear] = useUrlState('cpYear', '', stringSerializer);
   const [visibleCount, setVisibleCount] = useUrlState('cpN', 2, numberSerializer);
 
-  // Local/pending state — initialized from URL-restored applied values
+  // Local/pending state — initialized from URL-restored applied values.
+  // Each row is the new portfolio shape:
+  //   { primaryDisease: string[], secondaryDisease: string[], product: string[] }
+  //
+  // The deserializer already coerces every field to an array, so we
+  // only need to defend against absent fields when reading older URL
+  // states (or the first-render empty case).
+  const emptyPortfolio = () => ({ primaryDisease: [], secondaryDisease: [], product: [] });
+  const coercePortfolio = (p) => ({
+    primaryDisease: Array.isArray(p?.primaryDisease) ? p.primaryDisease : [],
+    secondaryDisease: Array.isArray(p?.secondaryDisease) ? p.secondaryDisease : [],
+    product: Array.isArray(p?.product) ? p.product : (p?.product ? [p.product] : []),
+  });
   const [portfolios, setPortfolios] = useState(() => {
-    const initial = [
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-    ];
+    const initial = [emptyPortfolio(), emptyPortfolio(), emptyPortfolio(), emptyPortfolio()];
     appliedPortfolios.forEach((p, i) => {
-      if (i < 4) initial[i] = {
-        disease: Array.isArray(p.disease) ? p.disease : (p.disease ? [p.disease] : []),
-        product: Array.isArray(p.product) ? p.product : (p.product ? [p.product] : []),
-      };
+      if (i < 4) initial[i] = coercePortfolio(p);
     });
     return initial;
   });
@@ -134,10 +156,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
         setPortfolios(prev => {
           const next = [...prev];
           appliedPortfolios.forEach((p, i) => {
-            if (i < 4) next[i] = {
-              disease: Array.isArray(p.disease) ? p.disease : (p.disease ? [p.disease] : []),
-              product: Array.isArray(p.product) ? p.product : (p.product ? [p.product] : []),
-            };
+            if (i < 4) next[i] = coercePortfolio(p);
           });
           return next;
         });
@@ -149,39 +168,60 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     }
   }, [appliedPortfolios, appliedCompareYear]);
 
-  // Client-side cascading filters from disease×product pairs
-  // (product options may have pipe-separated keys from VC consolidation)
+  // Client-side cascading filters from the disease×product pairs.
+  //
+  // For each portfolio row, narrow the OPPOSITE axis based on the
+  // current selection of one axis. Because pairs now carry both
+  // `disease_filter` (the authoritative primary) and
+  // `secondary_disease_name`, a row whose primary or secondary is
+  // selected can constrain the product list, and vice versa.
+  //
+  // Disease selections are canonical post-migration -- there is no
+  // composite expansion to apply (no legacy group-name synonyms),
+  // so we compare raw names directly.
   const validProducts = useMemo(() => {
     return portfolios.map(p => {
-      if (!p.disease || p.disease.length === 0) return null;
-      const expandedDisease = expandDiseaseSelection(p.disease);
+      const primarySel = p.primaryDisease || [];
+      const secondarySel = p.secondaryDisease || [];
+      if (primarySel.length === 0 && secondarySel.length === 0) return null;
       const validKeys = new Set(
-        filterPairs.filter(pair => expandedDisease.includes(pair.disease_group_name))
-                   .map(pair => String(pair.product_key))
+        filterPairs
+          .filter(pair => {
+            if (primarySel.length > 0 && !primarySel.includes(pair.disease_filter)) return false;
+            if (secondarySel.length > 0 && !secondarySel.includes(pair.secondary_disease_name)) return false;
+            return true;
+          })
+          .map(pair => String(pair.product_key))
       );
       return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
     });
   }, [portfolios, filterPairs, productOptions]);
 
-  const validDiseases = useMemo(() => {
+  // For each portfolio, derive a narrowed hierarchy that reflects
+  // the products selected in that row. We use `pairs` to find which
+  // primaries and secondaries are still reachable under the chosen
+  // products, then prune the parent `narrowedHierarchy`. Rows whose
+  // secondary equals the primary (the self-row emitted for
+  // childless primaries) are kept as long as the primary is
+  // reachable.
+  const validHierarchies = useMemo(() => {
     return portfolios.map(p => {
       if (!p.product || p.product.length === 0) return null;
-      const expanded = expandProductKeySelection(p.product);
-      const pkeys = new Set(expanded);
-      const validNames = new Set(
-        filterPairs.filter(pair => pkeys.has(String(pair.product_key)))
-                   .map(pair => pair.disease_group_name)
-      );
-      return diseaseOptions.filter(d => {
-        const name = typeof d === 'string' ? d : d.value;
-        if (validNames.has(name)) return true;
-        if (name === MALARIA_GROUP.label) {
-          return MALARIA_GROUP.members.some(m => validNames.has(m));
-        }
-        return false;
+      const pkeys = new Set(expandProductKeySelection(p.product));
+      const reachablePrimaries = new Set();
+      const reachableSecondaries = new Set();
+      for (const pair of filterPairs) {
+        if (!pkeys.has(String(pair.product_key))) continue;
+        if (pair.disease_filter) reachablePrimaries.add(pair.disease_filter);
+        if (pair.secondary_disease_name) reachableSecondaries.add(pair.secondary_disease_name);
+      }
+      return narrowedHierarchy.filter((r) => {
+        if (!reachablePrimaries.has(r.primary_disease)) return false;
+        if (r.secondary_disease === r.primary_disease) return true;
+        return reachableSecondaries.has(r.secondary_disease);
       });
     });
-  }, [portfolios, filterPairs, diseaseOptions]);
+  }, [portfolios, filterPairs, narrowedHierarchy]);
 
   // Fetch data for applied portfolios
   const { results, loading } = usePortfolioComparison(appliedPortfolios);
@@ -223,14 +263,9 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     );
   };
 
-  const handleDiseaseChange = (index, value) => {
-    setPortfolios(prev => {
-      const next = [...prev];
-      next[index] = { ...next[index], disease: value };
-      return next;
-    });
-  };
-
+  // Disease changes flow through `HierarchicalDiseaseFilter`'s
+  // `onChange` directly into setPortfolios -- the component owns
+  // both arrays so we no longer need a separate disease handler.
   const handleProductChange = (index, value) => {
     setPortfolios(prev => {
       const next = [...prev];
@@ -239,26 +274,29 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
     });
   };
 
+  // A portfolio is "non-empty" if any of its three axes carry a
+  // selection -- this gates both Apply (only commit non-empty rows)
+  // and Clear (enabled when any pending or applied state exists).
+  const isPortfolioNonEmpty = (p) =>
+    (p.primaryDisease?.length ?? 0) > 0 ||
+    (p.secondaryDisease?.length ?? 0) > 0 ||
+    (p.product?.length ?? 0) > 0;
+
   const handleCompareApply = () => {
     const applied = portfolios
       .slice(0, visibleCount)
       .map((p, idx) => ({ ...p, label: buildPortfolioLabel(p, productOptions, idx) }))
-      .filter(p => p.disease.length > 0 || p.product.length > 0);
+      .filter(isPortfolioNonEmpty);
     setAppliedPortfolios(applied);
     setAppliedCompareYear(compareYear);
     setHiddenComparePhases([]);
   };
 
-  const hasCompareFilters = portfolios.some(p => p.disease.length > 0 || p.product.length > 0) || compareYear !== '' ||
+  const hasCompareFilters = portfolios.some(isPortfolioNonEmpty) || compareYear !== '' ||
     appliedPortfolios.length > 0 || appliedCompareYear !== '';
 
   const handleCompareClear = () => {
-    setPortfolios([
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-      { disease: [], product: [] },
-    ]);
+    setPortfolios([emptyPortfolio(), emptyPortfolio(), emptyPortfolio(), emptyPortfolio()]);
     setCompareYear('');
     setAppliedPortfolios([]);
     setAppliedCompareYear('');
@@ -443,13 +481,23 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
             >
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <Dropdown
+                  <HierarchicalDiseaseFilter
                     label="Disease"
-                    value={portfolios[idx].disease}
-                    onChange={(val) => handleDiseaseChange(idx, val)}
+                    hierarchy={validHierarchies[idx] ?? narrowedHierarchy}
+                    primarySelected={portfolios[idx].primaryDisease}
+                    secondarySelected={portfolios[idx].secondaryDisease}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      setPortfolios(prev => {
+                        const next = [...prev];
+                        next[idx] = {
+                          ...next[idx],
+                          primaryDisease: primarySelected,
+                          secondaryDisease: secondarySelected,
+                        };
+                        return next;
+                      });
+                    }}
                     placeholder="All"
-                    options={validDiseases[idx] ?? diseaseOptions}
-                    multiSelect={true}
                   />
                 </div>
                 <div className="flex-1">
@@ -697,7 +745,7 @@ function ComparePortfoliosTab({ diseaseOptions = [], productOptions = [], yearOp
 }
 
 export default function TemporalTrendsSection({
-  diseaseOptions = [],
+  narrowedHierarchy = [],
   productOptions = [],
   availableYears = [],
 }) {
@@ -710,13 +758,20 @@ export default function TemporalTrendsSection({
   });
   const { pairs } = usePipelineFilterPairs();
 
-  // Applied filters → URL (committed on Apply)
-  const [appliedDisease, setAppliedDisease] = useUrlState('ttDisease', [], arraySerializer);
+  // Applied filters → URL (committed on Apply). Disease selections
+  // now live in two parallel arrays mirroring the
+  // HierarchicalDiseaseFilter contract: `appliedPrimary` carries
+  // primary disease names, `appliedSecondary` the (optional) explicit
+  // children. Keeping them as two URL params makes the URL idempotent
+  // and easy to share.
+  const [appliedPrimary, setAppliedPrimary] = useUrlState('ttPrimary', [], arraySerializer);
+  const [appliedSecondary, setAppliedSecondary] = useUrlState('ttSecondary', [], arraySerializer);
   const [appliedProduct, setAppliedProduct] = useUrlState('ttProduct', [], arraySerializer);
   const [appliedYear, setAppliedYear] = useUrlState('ttYear', [], arraySerializer);
 
   // Local/pending filter state — initialized from URL-restored applied values
-  const [filterDisease, setFilterDisease] = useState(appliedDisease);
+  const [filterPrimary, setFilterPrimary] = useState(appliedPrimary);
+  const [filterSecondary, setFilterSecondary] = useState(appliedSecondary);
   const [filterProduct, setFilterProduct] = useState(appliedProduct);
   const [filterYear, setFilterYear] = useState(appliedYear);
 
@@ -726,69 +781,96 @@ export default function TemporalTrendsSection({
   const singleSynced = useRef(false);
   useEffect(() => {
     if (!singleSynced.current) {
-      if (appliedDisease.length || appliedProduct.length || appliedYear.length) {
+      if (
+        appliedPrimary.length ||
+        appliedSecondary.length ||
+        appliedProduct.length ||
+        appliedYear.length
+      ) {
         singleSynced.current = true;
-        setFilterDisease(appliedDisease);
+        setFilterPrimary(appliedPrimary);
+        setFilterSecondary(appliedSecondary);
         setFilterProduct(appliedProduct);
         setFilterYear(appliedYear);
       }
     }
-  }, [appliedDisease, appliedProduct, appliedYear]);
+  }, [appliedPrimary, appliedSecondary, appliedProduct, appliedYear]);
 
-  // Client-side cascading filters from disease×product pairs
-  // (product options may have pipe-separated keys from VC consolidation)
+  // Client-side cascading filters from the disease×product pairs.
+  //
+  // The product list is narrowed by whichever disease axes the user
+  // has touched. Both primary AND secondary selections constrain
+  // independently: a chosen primary keeps only pairs where
+  // `disease_filter` matches; a chosen secondary keeps only pairs
+  // where `secondary_disease_name` matches; together they intersect.
   const effectiveProductOptions = useMemo(() => {
-    if (filterDisease.length === 0) return productOptions;
-    const expandedDisease = expandDiseaseSelection(filterDisease);
+    if (filterPrimary.length === 0 && filterSecondary.length === 0) return productOptions;
     const validKeys = new Set(
-      pairs.filter(p => expandedDisease.includes(p.disease_group_name))
-           .map(p => String(p.product_key))
+      pairs
+        .filter(p => {
+          if (filterPrimary.length > 0 && !filterPrimary.includes(p.disease_filter)) return false;
+          if (filterSecondary.length > 0 && !filterSecondary.includes(p.secondary_disease_name)) return false;
+          return true;
+        })
+        .map(p => String(p.product_key))
     );
     return productOptions.filter(o => o.value.split('|').some(k => validKeys.has(k)));
-  }, [filterDisease, pairs, productOptions]);
+  }, [filterPrimary, filterSecondary, pairs, productOptions]);
 
-  const effectiveDiseaseOptions = useMemo(() => {
-    if (filterProduct.length === 0) return diseaseOptions;
+  // The disease hierarchy is narrowed by the chosen products. We
+  // walk pairs to find every primary and secondary still reachable
+  // under those product keys, then prune `narrowedHierarchy`.
+  // Self-rows (where secondary equals primary, emitted for childless
+  // primaries) are kept as long as the primary is reachable.
+  const effectiveHierarchy = useMemo(() => {
+    if (filterProduct.length === 0) return narrowedHierarchy;
     const pkeys = new Set(expandProductKeySelection(filterProduct));
-    const validNames = new Set(
-      pairs.filter(p => pkeys.has(String(p.product_key)))
-           .map(p => p.disease_group_name)
-    );
-    return diseaseOptions.filter(d => {
-      const name = typeof d === 'string' ? d : d.value;
-      if (validNames.has(name)) return true;
-      if (name === MALARIA_GROUP.label) {
-        return MALARIA_GROUP.members.some(m => validNames.has(m));
-      }
-      return false;
+    const reachablePrimaries = new Set();
+    const reachableSecondaries = new Set();
+    for (const p of pairs) {
+      if (!pkeys.has(String(p.product_key))) continue;
+      if (p.disease_filter) reachablePrimaries.add(p.disease_filter);
+      if (p.secondary_disease_name) reachableSecondaries.add(p.secondary_disease_name);
+    }
+    return narrowedHierarchy.filter((r) => {
+      if (!reachablePrimaries.has(r.primary_disease)) return false;
+      if (r.secondary_disease === r.primary_disease) return true;
+      return reachableSecondaries.has(r.secondary_disease);
     });
-  }, [filterProduct, pairs, diseaseOptions]);
+  }, [narrowedHierarchy, filterProduct, pairs]);
 
   const handleApply = () => {
-    setAppliedDisease(filterDisease);
+    setAppliedPrimary(filterPrimary);
+    setAppliedSecondary(filterSecondary);
     setAppliedProduct(filterProduct);
     setAppliedYear(filterYear);
   };
 
-  const hasSingleFilters = filterDisease.length > 0 || filterProduct.length > 0 ||
-    filterYear.length > 0 || appliedDisease.length > 0 || appliedProduct.length > 0 ||
-    appliedYear.length > 0;
+  const hasSingleFilters =
+    filterPrimary.length > 0 || filterSecondary.length > 0 ||
+    filterProduct.length > 0 || filterYear.length > 0 ||
+    appliedPrimary.length > 0 || appliedSecondary.length > 0 ||
+    appliedProduct.length > 0 || appliedYear.length > 0;
 
   const handleClear = () => {
-    setFilterDisease([]);
+    setFilterPrimary([]);
+    setFilterSecondary([]);
     setFilterProduct([]);
     setFilterYear([]);
-    setAppliedDisease([]);
+    setAppliedPrimary([]);
+    setAppliedSecondary([]);
     setAppliedProduct([]);
     setAppliedYear([]);
     setHiddenPhases([]);
     setHiddenYears([]);
   };
 
-  // Build API filter params (expand composite selections)
-  const expandedDisease = expandDiseaseSelection(appliedDisease);
+  // Build API filter params. Disease axes are now canonical names --
+  // no expansion needed. Empty selections become `null` so the
+  // resolver treats them as "no filter on this axis".
   const expandedProductKeys = expandProductKeySelection(appliedProduct);
-  const diseaseGroupNames = expandedDisease.length > 0 ? expandedDisease : null;
+  const primaryNames = appliedPrimary.length > 0 ? appliedPrimary : null;
+  const secondaryNames = appliedSecondary.length > 0 ? appliedSecondary : null;
   const productKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
   const years = appliedYear.length > 0 ? appliedYear.map(v => parseInt(v)) : null;
 
@@ -796,7 +878,8 @@ export default function TemporalTrendsSection({
     years,
     null,
     productKeys,
-    diseaseGroupNames
+    primaryNames,
+    secondaryNames,
   );
 
   // Sub-section A: phase selection for stacked bar
@@ -965,13 +1048,16 @@ export default function TemporalTrendsSection({
           <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
             <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
               <div className="min-w-[200px]">
-                <Dropdown
+                <HierarchicalDiseaseFilter
                   label="Disease"
-                  value={filterDisease}
-                  onChange={setFilterDisease}
+                  hierarchy={effectiveHierarchy}
+                  primarySelected={filterPrimary}
+                  secondarySelected={filterSecondary}
+                  onChange={({ primarySelected, secondarySelected }) => {
+                    setFilterPrimary(primarySelected);
+                    setFilterSecondary(secondarySelected);
+                  }}
                   placeholder="All"
-                  options={effectiveDiseaseOptions}
-                  multiSelect={true}
                 />
               </div>
               <div className="min-w-[200px]">
@@ -1170,7 +1256,7 @@ export default function TemporalTrendsSection({
       ) : (
         /* Tab 2: Compare different portfolios */
         <ComparePortfoliosTab
-          diseaseOptions={diseaseOptions}
+          narrowedHierarchy={narrowedHierarchy}
           productOptions={productOptions}
           yearOptions={yearOptions}
           filterPairs={pairs}

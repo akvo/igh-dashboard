@@ -6,7 +6,10 @@ import { GET_RD_PRIORITIES_WITH_CANDIDATES, GET_RD_PRIORITIES } from '../queries
 export function buildPriorityFilterVars(filter) {
   return {
     global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
-    disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
+    primary_disease_names:
+      filter?.primaryDiseaseNames?.length > 0 ? filter.primaryDiseaseNames : undefined,
+    secondary_disease_names:
+      filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     search: filter?.search || undefined,
   };
 }

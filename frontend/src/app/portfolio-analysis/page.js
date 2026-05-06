@@ -9,18 +9,18 @@ import { StatCard, Dropdown, TabSwitcher, ChartMenu, ServerTable } from '@/compo
 import DebouncedInput from '@/components/ui/DebouncedInput';
 import { UploadIcon, RefreshIcon, DownloadIcon, InfoIcon, SearchIcon, MoreHorizontalIcon, CloudDownloadIcon, BoltIcon, ListIcon, ChartIcon, ListFilterIcon } from '@/components/icons';
 import { StackedBarChart, DonutChart, BarChart, WorldMap, ChartEmptyState } from '@/components/charts';
-import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, useActivePipelineFilterPairs } from '@/graphql/hooks';
+import { usePortfolioKPIs, useGlobalHealthAreaSummaries, useProducts, useDiseases, useDiseaseHierarchy, usePhases, useProductPhaseDistribution, useProductDistribution, useRegulatoryDistribution, useClinicalTrialStats, useClinicalTrials, usePortfolioCandidates, useGeographicDistribution, useTechnologyTypeDistribution, useRdPrioritiesWithCandidates, useRdPriorities, useActivePipelineFilterPairs } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, PHASE_COLORS } from '@/lib/transformations/constants';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import {
-  expandDiseaseSelection,
   consolidateProductOptionsByName,
   expandProductNameSelection,
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -37,7 +37,12 @@ function CellText({ children }) {
 export default function PortfolioAnalysis() {
   const [activeTab, setActiveTab] = useUrlState('tab', 'explore', { ...stringSerializer, historyMode: 'push' });
   const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
-  const [disease, setDisease] = useUrlState('disease', [], arraySerializer);
+  // Disease selection is now hierarchical: `primary` is the
+  // top-level group ("Malaria"), `secondary` is the explicit
+  // sub-disease ("P. falciparum"). See
+  // HierarchicalDiseaseFilter for the implicit/explicit semantics.
+  const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
+  const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
   const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
   const [productTypeFilter, setProductTypeFilter] = useUrlState('productType', [], arraySerializer);
@@ -123,30 +128,32 @@ export default function PortfolioAnalysis() {
   const apolloClient = useApolloClient();
 
   // Fetch data from API
-  // Expand composite filter selections for API calls
-  const expandedDisease = expandDiseaseSelection(disease);
+  // Expand composite product selections for API calls. Disease no
+  // longer needs an `expand` step -- the hierarchical filter
+  // already produces the canonical primary / secondary lists.
   const expandedProduct = expandProductNameSelection(product);
 
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(healthArea, primary, secondary, expandedProduct, rdPhase);
   const { bubbleData: healthAreas, loading: healthAreasLoading } = useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
-  const { diseases: diseasesList, raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
+  const { diseases: diseasesList, loading: diseasesLoading } = useDiseases();
+  const { hierarchy: diseaseHierarchy, loading: hierarchyLoading } = useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = useActivePipelineFilterPairs();
   const { phases, loading: phasesLoading } = usePhases();
-  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } = useProductPhaseDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
   const pipelineData = useMemo(() => mergeVectorControlStackedData(rawPipelineData), [rawPipelineData]);
   const candidateTypeForApi = productTypeFilter.length === 1 ? productTypeFilter[0] : undefined;
-  const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, expandedDisease, expandedProduct, rdPhase, candidateTypeForApi);
+  const { chartData: rawProductTypesData, loading: productTypesLoading } = useProductDistribution(healthArea, primary, secondary, expandedProduct, rdPhase, candidateTypeForApi);
   const productTypesData = useMemo(() => mergeVectorControlChartData(rawProductTypesData), [rawProductTypesData]);
-  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { approvalStatus: approvalStatusData, whoPrequalification: whoPrequalData, approvingAuthorities: approvingAuthoritiesData, loading: regulatoryLoading } = useRegulatoryDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
 
   const approvingAuthoritiesPhases = [
     { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
     { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
   ];
-  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { totalTrials: ongoingTrials, statusDistribution: trialStatusData, ageGroupDistribution: ageGroupsData, loading: trialsLoading } = useClinicalTrialStats(healthArea, primary, secondary, expandedProduct, rdPhase);
   const itemsPerPage = 10;
-  const globalFilter = { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, phaseNames: rdPhase };
+  const globalFilter = { globalHealthAreas: healthArea, primaryDiseaseNames: primary, secondaryDiseaseNames: secondary, productNames: expandedProduct, phaseNames: rdPhase };
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined }, itemsPerPage, (candidatesPage - 1) * itemsPerPage,
   );
@@ -194,13 +201,14 @@ export default function PortfolioAnalysis() {
   // Per-tab extract filters and data fetching
   // =========================================================
 
-  // Extract tab reuses the global filter selections (healthArea / expandedDisease / expandedProduct / rdPhase)
+  // Extract tab reuses the global filter selections (healthArea / primary / secondary / expandedProduct / rdPhase)
   // so that switching between Explore and Extract tabs shares the same filters.
   // The extract-specific R&D Stage dropdown narrows further within the global phase selection.
   const effectiveExtractPhases = extractRdStage.length > 0 ? extractRdStage : (rdPhase.length > 0 ? rdPhase : undefined);
   const extractCandidatesFilter = {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
-    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    primaryDiseaseNames: primary.length > 0 ? primary : undefined,
+    secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
     productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
     phaseNames: effectiveExtractPhases,
     search: extractSearchQuery || undefined,
@@ -210,13 +218,15 @@ export default function PortfolioAnalysis() {
   // Product or R&D Stage (those fields don't exist on priorities).
   const extractPriorityFilter = {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
-    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    primaryDiseaseNames: primary.length > 0 ? primary : undefined,
+    secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
     search: extractSearchQuery || undefined,
   };
 
   const extractTrialFilter = {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
-    diseaseNames: expandedDisease.length > 0 ? expandedDisease : undefined,
+    primaryDiseaseNames: primary.length > 0 ? primary : undefined,
+    secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
     productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
   };
 
@@ -254,12 +264,12 @@ export default function PortfolioAnalysis() {
   const extractLoading = activeExtractData.loading;
   const trialsPerPage = 10;
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
-    { globalHealthAreas: healthArea, diseaseNames: expandedDisease, productNames: expandedProduct, statuses: geoTrialStatus, search: trialsSearchQuery || undefined },
+    { globalHealthAreas: healthArea, primaryDiseaseNames: primary, secondaryDiseaseNames: secondary, productNames: expandedProduct, statuses: geoTrialStatus, search: trialsSearchQuery || undefined },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
   );
-  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, expandedDisease, expandedProduct, rdPhase);
-  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, expandedDisease, expandedProduct, rdPhase);
+  const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution('Trial Location', geoTrialStatus, healthArea, primary, secondary, expandedProduct, rdPhase);
+  const { tableData: technologyTableData, phases: technologyPhases, totalCount: technologyTotalCount, loading: technologyLoading } = useTechnologyTypeDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const pipelineVisiblePhases = useMemo(() =>
@@ -307,14 +317,16 @@ export default function PortfolioAnalysis() {
     [phases]
   );
 
-  const crossFilterData = { healthAreas, diseasesRaw, pairs, allProductOptions, allPhaseOptions };
-  const crossFilterLoading = { healthAreas: healthAreasLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading };
+  const crossFilterData = { healthAreas, diseaseHierarchy, pairs, allProductOptions, allPhaseOptions };
+  const crossFilterLoading = { healthAreas: healthAreasLoading, diseases: hierarchyLoading || diseasesLoading, products: productsLoading, pairs: pairsLoading };
 
-  // Explore tab cross-filtered options (GHA ↔ disease ↔ product ↔ R&D phase)
-  const { healthAreaOptions, diseaseOptions, productOptions, rdPhaseOptions } = useCrossFilteredOptions({
+  // Explore tab cross-filtered options (GHA ↔ disease ↔ product ↔ R&D phase).
+  // `narrowedHierarchy` feeds the HierarchicalDiseaseFilter so the
+  // tree only offers options reachable under the other filters.
+  const { healthAreaOptions, narrowedHierarchy, productOptions, rdPhaseOptions } = useCrossFilteredOptions({
     data: crossFilterData,
-    selections: { healthArea, disease, product, rdPhase },
-    setters: { setHealthArea, setDisease, setProduct, setRdPhase },
+    selections: { healthArea, primary, secondary, product, rdPhase },
+    setters: { setHealthArea, setPrimary, setSecondary, setProduct, setRdPhase },
     loading: crossFilterLoading,
   });
 
@@ -340,7 +352,8 @@ export default function PortfolioAnalysis() {
   const handleClearFilters = () => {
     // Global GHA / Disease / Product / R&D Phase filters
     setHealthArea([]);
-    setDisease([]);
+    setPrimary([]);
+    setSecondary([]);
     setProduct([]);
     setRdPhase([]);
     // Chart-level filters
@@ -362,7 +375,7 @@ export default function PortfolioAnalysis() {
   };
 
   const hasFilters =
-    healthArea.length > 0 || disease.length > 0 || product.length > 0 ||
+    healthArea.length > 0 || primary.length > 0 || secondary.length > 0 || product.length > 0 ||
     rdPhase.length > 0 ||
     productTypeFilter.length > 0 || geoTrialStatus.length > 0 ||
     pipelineHiddenPhases.length > 0 || authHiddenPhases.length > 0 ||
@@ -563,11 +576,12 @@ export default function PortfolioAnalysis() {
     return data;
   }, [extractTableData, extractColumnFilters, extractSort, availableColumns]);
 
-  const hasExtractFilters = healthArea.length > 0 || disease.length > 0 || product.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
+  const hasExtractFilters = healthArea.length > 0 || primary.length > 0 || secondary.length > 0 || product.length > 0 || extractRdStage.length > 0 || extractSearchQuery.length > 0;
 
   const handleResetExtractFilters = () => {
     setHealthArea([]);
-    setDisease([]);
+    setPrimary([]);
+    setSecondary([]);
     setProduct([]);
     setExtractRdStage([]);
     setExtractSearchQuery('');
@@ -593,7 +607,7 @@ export default function PortfolioAnalysis() {
       setCandidatesDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, disease, product, searchQuery]);
+  }, [apolloClient, healthArea, primary, secondary, product, searchQuery]);
 
   // Download all approved products from the "Selected products" tab as CSV.
   const handleApprovedDownloadCSV = useCallback(async () => {
@@ -611,7 +625,7 @@ export default function PortfolioAnalysis() {
       setApprovedDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, disease, product]);
+  }, [apolloClient, healthArea, primary, secondary, product]);
 
   // Download all clinical trials from the "Selected clinical trials" tab as CSV.
   const handleTrialsDownloadCSV = useCallback(async () => {
@@ -619,7 +633,8 @@ export default function PortfolioAnalysis() {
     try {
       const allRows = await fetchAllTrials(apolloClient, {
         globalHealthAreas: healthArea,
-        diseaseNames: expandedDisease,
+        primaryDiseaseNames: primary,
+        secondaryDiseaseNames: secondary,
         productNames: expandedProduct,
         statuses: geoTrialStatus,
       });
@@ -631,7 +646,7 @@ export default function PortfolioAnalysis() {
       setTrialsDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, disease, product, geoTrialStatus]);
+  }, [apolloClient, healthArea, primary, secondary, product, geoTrialStatus]);
 
   // Download technology types table as CSV. All rows are already loaded
   // client-side so no async fetching is needed — we just build from
@@ -696,7 +711,7 @@ export default function PortfolioAnalysis() {
       setExtractDownloading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, extractTab, appliedColumns, healthArea, disease, product, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, extractRdStage, extractSearchQuery]);
 
   // R&D stage options for the Extract tab (always shows all phases)
   const rdStageOptions = useMemo(() =>
@@ -823,14 +838,16 @@ export default function PortfolioAnalysis() {
                   />
                 </div>
                 <div className="min-w-[220px]">
-                  <Dropdown
+                  <HierarchicalDiseaseFilter
                     label="Disease"
-                    value={disease}
-                    onChange={setDisease}
+                    hierarchy={narrowedHierarchy}
+                    primarySelected={primary}
+                    secondarySelected={secondary}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      setPrimary(primarySelected);
+                      setSecondary(secondarySelected);
+                    }}
                     placeholder="All"
-                    options={diseaseOptions}
-                    multiSelect={true}
-                    loading={diseasesLoading}
                     variant="outlined"
                   />
                 </div>
@@ -1074,13 +1091,17 @@ export default function PortfolioAnalysis() {
                       />
                     </div>
                     <div className="min-w-[180px]">
-                      <Dropdown
+                      <HierarchicalDiseaseFilter
                         label="Disease"
-                        value={disease}
-                        onChange={(v) => { setDisease(v); setExtractPage(1); }}
+                        hierarchy={narrowedHierarchy}
+                        primarySelected={primary}
+                        secondarySelected={secondary}
+                        onChange={({ primarySelected, secondarySelected }) => {
+                          setPrimary(primarySelected);
+                          setSecondary(secondarySelected);
+                          setExtractPage(1);
+                        }}
                         placeholder="All"
-                        options={diseaseOptions}
-                        multiSelect={true}
                         compact={true}
                         variant="outlined"
                       />

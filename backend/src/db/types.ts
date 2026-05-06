@@ -21,6 +21,14 @@ export interface DimDisease {
   disease_group_name: string | null;
   global_health_area: string | null;
   disease_type: string | null;
+  // Authoritative primary disease group (e.g. "Malaria",
+  // "Tuberculosis"). Replaces the mixed-granularity
+  // disease_group_name as the source for the hierarchical filter.
+  disease_filter: string | null;
+  // Sub-disease label (e.g. "P. falciparum"). NULL when the disease
+  // has no secondary -- the "No secondary disease" sentinel and
+  // empty strings are normalized to NULL in bronze-to-silver.
+  secondary_disease_name: string | null;
 }
 
 export interface DimPhase {
@@ -128,7 +136,10 @@ export interface FactPipelineSnapshot {
   date_key: number | null;
   is_active_flag: number | null;
   include_in_pipeline: number | null;
-  secondary_disease_key: number | null;
+  // secondary_disease_key removed: source column had effectively zero
+  // signal (set on 59/9388 candidates, 57 of those self-referencing
+  // primary). Authoritative secondary now lives on
+  // dim_disease.secondary_disease_name.
   sub_product_key: number | null;
 }
 
@@ -240,6 +251,8 @@ export interface TemporalSnapshotRow {
 
 export interface PipelineFilterPair {
   disease_group_name: string;
+  disease_filter: string | null;
+  secondary_disease_name: string | null;
   product_key: number;
   product_name: string;
   phase_name: string | null;
@@ -322,7 +335,8 @@ export interface ClinicalTrialNode {
 
 export interface ClinicalTrialFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   statuses?: string[];
   search?: string;
@@ -382,14 +396,17 @@ export interface PortfolioCandidateNode {
 }
 
 export interface DiseaseHierarchyRow {
-  parent_disease: string;
-  child_disease: string;
+  primary_disease: string;
+  // Equal to primary_disease for childless primaries (matches the
+  // sidebar's "leaf with no `+`" rendering rule).
+  secondary_disease: string;
   global_health_area: string;
 }
 
 export interface PortfolioCandidateFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
@@ -455,7 +472,8 @@ export interface RdPriorityNode {
 
 export interface RdPriorityFilter {
   global_health_areas?: string[];
-  disease_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   search?: string;
 }
 

@@ -25,7 +25,8 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT disease_key, diseaseid, disease_name, disease_group_name, global_health_area, disease_type
+          SELECT disease_key, diseaseid, disease_name, disease_group_name, global_health_area, disease_type,
+                 disease_filter, secondary_disease_name
           FROM dim_disease
           WHERE disease_key IN (${placeholders})
         `,
@@ -206,7 +207,7 @@ export function createLoaders() {
             `
           SELECT snapshot_id, candidate_key, product_key, disease_key,
                  technology_key, regulatory_key, phase_key, date_key, is_active_flag,
-                 secondary_disease_key, sub_product_key
+                 sub_product_key
           FROM fact_pipeline_snapshot
           WHERE candidate_key IN (${placeholders})
             AND is_active_flag = 1

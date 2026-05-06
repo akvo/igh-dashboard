@@ -2,8 +2,8 @@ import { gql } from '@apollo/client/core';
 
 // KPI Cards Query
 export const GET_PORTFOLIO_KPIS = gql`
-  query KPICards($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
-    portfolioKPIs(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
+  query KPICards($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    portfolioKPIs(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       totalDiseases
       totalCandidates
       approvedProducts
@@ -74,8 +74,8 @@ export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
 
 // Geographic Distribution Map
 export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
-  query GeographicMap($scope: String!, $statuses: [String!], $globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
-    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
+  query GeographicMap($scope: String!, $statuses: [String!], $globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    geographicDistribution(location_scope: $scope, statuses: $statuses, global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       country_key
       country_name
       iso_code
@@ -86,8 +86,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!], $diseaseGroupNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
-    temporalSnapshots(years: $years, disease_group_names: $diseaseGroupNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
+  query TemporalAnalysis($years: [Int!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
+    temporalSnapshots(years: $years, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
       year
       phase_name
       sort_order
@@ -235,8 +235,8 @@ export const GET_CLINICAL_TRIALS = gql`
 
 // Clinical Trial Stats - Portfolio Analysis (Trials tab)
 export const GET_CLINICAL_TRIAL_STATS = gql`
-  query ClinicalTrialStats($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
-    clinicalTrialStats(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
+  query ClinicalTrialStats($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    clinicalTrialStats(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       totalTrials
       statusDistribution {
         status
@@ -252,8 +252,8 @@ export const GET_CLINICAL_TRIAL_STATS = gql`
 
 // Regulatory Distribution - Portfolio Analysis (Approved Products tab)
 export const GET_REGULATORY_DISTRIBUTION = gql`
-  query RegulatoryDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
-    regulatoryDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames) {
+  query RegulatoryDistribution($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!]) {
+    regulatoryDistribution(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames) {
       approvalStatus {
         approval_status
         candidateCount
@@ -273,8 +273,8 @@ export const GET_REGULATORY_DISTRIBUTION = gql`
 
 // Product Distribution - Portfolio Analysis (Donut Chart)
 export const GET_PRODUCT_DISTRIBUTION = gql`
-  query ProductDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
-    productDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
+  query ProductDistribution($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    productDistribution(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       product_name
       candidateCount
     }
@@ -283,8 +283,8 @@ export const GET_PRODUCT_DISTRIBUTION = gql`
 
 // Product Phase Distribution - Portfolio Analysis (Stacked Bar by Product)
 export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
-  query ProductPhaseDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
-    productPhaseDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
+  query ProductPhaseDistribution($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    productPhaseDistribution(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       product_name
       phase_name
       sort_order
@@ -295,8 +295,8 @@ export const GET_PRODUCT_PHASE_DISTRIBUTION = gql`
 
 // Technology Type Distribution - Portfolio Analysis (Technology tab)
 export const GET_TECHNOLOGY_TYPE_DISTRIBUTION = gql`
-  query TechnologyTypeDistribution($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
-    technologyTypeDistribution(global_health_areas: $globalHealthAreas, disease_names: $diseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
+  query TechnologyTypeDistribution($globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $productNames: [String!], $phaseNames: [String!], $candidateType: String) {
+    technologyTypeDistribution(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       technology_type
       phase_name
       sort_order
@@ -359,11 +359,17 @@ export const GET_RD_PRIORITIES = gql`
   }
 `;
 
-// Pipeline filter pairs — distinct (disease, product) tuples for cross-filtering
+// Pipeline filter pairs — distinct (disease, product) tuples for cross-filtering.
+// Carries both `disease_filter` (authoritative primary) and
+// `secondary_disease_name` so the cross-filter can intersect on
+// either axis. `disease_group_name` is kept for backwards compat
+// with existing chart tooltips that key on it.
 export const GET_PIPELINE_FILTER_PAIRS = gql`
   query PipelineFilterPairs {
     pipelineFilterPairs {
       disease_group_name
+      disease_filter
+      secondary_disease_name
       product_key
       product_name
       phase_name
@@ -371,13 +377,18 @@ export const GET_PIPELINE_FILTER_PAIRS = gql`
   }
 `;
 
-// Active-pipeline filter pairs — same shape, but restricted to active candidates
-// of type Candidate/Product. Used by Portfolio Overview / Portfolio Analysis
-// dropdowns to avoid offering options that produce empty charts.
+// Active-pipeline filter pairs — same shape as pipelineFilterPairs, but
+// restricted to active candidates of type Candidate/Product. Used by
+// Portfolio Overview / Portfolio Analysis dropdowns to avoid offering
+// options that produce empty charts. Carries `disease_filter` /
+// `secondary_disease_name` so the hierarchical cross-filter can intersect
+// on either axis.
 export const GET_ACTIVE_PIPELINE_FILTER_PAIRS = gql`
   query ActivePipelineFilterPairs {
     activePipelineFilterPairs {
       disease_group_name
+      disease_filter
+      secondary_disease_name
       product_key
       product_name
       phase_name
@@ -385,32 +396,37 @@ export const GET_ACTIVE_PIPELINE_FILTER_PAIRS = gql`
   }
 `;
 
-// Get all diseases (grouped by disease_group_name)
+// Primary disease groups (e.g. "Malaria", "Tuberculosis").
 export const GET_DISEASES = gql`
   query GetDiseases {
     diseases {
-      disease_group_name
+      disease_filter
       global_health_area
     }
   }
 `;
 
-// Get secondary diseases
+// Secondary diseases joined to their parent primary so the
+// frontend can build the parent->children map without a second
+// roundtrip.
 export const GET_SECONDARY_DISEASES = gql`
   query GetSecondaryDiseases {
     secondaryDiseases {
-      disease_group_name
+      disease_filter
+      secondary_disease_name
       global_health_area
     }
   }
 `;
 
-// Get disease hierarchy (parent → child grouping for disease panel)
+// Hierarchy of (primary, secondary, GHA) used by the home-page
+// sidebar. Childless primaries appear with `secondary == primary`,
+// matching the sidebar's existing leaf rendering.
 export const GET_DISEASE_HIERARCHY = gql`
   query GetDiseaseHierarchy {
     diseaseHierarchy {
-      parent_disease
-      child_disease
+      primary_disease
+      secondary_disease
       global_health_area
     }
   }

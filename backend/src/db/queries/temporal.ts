@@ -4,7 +4,8 @@ import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface TemporalSnapshotFilters {
   years?: number[];
-  disease_group_names?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
   global_health_areas?: string[];
   product_keys?: number[];
   candidate_type?: string;
@@ -23,8 +24,15 @@ function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
   addArrayCondition(filters?.years, "dt.year", conditions, params);
   const diseaseCtx = { joins, join: DISEASE_JOIN };
   addArrayCondition(
-    filters?.disease_group_names,
-    "d.disease_group_name",
+    filters?.primary_disease_names,
+    "d.disease_filter",
+    conditions,
+    params,
+    diseaseCtx,
+  );
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
     conditions,
     params,
     diseaseCtx,
@@ -81,7 +89,13 @@ export function getPipelineFilterPairs(): PipelineFilterPair[] {
   return db
     .prepare(
       `
-    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name, ph.phase_name
+    SELECT DISTINCT
+      dd.disease_group_name,
+      dd.disease_filter,
+      dd.secondary_disease_name,
+      f.product_key,
+      dp.product_name,
+      ph.phase_name
     FROM fact_pipeline_snapshot f
     JOIN dim_disease dd ON f.disease_key = dd.disease_key
     JOIN dim_product dp ON f.product_key = dp.product_key
@@ -111,7 +125,13 @@ export function getActivePipelineFilterPairs(): PipelineFilterPair[] {
   return db
     .prepare(
       `
-    SELECT DISTINCT dd.disease_group_name, f.product_key, dp.product_name, ph.phase_name
+    SELECT DISTINCT
+      dd.disease_group_name,
+      dd.disease_filter,
+      dd.secondary_disease_name,
+      f.product_key,
+      dp.product_name,
+      ph.phase_name
     FROM fact_pipeline_snapshot f
     JOIN dim_disease dd ON f.disease_key = dd.disease_key
     JOIN dim_product dp ON f.product_key = dp.product_key

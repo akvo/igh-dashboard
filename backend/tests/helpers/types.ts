@@ -67,8 +67,11 @@ export interface TemporalSnapshotRow {
 
 export interface PipelineFilterPair {
   disease_group_name: string;
+  disease_filter: string | null;
+  secondary_disease_name: string | null;
   product_key: number;
   product_name: string;
+  phase_name: string | null;
 }
 
 export interface Product {
@@ -94,6 +97,8 @@ export interface DimDisease {
   disease_key: number;
   disease_name: string | null;
   disease_group_name: string | null;
+  disease_filter: string | null;
+  secondary_disease_name: string | null;
   global_health_area: string | null;
 }
 

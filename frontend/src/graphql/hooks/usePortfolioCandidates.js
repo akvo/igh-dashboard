@@ -6,7 +6,10 @@ import { GET_PORTFOLIO_CANDIDATES } from '../queries';
 export function buildCandidateFilterVars(filter) {
   return {
     global_health_areas: filter?.globalHealthAreas?.length > 0 ? filter.globalHealthAreas : undefined,
-    disease_names: filter?.diseaseNames?.length > 0 ? filter.diseaseNames : undefined,
+    primary_disease_names:
+      filter?.primaryDiseaseNames?.length > 0 ? filter.primaryDiseaseNames : undefined,
+    secondary_disease_names:
+      filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     candidate_type: filter?.candidateType || undefined,
     phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,

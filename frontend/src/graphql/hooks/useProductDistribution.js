@@ -5,15 +5,16 @@ import { useMemo } from 'react';
 import { GET_PRODUCT_DISTRIBUTION } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 
-export function useProductDistribution(globalHealthAreas, diseaseNames, productNames, phaseNames, candidateType) {
+export function useProductDistribution(globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames, candidateType) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('productDistribution', { globalHealthAreas, diseaseNames, productNames, phaseNames, candidateType });
+  const cacheKey = getCacheKey('productDistribution', { globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames, candidateType });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PRODUCT_DISTRIBUTION, {
     variables: {
       globalHealthAreas: globalHealthAreas && globalHealthAreas.length > 0 ? globalHealthAreas : undefined,
-      diseaseNames: diseaseNames && diseaseNames.length > 0 ? diseaseNames : undefined,
+      primaryDiseaseNames: primaryDiseaseNames && primaryDiseaseNames.length > 0 ? primaryDiseaseNames : undefined,
+      secondaryDiseaseNames: secondaryDiseaseNames && secondaryDiseaseNames.length > 0 ? secondaryDiseaseNames : undefined,
       productNames: productNames && productNames.length > 0 ? productNames : undefined,
       phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
       candidateType: candidateType || undefined,

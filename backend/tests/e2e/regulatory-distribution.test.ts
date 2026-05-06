@@ -22,7 +22,7 @@ const REGULATORY_QUERY = `
   query ($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
     regulatoryDistribution(
       global_health_areas: $globalHealthAreas,
-      disease_names: $diseaseNames,
+      primary_disease_names: $diseaseNames,
       product_names: $productNames
     ) {
       approvalStatus { approval_status candidateCount }
@@ -36,7 +36,7 @@ const KPI_QUERY = `
   query ($globalHealthAreas: [String!], $diseaseNames: [String!], $productNames: [String!]) {
     portfolioKPIs(
       global_health_areas: $globalHealthAreas,
-      disease_names: $diseaseNames,
+      primary_disease_names: $diseaseNames,
       product_names: $productNames
     ) {
       totalDiseases totalCandidates approvedProducts
