@@ -147,6 +147,8 @@ export interface FactClinicalTrialEvent {
   trial_id: number;
   candidate_key: number | null;
   start_date_key: number | null;
+  end_date_key: number | null;
+  last_updated_key: number | null;
   trial_phase: string | null;
   enrollment_count: number | null;
   status: string | null;
