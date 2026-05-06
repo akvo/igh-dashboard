@@ -64,6 +64,7 @@ export {
   Briefcase as BriefcaseIcon,
   Database as DatabaseIcon,
   PieChart as PieChartIcon,
+  Layers as LayersIcon,
   Activity as ActivityIcon,
   Target as TargetIcon,
   Award as AwardIcon,

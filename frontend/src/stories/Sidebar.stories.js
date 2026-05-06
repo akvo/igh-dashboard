@@ -10,7 +10,18 @@ export default {
   argTypes: {
     activeId: {
       control: 'select',
-      options: ['home', 'portfolio', 'cross-pipeline', 'who-priority', 'ai-search', 'case-studies', 'methodology'],
+      options: [
+        'home',
+        'portfolio-analysis',
+        'portfolio-analysis-explore',
+        'portfolio-analysis-extract',
+        'portfolio-analysis-aggregated',
+        'cross-pipeline-analytics',
+        'who-priority',
+        'ai-search',
+        'case-studies',
+        'methodology',
+      ],
       description: 'Currently active menu item',
     },
     defaultExpanded: {
@@ -58,7 +69,28 @@ export const Collapsed = {
 
 export const PortfolioActive = {
   args: {
-    activeId: 'portfolio',
+    activeId: 'portfolio-analysis',
+    defaultExpanded: true,
+    showSearch: true,
+    showHelp: true,
+  },
+};
+
+// Active sub-item under the new expandable Portfolio Analysis
+// group. The parent auto-highlights and the children band stays
+// open for the whole group when any child is active.
+export const PortfolioGroupExtractActive = {
+  args: {
+    activeId: 'portfolio-analysis-extract',
+    defaultExpanded: true,
+    showSearch: true,
+    showHelp: true,
+  },
+};
+
+export const PortfolioGroupAggregatedActive = {
+  args: {
+    activeId: 'portfolio-analysis-aggregated',
     defaultExpanded: true,
     showSearch: true,
     showHelp: true,
