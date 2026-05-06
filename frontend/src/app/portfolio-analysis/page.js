@@ -21,7 +21,6 @@ import {
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
-import { migrateLegacyDiseaseUrl } from '@/lib/migrateLegacyDiseaseUrl';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -127,13 +126,6 @@ export default function PortfolioAnalysis() {
   const [trialStatusHiddenItems, setTrialStatusHiddenItems] = useUrlState('tshide', [], arraySerializer);
 
   const apolloClient = useApolloClient();
-
-  // Migrate any incoming `?disease=` URL once on mount so existing
-  // bookmarks hydrate to `?primary=`.
-  useEffect(() => {
-    migrateLegacyDiseaseUrl({ setPrimary });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Fetch data from API
   // Expand composite product selections for API calls. Disease no

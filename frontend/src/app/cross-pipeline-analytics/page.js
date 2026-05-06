@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
 import Sidebar from '@/components/layout/Sidebar';
@@ -23,7 +23,6 @@ import {
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
-import { migrateLegacyDiseaseUrl } from '@/lib/migrateLegacyDiseaseUrl';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
@@ -33,12 +32,6 @@ export default function CrossPipelineAnalytics() {
   const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
   const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
-
-  // Migrate legacy `?disease=` URLs to `?primary=` once on mount.
-  useEffect(() => {
-    migrateLegacyDiseaseUrl({ setPrimary });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
