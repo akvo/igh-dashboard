@@ -12,48 +12,7 @@ const MAX_LIMIT = 100;
 // =========================================================
 
 // Base columns available in both query variants (with and without candidates).
-const BASE_SEARCHABLE_COLUMNS = [
-  "p.priority_name",
-  "p.rdpriorityid",
-  "p.indication",
-  "p.intended_use",
-  "p.author",
-  "p.publication_date",
-  "p.target_population",
-  "p.efficacy",
-  "p.safety",
-  "p.source",
-  "d.disease_filter",
-  "d.global_health_area",
-  "pr.product_name",
-] as const;
-
-// Additional columns only available when candidate tables are joined.
-const CANDIDATE_SEARCHABLE_COLUMNS = ["c.candidate_name", "c.current_rd_stage"] as const;
-
-function addSearchCondition(
-  search: string,
-  conditions: string[],
-  params: (string | number)[],
-  includeCandidateColumns: boolean,
-) {
-  const columns = includeCandidateColumns
-    ? [...BASE_SEARCHABLE_COLUMNS, ...CANDIDATE_SEARCHABLE_COLUMNS]
-    : BASE_SEARCHABLE_COLUMNS;
-  const pattern = `%${search}%`;
-  const orClauses = columns.map((col) => `${col} LIKE ?`).join(" OR ");
-  conditions.push(`(${orClauses})`);
-  for (let i = 0; i < columns.length; i++) {
-    params.push(pattern);
-  }
-}
-
-// eslint-disable-next-line complexity -- one extra branch above threshold for column_filters
-function buildWhere(
-  filter?: RdPriorityFilter,
-  includeCandidateColumns = false,
-  table: DataTableId = "RD_PRIORITIES",
-) {
+function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITIES") {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
@@ -65,10 +24,6 @@ function buildWhere(
     conditions,
     params,
   );
-
-  if (filter?.search) {
-    addSearchCondition(filter.search, conditions, params, includeCandidateColumns);
-  }
 
   if (filter?.column_filters) {
     const cf = buildColumnFilterClauses(table, filter.column_filters);
@@ -97,7 +52,7 @@ export function getRdPrioritiesWithCandidates(
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter, true, "RD_PRIORITIES_WITH_CANDIDATES");
+  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES_WITH_CANDIDATES");
 
   const orderBy =
     buildOrderBy("RD_PRIORITIES_WITH_CANDIDATES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
@@ -166,7 +121,7 @@ export function getRdPriorities(
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter, false, "RD_PRIORITIES");
+  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES");
 
   const orderBy = buildOrderBy("RD_PRIORITIES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
 

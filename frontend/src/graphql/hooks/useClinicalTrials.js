@@ -12,7 +12,6 @@ export function buildClinicalTrialFilterVars(filter) {
       filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     statuses: filter?.statuses?.length > 0 ? filter.statuses : undefined,
-    search: filter?.search || undefined,
     column_filters: filter?.columnFilters,
   };
 }

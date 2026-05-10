@@ -162,7 +162,6 @@ export const resolvers = {
           product_names?: string[];
           candidate_type?: string;
           phase_names?: string[];
-          search?: string;
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
@@ -179,7 +178,6 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
-          search?: string;
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
@@ -202,7 +200,6 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
-          search?: string;
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
@@ -231,7 +228,6 @@ export const resolvers = {
           secondary_disease_names?: string[];
           product_names?: string[];
           statuses?: string[];
-          search?: string;
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;

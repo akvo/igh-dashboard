@@ -345,7 +345,6 @@ export interface ClinicalTrialFilter {
   secondary_disease_names?: string[];
   product_names?: string[];
   statuses?: string[];
-  search?: string;
   column_filters?: ColumnFilterInput[];
 }
 
@@ -417,7 +416,6 @@ export interface PortfolioCandidateFilter {
   product_names?: string[];
   candidate_type?: string;
   phase_names?: string[];
-  search?: string;
   column_filters?: ColumnFilterInput[];
 }
 
@@ -482,7 +480,6 @@ export interface RdPriorityFilter {
   global_health_areas?: string[];
   primary_disease_names?: string[];
   secondary_disease_names?: string[];
-  search?: string;
   column_filters?: ColumnFilterInput[];
 }
 

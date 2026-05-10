@@ -505,7 +505,6 @@ export const typeDefs = `#graphql
     product_names: [String!]
     candidate_type: String
     phase_names: [String!]
-    search: String
     column_filters: [ColumnFilter!]
   }
 
@@ -515,7 +514,6 @@ export const typeDefs = `#graphql
     secondary_disease_names: [String!]
     product_names: [String!]
     statuses: [String!]
-    search: String
     column_filters: [ColumnFilter!]
   }
 
@@ -523,7 +521,6 @@ export const typeDefs = `#graphql
     global_health_areas: [String!]
     primary_disease_names: [String!]
     secondary_disease_names: [String!]
-    search: String
     column_filters: [ColumnFilter!]
   }
 
