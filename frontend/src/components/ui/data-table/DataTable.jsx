@@ -371,6 +371,7 @@ export default function DataTable({
             <DataTableHeader
               columns={orderedColumns}
               activeSort={sort}
+              filters={filters}
               onSort={onSort}
               onHideColumn={onHideColumn}
               scrollableRef={scrollableRef}

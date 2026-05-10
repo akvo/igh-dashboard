@@ -91,12 +91,19 @@ export default function DateFilter({
     fire(nextOp, lo, nextOp === 'between' ? hi : '');
   };
 
+  // Highlight the controls when a filter value is active. Mirrors the
+  // pattern in NumberFilter / TextFilter so users have a consistent
+  // visual cue across kinds.
+  const isActive = (lo && ISO.test(lo)) || (operator === 'between' && hi && ISO.test(hi));
+  const activeBorder = isActive
+    ? 'border-orange-500 ring-1 ring-orange-300'
+    : 'border-gray-200';
   return (
     <div className="flex items-center gap-1">
       <select
         value={operator}
         onChange={(e) => handleOperator(e.target.value)}
-        className="px-1 py-1 text-xs border border-gray-200 rounded bg-white text-black focus:outline-none focus:border-orange-500"
+        className={`px-1 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
         aria-label="Date filter operator"
       >
         {operators.map((op) => (
@@ -112,7 +119,7 @@ export default function DateFilter({
           setLo(e.target.value);
           fire(operator, e.target.value, hi);
         }}
-        className="w-full min-w-0 px-2 py-1 text-xs border border-gray-200 rounded bg-white text-black focus:outline-none focus:border-orange-500"
+        className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
       />
       {operator === 'between' && (
         <input
@@ -122,7 +129,7 @@ export default function DateFilter({
             setHi(e.target.value);
             fire(operator, lo, e.target.value);
           }}
-          className="w-full min-w-0 px-2 py-1 text-xs border border-gray-200 rounded bg-white text-black focus:outline-none focus:border-orange-500"
+          className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
         />
       )}
     </div>

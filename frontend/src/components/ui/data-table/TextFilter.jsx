@@ -18,12 +18,18 @@ import DebouncedInput from '../DebouncedInput';
 //                 debounce upstream if needed)
 //   placeholder — optional input placeholder
 export default function TextFilter({ value, onChange, placeholder = 'Filter…' }) {
+  // Highlight the input when a filter is active so the user can tell at
+  // a glance, even on tightly-packed columns where the text inside the
+  // input may be clipped.
+  const isActive = (value ?? '').trim().length > 0;
   return (
     <DebouncedInput
       value={value ?? ''}
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-2 py-1 text-xs border border-gray-200 rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500"
+      className={`w-full px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${
+        isActive ? 'border-orange-500 ring-1 ring-orange-300' : 'border-gray-200'
+      }`}
     />
   );
 }
