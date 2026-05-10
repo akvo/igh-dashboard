@@ -113,6 +113,14 @@ export default function AggregatedPortfolioPage() {
     }),
     [],
   );
+  const trialsFilterSerializer = useMemo(
+    () => ({
+      serialize: encodeFilters,
+      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CLINICAL_TRIAL_COLUMNS),
+      debounceMs: 500,
+    }),
+    [],
+  );
   const sortSerializer = useMemo(
     () => ({ serialize: encodeSort, deserialize: decodeSort }),
     [],
@@ -123,8 +131,10 @@ export default function AggregatedPortfolioPage() {
   const [approvedFilters, setApprovedFilters] = useUrlState('f.approved', {}, approvedFilterSerializer);
   const [approvedSort, setApprovedSort] = useUrlState('s.approved', null, sortSerializer);
   const [approvedVisibleCols, setApprovedVisibleCols] = useUrlState('cols.approved', [], arraySerializer);
-  // Other tabs still use legacy search until their migrations land.
-  const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
+  const [trialsFilters, setTrialsFilters] = useUrlState('f.trials', {}, trialsFilterSerializer);
+  const [trialsSort, setTrialsSort] = useUrlState('s.trials', null, sortSerializer);
+  const [trialsVisibleCols, setTrialsVisibleCols] = useUrlState('cols.trials', [], arraySerializer);
+  // Technology types still uses legacy search until its migration lands.
   const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
   const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
@@ -153,10 +163,6 @@ export default function AggregatedPortfolioPage() {
     const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
     return () => clearTimeout(timer);
   }, []);
-  useEffect(() => {
-    if (!didHydrateSearchRef.current) return;
-    setTrialsPage(1);
-  }, [trialsSearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!didHydrateSearchRef.current) return;
     setCurrentPage(1);
@@ -257,6 +263,25 @@ export default function AggregatedPortfolioPage() {
     ageGroupDistribution: ageGroupsData,
     loading: trialsLoading,
   } = useClinicalTrialStats(healthArea, primary, secondary, expandedProduct, rdPhase);
+  const trialsColumnFilters = useMemo(
+    () => toColumnFilters(trialsFilters),
+    [trialsFilters],
+  );
+  const trialsSortVar = useMemo(
+    () => toColumnSort(trialsSort),
+    [trialsSort],
+  );
+  const trialsFilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      product_names: expandedProduct?.length > 0 ? expandedProduct : undefined,
+      statuses: geoTrialStatus?.length > 0 ? geoTrialStatus : undefined,
+      column_filters: trialsColumnFilters,
+    }),
+    [healthArea, primary, secondary, expandedProduct, geoTrialStatus, trialsColumnFilters],
+  );
   const { trials: clinicalTrialsTableData, totalCount: trialsTotalCount, hasNextPage: trialsHasNextPage, loading: trialsListLoading } = useClinicalTrials(
     {
       globalHealthAreas: healthArea,
@@ -264,10 +289,11 @@ export default function AggregatedPortfolioPage() {
       secondaryDiseaseNames: secondary,
       productNames: expandedProduct,
       statuses: geoTrialStatus,
-      search: trialsSearchQuery || undefined,
+      columnFilters: trialsColumnFilters,
     },
     trialsPerPage,
     (trialsPage - 1) * trialsPerPage,
+    { sort: trialsSortVar },
   );
   const { mapData: clinicalTrialsMapData, distributionList: clinicalTrialsDistribution, loading: geoLoading } = useGeographicDistribution(
     'Trial Location', geoTrialStatus, healthArea, primary, secondary, expandedProduct, rdPhase,
@@ -405,6 +431,7 @@ export default function AggregatedPortfolioPage() {
         secondaryDiseaseNames: secondary,
         productNames: expandedProduct,
         statuses: geoTrialStatus,
+        columnFilters: trialsColumnFilters,
       });
       const csv = buildCSV(toCSVColumns(CLINICAL_TRIAL_COLUMNS), allRows);
       downloadCSV(csv, 'selected-clinical-trials');
@@ -414,7 +441,7 @@ export default function AggregatedPortfolioPage() {
       setTrialsDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, primary, secondary, product, geoTrialStatus]);
+  }, [apolloClient, healthArea, primary, secondary, product, geoTrialStatus, trialsColumnFilters]);
 
   const handleTechnologyDownloadCSV = useCallback(() => {
     setTechnologyDownloading(true);
@@ -879,16 +906,6 @@ export default function AggregatedPortfolioPage() {
                         <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount} Trials</span>
                       </div>
                       <div className="flex items-center gap-3 h-[36px]">
-                        <div className="relative">
-                          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <DebouncedInput
-                            type="text"
-                            placeholder="Search"
-                            value={trialsSearchQuery}
-                            onChange={(e) => { setTrialsSearchQuery(e.target.value); }}
-                            className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          />
-                        </div>
                         <button
                           onClick={handleTrialsDownloadCSV}
                           disabled={trialsDownloading}
@@ -900,25 +917,43 @@ export default function AggregatedPortfolioPage() {
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">
-                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
+                      The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
                     </p>
                   </div>
 
-                  <ServerTable
+                  <DataTable
+                    tableId="trials"
+                    graphqlTable="CLINICAL_TRIALS"
+                    filterContext={trialsFilterContext}
                     columns={CLINICAL_TRIAL_COLUMNS}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
-                    currentPage={trialsPage}
+                    page={trialsPage}
                     onPageChange={setTrialsPage}
                     totalCount={trialsTotalCount}
                     hasNextPage={trialsHasNextPage}
                     itemsPerPage={trialsPerPage}
                     loading={trialsListLoading}
-                    emptyState={trialsSearchQuery ? {
-                      title: 'No clinical trials found',
-                      description: `Your search "${trialsSearchQuery}" did not match any clinical trials. Please try again or clear the search.`,
-                      onClear: () => { setTrialsSearchQuery(''); setTrialsPage(1); },
-                    } : { title: 'No clinical trials available' }}
+                    filters={trialsFilters}
+                    onFiltersChange={(next) => {
+                      setTrialsFilters(next);
+                      setTrialsPage(1);
+                    }}
+                    sort={trialsSort}
+                    onSortChange={(next) => {
+                      setTrialsSort(next);
+                      setTrialsPage(1);
+                    }}
+                    visibleColumns={trialsVisibleCols}
+                    onVisibleColumnsChange={setTrialsVisibleCols}
+                    emptyState={
+                      Object.keys(trialsFilters).length > 0
+                        ? {
+                            title: 'No clinical trials found',
+                            description: 'No rows match the active filters. Clear them to see more.',
+                          }
+                        : { title: 'No clinical trials available' }
+                    }
                   />
                 </div>
               </>
