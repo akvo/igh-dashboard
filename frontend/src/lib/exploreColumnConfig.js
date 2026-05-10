@@ -124,9 +124,10 @@ export const CLINICAL_TRIAL_COLUMNS = [
     filter: { kind: 'text' },
   },
   { header: 'Candidate / product name', accessor: 'candidate_name', filter: { kind: 'text' } },
-  // trial_title is free-text and not sortable in the backend registry.
-  { header: 'Title', accessor: 'trial_title', render: (value) => <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>, sortable: false },
-  { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px', sortable: false },
+  // trial_title and description are free-text — backend supports LIKE
+  // matching but neither is sortable.
+  { header: 'Title', accessor: 'trial_title', render: (value) => <div className="text-sm font-medium text-black max-w-[300px]">{value}</div>, filter: { kind: 'text' }, sortable: false },
+  { header: 'Description', accessor: 'description', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   { header: 'CT phase', accessor: 'trial_phase', filter: { kind: 'category' } },
   { header: 'CT status', accessor: 'status', filter: { kind: 'category' } },
   // Aggregated semicolon-joined strings — TEXT only.
@@ -137,7 +138,7 @@ export const CLINICAL_TRIAL_COLUMNS = [
   { header: 'Last updated', accessor: 'last_updated', filter: { kind: 'date' } },
   { header: 'Sponsor', accessor: 'sponsor', filter: { kind: 'text' } },
   { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
-  { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px', sortable: false },
+  { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
 ];
 
 // =========================================================
