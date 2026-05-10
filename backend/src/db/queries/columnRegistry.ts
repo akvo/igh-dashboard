@@ -238,6 +238,12 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
     filterKind: "TEXT",
     isAggregated: false,
   },
+  enrollment_count: {
+    sqlExpr: "t.enrollment_count",
+    sortable: true,
+    filterKind: "NUMBER",
+    isAggregated: false,
+  },
   // Date columns are joined from dim_date — fact_clinical_trial_event
   // carries `*_date_key` foreign keys, the human-readable yyyy-mm-dd is
   // on `dim_date.full_date` aliased per column in clinicalTrials.ts:

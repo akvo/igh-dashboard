@@ -32,6 +32,12 @@ export const EXTRACT_TAB_COLUMNS = {
       label: 'Name',
       accessor: 'candidate_name',
       csvAccessor: (row) => row.candidate_name || row.alternative_names,
+      // Fall back to `alternative_names` when `candidate_name` is
+      // empty — matches what the historical fixed-column render
+      // showed. The TEXT filter still targets `candidate_name` only
+      // (backend registry doesn't have a combined column); cell
+      // display + CSV stay aligned with the previous UX.
+      render: (v, row) => v || row.alternative_names,
       filter: { kind: 'text' },
       hideable: false,
     },
@@ -103,17 +109,17 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'sponsor', label: 'Sponsor', accessor: 'sponsor', filter: { kind: 'text' } },
     { id: 'studyDesign', label: 'Study design', accessor: 'study_design' },
     { id: 'studyType', label: 'Study type', accessor: 'study_type' },
-    { id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count', type: 'number' },
+    { id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count', type: 'number', filter: { kind: 'number' } },
     { id: 'rdPhase', label: 'R&D phase', accessor: 'trial_phase', filter: { kind: 'category' } },
     { id: 'ctResultsStatus', label: 'CT results status', accessor: 'ct_results_status', filter: { kind: 'category' } },
     { id: 'ctResultType', label: 'CT result type', accessor: 'ct_results_type' },
     { id: 'ctTerminatedReason', label: 'CT terminated reason', accessor: 'ct_terminated_reason', type: 'line-clamp' },
-    { id: 'description', label: 'Description', accessor: 'description', type: 'line-clamp', sortable: false },
+    { id: 'description', label: 'Description', accessor: 'description', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
     { id: 'endDate', label: 'End date', accessor: 'end_date', filter: { kind: 'date' } },
     { id: 'startDate', label: 'Start date', accessor: 'start_date', filter: { kind: 'date' } },
     { id: 'lastUpdated', label: 'Last updated', accessor: 'last_updated', filter: { kind: 'date' } },
-    { id: 'source', label: 'Source', accessor: 'source_text', type: 'line-clamp', sortable: false },
-    { id: 'ctTitle', label: 'CT title', accessor: 'trial_title', type: 'line-clamp', sortable: false },
+    { id: 'source', label: 'Source', accessor: 'source_text', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
+    { id: 'ctTitle', label: 'CT title', accessor: 'trial_title', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
   ],
 
   'rd-only': [

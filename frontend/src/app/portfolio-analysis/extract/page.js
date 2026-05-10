@@ -16,13 +16,20 @@
 // their filter selections; the sidebar's sibling-aware query
 // forwarding does the carry-over for free.
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
+import {
+  encodeFilters,
+  decodeFilters,
+  encodeSort,
+  decodeSort,
+  hydrateFiltersFromUrl,
+} from '@/lib/dataTableUrl';
+import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ServerTable } from '@/components/ui';
-import DebouncedInput from '@/components/ui/DebouncedInput';
+import { Dropdown, DataTable } from '@/components/ui';
 import {
   SearchIcon,
   InfoIcon,
@@ -45,7 +52,6 @@ import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetc
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import {
   EXTRACT_TAB_COLUMNS,
-  EXTRACT_FIXED_COLUMNS,
   EXTRACT_ROW_KEY,
 } from '@/lib/extractColumnConfig';
 import {
@@ -79,28 +85,72 @@ export default function ExtractCustomDetailsPage() {
   const [extractPageRdPriorities, setExtractPageRdPriorities] = useUrlState('extP2', 1, numberSerializer);
   const [extractPageTrials, setExtractPageTrials] = useUrlState('extP3', 1, numberSerializer);
   const [extractPageRdOnly, setExtractPageRdOnly] = useUrlState('extP4', 1, numberSerializer);
+  // Visible-columns URL state, one slot per sub-tab. Default `[]`,
+  // not a seeded identifier column: `arraySerializer.serialize([])`
+  // returns `null` so the URL key is elided, and useUrlState
+  // re-applies the default on the next read. If we seeded with the
+  // name id, the Clear button on the rail would immediately revert
+  // to that seeded column — the user could never reach a true
+  // "no columns" state. First-time visitors instead land on the
+  // rail's instructive empty state until they tick a column.
   const [colsCandidates, setColsCandidates] = useUrlState('cols1', [], arraySerializer);
   const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
   const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
-  const [extractSearchQuery, setExtractSearchQuery] = useUrlState('extQ', '', { ...stringSerializer, debounceMs: 500 });
   const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
 
+  // Per-sub-tab DataTable filter / sort URL state. Each filter
+  // serializer hydrates against its own EXTRACT_TAB_COLUMNS slice so
+  // TEXT vs CATEGORY is recovered correctly on URL load.
+  const sortSerializer = useMemo(
+    () => ({ serialize: encodeSort, deserialize: decodeSort }),
+    [],
+  );
+  const makeFilterSerializer = useCallback(
+    (tabKey) => ({
+      serialize: encodeFilters,
+      deserialize: (s) =>
+        hydrateFiltersFromUrl(decodeFilters(s), EXTRACT_TAB_COLUMNS[tabKey] || []),
+      debounceMs: 500,
+    }),
+    [],
+  );
+  const ext1FilterSerializer = useMemo(
+    () => makeFilterSerializer('candidates-approved'),
+    [makeFilterSerializer],
+  );
+  const ext2FilterSerializer = useMemo(
+    () => makeFilterSerializer('rd-priorities'),
+    [makeFilterSerializer],
+  );
+  const ext3FilterSerializer = useMemo(
+    () => makeFilterSerializer('clinical-trials'),
+    [makeFilterSerializer],
+  );
+  const ext4FilterSerializer = useMemo(
+    () => makeFilterSerializer('rd-only'),
+    [makeFilterSerializer],
+  );
+  const [ext1Filters, setExt1Filters] = useUrlState('f.ext1', {}, ext1FilterSerializer);
+  const [ext2Filters, setExt2Filters] = useUrlState('f.ext2', {}, ext2FilterSerializer);
+  const [ext3Filters, setExt3Filters] = useUrlState('f.ext3', {}, ext3FilterSerializer);
+  const [ext4Filters, setExt4Filters] = useUrlState('f.ext4', {}, ext4FilterSerializer);
+  const [ext1Sort, setExt1Sort] = useUrlState('s.ext1', null, sortSerializer);
+  const [ext2Sort, setExt2Sort] = useUrlState('s.ext2', null, sortSerializer);
+  const [ext3Sort, setExt3Sort] = useUrlState('s.ext3', null, sortSerializer);
+  const [ext4Sort, setExt4Sort] = useUrlState('s.ext4', null, sortSerializer);
+
   // =========================================================
-  // Local-only state (column picker + download flag)
+  // Local-only state (column picker search + download flag)
   // =========================================================
 
   const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [extractDownloading, setExtractDownloading] = useState(false);
-  const [pickerColumnsMap, setPickerColumnsMap] = useState(() => ({
-    'candidates-approved': [...colsCandidates],
-    'rd-priorities': [...colsRdPriorities],
-    'clinical-trials': [...colsClinicalTrials],
-    'rd-only': [...colsRdOnly],
-  }));
 
-  // Applied columns come straight from URL state — the single
-  // source of truth driving the visible table.
+  // Applied columns come straight from URL state — the single source
+  // of truth driving the visible table. The rail mutates these
+  // directly (tick / drag / "Select all" / kebab "Hide column" all
+  // update URL state immediately, no Apply gate).
   const appliedColumnsMap = {
     'candidates-approved': colsCandidates,
     'rd-priorities': colsRdPriorities,
@@ -108,47 +158,13 @@ export default function ExtractCustomDetailsPage() {
     'rd-only': colsRdOnly,
   };
   const appliedColumns = appliedColumnsMap[extractTab] || [];
-
-  // One-time hydration sync: the useState initializer runs during
-  // SSR when URL state is empty. After hydration, copy URL cols
-  // into picker state so the checkboxes reflect applied columns
-  // on shared-URL load.
-  const didInitPickerRef = useRef(false);
-  useEffect(() => {
-    if (didInitPickerRef.current) return;
-    const hasUrlCols =
-      colsCandidates.length > 0 ||
-      colsRdPriorities.length > 0 ||
-      colsClinicalTrials.length > 0 ||
-      colsRdOnly.length > 0;
-    if (hasUrlCols) {
-      didInitPickerRef.current = true;
-      setPickerColumnsMap({
-        'candidates-approved': [...colsCandidates],
-        'rd-priorities': [...colsRdPriorities],
-        'clinical-trials': [...colsClinicalTrials],
-        'rd-only': [...colsRdOnly],
-      });
-    }
-  }, [colsCandidates, colsRdPriorities, colsClinicalTrials, colsRdOnly]);
-
-  // =========================================================
-  // Per-tab column picker + page state plumbing
-  // =========================================================
-
-  const selectedColumnsMap = {
-    'candidates-approved': pickerColumnsMap['candidates-approved'],
-    'rd-priorities': pickerColumnsMap['rd-priorities'],
-    'clinical-trials': pickerColumnsMap['clinical-trials'],
-    'rd-only': pickerColumnsMap['rd-only'],
+  const colsSetterByTab = {
+    'candidates-approved': setColsCandidates,
+    'rd-priorities': setColsRdPriorities,
+    'clinical-trials': setColsClinicalTrials,
+    'rd-only': setColsRdOnly,
   };
-  const selectedColumns = selectedColumnsMap[extractTab] || [];
-  const setSelectedColumns = (val) => {
-    setPickerColumnsMap((prev) => ({
-      ...prev,
-      [extractTab]: typeof val === 'function' ? val(prev[extractTab] || []) : val,
-    }));
-  };
+  const setActiveCols = colsSetterByTab[extractTab] || (() => {});
 
   const extractPageMap = {
     'candidates-approved': extractPageCandidates,
@@ -183,13 +199,23 @@ export default function ExtractCustomDetailsPage() {
     ? extractRdStage
     : rdPhase.length > 0 ? rdPhase : undefined;
 
+  // Per-sub-tab column-filters (UI → GraphQL) + sort.
+  const ext1ColumnFilters = useMemo(() => toColumnFilters(ext1Filters), [ext1Filters]);
+  const ext2ColumnFilters = useMemo(() => toColumnFilters(ext2Filters), [ext2Filters]);
+  const ext3ColumnFilters = useMemo(() => toColumnFilters(ext3Filters), [ext3Filters]);
+  const ext4ColumnFilters = useMemo(() => toColumnFilters(ext4Filters), [ext4Filters]);
+  const ext1SortVar = useMemo(() => toColumnSort(ext1Sort), [ext1Sort]);
+  const ext2SortVar = useMemo(() => toColumnSort(ext2Sort), [ext2Sort]);
+  const ext3SortVar = useMemo(() => toColumnSort(ext3Sort), [ext3Sort]);
+  const ext4SortVar = useMemo(() => toColumnSort(ext4Sort), [ext4Sort]);
+
   const extractCandidatesFilter = {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
     primaryDiseaseNames: primary.length > 0 ? primary : undefined,
     secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
     productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
     phaseNames: effectiveExtractPhases,
-    search: extractSearchQuery || undefined,
+    columnFilters: ext1ColumnFilters,
   };
 
   // Priority and trial tabs share GHA + Disease filters but not
@@ -198,7 +224,6 @@ export default function ExtractCustomDetailsPage() {
     globalHealthAreas: healthArea.length > 0 ? healthArea : undefined,
     primaryDiseaseNames: primary.length > 0 ? primary : undefined,
     secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
-    search: extractSearchQuery || undefined,
   };
 
   const extractTrialFilter = {
@@ -206,7 +231,51 @@ export default function ExtractCustomDetailsPage() {
     primaryDiseaseNames: primary.length > 0 ? primary : undefined,
     secondaryDiseaseNames: secondary.length > 0 ? secondary : undefined,
     productNames: expandedProduct.length > 0 ? expandedProduct : undefined,
+    columnFilters: ext3ColumnFilters,
   };
+
+  // Per-sub-tab `ColumnFilterContext` for DataTable's CategoryFilter
+  // dropdowns (drives the `distinctValues` GraphQL resolver). Snake-case
+  // to match the GraphQL input shape, with empty arrays omitted.
+  const ext1FilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      product_names: expandedProduct?.length > 0 ? expandedProduct : undefined,
+      phase_names: effectiveExtractPhases,
+      column_filters: ext1ColumnFilters,
+    }),
+    [healthArea, primary, secondary, expandedProduct, effectiveExtractPhases, ext1ColumnFilters],
+  );
+  const ext2FilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      column_filters: ext2ColumnFilters,
+    }),
+    [healthArea, primary, secondary, ext2ColumnFilters],
+  );
+  const ext3FilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      product_names: expandedProduct?.length > 0 ? expandedProduct : undefined,
+      column_filters: ext3ColumnFilters,
+    }),
+    [healthArea, primary, secondary, expandedProduct, ext3ColumnFilters],
+  );
+  const ext4FilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      column_filters: ext4ColumnFilters,
+    }),
+    [healthArea, primary, secondary, ext4ColumnFilters],
+  );
 
   // Only fire the hook for the active extract tab to prevent
   // cross-tab data bleed — inactive hooks would refetch with
@@ -214,19 +283,19 @@ export default function ExtractCustomDetailsPage() {
   // to briefly appear in other tabs' tables.
   const { candidates: extractCandidatesData, totalCount: extractCandidatesTotalCount, hasNextPage: extractCandidatesHasNext, loading: extractCandidatesLoading } = usePortfolioCandidates(
     extractCandidatesFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
-    { skip: extractTab !== 'candidates-approved' },
+    { skip: extractTab !== 'candidates-approved', sort: ext1SortVar },
   );
   const { priorities: extractRdPrioritiesData, totalCount: extractRdPrioritiesTotalCount, hasNextPage: extractRdPrioritiesHasNext, loading: extractRdPrioritiesLoading } = useRdPrioritiesWithCandidates(
-    extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
-    { skip: extractTab !== 'rd-priorities' },
+    { ...extractPriorityFilter, columnFilters: ext2ColumnFilters }, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'rd-priorities', sort: ext2SortVar },
   );
   const { trials: extractTrialsData, totalCount: extractTrialsTotalCount, hasNextPage: extractTrialsHasNext, loading: extractTrialsLoading } = useClinicalTrials(
     extractTrialFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
-    { skip: extractTab !== 'clinical-trials' },
+    { skip: extractTab !== 'clinical-trials', sort: ext3SortVar },
   );
   const { priorities: extractRdOnlyData, totalCount: extractRdOnlyTotalCount, hasNextPage: extractRdOnlyHasNext, loading: extractRdOnlyLoading } = useRdPriorities(
-    extractPriorityFilter, itemsPerPage, (extractPage - 1) * itemsPerPage,
-    { skip: extractTab !== 'rd-only' },
+    { ...extractPriorityFilter, columnFilters: ext4ColumnFilters }, itemsPerPage, (extractPage - 1) * itemsPerPage,
+    { skip: extractTab !== 'rd-only', sort: ext4SortVar },
   );
 
   const extractDataMap = {
@@ -245,19 +314,22 @@ export default function ExtractCustomDetailsPage() {
     .map((id) => availableColumns.find((col) => col.id === id))
     .filter(Boolean);
 
-  // Build the picker column list respecting drag order: selected
-  // columns in their reordered sequence first, then unselected
-  // columns in original order, filtered by search.
+  // Build the picker column list respecting drag order: applied
+  // columns in their reordered sequence first, then unapplied
+  // columns in original order, filtered by search. The rail binds
+  // directly to the URL state — no buffered "selected" mirror — so
+  // ticking a checkbox or finishing a drag updates the table
+  // immediately.
   const filteredColumns = useMemo(() => {
     const search = columnSearchQuery.toLowerCase();
-    const selected = selectedColumns
+    const applied = appliedColumns
       .map((id) => availableColumns.find((col) => col.id === id))
       .filter(Boolean);
-    const unselected = availableColumns.filter((col) => !selectedColumns.includes(col.id));
-    return [...selected, ...unselected].filter((col) =>
+    const unapplied = availableColumns.filter((col) => !appliedColumns.includes(col.id));
+    return [...applied, ...unapplied].filter((col) =>
       col.label.toLowerCase().includes(search),
     );
-  }, [availableColumns, selectedColumns, columnSearchQuery]);
+  }, [availableColumns, appliedColumns, columnSearchQuery]);
 
   // R&D stage options for the candidates-approved tab. Always
   // shows all phases (not narrowed by other selections) so that
@@ -274,6 +346,12 @@ export default function ExtractCustomDetailsPage() {
   // =========================================================
   // Drag-and-drop reordering and picker handlers
   // =========================================================
+  //
+  // The rail mutates `appliedColumns` (the URL state) directly. No
+  // Apply / Clear buttons mediate the change — ticking a checkbox or
+  // finishing a drag updates the URL and the table immediately. Page
+  // resets to 1 on each change so a filter narrowed below the user's
+  // current page doesn't leave them on a non-existent one.
 
   const draggedColumnRef = useRef(null);
   const [dragOverColumn, setDragOverColumn] = useState(null);
@@ -285,9 +363,9 @@ export default function ExtractCustomDetailsPage() {
   const handleDragOver = (e, colId) => {
     e.preventDefault();
     if (!draggedColumnRef.current || draggedColumnRef.current === colId) return;
-    if (!selectedColumns.includes(draggedColumnRef.current) || !selectedColumns.includes(colId)) return;
+    if (!appliedColumns.includes(draggedColumnRef.current) || !appliedColumns.includes(colId)) return;
     setDragOverColumn(colId);
-    setSelectedColumns((prev) => {
+    setActiveCols((prev) => {
       const draggedId = draggedColumnRef.current;
       const fromIndex = prev.indexOf(draggedId);
       const toIndex = prev.indexOf(colId);
@@ -305,53 +383,35 @@ export default function ExtractCustomDetailsPage() {
   };
 
   const handleSelectAllColumns = () => {
-    setSelectedColumns((prev) => {
+    setActiveCols((prev) => {
       const allIds = availableColumns.map((col) => col.id);
       const remaining = allIds.filter((id) => !prev.includes(id));
       return [...prev, ...remaining];
     });
   };
 
-  const colsSetterByTab = {
-    'candidates-approved': setColsCandidates,
-    'rd-priorities': setColsRdPriorities,
-    'clinical-trials': setColsClinicalTrials,
-    'rd-only': setColsRdOnly,
-  };
-
-  const handleClearColumns = () => {
-    setPickerColumnsMap((prev) => ({ ...prev, [extractTab]: [] }));
-    const setter = colsSetterByTab[extractTab];
-    if (setter) setter([]);
-  };
-
-  const handleApplyColumns = () => {
-    const cols = pickerColumnsMap[extractTab] || [];
-    const setter = colsSetterByTab[extractTab];
-    if (setter) setter([...cols]);
+  const handleToggleColumn = (colId) => {
+    setActiveCols((prev) =>
+      prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId],
+    );
     setExtractPage(1);
   };
 
-  const handleToggleColumn = (colId) => {
-    setSelectedColumns((prev) =>
-      prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId],
-    );
-  };
-
-  // Reset clears the filter values that the user can see on the
-  // current sub-tab — plus the search input — and resets the
+  // Reset clears the filter values the user can see on the
+  // current sub-tab — the global GHA / disease / product
+  // dropdowns plus the in-page R&D-stage dropdown — and resets the
   // active sub-tab's page to 1. We deliberately leave `rdPhase`
   // alone: it's the global R&D phase URL key (only directly
   // editable from the Explore page), and clearing it here would
-  // wipe a filter the user did not set from this page. Matches
-  // legacy single-page behavior.
+  // wipe a filter the user did not set from this page. Per-column
+  // filters live in `f.ext1`-`f.ext4` and are cleared via the
+  // table's own "Clear all filters" link, not this button.
   const hasExtractFilters =
     healthArea.length > 0 ||
     primary.length > 0 ||
     secondary.length > 0 ||
     product.length > 0 ||
-    extractRdStage.length > 0 ||
-    extractSearchQuery.length > 0;
+    extractRdStage.length > 0;
 
   const handleResetExtractFilters = () => {
     setHealthArea([]);
@@ -359,7 +419,6 @@ export default function ExtractCustomDetailsPage() {
     setSecondary([]);
     setProduct([]);
     setExtractRdStage([]);
-    setExtractSearchQuery('');
     setExtractPage(1);
   };
 
@@ -377,19 +436,21 @@ export default function ExtractCustomDetailsPage() {
       } else if (extractTab === 'clinical-trials') {
         allRows = await fetchAllTrials(apolloClient, extractTrialFilter);
       } else if (extractTab === 'rd-priorities') {
-        allRows = await fetchAllPrioritiesWithCandidates(apolloClient, extractPriorityFilter);
+        allRows = await fetchAllPrioritiesWithCandidates(apolloClient, {
+          ...extractPriorityFilter,
+          columnFilters: ext2ColumnFilters,
+        });
       } else {
-        allRows = await fetchAllPriorities(apolloClient, extractPriorityFilter);
+        allRows = await fetchAllPriorities(apolloClient, {
+          ...extractPriorityFilter,
+          columnFilters: ext4ColumnFilters,
+        });
       }
 
-      const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
-      const columns = [
-        { label: fixedCol.label, accessor: fixedCol.accessor },
-        ...activeExtractColumns.map((col) => ({
-          label: col.label,
-          accessor: col.csvAccessor || col.accessor || (() => ''),
-        })),
-      ];
+      const columns = activeExtractColumns.map((col) => ({
+        label: col.label,
+        accessor: col.csvAccessor || col.accessor || (() => ''),
+      }));
       const csv = buildCSV(columns, allRows);
       downloadCSV(csv, `extract-${extractTab}`);
     } catch (err) {
@@ -398,7 +459,7 @@ export default function ExtractCustomDetailsPage() {
       setExtractDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, extractRdStage, extractSearchQuery]);
+  }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, extractRdStage, ext1ColumnFilters, ext2ColumnFilters, ext3ColumnFilters, ext4ColumnFilters]);
 
   return (
     <div className="flex h-[calc(100vh-74px)] bg-cream-200">
@@ -452,23 +513,13 @@ export default function ExtractCustomDetailsPage() {
                   <div style={{ borderBottom: '1px solid #26262617' }} />
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <DebouncedInput
-                      type="text"
-                      placeholder="Search item"
-                      value={extractSearchQuery}
-                      onChange={(e) => setExtractSearchQuery(e.target.value)}
-                      className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
-                  </div>
                   <button
                     className={`flex items-center gap-2 px-4 py-2 text-sm border transition-colors ${
-                      selectedColumns.length > 0 && !extractDownloading
+                      appliedColumns.length > 0 && !extractDownloading
                         ? 'text-black bg-white border-black-24 hover:bg-gray-50'
                         : 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
                     }`}
-                    disabled={selectedColumns.length === 0 || extractDownloading}
+                    disabled={appliedColumns.length === 0 || extractDownloading}
                     onClick={handleExtractDownloadCSV}
                   >
                     <CloudDownloadIcon className="w-4 h-4" />
@@ -578,40 +629,59 @@ export default function ExtractCustomDetailsPage() {
 
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm text-gray-600">Select columns</span>
-                  <button
-                    onClick={handleSelectAllColumns}
-                    className="text-sm text-orange-500 hover:underline cursor-pointer border-none bg-transparent"
-                  >
-                    Select all
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSelectAllColumns}
+                      className="text-sm text-orange-500 hover:underline cursor-pointer border-none bg-transparent"
+                    >
+                      Select all
+                    </button>
+                    {/* Reset the active sub-tab's visible-columns list.
+                        Useful when the user wants to start over —
+                        cheaper than unticking columns one by one. */}
+                    <button
+                      onClick={() => {
+                        setActiveCols([]);
+                        setExtractPage(1);
+                      }}
+                      disabled={appliedColumns.length === 0}
+                      className={`text-sm border-none bg-transparent ${
+                        appliedColumns.length === 0
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-orange-500 hover:underline cursor-pointer'
+                      }`}
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
 
                 <div className="space-y-1 max-h-[400px] overflow-y-auto">
                   {filteredColumns.map((col) => {
-                    const isSelected = selectedColumns.includes(col.id);
+                    const isApplied = appliedColumns.includes(col.id);
                     const isDragging = draggedColumnRef.current === col.id;
                     const isDragOver = dragOverColumn === col.id;
                     return (
                       <div
                         key={col.id}
-                        draggable={isSelected}
+                        draggable={isApplied}
                         onDragStart={() => handleDragStart(col.id)}
                         onDragOver={(e) => handleDragOver(e, col.id)}
                         onDragEnd={handleDragEnd}
                         className={`flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer select-none ${
                           isDragging ? 'opacity-40' : ''
-                        } ${isDragOver && isSelected ? 'border-t-2 border-orange-400' : ''}`}
+                        } ${isDragOver && isApplied ? 'border-t-2 border-orange-400' : ''}`}
                         onClick={() => handleToggleColumn(col.id)}
                       >
                         <div className="flex items-center gap-3">
                           <span
                             className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                              isSelected
+                              isApplied
                                 ? 'border-orange-500 bg-orange-500'
                                 : 'border-gray-300 bg-white'
                             }`}
                           >
-                            {isSelected && (
+                            {isApplied && (
                               <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
                                 <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
@@ -620,36 +690,11 @@ export default function ExtractCustomDetailsPage() {
                           <span className="text-sm text-gray-700">{col.label}</span>
                         </div>
                         <ListFilterIcon
-                          className={`w-4 h-4 ${isSelected ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
+                          className={`w-4 h-4 ${isApplied ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
                         />
                       </div>
                     );
                   })}
-                </div>
-
-                <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={handleApplyColumns}
-                    disabled={selectedColumns.length === 0}
-                    className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
-                      selectedColumns.length > 0
-                        ? 'bg-orange-500 text-black hover:bg-black hover:text-white cursor-pointer transition-colors'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Apply
-                  </button>
-                  <button
-                    onClick={handleClearColumns}
-                    disabled={selectedColumns.length === 0}
-                    className={`flex-1 px-4 py-2.5 text-sm font-medium border-none ${
-                      selectedColumns.length > 0
-                        ? 'bg-gray-200 text-[#262626] hover:bg-gray-300 cursor-pointer'
-                        : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                    }`}
-                  >
-                    Clear
-                  </button>
                 </div>
               </div>
 
@@ -660,53 +705,55 @@ export default function ExtractCustomDetailsPage() {
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
                       <InfoIcon className="w-6 h-6 text-orange-500" />
                     </div>
-                    <h4 className="text-lg font-bold text-black mb-2">
-                      {selectedColumns.length > 0 ? 'Click "Apply" to load table' : 'No columns selected'}
-                    </h4>
+                    <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
                     <p className="text-sm text-gray-500 text-center max-w-xs">
-                      {selectedColumns.length > 0
-                        ? 'Select your columns and click Apply to generate the table'
-                        : "Select table columns you'd like to include in the overview"}
+                      Tick a column in the rail to add it to the table — changes apply immediately, no Apply button.
                     </p>
                   </div>
                 ) : (
-                  <ServerTable
+                  <ExtractDataTable
                     key={extractTab}
-                    columns={[
-                      {
-                        header: EXTRACT_FIXED_COLUMNS[extractTab].label,
-                        accessor: typeof EXTRACT_FIXED_COLUMNS[extractTab].accessor === 'string'
-                          ? EXTRACT_FIXED_COLUMNS[extractTab].accessor
-                          : '_fixed',
-                        render: (value, row) => {
-                          const fixedCol = EXTRACT_FIXED_COLUMNS[extractTab];
-                          const fixedValue = typeof fixedCol.accessor === 'function' ? fixedCol.accessor(row) : value;
-                          return (
-                            <div className="text-sm font-medium text-black max-w-[300px]">{fixedValue}</div>
-                          );
-                        },
-                      },
-                      ...activeExtractColumns.map((col) => ({
-                        header: col.label,
-                        accessor: col.accessor || col.id,
-                        ...(col.render && { render: col.render }),
-                        ...(col.type && { type: col.type, maxWidth: col.maxWidth || '250px' }),
-                      })),
-                    ]}
-                    data={extractTableData}
-                    rowKey={EXTRACT_ROW_KEY[extractTab]}
-                    currentPage={extractPage}
-                    onPageChange={setExtractPage}
-                    totalCount={extractTotalCount}
-                    hasNextPage={extractHasNext}
+                    extractTab={extractTab}
+                    activeExtractColumns={activeExtractColumns}
+                    availableColumns={availableColumns}
+                    setActiveCols={setActiveCols}
+                    extractTableData={extractTableData}
+                    extractTotalCount={extractTotalCount}
+                    extractHasNext={extractHasNext}
+                    extractLoading={extractLoading}
+                    extractPage={extractPage}
+                    setExtractPage={setExtractPage}
                     itemsPerPage={itemsPerPage}
-                    fitContent
-                    loading={extractLoading}
-                    emptyState={extractSearchQuery ? {
-                      title: 'No results found',
-                      description: `Your search "${extractSearchQuery}" did not match any results. Please try again or clear the search.`,
-                      onClear: () => { setExtractSearchQuery(''); setExtractPage(1); },
-                    } : { title: 'No results available' }}
+                    filtersByTab={{
+                      'candidates-approved': ext1Filters,
+                      'rd-priorities': ext2Filters,
+                      'clinical-trials': ext3Filters,
+                      'rd-only': ext4Filters,
+                    }}
+                    setFiltersByTab={{
+                      'candidates-approved': setExt1Filters,
+                      'rd-priorities': setExt2Filters,
+                      'clinical-trials': setExt3Filters,
+                      'rd-only': setExt4Filters,
+                    }}
+                    sortByTab={{
+                      'candidates-approved': ext1Sort,
+                      'rd-priorities': ext2Sort,
+                      'clinical-trials': ext3Sort,
+                      'rd-only': ext4Sort,
+                    }}
+                    setSortByTab={{
+                      'candidates-approved': setExt1Sort,
+                      'rd-priorities': setExt2Sort,
+                      'clinical-trials': setExt3Sort,
+                      'rd-only': setExt4Sort,
+                    }}
+                    filterContextByTab={{
+                      'candidates-approved': ext1FilterContext,
+                      'rd-priorities': ext2FilterContext,
+                      'clinical-trials': ext3FilterContext,
+                      'rd-only': ext4FilterContext,
+                    }}
                   />
                 )}
               </div>
@@ -715,5 +762,127 @@ export default function ExtractCustomDetailsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+// =========================================================
+// ExtractDataTable — per-sub-tab DataTable wrapper
+// =========================================================
+//
+// The Extract page renders one logical DataTable whose `tableId`,
+// `graphqlTable`, columns, data, filters, sort, and filter context
+// switch with the active sub-tab. Lifting that into its own
+// component keeps the main page render readable and lets us
+// `key={extractTab}` it so internal state (column widths, popover
+// open state) doesn't leak between sub-tabs.
+//
+// `_fixed` is the synthetic accessor for the always-visible first
+// column (Name / Title / Candidate name depending on sub-tab). It's
+// not in `availableColumns` and never appears in the rail; the
+// orchestrator just keeps it pinned at index 0 of `visibleColumns`.
+// `hideable: false` blocks the kebab's Hide-column option.
+const SUB_TAB_GRAPHQL = {
+  'candidates-approved': 'PORTFOLIO_CANDIDATES',
+  'rd-priorities': 'RD_PRIORITIES_WITH_CANDIDATES',
+  'clinical-trials': 'CLINICAL_TRIALS',
+  'rd-only': 'RD_PRIORITIES',
+};
+
+const SUB_TAB_TABLE_ID = {
+  'candidates-approved': 'ext1',
+  'rd-priorities': 'ext2',
+  'clinical-trials': 'ext3',
+  'rd-only': 'ext4',
+};
+
+function ExtractDataTable({
+  extractTab,
+  activeExtractColumns,
+  availableColumns,
+  setActiveCols,
+  extractTableData,
+  extractTotalCount,
+  extractHasNext,
+  extractLoading,
+  extractPage,
+  setExtractPage,
+  itemsPerPage,
+  filtersByTab,
+  setFiltersByTab,
+  sortByTab,
+  setSortByTab,
+  filterContextByTab,
+}) {
+  const filters = filtersByTab[extractTab] ?? {};
+  const setFilters = setFiltersByTab[extractTab] ?? (() => {});
+  const sort = sortByTab[extractTab] ?? null;
+  const setSort = setSortByTab[extractTab] ?? (() => {});
+  const filterContext = filterContextByTab[extractTab] ?? {};
+
+  // The rail already pins the "name" column at the top with
+  // `hideable: false`, so we don't need a synthetic always-on
+  // column here — that would double up the column when the user
+  // also ticks the name in the rail. DataTable's positional freeze
+  // means whichever column ends up first in the rail order is the
+  // sticky one.
+  const columns = activeExtractColumns.map((col) => ({
+    header: col.label,
+    accessor: col.accessor || col.id,
+    ...(col.render && { render: col.render }),
+    ...(col.type && { type: col.type, maxWidth: col.maxWidth || '250px' }),
+    ...(col.filter && { filter: col.filter }),
+    sortable: col.sortable !== false,
+    hideable: col.hideable !== false,
+  }));
+
+  const visibleColumns = activeExtractColumns.map((c) => c.accessor || c.id);
+
+  // DataTable's kebab "Hide column" fires onVisibleColumnsChange with
+  // an accessor list. Translate the surviving accessors back to the
+  // rail's id space and persist via the per-sub-tab cols setter.
+  const handleVisibleColumnsChange = (nextAccessors) => {
+    const accessorToId = new Map(availableColumns.map((c) => [c.accessor, c.id]));
+    const nextIds = nextAccessors
+      .map((a) => accessorToId.get(a))
+      .filter(Boolean);
+    setActiveCols(nextIds);
+  };
+
+  return (
+    <DataTable
+      tableId={SUB_TAB_TABLE_ID[extractTab]}
+      graphqlTable={SUB_TAB_GRAPHQL[extractTab]}
+      filterContext={filterContext}
+      columns={columns}
+      data={extractTableData}
+      rowKey={EXTRACT_ROW_KEY[extractTab]}
+      page={extractPage}
+      onPageChange={setExtractPage}
+      totalCount={extractTotalCount}
+      hasNextPage={extractHasNext}
+      itemsPerPage={itemsPerPage}
+      loading={extractLoading}
+      filters={filters}
+      onFiltersChange={(next) => {
+        setFilters(next);
+        setExtractPage(1);
+      }}
+      sort={sort}
+      onSortChange={(next) => {
+        setSort(next);
+        setExtractPage(1);
+      }}
+      visibleColumns={visibleColumns}
+      onVisibleColumnsChange={handleVisibleColumnsChange}
+      hideColumnsButton
+      emptyState={
+        Object.keys(filters).length > 0
+          ? {
+              title: 'No results found',
+              description: 'No rows match the active filters. Clear them to see more.',
+            }
+          : { title: 'No results available' }
+      }
+    />
   );
 }
