@@ -381,6 +381,18 @@ export default function AggregatedPortfolioPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [technologyTableData, technologyPhases],
   );
+  // Materialise `_total` on each row so DataTable's number filter and
+  // sort can read it — render alone isn't enough; client-side filtering
+  // reads `row[accessor]` directly.
+  const technologyRowsWithTotal = useMemo(
+    () =>
+      technologyTableData.map((row) => ({
+        ...row,
+        _total: phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0),
+      })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [technologyTableData, technologyPhases],
+  );
 
   // =========================================================
   // CSV download handlers
@@ -1010,18 +1022,19 @@ export default function AggregatedPortfolioPage() {
                     {
                       header: 'Total',
                       accessor: '_total',
-                      sortable: false,
+                      type: 'number',
+                      filter: { kind: 'number' },
+                      sortable: true,
                       hideable: true,
-                      // _total is a computed accessor — derive it on each
-                      // row so DataTable's client-side sort / number filter
-                      // can use the value (not just render it).
-                      render: (_, row) => {
-                        const sum = phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0);
-                        return <span className="tabular-nums text-center block font-semibold">{sum}</span>;
-                      },
+                      // `_total` is materialised on each row up the tree
+                      // (technologyRowsWithTotal) so DataTable's filter +
+                      // sort can read the value directly.
+                      render: (value) => (
+                        <span className="tabular-nums text-center block font-semibold">{value || 0}</span>
+                      ),
                     },
                   ]}
-                  data={technologyTableData}
+                  data={technologyRowsWithTotal}
                   rowKey="technology_type"
                   page={currentPage}
                   onPageChange={setCurrentPage}
