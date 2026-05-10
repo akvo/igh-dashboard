@@ -14,6 +14,7 @@ export function buildCandidateFilterVars(filter) {
     candidate_type: filter?.candidateType || undefined,
     phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
     search: filter?.search || undefined,
+    column_filters: filter?.columnFilters,
   };
 }
 
@@ -21,6 +22,7 @@ export function usePortfolioCandidates(filter, limit = 20, offset = 0, options =
   const { data, loading, error } = useQuery(GET_PORTFOLIO_CANDIDATES, {
     variables: {
       filter: buildCandidateFilterVars(filter),
+      sort: options.sort,
       limit,
       offset,
     },

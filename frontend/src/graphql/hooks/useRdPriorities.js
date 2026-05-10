@@ -11,6 +11,7 @@ export function buildPriorityFilterVars(filter) {
     secondary_disease_names:
       filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     search: filter?.search || undefined,
+    column_filters: filter?.columnFilters,
   };
 }
 
@@ -18,6 +19,7 @@ export function useRdPrioritiesWithCandidates(filter, limit = 20, offset = 0, op
   const { data, loading, error } = useQuery(GET_RD_PRIORITIES_WITH_CANDIDATES, {
     variables: {
       filter: buildPriorityFilterVars(filter),
+      sort: options.sort,
       limit,
       offset,
     },
@@ -40,6 +42,7 @@ export function useRdPriorities(filter, limit = 20, offset = 0, options = {}) {
   const { data, loading, error } = useQuery(GET_RD_PRIORITIES, {
     variables: {
       filter: buildPriorityFilterVars(filter),
+      sort: options.sort,
       limit,
       offset,
     },

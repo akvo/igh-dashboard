@@ -22,8 +22,16 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
+import {
+  encodeFilters,
+  decodeFilters,
+  encodeSort,
+  decodeSort,
+  hydrateFiltersFromUrl,
+} from '@/lib/dataTableUrl';
+import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ChartMenu, ServerTable } from '@/components/ui';
+import { Dropdown, ChartMenu, ServerTable, DataTable } from '@/components/ui';
 import DebouncedInput from '@/components/ui/DebouncedInput';
 import {
   SearchIcon,
@@ -83,7 +91,28 @@ export default function AggregatedPortfolioPage() {
   // =========================================================
 
   const [portfolioTab, setPortfolioTab] = useUrlState('view', 'candidates', { ...stringSerializer, historyMode: 'push' });
-  const [searchQuery, setSearchQuery] = useUrlState('q', '', { ...stringSerializer, debounceMs: 500 });
+  // Per-column DataTable filter / sort / visible-columns state for the
+  // Candidates tab. Encoded compactly so the URL reads
+  // `?f.candidates=indication:tb&s.candidates=current_rd_stage:asc&cols.candidates=...`
+  const candidatesFilterSerializer = useMemo(
+    () => ({
+      serialize: encodeFilters,
+      // Hydrate against the static column config so TEXT vs CATEGORY
+      // is recovered on URL load (decoder alone returns
+      // category-shape).
+      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CANDIDATE_COLUMNS),
+      debounceMs: 500,
+    }),
+    [],
+  );
+  const sortSerializer = useMemo(
+    () => ({ serialize: encodeSort, deserialize: decodeSort }),
+    [],
+  );
+  const [candidatesFilters, setCandidatesFilters] = useUrlState('f.candidates', {}, candidatesFilterSerializer);
+  const [candidatesSort, setCandidatesSort] = useUrlState('s.candidates', null, sortSerializer);
+  const [candidatesVisibleCols, setCandidatesVisibleCols] = useUrlState('cols.candidates', [], arraySerializer);
+  // Other tabs still use legacy search until their migrations land.
   const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
   const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
   const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
@@ -140,10 +169,42 @@ export default function AggregatedPortfolioPage() {
   // Data hooks
   // =========================================================
 
+  const candidatesColumnFilters = useMemo(
+    () => toColumnFilters(candidatesFilters),
+    [candidatesFilters],
+  );
+  const candidatesSortVar = useMemo(
+    () => toColumnSort(candidatesSort),
+    [candidatesSort],
+  );
+  // Filter context handed to DataTable so its CategoryFilter dropdowns
+  // (powered by the `distinctValues` GraphQL query) honour the page-level
+  // filters — GHA, primary/secondary disease, product, R&D phase — plus
+  // every other active per-column filter. Without this the dropdowns
+  // would show every value in the table regardless of the user's wider
+  // filter selection. Shape matches the GraphQL `ColumnFilterContext`
+  // input (snake_case).
+  const candidatesFilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      product_names: expandedProduct?.length > 0 ? expandedProduct : undefined,
+      candidate_type: 'Candidate',
+      phase_names: rdPhase?.length > 0 ? rdPhase : undefined,
+      column_filters: candidatesColumnFilters,
+    }),
+    [healthArea, primary, secondary, expandedProduct, rdPhase, candidatesColumnFilters],
+  );
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Candidate', search: searchQuery || undefined },
+    {
+      ...globalFilter,
+      candidateType: 'Candidate',
+      columnFilters: candidatesColumnFilters,
+    },
     itemsPerPage,
     (candidatesPage - 1) * itemsPerPage,
+    { sort: candidatesSortVar },
   );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
     { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined },
@@ -270,7 +331,7 @@ export default function AggregatedPortfolioPage() {
       const allRows = await fetchAllCandidates(apolloClient, {
         ...globalFilter,
         candidateType: 'Candidate',
-        search: searchQuery || undefined,
+        columnFilters: candidatesColumnFilters,
       });
       const csv = buildCSV(toCSVColumns(CANDIDATE_COLUMNS), allRows);
       downloadCSV(csv, 'selected-candidates');
@@ -280,7 +341,7 @@ export default function AggregatedPortfolioPage() {
       setCandidatesDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, primary, secondary, product, searchQuery]);
+  }, [apolloClient, healthArea, primary, secondary, product, candidatesColumnFilters]);
 
   const handleApprovedDownloadCSV = useCallback(async () => {
     setApprovedDownloading(true);
@@ -390,16 +451,6 @@ export default function AggregatedPortfolioPage() {
                     <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount} candidates</span>
                   </div>
                   <div className="flex items-center gap-3 h-[36px]">
-                    <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <DebouncedInput
-                        type="text"
-                        placeholder="Search item"
-                        value={searchQuery}
-                        onChange={(e) => { setSearchQuery(e.target.value); setCandidatesPage(1); }}
-                        className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                    </div>
                     <button
                       onClick={handleCandidatesDownloadCSV}
                       disabled={candidatesDownloading}
@@ -411,23 +462,41 @@ export default function AggregatedPortfolioPage() {
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-4 px-4">
-                  This matrix grid shows candidates in development on your current page filter, with a text search option to quickly find specific records. It provides candidate level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
+                  This matrix grid shows candidates in development on your current page filter, with per-column filters beneath each header for narrowing the dataset. It provides candidate-level details such as name, R&D stage, developer, indication and additional attributes to support deeper portfolio analysis.
                 </p>
-                <ServerTable
+                <DataTable
+                  tableId="candidates"
+                  graphqlTable="PORTFOLIO_CANDIDATES"
+                  filterContext={candidatesFilterContext}
                   columns={CANDIDATE_COLUMNS}
                   data={candidatesData}
                   rowKey="candidate_key"
-                  currentPage={candidatesPage}
+                  page={candidatesPage}
                   onPageChange={setCandidatesPage}
                   totalCount={candidatesTotalCount}
                   hasNextPage={candidatesHasNext}
                   itemsPerPage={itemsPerPage}
                   loading={candidatesLoading}
-                  emptyState={searchQuery ? {
-                    title: 'No candidates found',
-                    description: `Your search "${searchQuery}" did not match any candidates. Please try again or clear the search.`,
-                    onClear: () => { setSearchQuery(''); setCandidatesPage(1); },
-                  } : { title: 'No candidates available' }}
+                  filters={candidatesFilters}
+                  onFiltersChange={(next) => {
+                    setCandidatesFilters(next);
+                    setCandidatesPage(1);
+                  }}
+                  sort={candidatesSort}
+                  onSortChange={(next) => {
+                    setCandidatesSort(next);
+                    setCandidatesPage(1);
+                  }}
+                  visibleColumns={candidatesVisibleCols}
+                  onVisibleColumnsChange={setCandidatesVisibleCols}
+                  emptyState={
+                    Object.keys(candidatesFilters).length > 0
+                      ? {
+                          title: 'No candidates found',
+                          description: 'No rows match the active filters. Clear them to see more.',
+                        }
+                      : { title: 'No candidates available' }
+                  }
                 />
               </div>
             )}
