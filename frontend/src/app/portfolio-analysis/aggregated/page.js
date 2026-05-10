@@ -31,12 +31,8 @@ import {
 } from '@/lib/dataTableUrl';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
-import { Dropdown, ChartMenu, ServerTable, DataTable } from '@/components/ui';
-import DebouncedInput from '@/components/ui/DebouncedInput';
-import {
-  SearchIcon,
-  CloudDownloadIcon,
-} from '@/components/icons';
+import { Dropdown, ChartMenu, DataTable } from '@/components/ui';
+import { CloudDownloadIcon } from '@/components/icons';
 import {
   StackedBarChart,
   DonutChart,
@@ -134,8 +130,36 @@ export default function AggregatedPortfolioPage() {
   const [trialsFilters, setTrialsFilters] = useUrlState('f.trials', {}, trialsFilterSerializer);
   const [trialsSort, setTrialsSort] = useUrlState('s.trials', null, sortSerializer);
   const [trialsVisibleCols, setTrialsVisibleCols] = useUrlState('cols.trials', [], arraySerializer);
-  // Technology types still uses legacy search until its migration lands.
-  const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
+  // Technology types runs DataTable in client-side mode against a
+  // fully-loaded dataset, so filters / sort / visible cols all live in
+  // the URL the same way the server-side tables do.
+  const technologyFilterSerializer = useMemo(
+    () => ({
+      // Hydration runs without the dynamic phase columns since they
+      // depend on backend data, but the only filterable column here is
+      // technology_type (TEXT) which is statically known. Decoder
+      // returns category-shape entries by default; coerce
+      // `technology_type` back to TEXT explicitly.
+      serialize: encodeFilters,
+      deserialize: (s) => {
+        const decoded = decodeFilters(s);
+        const out = {};
+        for (const [accessor, entry] of Object.entries(decoded ?? {})) {
+          if (accessor === 'technology_type' && entry?.values?.[0] != null) {
+            out[accessor] = { kind: 'text', text: String(entry.values[0]) };
+          } else {
+            out[accessor] = entry;
+          }
+        }
+        return out;
+      },
+      debounceMs: 500,
+    }),
+    [],
+  );
+  const [technologyFilters, setTechnologyFilters] = useUrlState('f.technology', {}, technologyFilterSerializer);
+  const [technologySort, setTechnologySort] = useUrlState('s.technology', null, sortSerializer);
+  const [technologyVisibleCols, setTechnologyVisibleCols] = useUrlState('cols.technology', [], arraySerializer);
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
   const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
   const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
@@ -158,16 +182,6 @@ export default function AggregatedPortfolioPage() {
   // the search queries transition from '' to their URL value,
   // which would otherwise wipe out the page param from a shared
   // URL.
-  const didHydrateSearchRef = useRef(false);
-  useEffect(() => {
-    const timer = setTimeout(() => { didHydrateSearchRef.current = true; }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-  useEffect(() => {
-    if (!didHydrateSearchRef.current) return;
-    setCurrentPage(1);
-  }, [technologySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const apolloClient = useApolloClient();
   const itemsPerPage = 10;
   const trialsPerPage = 10;
@@ -353,33 +367,19 @@ export default function AggregatedPortfolioPage() {
   const geoDistributionChartRef = useRef(null);
 
   // =========================================================
-  // Technology types: client-side filter + pagination
+  // Technology types: heatmap colour scale
   // =========================================================
   //
-  // Backend doesn't support search for this view; all rows are
-  // already loaded so we filter and paginate client-side.
-
-  const filteredTechData = useMemo(() => {
-    if (!technologySearchQuery.trim()) return technologyTableData;
-    const q = technologySearchQuery.toLowerCase();
-    return technologyTableData.filter((item) =>
-      item.technology_type && item.technology_type.toLowerCase().includes(q),
-    );
-  }, [technologyTableData, technologySearchQuery]);
+  // The heatmap colour scale is derived from the full dataset (not
+  // the current page) so colours stay stable across pages and
+  // filter changes. DataTable in `serverSide={false}` mode handles
+  // filter / sort / pagination internally — no slicing needed here.
 
   const phaseAccessors = technologyPhases.map((p) => p.key);
-  // Heatmap colour scale derived from the full dataset (not the
-  // current page) so colours stay stable across pages.
   const getHeatmapStyle = useMemo(
     () => createHeatmapScale(technologyTableData, phaseAccessors),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [technologyTableData, technologyPhases],
-  );
-
-  const techTotalPages = Math.ceil(filteredTechData.length / techItemsPerPage);
-  const paginatedTechData = filteredTechData.slice(
-    (currentPage - 1) * techItemsPerPage,
-    currentPage * techItemsPerPage,
   );
 
   // =========================================================
@@ -966,19 +966,9 @@ export default function AggregatedPortfolioPage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
-                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{filteredTechData.length} types</span>
+                      <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTableData.length} types</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
-                      <div className="relative">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <DebouncedInput
-                          type="text"
-                          placeholder="Search item"
-                          value={technologySearchQuery}
-                          onChange={(e) => { setTechnologySearchQuery(e.target.value); }}
-                          className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
                       <button
                         onClick={handleTechnologyDownloadCSV}
                         disabled={technologyDownloading}
@@ -990,16 +980,28 @@ export default function AggregatedPortfolioPage() {
                     </div>
                   </div>
                   <p className="text-sm text-gray-500">
-                    The technology type table is a matrix showing each technology category by stage of development, including approved products. This highlights how technologies are distributed across the R&D lifecycle. The table can be searched using the a text search box to quickly locate specific technologies and filtered results can be exported as a .csv file.
+                    The technology type table is a matrix showing each technology category by stage of development, including approved products. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
                   </p>
                 </div>
 
-                <ServerTable
+                <DataTable
+                  tableId="technology"
+                  serverSide={false}
                   columns={[
-                    { header: 'Name', accessor: 'technology_type' },
+                    {
+                      header: 'Name',
+                      accessor: 'technology_type',
+                      filter: { kind: 'text' },
+                      sortable: true,
+                      hideable: false,
+                    },
                     ...technologyPhases.map((phase) => ({
                       header: phase.label,
                       accessor: phase.key,
+                      type: 'number',
+                      filter: { kind: 'number' },
+                      sortable: true,
+                      hideable: true,
                       cellStyle: (value) => getHeatmapStyle(value),
                       render: (value) => (
                         <span className="tabular-nums text-center block">{value || 0}</span>
@@ -1008,24 +1010,43 @@ export default function AggregatedPortfolioPage() {
                     {
                       header: 'Total',
                       accessor: '_total',
+                      sortable: false,
+                      hideable: true,
+                      // _total is a computed accessor — derive it on each
+                      // row so DataTable's client-side sort / number filter
+                      // can use the value (not just render it).
                       render: (_, row) => {
                         const sum = phaseAccessors.reduce((s, key) => s + (row[key] || 0), 0);
                         return <span className="tabular-nums text-center block font-semibold">{sum}</span>;
                       },
                     },
                   ]}
-                  data={paginatedTechData}
-                  currentPage={currentPage}
+                  data={technologyTableData}
+                  rowKey="technology_type"
+                  page={currentPage}
                   onPageChange={setCurrentPage}
-                  totalCount={filteredTechData.length}
-                  hasNextPage={currentPage < techTotalPages}
                   itemsPerPage={techItemsPerPage}
                   loading={technologyLoading}
-                  emptyState={technologySearchQuery ? {
-                    title: 'No technology types found',
-                    description: `Your search "${technologySearchQuery}" did not match any technology types. Please try again or clear the search.`,
-                    onClear: () => { setTechnologySearchQuery(''); setCurrentPage(1); },
-                  } : { title: 'No technology types available' }}
+                  filters={technologyFilters}
+                  onFiltersChange={(next) => {
+                    setTechnologyFilters(next);
+                    setCurrentPage(1);
+                  }}
+                  sort={technologySort}
+                  onSortChange={(next) => {
+                    setTechnologySort(next);
+                    setCurrentPage(1);
+                  }}
+                  visibleColumns={technologyVisibleCols}
+                  onVisibleColumnsChange={setTechnologyVisibleCols}
+                  emptyState={
+                    Object.keys(technologyFilters).length > 0
+                      ? {
+                          title: 'No technology types found',
+                          description: 'No rows match the active filters. Clear them to see more.',
+                        }
+                      : { title: 'No technology types available' }
+                  }
                 />
               </div>
             )}

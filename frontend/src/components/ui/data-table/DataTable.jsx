@@ -438,11 +438,17 @@ export default function DataTable({
                             background: 'white',
                           }
                         : undefined;
+                      // cellStyle lets a column tint the whole <td> based
+                      // on the cell value — used by the Technology Types
+                      // heatmap. Frozen-cell stickiness still wins on
+                      // collisions (it carries the white background that
+                      // hides body cells scrolling under the column).
+                      const dynamicStyle = col.cellStyle?.(row[col.accessor], row);
                       return (
                         <td
                           key={col.accessor}
                           className="py-4 px-4 text-sm text-left align-top border-b border-gray-200 text-black"
-                          style={stickyStyle}
+                          style={{ ...dynamicStyle, ...stickyStyle }}
                         >
                           {renderCell(row, col)}
                         </td>
