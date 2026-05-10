@@ -1,5 +1,3 @@
-export { default as Table, ScrollableTable } from './Table';
-export { default as ServerTable } from './ServerTable';
 export { default as Button, TextLink } from './Button';
 export { default as Chip, ChipGroup } from './Chip';
 export { default as Dropdown } from './Dropdown';

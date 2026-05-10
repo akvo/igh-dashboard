@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
+import { Dropdown, ChartMenu, TabNav, DataTable } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
@@ -667,10 +667,12 @@ function ComparePortfoliosTab({
             <div className="animate-pulse text-gray-400">Loading table data...</div>
           </div>
         ) : (
-          <Table
+          <DataTable
+            tableId="temporal-compare"
+            serverSide={false}
             columns={compareTableColumns}
             data={compareTableData}
-            pagination={false}
+            itemsPerPage={Math.max(compareTableData.length, 1)}
             className="compare-table-bordered"
             emptyState={{
               title: 'No data available',
@@ -1241,10 +1243,12 @@ export default function TemporalTrendsSection({
                 <div className="animate-pulse text-gray-400">Loading table data...</div>
               </div>
             ) : (
-              <Table
+              <DataTable
+                tableId="temporal-growth"
+                serverSide={false}
                 columns={growthTableColumns}
                 data={growthTableData}
-                pagination={false}
+                itemsPerPage={Math.max(growthTableData.length, 1)}
                 emptyState={{
                   title: 'No data available',
                   description: 'No data available for the selected filters.',

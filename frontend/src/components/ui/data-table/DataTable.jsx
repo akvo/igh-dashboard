@@ -392,17 +392,23 @@ export default function DataTable({
               scrollableRef={scrollableRef}
               headerRowRef={headerRowRef}
             />
-            <DataTableFilterRow
-              columns={orderedColumns}
-              filters={filters}
-              onFilterChange={onFilterChange}
-              table={graphqlTable}
-              filterContext={filterContext}
-              buildContextForColumn={buildContextForColumn}
-              headerHeight={headerHeight}
-              serverSide={serverSide}
-              data={data}
-            />
+            {/* Auto-hide the filter row when no visible column declares
+                a filter. Presentation-only tables (heatmaps, summary
+                grids) shouldn't reserve vertical space for empty
+                filter cells. */}
+            {orderedColumns.some((c) => c.filter) && (
+              <DataTableFilterRow
+                columns={orderedColumns}
+                filters={filters}
+                onFilterChange={onFilterChange}
+                table={graphqlTable}
+                filterContext={filterContext}
+                buildContextForColumn={buildContextForColumn}
+                headerHeight={headerHeight}
+                serverSide={serverSide}
+                data={data}
+              />
+            )}
           </thead>
           <tbody>
             {visibleRows.length === 0 && (
