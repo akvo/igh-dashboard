@@ -425,6 +425,79 @@ export const typeDefs = `#graphql
   # INPUT TYPES
   # =============================================================================
 
+  # =============================================================================
+  # DataTable filter / sort / distinct-values support
+  # (see docs/superpowers/specs/2026-04-30-data-table-improvements-design.md)
+  # =============================================================================
+
+  enum ColumnFilterKind {
+    TEXT
+    CATEGORY
+    NUMBER
+    DATE
+  }
+
+  enum ColumnFilterOperator {
+    EQ        # NUMBER = ; DATE = (whole-day match via DATE())
+    LT        # NUMBER <
+    GT        # NUMBER >
+    BEFORE    # DATE <
+    AFTER     # DATE >
+    BETWEEN   # NUMBER / DATE inclusive range; NULL bounds = open
+  }
+
+  # ColumnFilter carries every kind's value fields in one input. The
+  # resolver picks the right ones based on the kind; the others are
+  # ignored. Keeps the frontend filter-state shape simple at the cost
+  # of a tiny validation hop server-side.
+  input ColumnFilter {
+    column: String!
+    kind: ColumnFilterKind!
+    # TEXT
+    text: String
+    # CATEGORY
+    values: [String!]
+    # NUMBER + DATE
+    operator: ColumnFilterOperator
+    # NUMBER
+    number_value: Float
+    number_value_end: Float
+    # DATE — ISO yyyy-mm-dd
+    date_value: String
+    date_value_end: String
+  }
+
+  enum SortDirection {
+    ASC
+    DESC
+  }
+
+  input ColumnSort {
+    column: String!
+    direction: SortDirection!
+  }
+
+  enum DataTable {
+    PORTFOLIO_CANDIDATES
+    CLINICAL_TRIALS
+    RD_PRIORITIES
+    RD_PRIORITIES_WITH_CANDIDATES
+  }
+
+  # Generic context filter used by distinctValues. Any irrelevant fields
+  # are ignored per-table; e.g. statuses applies only when
+  # table = CLINICAL_TRIALS.
+  input ColumnFilterContext {
+    global_health_areas: [String!]
+    primary_disease_names: [String!]
+    secondary_disease_names: [String!]
+    product_names: [String!]
+    candidate_type: String
+    phase_names: [String!]
+    statuses: [String!]
+    column_filters: [ColumnFilter!]
+  }
+
   input PortfolioCandidateFilter {
     global_health_areas: [String!]
     primary_disease_names: [String!]
@@ -433,6 +506,7 @@ export const typeDefs = `#graphql
     candidate_type: String
     phase_names: [String!]
     search: String
+    column_filters: [ColumnFilter!]
   }
 
   input ClinicalTrialFilter {
@@ -442,6 +516,7 @@ export const typeDefs = `#graphql
     product_names: [String!]
     statuses: [String!]
     search: String
+    column_filters: [ColumnFilter!]
   }
 
   input RdPriorityFilter {
@@ -449,6 +524,7 @@ export const typeDefs = `#graphql
     primary_disease_names: [String!]
     secondary_disease_names: [String!]
     search: String
+    column_filters: [ColumnFilter!]
   }
 
   input CandidateFilter {
@@ -501,16 +577,22 @@ export const typeDefs = `#graphql
     candidate(candidate_key: Int!): DimCandidateCore
 
     # Portfolio analysis - candidates list (paginated with flattened dimensions)
-    portfolioCandidates(filter: PortfolioCandidateFilter, limit: Int, offset: Int): PortfolioCandidateConnection!
+    portfolioCandidates(filter: PortfolioCandidateFilter, sort: ColumnSort, limit: Int, offset: Int): PortfolioCandidateConnection!
 
     # Portfolio analysis - clinical trials list (paginated)
-    clinicalTrials(filter: ClinicalTrialFilter, limit: Int, offset: Int): ClinicalTrialConnection!
+    clinicalTrials(filter: ClinicalTrialFilter, sort: ColumnSort, limit: Int, offset: Int): ClinicalTrialConnection!
 
     # Extract tab - R&D priorities with linked candidates (paginated)
-    rdPrioritiesWithCandidates(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
+    rdPrioritiesWithCandidates(filter: RdPriorityFilter, sort: ColumnSort, limit: Int, offset: Int): RdPriorityConnection!
 
     # Extract tab - R&D priorities only (paginated)
-    rdPriorities(filter: RdPriorityFilter, limit: Int, offset: Int): RdPriorityConnection!
+    rdPriorities(filter: RdPriorityFilter, sort: ColumnSort, limit: Int, offset: Int): RdPriorityConnection!
+
+    # DataTable distinct-values lookup for category-filter dropdowns.
+    # The filter argument should mirror the list-query filter EXCLUDING
+    # the requesting column's own entry from column_filters so dropdown
+    # values stay contextual.
+    distinctValues(table: DataTable!, column: String!, filter: ColumnFilterContext): [String!]!
 
     # Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): ClinicalTrialStats!

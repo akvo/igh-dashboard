@@ -3,6 +3,10 @@
  * Column names match DB column names for transparent mapping.
  */
 
+import type { ColumnFilterInput, ColumnSortInput } from "./queries/columnFilters.js";
+
+export type { ColumnFilterInput, ColumnSortInput };
+
 // =============================================================================
 // DIMENSION TABLES
 // =============================================================================
@@ -342,6 +346,7 @@ export interface ClinicalTrialFilter {
   product_names?: string[];
   statuses?: string[];
   search?: string;
+  column_filters?: ColumnFilterInput[];
 }
 
 export interface ClinicalTrialConnection {
@@ -413,6 +418,7 @@ export interface PortfolioCandidateFilter {
   candidate_type?: string;
   phase_names?: string[];
   search?: string;
+  column_filters?: ColumnFilterInput[];
 }
 
 export interface PortfolioCandidateConnection {
@@ -477,6 +483,7 @@ export interface RdPriorityFilter {
   primary_disease_names?: string[];
   secondary_disease_names?: string[];
   search?: string;
+  column_filters?: ColumnFilterInput[];
 }
 
 export interface RdPriorityConnection {

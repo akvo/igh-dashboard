@@ -1,6 +1,7 @@
 import { getDatabase } from "../connection.js";
 import type { ClinicalTrialNode, ClinicalTrialFilter, ClinicalTrialConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
+import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
 
@@ -43,6 +44,7 @@ function addSearchCondition(search: string, conditions: string[], params: (strin
   }
 }
 
+// eslint-disable-next-line complexity -- one extra branch above threshold for column_filters
 function buildWhere(filter?: ClinicalTrialFilter) {
   const joins = [
     "LEFT JOIN dim_candidate_core c ON t.candidate_key = c.candidate_key",
@@ -71,6 +73,12 @@ function buildWhere(filter?: ClinicalTrialFilter) {
     addSearchCondition(filter.search, conditions, params);
   }
 
+  if (filter?.column_filters) {
+    const cf = buildColumnFilterClauses("CLINICAL_TRIALS", filter.column_filters);
+    conditions.push(...cf.conditions);
+    params.push(...cf.params);
+  }
+
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   return { joins, whereClause, params };
@@ -81,12 +89,15 @@ function buildWhere(filter?: ClinicalTrialFilter) {
  */
 export function getClinicalTrials(
   filter?: ClinicalTrialFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): ClinicalTrialConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
   const { joins, whereClause, params } = buildWhere(filter);
+
+  const orderBy = buildOrderBy("CLINICAL_TRIALS", sort) ?? "ORDER BY t.trial_id DESC NULLS LAST";
 
   const countSql = `
     SELECT COUNT(*) as total
@@ -130,7 +141,7 @@ export function getClinicalTrials(
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}
-    ORDER BY t.trial_id DESC NULLS LAST
+    ${orderBy}
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as ClinicalTrialNode[];

@@ -5,6 +5,7 @@ import type {
   PortfolioCandidateConnection,
 } from "../types.js";
 import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
+import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
 
@@ -65,6 +66,7 @@ function addSearchCondition(search: string, conditions: string[], params: (strin
   }
 }
 
+// eslint-disable-next-line complexity -- two extra branches above threshold for column_filters + sort
 function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
@@ -89,6 +91,12 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     addSearchCondition(filter.search, conditions, params);
   }
 
+  if (filter?.column_filters) {
+    const cf = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", filter.column_filters);
+    conditions.push(...cf.conditions);
+    params.push(...cf.params);
+  }
+
   return { whereClause: `WHERE ${conditions.join(" AND ")}`, params };
 }
 
@@ -108,12 +116,16 @@ const JOINS = `
 // eslint-disable-next-line max-lines-per-function -- single query builder with count + data
 export function getPortfolioCandidates(
   filter?: PortfolioCandidateFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): PortfolioCandidateConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
   const { whereClause, params } = buildWhere(filter);
+
+  const orderBy =
+    buildOrderBy("PORTFOLIO_CANDIDATES", sort) ?? "ORDER BY c.candidate_name NULLS LAST";
 
   const countSql = `
     SELECT COUNT(DISTINCT c.candidate_key) as total
@@ -171,7 +183,7 @@ export function getPortfolioCandidates(
       FROM dim_candidate_core c
       ${JOINS}
       ${whereClause}
-      ORDER BY c.candidate_name NULLS LAST
+      ${orderBy}
       LIMIT ? OFFSET ?
     )
     SELECT page.*,
