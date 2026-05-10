@@ -29,7 +29,7 @@ import { useEffect, useRef, useState } from 'react';
 //   debounceMs  — debounce on outgoing onChange (default 400, set 0 to disable)
 
 const ALL_OPERATORS = ['eq', 'lt', 'gt', 'between'];
-const OPERATOR_LABEL = { eq: '=', lt: '<', gt: '>', between: 'between' };
+const OPERATOR_LABEL = { eq: '=', lt: '<', gt: '>', between: '↔' };
 const DEFAULT_DEBOUNCE_MS = 400;
 
 export default function NumberFilter({
@@ -123,7 +123,7 @@ export default function NumberFilter({
           fire(operator, e.target.value, hi);
         }}
         placeholder={operator === 'between' ? 'min' : 'value'}
-        className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${activeBorder}`}
+        className={`w-full min-w-[3rem] px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${activeBorder}`}
       />
       {operator === 'between' && (
         <input
@@ -134,7 +134,7 @@ export default function NumberFilter({
             fire(operator, lo, e.target.value);
           }}
           placeholder="max"
-          className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${activeBorder}`}
+          className={`w-full min-w-[3rem] px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${activeBorder}`}
         />
       )}
     </div>

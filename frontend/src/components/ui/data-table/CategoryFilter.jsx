@@ -77,7 +77,7 @@ export default function CategoryFilter({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`w-full px-2 py-1 text-xs border rounded bg-white text-left flex items-center justify-between gap-1 ${
+        className={`w-full min-w-[5rem] px-2 py-1 text-xs border rounded bg-white text-left flex items-center justify-between gap-1 ${
           selected.size > 0 ? 'border-orange-500 ring-1 ring-orange-300 text-black' : 'border-gray-200 text-gray-500'
         }`}
       >

@@ -27,7 +27,7 @@ export default function TextFilter({ value, onChange, placeholder = 'Filter…' 
       value={value ?? ''}
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
-      className={`w-full px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${
+      className={`w-full min-w-[4rem] px-2 py-1 text-xs border rounded bg-white text-black placeholder:text-gray-400 focus:outline-none focus:border-orange-500 ${
         isActive ? 'border-orange-500 ring-1 ring-orange-300' : 'border-gray-200'
       }`}
     />

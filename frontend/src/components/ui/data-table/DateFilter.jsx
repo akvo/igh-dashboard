@@ -119,7 +119,7 @@ export default function DateFilter({
           setLo(e.target.value);
           fire(operator, e.target.value, hi);
         }}
-        className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
+        className={`w-full min-w-[7.5rem] px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
       />
       {operator === 'between' && (
         <input
@@ -129,7 +129,7 @@ export default function DateFilter({
             setHi(e.target.value);
             fire(operator, lo, e.target.value);
           }}
-          className={`w-full min-w-0 px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
+          className={`w-full min-w-[7.5rem] px-2 py-1 text-xs border rounded bg-white text-black focus:outline-none focus:border-orange-500 ${activeBorder}`}
         />
       )}
     </div>
