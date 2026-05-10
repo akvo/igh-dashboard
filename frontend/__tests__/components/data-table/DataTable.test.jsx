@@ -427,10 +427,10 @@ describe('DataTable', () => {
 
     render(<Page />);
 
-    // Pre-filter: all 5 rows visible. Subtract the filter row (which
-    // sits inside tbody — see orchestrator note).
+    // Pre-filter: all 5 rows visible. The filter row lives inside
+    // <thead> so tbody tr count is exactly the data row count.
     const countBodyRows = () =>
-      document.querySelectorAll('tbody tr').length - 1;
+      document.querySelectorAll('tbody tr').length;
     expect(countBodyRows()).toBe(5);
 
     // Set operator > and type 20 — expect 3 rows (25, 35, 45) once
@@ -480,7 +480,7 @@ describe('DataTable', () => {
     render(<Page />);
 
     const countBodyRows = () =>
-      document.querySelectorAll('tbody tr').length - 1;
+      document.querySelectorAll('tbody tr').length;
     expect(countBodyRows()).toBe(4);
 
     // Filter "after 2024-12-31" — expect 1 row (2025-02-05) after

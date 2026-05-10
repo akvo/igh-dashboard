@@ -58,14 +58,13 @@ function deriveLocalDistinctValues(rows, accessor, filters) {
 // visible-order index 0 is the frozen one (sticky left:0, matching the
 // header). There is no `column.freeze` config field.
 //
-// The "Clear all filters" link is rendered as an absolutely positioned
-// element overlaying the trailing edge of the last filterable cell so it
-// doesn't take up its own column slot.
+// "Clear all filters" lives in the table toolbar (next to the columns
+// selector) — not here — so it stays visible regardless of which columns
+// are scrolled into view.
 export default function DataTableFilterRow({
   columns,
   filters,
   onFilterChange,        // (accessor, entry|null) => void
-  onClearAll,            // () => void
   table,                 // DataTable enum
   filterContext,         // for distinctValues queries (fallback)
   buildContextForColumn, // (accessor) => filterContext, with own column stripped
@@ -73,11 +72,6 @@ export default function DataTableFilterRow({
   serverSide,            // when false, derive distinct values from data instead of GraphQL
   data,                  // dataset used to derive distinct values in client mode
 }) {
-  const activeCount = Object.keys(filters).filter((k) => filters[k]).length;
-  const lastFilterableAccessor = [...columns]
-    .reverse()
-    .find((c) => c.filter)?.accessor;
-
   // Sticky-top CSS for every filter cell so the filters row stays visible
   // during vertical scroll. The frozen (index 0) cell additionally sticks
   // to the left edge for horizontal scroll.
@@ -99,7 +93,7 @@ export default function DataTableFilterRow({
           return (
             <td
               key={column.accessor}
-              className="px-2 py-2 border-b border-gray-200 align-top relative"
+              className="px-2 py-2 border-b border-gray-200 align-top"
               style={stickyStyle}
             />
           );
@@ -108,7 +102,7 @@ export default function DataTableFilterRow({
         return (
           <td
             key={column.accessor}
-            className="px-2 py-2 border-b border-gray-200 align-top relative"
+            className="px-2 py-2 border-b border-gray-200 align-top"
             style={stickyStyle}
           >
             {(() => {
@@ -175,18 +169,6 @@ export default function DataTableFilterRow({
                 />
               );
             })()}
-            {/* "Clear all" piggybacks on the last filterable cell to avoid
-                a dedicated layout slot. Only renders when ≥1 filter is
-                active. */}
-            {activeCount > 0 && column.accessor === lastFilterableAccessor && (
-              <button
-                type="button"
-                onClick={onClearAll}
-                className="absolute right-3 mt-1 text-xs text-orange-500 hover:underline"
-              >
-                Clear all filters
-              </button>
-            )}
           </td>
         );
       })}

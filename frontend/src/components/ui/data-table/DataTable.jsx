@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -162,19 +162,34 @@ export default function DataTable({
   // Render
   // -----------------------------------------------------------------
   const scrollableRef = useRef(null);
-  const headerRowRef = useRef(null);
   // Measure the header row so the filter row's sticky-top offset matches
-  // the actual rendered height (which depends on theme padding + font).
+  // the actual rendered height (which depends on theme padding, font, and
+  // — critically — column widths, which only finalise once real data is
+  // in the table).
+  //
+  // We use a callback ref (not useRef + useEffect) because the <tr>
+  // element identity changes across renders that flip between the loading
+  // skeleton and the main render path: React unmounts and re-mounts the
+  // <tr>, but a `useEffect([], …)` only runs once at component mount and
+  // would observe the original (now-destroyed) element. With a callback
+  // ref, every attach re-measures and re-installs the ResizeObserver, so
+  // the sticky offset stays in sync as the table re-mounts and as column
+  // widths shift after data arrives.
+  const observerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(46);
-  useEffect(() => {
-    const el = headerRowRef.current;
+  const headerRowRef = useCallback((el) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
     if (!el) return;
-    const measure = () => setHeaderHeight(el.getBoundingClientRect().height);
-    measure();
+    setHeaderHeight(el.getBoundingClientRect().height);
     if (typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(measure);
+    const ro = new ResizeObserver(() =>
+      setHeaderHeight(el.getBoundingClientRect().height),
+    );
     ro.observe(el);
-    return () => ro.disconnect();
+    observerRef.current = ro;
   }, []);
 
   // Client-side mode: filter + sort the in-memory dataset, then slice
@@ -283,14 +298,16 @@ export default function DataTable({
       <div className={`bg-white border border-gray-200 ${className}`}>
         <div className="overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
           <table className="w-full">
-            <DataTableHeader
-              columns={orderedColumns}
-              activeSort={sort}
-              onSort={onSort}
-              onHideColumn={onHideColumn}
-              scrollableRef={scrollableRef}
-              headerRowRef={headerRowRef}
-            />
+            <thead>
+              <DataTableHeader
+                columns={orderedColumns}
+                activeSort={sort}
+                onSort={onSort}
+                onHideColumn={onHideColumn}
+                scrollableRef={scrollableRef}
+                headerRowRef={headerRowRef}
+              />
+            </thead>
             <tbody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-gray-100">
@@ -308,9 +325,23 @@ export default function DataTable({
     );
   }
 
+  // Show "Clear all filters" only when ≥1 filter is active. Lives in the
+  // toolbar next to the columns selector so horizontal overflow on the
+  // table never hides it.
+  const hasActiveFilter = Object.values(filters).some((v) => v != null);
+
   return (
     <div className={`bg-white border border-gray-200 ${className}`}>
-      <div className="flex items-center justify-end gap-2 px-4 py-2 border-b border-gray-200">
+      <div className="flex items-center justify-end gap-3 px-4 py-2 border-b border-gray-200">
+        {hasActiveFilter && (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs text-orange-500 hover:underline"
+          >
+            Clear all filters
+          </button>
+        )}
         <ColumnsPopover
           columns={columns}
           visibleColumns={orderedColumns.map((c) => c.accessor)}
@@ -332,22 +363,23 @@ export default function DataTable({
           </>
         )}
         <table className="w-full border-collapse">
-          <DataTableHeader
-            columns={orderedColumns}
-            activeSort={sort}
-            onSort={onSort}
-            onHideColumn={onHideColumn}
-            scrollableRef={scrollableRef}
-          />
-          <tbody>
-            {/* Filter row sits inside <tbody> so it stays aligned with body
-                cells. Some browsers handle a <thead>-nested second row
-                differently across sticky positioning rules. */}
+          {/* Header + filter rows live inside the same <thead>. position:
+              sticky on table cells works reliably for thead-nested rows
+              but is browser-dependent for the first <tr> of <tbody> —
+              which earlier let the filter row scroll out of view. */}
+          <thead>
+            <DataTableHeader
+              columns={orderedColumns}
+              activeSort={sort}
+              onSort={onSort}
+              onHideColumn={onHideColumn}
+              scrollableRef={scrollableRef}
+              headerRowRef={headerRowRef}
+            />
             <DataTableFilterRow
               columns={orderedColumns}
               filters={filters}
               onFilterChange={onFilterChange}
-              onClearAll={clearAllFilters}
               table={graphqlTable}
               filterContext={filterContext}
               buildContextForColumn={buildContextForColumn}
@@ -355,6 +387,8 @@ export default function DataTable({
               serverSide={serverSide}
               data={data}
             />
+          </thead>
+          <tbody>
             {visibleRows.length === 0 && (
               <tr>
                 <td
