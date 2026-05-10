@@ -105,6 +105,14 @@ export default function AggregatedPortfolioPage() {
     }),
     [],
   );
+  const approvedFilterSerializer = useMemo(
+    () => ({
+      serialize: encodeFilters,
+      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), APPROVED_PRODUCT_COLUMNS),
+      debounceMs: 500,
+    }),
+    [],
+  );
   const sortSerializer = useMemo(
     () => ({ serialize: encodeSort, deserialize: decodeSort }),
     [],
@@ -112,8 +120,10 @@ export default function AggregatedPortfolioPage() {
   const [candidatesFilters, setCandidatesFilters] = useUrlState('f.candidates', {}, candidatesFilterSerializer);
   const [candidatesSort, setCandidatesSort] = useUrlState('s.candidates', null, sortSerializer);
   const [candidatesVisibleCols, setCandidatesVisibleCols] = useUrlState('cols.candidates', [], arraySerializer);
+  const [approvedFilters, setApprovedFilters] = useUrlState('f.approved', {}, approvedFilterSerializer);
+  const [approvedSort, setApprovedSort] = useUrlState('s.approved', null, sortSerializer);
+  const [approvedVisibleCols, setApprovedVisibleCols] = useUrlState('cols.approved', [], arraySerializer);
   // Other tabs still use legacy search until their migrations land.
-  const [approvedSearchQuery, setApprovedSearchQuery] = useUrlState('aq', '', { ...stringSerializer, debounceMs: 500 });
   const [trialsSearchQuery, setTrialsSearchQuery] = useUrlState('tq', '', { ...stringSerializer, debounceMs: 500 });
   const [technologySearchQuery, setTechnologySearchQuery] = useUrlState('techQ', '', { ...stringSerializer, debounceMs: 500 });
   const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
@@ -206,10 +216,35 @@ export default function AggregatedPortfolioPage() {
     (candidatesPage - 1) * itemsPerPage,
     { sort: candidatesSortVar },
   );
+  const approvedColumnFilters = useMemo(
+    () => toColumnFilters(approvedFilters),
+    [approvedFilters],
+  );
+  const approvedSortVar = useMemo(
+    () => toColumnSort(approvedSort),
+    [approvedSort],
+  );
+  const approvedFilterContext = useMemo(
+    () => ({
+      global_health_areas: healthArea?.length > 0 ? healthArea : undefined,
+      primary_disease_names: primary?.length > 0 ? primary : undefined,
+      secondary_disease_names: secondary?.length > 0 ? secondary : undefined,
+      product_names: expandedProduct?.length > 0 ? expandedProduct : undefined,
+      candidate_type: 'Product',
+      phase_names: rdPhase?.length > 0 ? rdPhase : undefined,
+      column_filters: approvedColumnFilters,
+    }),
+    [healthArea, primary, secondary, expandedProduct, rdPhase, approvedColumnFilters],
+  );
   const { candidates: approvedProductsData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedLoading } = usePortfolioCandidates(
-    { ...globalFilter, candidateType: 'Product', search: approvedSearchQuery || undefined },
+    {
+      ...globalFilter,
+      candidateType: 'Product',
+      columnFilters: approvedColumnFilters,
+    },
     itemsPerPage,
     (approvedPage - 1) * itemsPerPage,
+    { sort: approvedSortVar },
   );
   const {
     approvalStatus: approvalStatusData,
@@ -349,6 +384,7 @@ export default function AggregatedPortfolioPage() {
       const allRows = await fetchAllCandidates(apolloClient, {
         ...globalFilter,
         candidateType: 'Product',
+        columnFilters: approvedColumnFilters,
       });
       const csv = buildCSV(toCSVColumns(APPROVED_PRODUCT_COLUMNS), allRows);
       downloadCSV(csv, 'selected-products');
@@ -358,7 +394,7 @@ export default function AggregatedPortfolioPage() {
       setApprovedDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, healthArea, primary, secondary, product]);
+  }, [apolloClient, healthArea, primary, secondary, product, approvedColumnFilters]);
 
   const handleTrialsDownloadCSV = useCallback(async () => {
     setTrialsDownloading(true);
@@ -650,16 +686,6 @@ export default function AggregatedPortfolioPage() {
                       <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount} products</span>
                     </div>
                     <div className="flex items-center gap-3 h-[36px]">
-                      <div className="relative">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <DebouncedInput
-                          type="text"
-                          placeholder="Search item"
-                          value={approvedSearchQuery}
-                          onChange={(e) => { setApprovedSearchQuery(e.target.value); setApprovedPage(1); }}
-                          className="pl-10 pr-4 py-2 text-sm bg-gray-100 border-none w-64 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
                       <button
                         onClick={handleApprovedDownloadCSV}
                         disabled={approvedDownloading}
@@ -671,21 +697,39 @@ export default function AggregatedPortfolioPage() {
                     </div>
                   </div>
 
-                  <ServerTable
+                  <DataTable
+                    tableId="approved"
+                    graphqlTable="PORTFOLIO_CANDIDATES"
+                    filterContext={approvedFilterContext}
                     columns={APPROVED_PRODUCT_COLUMNS}
                     data={approvedProductsData}
                     rowKey="candidate_key"
-                    currentPage={approvedPage}
+                    page={approvedPage}
                     onPageChange={setApprovedPage}
                     totalCount={approvedTotalCount}
                     hasNextPage={approvedHasNext}
                     itemsPerPage={itemsPerPage}
                     loading={approvedLoading}
-                    emptyState={approvedSearchQuery ? {
-                      title: 'No approved products found',
-                      description: `Your search "${approvedSearchQuery}" did not match any approved products. Please try again or clear the search.`,
-                      onClear: () => { setApprovedSearchQuery(''); setApprovedPage(1); },
-                    } : { title: 'No approved products available' }}
+                    filters={approvedFilters}
+                    onFiltersChange={(next) => {
+                      setApprovedFilters(next);
+                      setApprovedPage(1);
+                    }}
+                    sort={approvedSort}
+                    onSortChange={(next) => {
+                      setApprovedSort(next);
+                      setApprovedPage(1);
+                    }}
+                    visibleColumns={approvedVisibleCols}
+                    onVisibleColumnsChange={setApprovedVisibleCols}
+                    emptyState={
+                      Object.keys(approvedFilters).length > 0
+                        ? {
+                            title: 'No approved products found',
+                            description: 'No rows match the active filters. Clear them to see more.',
+                          }
+                        : { title: 'No approved products available' }
+                    }
                   />
                 </div>
               </>
