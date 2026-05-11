@@ -84,6 +84,16 @@ export default function Home() {
   // internal state cleanly, and DataTable's own page-snap effect pulls
   // this value back to 1 if the new view has fewer pages.
   const [bubblePage, setBubblePage] = useState(1);
+  // Sort + visible-column state for the drill-down table. Reset when
+  // the bubble view tab changes — each view has a different column
+  // set, so carrying accessors across would leave the table empty
+  // (DataTable's reconciliation drops unknown accessors).
+  const [bubbleSort, setBubbleSort] = useState(null);
+  const [bubbleVisibleColumns, setBubbleVisibleColumns] = useState([]);
+  useEffect(() => {
+    setBubbleSort(null);
+    setBubbleVisibleColumns([]);
+  }, [bubbleView]);
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
@@ -476,6 +486,10 @@ export default function Home() {
                   page={bubblePage}
                   onPageChange={setBubblePage}
                   itemsPerPage={6}
+                  sort={bubbleSort}
+                  onSortChange={setBubbleSort}
+                  visibleColumns={bubbleVisibleColumns}
+                  onVisibleColumnsChange={setBubbleVisibleColumns}
                 />
               )}
               </div>
