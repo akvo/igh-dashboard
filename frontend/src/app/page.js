@@ -43,7 +43,7 @@ import {
   usePipelineFilterPairs,
   useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
 import {
   consolidateProductOptionsByKey,
   expandProductKeySelection,
@@ -80,7 +80,7 @@ export default function Home() {
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
   // WHO Priority Alignment section — multi-select disease filter.
-  const [whoDiseases, setWhoDiseases] = useUrlState('whoDiseases', [], arraySerializer);
+  const [whoDiseases, setWhoDiseases] = useUrlState('whoDis', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
   // Page number for the bubble-chart drill-down DataTable. Lives in
   // the parent because DataTable's pagination is controlled. Reset to
@@ -279,17 +279,6 @@ export default function Home() {
     })),
     [whoDiseaseOptionsRaw],
   );
-
-  // GHA → card title mapping. The DB strings ("Neglected disease", etc.)
-  // don't match the user-facing card labels in the screenshot; the
-  // backend returns raw DB values so the dropdown filter keys stay
-  // consistent everywhere on the page. Mapping lives here because it's
-  // tiny and only used in this section.
-  const WHO_GHA_LABELS = {
-    'Neglected disease': 'Neglected diseases',
-    'Emerging infectious disease': 'Emerging infectious diseases',
-    'Womens Health': "Women's health",
-  };
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
@@ -820,7 +809,7 @@ export default function Home() {
                     {whoByArea.map((area) => (
                       <PriorityShareCard
                         key={area.global_health_area}
-                        title={WHO_GHA_LABELS[area.global_health_area] || area.global_health_area}
+                        title={displayHealthArea(area.global_health_area)}
                         description="Share with dedicated priority."
                         diseasesWithPriority={area.diseasesWithPriority}
                         totalDiseases={area.totalDiseases}
