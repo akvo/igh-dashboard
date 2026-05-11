@@ -24,6 +24,7 @@ import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
+import { getDistinctValues } from "../db/queries/distinctValues.js";
 import {
   getDiseases,
   getSecondaryDiseases,
@@ -160,11 +161,14 @@ export const resolvers = {
           secondary_disease_names?: string[];
           product_names?: string[];
           candidate_type?: string;
+          phase_names?: string[];
+          column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
         limit?: number;
         offset?: number;
       },
-    ) => getPortfolioCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+    ) => getPortfolioCandidates(args.filter, args.sort ?? null, args.limit ?? 20, args.offset ?? 0),
 
     // Extract tab - R&D priorities with linked candidates (paginated)
     rdPrioritiesWithCandidates: (
@@ -174,12 +178,19 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
-          search?: string;
+          column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
         limit?: number;
         offset?: number;
       },
-    ) => getRdPrioritiesWithCandidates(args.filter, args.limit ?? 20, args.offset ?? 0),
+    ) =>
+      getRdPrioritiesWithCandidates(
+        args.filter,
+        args.sort ?? null,
+        args.limit ?? 20,
+        args.offset ?? 0,
+      ),
 
     // Extract tab - R&D priorities only (paginated)
     rdPriorities: (
@@ -189,12 +200,23 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
-          search?: string;
+          column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
         limit?: number;
         offset?: number;
       },
-    ) => getRdPriorities(args.filter, args.limit ?? 20, args.offset ?? 0),
+    ) => getRdPriorities(args.filter, args.sort ?? null, args.limit ?? 20, args.offset ?? 0),
+
+    // DataTable category-filter dropdown options (one column at a time).
+    distinctValues: (
+      _: unknown,
+      args: {
+        table: import("../db/queries/columnRegistry.js").DataTableId;
+        column: string;
+        filter?: import("../db/queries/distinctValues.js").DistinctValuesFilter;
+      },
+    ) => getDistinctValues(args.table, args.column, args.filter),
 
     // Portfolio analysis - clinical trials list (paginated)
     clinicalTrials: (
@@ -206,12 +228,13 @@ export const resolvers = {
           secondary_disease_names?: string[];
           product_names?: string[];
           statuses?: string[];
-          search?: string;
+          column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
         limit?: number;
         offset?: number;
       },
-    ) => getClinicalTrials(args.filter, args.limit ?? 20, args.offset ?? 0),
+    ) => getClinicalTrials(args.filter, args.sort ?? null, args.limit ?? 20, args.offset ?? 0),
 
     // Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats: (

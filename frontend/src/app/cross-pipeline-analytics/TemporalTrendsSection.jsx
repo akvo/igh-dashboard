@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Dropdown, ChartMenu, TabNav, Table } from '@/components/ui';
+import { Dropdown, ChartMenu, TabNav, DataTable } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
@@ -119,6 +119,12 @@ function ComparePortfoliosTab({
   const [appliedPortfolios, setAppliedPortfolios] = useUrlState('cpf', [], portfolioSerializer);
   const [appliedCompareYear, setAppliedCompareYear] = useUrlState('cpYear', '', stringSerializer);
   const [visibleCount, setVisibleCount] = useUrlState('cpN', 2, numberSerializer);
+  // Sort + visible-column state for the comparison table. Kept as
+  // local component state — the table is a presentation drill-down
+  // (no URL persistence needed) but the DataTable kebab/popover
+  // affordances still need controlled props to do anything.
+  const [compareSort, setCompareSort] = useState(null);
+  const [compareVisibleColumns, setCompareVisibleColumns] = useState([]);
 
   // Local/pending state — initialized from URL-restored applied values.
   // Each row is the new portfolio shape:
@@ -667,10 +673,16 @@ function ComparePortfoliosTab({
             <div className="animate-pulse text-gray-400">Loading table data...</div>
           </div>
         ) : (
-          <Table
+          <DataTable
+            tableId="temporal-compare"
+            serverSide={false}
             columns={compareTableColumns}
             data={compareTableData}
-            pagination={false}
+            itemsPerPage={Math.max(compareTableData.length, 1)}
+            sort={compareSort}
+            onSortChange={setCompareSort}
+            visibleColumns={compareVisibleColumns}
+            onVisibleColumnsChange={setCompareVisibleColumns}
             className="compare-table-bordered"
             emptyState={{
               title: 'No data available',
@@ -941,6 +953,8 @@ export default function TemporalTrendsSection({
 
   // Sub-section C: growth table
   const growthTable = useMemo(() => computeGrowthTable(aggregatedData), [aggregatedData]);
+  const [growthSort, setGrowthSort] = useState(null);
+  const [growthVisibleColumns, setGrowthVisibleColumns] = useState([]);
 
   // Build Table component columns and data from growthTable
   const growthTableColumns = useMemo(() => {
@@ -1241,10 +1255,16 @@ export default function TemporalTrendsSection({
                 <div className="animate-pulse text-gray-400">Loading table data...</div>
               </div>
             ) : (
-              <Table
+              <DataTable
+                tableId="temporal-growth"
+                serverSide={false}
                 columns={growthTableColumns}
                 data={growthTableData}
-                pagination={false}
+                itemsPerPage={Math.max(growthTableData.length, 1)}
+                sort={growthSort}
+                onSortChange={setGrowthSort}
+                visibleColumns={growthVisibleColumns}
+                onVisibleColumnsChange={setGrowthVisibleColumns}
                 emptyState={{
                   title: 'No data available',
                   description: 'No data available for the selected filters.',

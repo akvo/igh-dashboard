@@ -1,5 +1,3 @@
-export { default as Table, ScrollableTable } from './Table';
-export { default as ServerTable } from './ServerTable';
 export { default as Button, TextLink } from './Button';
 export { default as Chip, ChipGroup } from './Chip';
 export { default as Dropdown } from './Dropdown';
@@ -9,3 +7,4 @@ export { default as Header } from './Header';
 export { default as TabNav } from './TabNav';
 export { default as ChartMenu } from './ChartMenu';
 export { default as DiseaseListPanel } from './DiseaseListPanel';
+export { DataTable } from './data-table';

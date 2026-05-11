@@ -1,47 +1,9 @@
 import { getDatabase } from "../connection.js";
 import type { ClinicalTrialNode, ClinicalTrialFilter, ClinicalTrialConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
+import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
-
-// All text columns searchable via the free-text filter.
-// Excluded: enrollment_count (numeric), start/end dates (via dim_date joins).
-const SEARCHABLE_COLUMNS = [
-  // fact_clinical_trial_event (t)
-  "t.trial_name",
-  "t.clinicaltrialid",
-  "t.trial_title",
-  "t.trial_phase",
-  "t.status",
-  "t.description",
-  "t.ct_results_status",
-  "t.collaborator",
-  "t.locations",
-  "t.sponsor",
-  "t.source_text",
-  "t.age_groups",
-  "t.study_type",
-  "t.funder_type",
-  "t.interventions",
-  "t.outcome_measure",
-  "t.sex",
-  "t.study_design",
-  "t.ct_results_type",
-  "t.ct_terminated_reason",
-  // Joined dimensions
-  "c.candidate_name",
-  "d.disease_filter",
-  "pr.product_name",
-] as const;
-
-function addSearchCondition(search: string, conditions: string[], params: (string | number)[]) {
-  const pattern = `%${search}%`;
-  const orClauses = SEARCHABLE_COLUMNS.map((col) => `${col} LIKE ?`).join(" OR ");
-  conditions.push(`(${orClauses})`);
-  for (let i = 0; i < SEARCHABLE_COLUMNS.length; i++) {
-    params.push(pattern);
-  }
-}
 
 function buildWhere(filter?: ClinicalTrialFilter) {
   const joins = [
@@ -67,8 +29,10 @@ function buildWhere(filter?: ClinicalTrialFilter) {
 
   addArrayCondition(filter?.statuses, "t.status", conditions, params);
 
-  if (filter?.search) {
-    addSearchCondition(filter.search, conditions, params);
+  if (filter?.column_filters) {
+    const cf = buildColumnFilterClauses("CLINICAL_TRIALS", filter.column_filters);
+    conditions.push(...cf.conditions);
+    params.push(...cf.params);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -81,12 +45,15 @@ function buildWhere(filter?: ClinicalTrialFilter) {
  */
 export function getClinicalTrials(
   filter?: ClinicalTrialFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): ClinicalTrialConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
   const { joins, whereClause, params } = buildWhere(filter);
+
+  const orderBy = buildOrderBy("CLINICAL_TRIALS", sort) ?? "ORDER BY t.trial_id DESC NULLS LAST";
 
   const countSql = `
     SELECT COUNT(*) as total
@@ -130,7 +97,7 @@ export function getClinicalTrials(
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}
-    ORDER BY t.trial_id DESC NULLS LAST
+    ${orderBy}
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as ClinicalTrialNode[];

@@ -5,65 +5,9 @@ import type {
   PortfolioCandidateConnection,
 } from "../types.js";
 import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
+import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
-
-// All columns searchable via the free-text filter, covering the three
-// portfolio tables (Candidates, Approved Products, Extract custom data).
-// Excluded: approving_authorities_agg (correlated subquery),
-// rd_stage_2023/rd_stage_2019 (correlated subqueries, low search value
-// since p.phase_name and c.current_rd_stage already cover phase searches).
-const SEARCHABLE_COLUMNS = [
-  // dim_candidate_core (c)
-  "c.candidate_name",
-  "c.alternative_names",
-  "c.candidate_type",
-  "c.current_rd_stage",
-  "c.developers_agg",
-  "c.indication",
-  "c.indication_type",
-  "c.healthcare_facility_level",
-  "c.target",
-  "c.mechanism_of_action",
-  "c.key_features",
-  "c.recent_updates",
-  "c.test_format",
-  "c.preclinical_results_status",
-  "c.type_of_preclinical_results",
-  "c.preclinical_results_source",
-  "c.route_of_administration",
-  "c.technology_principle",
-  "c.known_funders_agg",
-  "c.key_clinical_trial",
-  "c.chim_study",
-  "c.target_population",
-  "c.platform",
-  "c.countries_approved_agg",
-  // Joined dimensions
-  "d.global_health_area",
-  "d.disease_filter",
-  "d.secondary_disease_name",
-  "pr.product_name",
-  "sp.product_name",
-  "p.phase_name",
-  "t.technology_type",
-  // Regulatory (r)
-  "r.approval_status",
-  "r.nra_approval_status",
-  "r.sra_approval_status",
-  "r.ema_approval_status",
-  "r.japanese_mhlw_approval_status",
-  "r.us_fda_approval_status",
-] as const;
-
-function addSearchCondition(search: string, conditions: string[], params: (string | number)[]) {
-  const pattern = `%${search}%`;
-  const orClauses = SEARCHABLE_COLUMNS.map((col) => `${col} LIKE ?`).join(" OR ");
-  conditions.push(`(${orClauses})`);
-  for (let i = 0; i < SEARCHABLE_COLUMNS.length; i++) {
-    params.push(pattern);
-  }
-}
 
 function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
@@ -85,8 +29,10 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     params.push(filter.candidate_type);
   }
 
-  if (filter?.search) {
-    addSearchCondition(filter.search, conditions, params);
+  if (filter?.column_filters) {
+    const cf = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", filter.column_filters);
+    conditions.push(...cf.conditions);
+    params.push(...cf.params);
   }
 
   return { whereClause: `WHERE ${conditions.join(" AND ")}`, params };
@@ -108,12 +54,16 @@ const JOINS = `
 // eslint-disable-next-line max-lines-per-function -- single query builder with count + data
 export function getPortfolioCandidates(
   filter?: PortfolioCandidateFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): PortfolioCandidateConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
   const { whereClause, params } = buildWhere(filter);
+
+  const orderBy =
+    buildOrderBy("PORTFOLIO_CANDIDATES", sort) ?? "ORDER BY c.candidate_name NULLS LAST";
 
   const countSql = `
     SELECT COUNT(DISTINCT c.candidate_key) as total
@@ -171,7 +121,7 @@ export function getPortfolioCandidates(
       FROM dim_candidate_core c
       ${JOINS}
       ${whereClause}
-      ORDER BY c.candidate_name NULLS LAST
+      ${orderBy}
       LIMIT ? OFFSET ?
     )
     SELECT page.*,

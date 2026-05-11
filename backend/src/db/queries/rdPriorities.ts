@@ -1,6 +1,9 @@
 import { getDatabase } from "../connection.js";
 import type { RdPriorityNode, RdPriorityFilter, RdPriorityConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
+import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
+
+import type { DataTableId } from "./columnRegistry.js";
 
 const MAX_LIMIT = 100;
 
@@ -9,43 +12,7 @@ const MAX_LIMIT = 100;
 // =========================================================
 
 // Base columns available in both query variants (with and without candidates).
-const BASE_SEARCHABLE_COLUMNS = [
-  "p.priority_name",
-  "p.rdpriorityid",
-  "p.indication",
-  "p.intended_use",
-  "p.author",
-  "p.publication_date",
-  "p.target_population",
-  "p.efficacy",
-  "p.safety",
-  "p.source",
-  "d.disease_filter",
-  "d.global_health_area",
-  "pr.product_name",
-] as const;
-
-// Additional columns only available when candidate tables are joined.
-const CANDIDATE_SEARCHABLE_COLUMNS = ["c.candidate_name", "c.current_rd_stage"] as const;
-
-function addSearchCondition(
-  search: string,
-  conditions: string[],
-  params: (string | number)[],
-  includeCandidateColumns: boolean,
-) {
-  const columns = includeCandidateColumns
-    ? [...BASE_SEARCHABLE_COLUMNS, ...CANDIDATE_SEARCHABLE_COLUMNS]
-    : BASE_SEARCHABLE_COLUMNS;
-  const pattern = `%${search}%`;
-  const orClauses = columns.map((col) => `${col} LIKE ?`).join(" OR ");
-  conditions.push(`(${orClauses})`);
-  for (let i = 0; i < columns.length; i++) {
-    params.push(pattern);
-  }
-}
-
-function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) {
+function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITIES") {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
 
@@ -58,8 +25,10 @@ function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) 
     params,
   );
 
-  if (filter?.search) {
-    addSearchCondition(filter.search, conditions, params, includeCandidateColumns);
+  if (filter?.column_filters) {
+    const cf = buildColumnFilterClauses(table, filter.column_filters);
+    conditions.push(...cf.conditions);
+    params.push(...cf.params);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -77,12 +46,16 @@ function buildWhere(filter?: RdPriorityFilter, includeCandidateColumns = false) 
  */
 export function getRdPrioritiesWithCandidates(
   filter?: RdPriorityFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter, true);
+  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES_WITH_CANDIDATES");
+
+  const orderBy =
+    buildOrderBy("RD_PRIORITIES_WITH_CANDIDATES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
@@ -121,7 +94,7 @@ export function getRdPrioritiesWithCandidates(
     FROM dim_priority p
     ${joins}
     ${whereClause}
-    ORDER BY p.priority_name NULLS LAST
+    ${orderBy}
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as RdPriorityNode[];
@@ -142,12 +115,15 @@ export function getRdPrioritiesWithCandidates(
  */
 export function getRdPriorities(
   filter?: RdPriorityFilter,
+  sort: ColumnSortInput | null = null,
   limit = 20,
   offset = 0,
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter);
+  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES");
+
+  const orderBy = buildOrderBy("RD_PRIORITIES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
@@ -182,7 +158,7 @@ export function getRdPriorities(
     FROM dim_priority p
     ${joins}
     ${whereClause}
-    ORDER BY p.priority_name NULLS LAST
+    ${orderBy}
     LIMIT ? OFFSET ?
   `;
   const nodes = db.prepare(dataSql).all(...params, limit, offset) as RdPriorityNode[];
