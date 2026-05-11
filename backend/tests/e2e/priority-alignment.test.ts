@@ -1,0 +1,223 @@
+/**
+ * E2E Tests — priorityAlignmentOverview query (Home page WHO Priority section).
+ *
+ * Validates the consolidated payload (totalPriorities, byArea, productTypeBreakdown,
+ * diseaseOptions) both unfiltered and with a diseaseKeys filter. Asserts the fixed
+ * 3-row byArea ordering (ND, EID, WH) and that stub priorities are excluded.
+ */
+
+import { describe, it, expect, beforeAll } from "vitest";
+import { query } from "../helpers/graphql.js";
+
+// ---------------------------------------------------------------------------
+// Types (match GraphQL response shape)
+// ---------------------------------------------------------------------------
+
+interface AreaShare {
+  global_health_area: string;
+  diseasesWithPriority: number;
+  totalDiseases: number;
+  sharePercentage: number;
+}
+
+interface ProductTypeRow {
+  product_name: string;
+  candidateCount: number;
+}
+
+interface DiseaseOption {
+  disease_key: number;
+  disease_name: string;
+  global_health_area: string;
+}
+
+interface Overview {
+  totalPriorities: number;
+  byArea: AreaShare[];
+  productTypeBreakdown: ProductTypeRow[];
+  diseaseOptions: DiseaseOption[];
+}
+
+const FIXED_AREA_ORDER = [
+  "Neglected disease",
+  "Emerging infectious disease",
+  "Womens Health",
+] as const;
+
+// ---------------------------------------------------------------------------
+// Helper
+// ---------------------------------------------------------------------------
+
+async function fetchOverview(diseaseKeys?: number[]): Promise<Overview> {
+  const { data } = await query<{ priorityAlignmentOverview: Overview }>(
+    `query ($diseaseKeys: [Int!]) {
+      priorityAlignmentOverview(diseaseKeys: $diseaseKeys) {
+        totalPriorities
+        byArea {
+          global_health_area
+          diseasesWithPriority
+          totalDiseases
+          sharePercentage
+        }
+        productTypeBreakdown {
+          product_name
+          candidateCount
+        }
+        diseaseOptions {
+          disease_key
+          disease_name
+          global_health_area
+        }
+      }
+    }`,
+    diseaseKeys && diseaseKeys.length > 0 ? { diseaseKeys } : {},
+  );
+  return data.priorityAlignmentOverview;
+}
+
+// ---------------------------------------------------------------------------
+// Shared state
+// ---------------------------------------------------------------------------
+
+let baseline: Overview;
+
+beforeAll(async () => {
+  baseline = await fetchOverview();
+});
+
+// ---------------------------------------------------------------------------
+// 1. Unfiltered baseline
+// ---------------------------------------------------------------------------
+
+describe("priorityAlignmentOverview — unfiltered", () => {
+  it("totalPriorities matches snapshot (66)", () => {
+    expect(baseline.totalPriorities).toBe(66);
+  });
+
+  it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
+    expect(baseline.byArea).toHaveLength(3);
+    expect(baseline.byArea.map((r) => r.global_health_area)).toEqual(
+      Array.from(FIXED_AREA_ORDER),
+    );
+  });
+
+  it("byArea snapshot values match tracked DB", () => {
+    const byKey = Object.fromEntries(
+      baseline.byArea.map((r) => [r.global_health_area, r]),
+    );
+    expect(byKey["Neglected disease"].diseasesWithPriority).toBe(6);
+    expect(byKey["Neglected disease"].totalDiseases).toBe(203);
+    expect(byKey["Emerging infectious disease"].diseasesWithPriority).toBe(6);
+    expect(byKey["Emerging infectious disease"].totalDiseases).toBe(186);
+    expect(byKey["Womens Health"].diseasesWithPriority).toBe(0);
+    expect(byKey["Womens Health"].totalDiseases).toBe(59);
+  });
+
+  it("byArea sharePercentage = diseasesWithPriority / totalDiseases", () => {
+    for (const row of baseline.byArea) {
+      const expected =
+        row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0;
+      expect(row.sharePercentage).toBeCloseTo(expected, 6);
+    }
+  });
+
+  it("productTypeBreakdown is sorted desc by candidateCount with positive integer counts", () => {
+    expect(baseline.productTypeBreakdown.length).toBeGreaterThan(0);
+    for (const row of baseline.productTypeBreakdown) {
+      expect(Number.isInteger(row.candidateCount)).toBe(true);
+      expect(row.candidateCount).toBeGreaterThan(0);
+      expect(row.product_name.length).toBeGreaterThan(0);
+    }
+    const counts = baseline.productTypeBreakdown.map((r) => r.candidateCount);
+    const sorted = [...counts].sort((a, b) => b - a);
+    expect(counts).toEqual(sorted);
+  });
+
+  it("productTypeBreakdown includes expected top product types", () => {
+    const byKey = Object.fromEntries(
+      baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
+    );
+    expect(byKey["Vaccines"]).toBe(110);
+    expect(byKey["Drugs"]).toBe(100);
+    expect(byKey["Diagnostics"]).toBe(61);
+    expect(byKey["Biologics"]).toBe(39);
+  });
+
+  it("diseaseOptions returns priority-bearing diseases (count = 19), sorted by name", () => {
+    expect(baseline.diseaseOptions).toHaveLength(19);
+    const names = baseline.diseaseOptions.map((o) => o.disease_name);
+    const sorted = [...names].sort((a, b) => a.localeCompare(b));
+    expect(names).toEqual(sorted);
+    for (const opt of baseline.diseaseOptions) {
+      expect(opt.disease_key).toBeGreaterThan(0);
+      expect(opt.disease_name.length).toBeGreaterThan(0);
+      expect(opt.global_health_area.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("diseaseOptions has no duplicate disease_keys", () => {
+    const keys = baseline.diseaseOptions.map((o) => o.disease_key);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2. Filtered by diseaseKeys
+// ---------------------------------------------------------------------------
+
+describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
+  it("totalPriorities narrows to selected diseases only", async () => {
+    const firstOption = baseline.diseaseOptions[0];
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    expect(filtered.totalPriorities).toBeGreaterThan(0);
+    expect(filtered.totalPriorities).toBeLessThanOrEqual(baseline.totalPriorities);
+  });
+
+  it("byArea still returns exactly 3 rows in fixed order", async () => {
+    const firstOption = baseline.diseaseOptions[0];
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    expect(filtered.byArea).toHaveLength(3);
+    expect(filtered.byArea.map((r) => r.global_health_area)).toEqual(
+      Array.from(FIXED_AREA_ORDER),
+    );
+  });
+
+  it("byArea zero-denominator GHAs render sharePercentage = 0", async () => {
+    const firstOption = baseline.diseaseOptions[0];
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    const targetArea = firstOption.global_health_area;
+    for (const row of filtered.byArea) {
+      if (row.global_health_area !== targetArea) {
+        expect(row.totalDiseases).toBe(0);
+        expect(row.diseasesWithPriority).toBe(0);
+        expect(row.sharePercentage).toBe(0);
+      }
+    }
+  });
+
+  it("diseaseOptions does NOT narrow under the filter (still 19)", async () => {
+    const firstOption = baseline.diseaseOptions[0];
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
+  });
+
+  it("productTypeBreakdown total candidates ≤ baseline total", async () => {
+    const firstOption = baseline.diseaseOptions[0];
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    const baselineTotal = baseline.productTypeBreakdown.reduce(
+      (s, r) => s + r.candidateCount,
+      0,
+    );
+    const filteredTotal = filtered.productTypeBreakdown.reduce(
+      (s, r) => s + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThanOrEqual(baselineTotal);
+  });
+
+  it("empty diseaseKeys array behaves like unfiltered", async () => {
+    const filtered = await fetchOverview([]);
+    expect(filtered.totalPriorities).toBe(baseline.totalPriorities);
+    expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
+  });
+});

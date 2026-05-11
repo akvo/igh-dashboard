@@ -499,3 +499,36 @@ export interface CandidateGeography {
   iso_code: string | null;
   location_scope: string | null;
 }
+
+// =============================================================================
+// Priority Alignment (Home section)
+// =============================================================================
+
+export interface PriorityAlignmentAreaShare {
+  global_health_area: string;
+  diseasesWithPriority: number;
+  totalDiseases: number;
+  sharePercentage: number; // 0.0 – 1.0
+}
+
+export interface PriorityAlignmentProductType {
+  product_name: string;
+  candidateCount: number;
+}
+
+export interface PriorityAlignmentDiseaseOption {
+  disease_key: number;
+  disease_name: string;
+  global_health_area: string;
+}
+
+export interface PriorityAlignmentOverview {
+  totalPriorities: number;
+  byArea: PriorityAlignmentAreaShare[];
+  productTypeBreakdown: PriorityAlignmentProductType[];
+  diseaseOptions: PriorityAlignmentDiseaseOption[];
+}
+
+export interface PriorityAlignmentInput {
+  diseaseKeys?: number[] | null;
+}
