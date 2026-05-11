@@ -137,10 +137,10 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const byKey = Object.fromEntries(
       baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
     );
-    expect(byKey["Vaccines"]).toBe(110);
-    expect(byKey["Drugs"]).toBe(100);
-    expect(byKey["Diagnostics"]).toBe(61);
-    expect(byKey["Biologics"]).toBe(39);
+    expect(byKey["Vaccines"]).toBe(75);
+    expect(byKey["Drugs"]).toBe(68);
+    expect(byKey["Diagnostics"]).toBe(41);
+    expect(byKey["Biologics"]).toBe(19);
   });
 
   it("diseaseOptions returns priority-bearing diseases (count = 19), sorted by name", () => {

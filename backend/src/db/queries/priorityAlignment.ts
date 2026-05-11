@@ -126,6 +126,13 @@ export function getPriorityAlignmentOverview(
   // -----------------------------------------------------------------------
   // 3. productTypeBreakdown — candidates linked to a published priority
   //    via bridge_candidate_priority, grouped by dim_product.product_name.
+  //
+  // Applies the dashboard's canonical pipeline guard pair —
+  // `is_active_flag = 1` AND `include_in_pipeline = 1` — to match what
+  // every other "pipeline candidates by product type" query in the
+  // backend (e.g. productDistribution) reports. Without
+  // `include_in_pipeline = 1` the donut here would over-count by ~45%
+  // compared with the rest of the dashboard.
   // -----------------------------------------------------------------------
   const productParams: (string | number)[] = [];
   const productClause = diseaseKeysClause(diseaseKeys, "p.disease_key", productParams);
@@ -139,6 +146,7 @@ export function getPriorityAlignmentOverview(
        JOIN dim_priority p              ON p.priority_key   = bp.priority_key
        JOIN dim_product pr              ON pr.product_key   = f.product_key
        WHERE f.is_active_flag = 1
+         AND f.include_in_pipeline = 1
          AND ${NON_EMPTY_PRIORITY}
          AND pr.product_name IS NOT NULL${productClause}
        GROUP BY pr.product_name
