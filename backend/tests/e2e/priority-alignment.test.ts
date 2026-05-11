@@ -28,7 +28,7 @@ interface ProductTypeRow {
 interface DiseaseOption {
   disease_key: number;
   disease_name: string;
-  global_health_area: string;
+  global_health_area: string | null;
 }
 
 interface Overview {
@@ -146,12 +146,18 @@ describe("priorityAlignmentOverview — unfiltered", () => {
   it("diseaseOptions returns priority-bearing diseases (count = 19), sorted by name", () => {
     expect(baseline.diseaseOptions).toHaveLength(19);
     const names = baseline.diseaseOptions.map((o) => o.disease_name);
-    const sorted = [...names].sort((a, b) => a.localeCompare(b));
+    // Plain `.sort()` uses UTF-16 code-unit order — same collation SQLite's
+    // default ORDER BY uses. `localeCompare` would put `Helminth` before
+    // `HIV/AIDS` (lowercase < uppercase under locale rules), which doesn't
+    // match what the server returns.
+    const sorted = [...names].sort();
     expect(names).toEqual(sorted);
     for (const opt of baseline.diseaseOptions) {
       expect(opt.disease_key).toBeGreaterThan(0);
       expect(opt.disease_name.length).toBeGreaterThan(0);
-      expect(opt.global_health_area.length).toBeGreaterThan(0);
+      // global_health_area is intentionally nullable: 7 of the 19
+      // priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis, Scabies)
+      // are not categorised into the three WHO areas in dim_disease.
     }
   });
 
@@ -166,15 +172,29 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
+  // Pick a priority-bearing disease with a labelled GHA so the
+  // zero-denominator test has a meaningful target_area to compare against.
+  // 7 of the 19 priority-bearing diseases have null GHA in dim_disease;
+  // selecting one of those would make the "other GHAs are zero" assertion
+  // trivially pass (target_area is null, so `row.gha !== target_area` is
+  // always true and all three rows would be checked for zero — which is
+  // not what we're testing).
+  let filterTarget: DiseaseOption;
+  beforeAll(() => {
+    const target = baseline.diseaseOptions.find((o) => o.global_health_area);
+    if (!target) throw new Error("expected at least one option with non-null GHA");
+    filterTarget = target;
+  });
+
   it("totalPriorities narrows to selected diseases only", async () => {
-    const firstOption = baseline.diseaseOptions[0];
+    const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     expect(filtered.totalPriorities).toBeGreaterThan(0);
     expect(filtered.totalPriorities).toBeLessThanOrEqual(baseline.totalPriorities);
   });
 
   it("byArea still returns exactly 3 rows in fixed order", async () => {
-    const firstOption = baseline.diseaseOptions[0];
+    const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     expect(filtered.byArea).toHaveLength(3);
     expect(filtered.byArea.map((r) => r.global_health_area)).toEqual(
@@ -183,7 +203,7 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
   });
 
   it("byArea zero-denominator GHAs render sharePercentage = 0", async () => {
-    const firstOption = baseline.diseaseOptions[0];
+    const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     const targetArea = firstOption.global_health_area;
     for (const row of filtered.byArea) {
@@ -196,13 +216,13 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
   });
 
   it("diseaseOptions does NOT narrow under the filter (still 19)", async () => {
-    const firstOption = baseline.diseaseOptions[0];
+    const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
   });
 
   it("productTypeBreakdown total candidates ≤ baseline total", async () => {
-    const firstOption = baseline.diseaseOptions[0];
+    const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     const baselineTotal = baseline.productTypeBreakdown.reduce(
       (s, r) => s + r.candidateCount,

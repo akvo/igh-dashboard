@@ -519,7 +519,11 @@ export interface PriorityAlignmentProductType {
 export interface PriorityAlignmentDiseaseOption {
   disease_key: number;
   disease_name: string;
-  global_health_area: string;
+  // Nullable: some priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis)
+  // are not categorised into the three WHO global health areas in dim_disease.
+  // They still appear in the dropdown; the section's per-GHA share cards
+  // simply won't reflect them.
+  global_health_area: string | null;
 }
 
 export interface PriorityAlignmentOverview {
