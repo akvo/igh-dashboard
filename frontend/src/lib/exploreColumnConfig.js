@@ -104,8 +104,11 @@ export const APPROVED_PRODUCT_COLUMNS = [
   { header: 'Key features and challenges', accessor: 'key_features', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   { header: 'Recent updates', accessor: 'recent_updates', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   { header: 'Approval status', accessor: 'approval_status', filter: { kind: 'category' } },
-  // Aggregated text — not in the column registry yet; keep unfilterable.
-  { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'line-clamp', maxWidth: '200px', sortable: false },
+  // Aggregated text — backed by a correlated GROUP_CONCAT subquery in
+  // the list query and registered with the same subquery as sqlExpr in
+  // the backend column registry, so TEXT filter emits a LIKE against
+  // the concatenated authority list.
+  { header: 'Approving authority', accessor: 'approving_authorities_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   { header: 'National regulatory authority approval status', accessor: 'nra_approval_status', filter: { kind: 'category' } },
   { header: 'Stringent regulatory authority approval status', accessor: 'sra_approval_status', filter: { kind: 'category' } },
   { header: 'EMA approval status', accessor: 'ema_approval_status', filter: { kind: 'category' } },

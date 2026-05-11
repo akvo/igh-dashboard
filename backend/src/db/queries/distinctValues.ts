@@ -14,6 +14,7 @@
 import { getDatabase } from "../connection.js";
 import { buildColumnFilterClauses, type ColumnFilterInput } from "./columnFilters.js";
 import { resolveColumn, type DataTableId } from "./columnRegistry.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 
 // FROM + JOIN clauses per table, mirroring the corresponding list query
 // so that a column expression registered against a specific alias (e.g.
@@ -62,7 +63,12 @@ interface TableInfo {
 const TABLE_FROM: Record<DataTableId, TableInfo> = {
   PORTFOLIO_CANDIDATES: {
     from: PORTFOLIO_CANDIDATES_FROM,
-    baseConditions: ["f.is_active_flag = 1"],
+    // Mirror `portfolioCandidates.ts::buildWhere` exactly. Without
+    // PIPELINE_FILTER the dropdown surfaces stage / approval values
+    // that only exist on rows where `include_in_pipeline = 0` (e.g.
+    // "0", "Unclear", "Not applicable"); the list query filters them
+    // out so selecting one yields an empty table.
+    baseConditions: ["f.is_active_flag = 1", PIPELINE_FILTER],
   },
   CLINICAL_TRIALS: {
     from: CLINICAL_TRIALS_FROM,

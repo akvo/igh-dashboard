@@ -149,6 +149,52 @@ describe("DataTable GraphQL features (e2e)", () => {
     expect(data.distinctValues).toEqual([]);
   });
 
+  it("portfolioCandidates TEXT filter on approving_authorities_agg matches by substring", async () => {
+    // Authority is computed by a correlated GROUP_CONCAT in the SELECT
+    // — the filter pushes the same subquery into WHERE so the rows
+    // returned all contain the searched authority. Use "WHO" to match
+    // "WHO prequalification" in the test fixtures.
+    const { data } = await query<{
+      portfolioCandidates: {
+        totalCount: number;
+        nodes: Array<{ candidate_key: number; approving_authorities_agg: string | null }>;
+      };
+    }>(
+      `query Q {
+        portfolioCandidates(
+          filter: {
+            column_filters: [
+              { column: "approving_authorities_agg", kind: TEXT, text: "WHO" }
+            ]
+          }
+          limit: 50
+        ) {
+          totalCount
+          nodes { candidate_key approving_authorities_agg }
+        }
+      }`,
+    );
+    expect(data.portfolioCandidates.totalCount).toBeGreaterThan(0);
+    for (const node of data.portfolioCandidates.nodes) {
+      expect((node.approving_authorities_agg ?? "").toLowerCase()).toContain("who");
+    }
+  });
+
+  it("distinctValues for PORTFOLIO_CANDIDATES restricts to pipeline-included rows", async () => {
+    // The candidates list query filters by `include_in_pipeline = 1` on
+    // top of `is_active_flag = 1`. distinctValues must mirror that or
+    // the dropdown surfaces values (e.g. "0", "Unclear") that the list
+    // view filters out — the user picks one and sees an empty table.
+    const { data } = await query<{ distinctValues: string[] }>(
+      `query Q {
+        distinctValues(table: PORTFOLIO_CANDIDATES, column: "current_rd_stage")
+      }`,
+    );
+    expect(data.distinctValues).not.toContain("0");
+    expect(data.distinctValues).not.toContain("Unclear");
+    expect(data.distinctValues).not.toContain("Not applicable");
+  });
+
   it("distinctValues excludes the asking column from its own filter", async () => {
     // Pick a real GHA value to constrain by, then ask for distinct GHAs
     // with that very GHA already in column_filters. If the resolver

@@ -161,6 +161,23 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     filterKind: "TEXT",
     isAggregated: true,
   },
+  // Unlike developers_agg this column is not pre-aggregated on
+  // dim_candidate_core; the list query computes it via correlated
+  // GROUP_CONCAT in the SELECT (see portfolioCandidates.ts). To make
+  // it filterable we inline the same subquery as sqlExpr so a TEXT
+  // filter emits `(GROUP_CONCAT subquery) LIKE '%foo%'`. The bridge
+  // table has an index on candidate_key (`idx_bcaa_candidate`), so
+  // per-row evaluation in WHERE is cheap.
+  approving_authorities_agg: {
+    sqlExpr:
+      "(SELECT GROUP_CONCAT(da.authority_name, '; ') " +
+      "FROM bridge_candidate_approving_authority baa " +
+      "JOIN dim_approving_authority da ON baa.authority_key = da.authority_key " +
+      "WHERE baa.candidate_key = c.candidate_key)",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: true,
+  },
   // Regulatory
   approval_status: {
     sqlExpr: "r.approval_status",
