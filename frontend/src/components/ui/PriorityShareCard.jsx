@@ -40,7 +40,7 @@ export default function PriorityShareCard({
 }) {
   if (loading) {
     return (
-      <div className="bg-white border border-gray-200 p-4 flex items-center justify-between gap-4 animate-pulse">
+      <div className="bg-white border border-gray-200 p-4 flex items-center justify-between gap-3 animate-pulse">
         <div className="flex-1">
           <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
           <div className="h-3 bg-gray-200 rounded w-1/2"></div>
@@ -54,18 +54,21 @@ export default function PriorityShareCard({
   }
 
   const hasData = totalDiseases > 0;
-  const sharePercent = hasData
-    ? Math.round((diseasesWithPriority / totalDiseases) * 100)
-    : null;
+  // Clamp so a caller bug (or future data anomaly) can't produce a label like
+  // "133%" alongside a visually-full ring. The backend SQL guarantees
+  // diseasesWithPriority ≤ totalDiseases today, but a prop-driven component
+  // shouldn't rely on that invariant holding everywhere it's wired up.
+  const filledCount = Math.min(Math.max(diseasesWithPriority, 0), totalDiseases);
+  const sharePercent = hasData ? Math.round((filledCount / totalDiseases) * 100) : null;
 
   // Two-slice pie: filled portion + remaining track. When totalDiseases
   // is 0 we render the track only (uniform light-gray ring).
   const pieData = hasData
     ? [
-        { name: 'filled', value: diseasesWithPriority, color: ACCENT_COLOR },
+        { name: 'filled', value: filledCount, color: ACCENT_COLOR },
         {
           name: 'rest',
-          value: Math.max(totalDiseases - diseasesWithPriority, 0),
+          value: totalDiseases - filledCount,
           color: TRACK_COLOR,
         },
       ]
@@ -84,7 +87,10 @@ export default function PriorityShareCard({
         <span className="text-sm font-semibold text-black tabular-nums">
           {hasData ? `${sharePercent}%` : '—'}
         </span>
-        <div style={{ width: RING_SIZE, height: RING_SIZE }}>
+        {/* The ring is decorative — the share percentage is already in the
+            <span> above. Hide from assistive tech so screen readers don't
+            try to walk the recharts SVG. */}
+        <div style={{ width: RING_SIZE, height: RING_SIZE }} aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
