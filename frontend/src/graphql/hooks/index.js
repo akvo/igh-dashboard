@@ -24,3 +24,4 @@ export { usePortfolioComparison } from './usePortfolioComparison';
 export { useRdPrioritiesWithCandidates, useRdPriorities } from './useRdPriorities';
 export { usePipelineFilterPairs } from './usePipelineFilterPairs';
 export { useActivePipelineFilterPairs } from './useActivePipelineFilterPairs';
+export { useHomePriorityAlignment } from './useHomePriorityAlignment';
