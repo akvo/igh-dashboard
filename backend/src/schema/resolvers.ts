@@ -20,11 +20,11 @@ import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribut
 import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";
 import { getProductDistribution } from "../db/queries/productDistribution.js";
 import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
+import { getPriorityAlignmentOverview } from "../db/queries/priorityAlignment.js";
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
-import { getPriorityAlignmentOverview } from "../db/queries/priorityAlignment.js";
 import { getDistinctValues } from "../db/queries/distinctValues.js";
 import {
   getDiseases,

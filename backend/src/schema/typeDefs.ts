@@ -534,7 +534,7 @@ export const typeDefs = `#graphql
   }
 
   # =============================================================================
-  # PRIORITY ALIGNMENT (Home section)
+  # PRIORITY ALIGNMENT TYPES (Home section)
   # =============================================================================
 
   type PriorityAlignmentAreaShare {
