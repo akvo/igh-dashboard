@@ -96,15 +96,11 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
     expect(baseline.byArea).toHaveLength(3);
-    expect(baseline.byArea.map((r) => r.global_health_area)).toEqual(
-      Array.from(FIXED_AREA_ORDER),
-    );
+    expect(baseline.byArea.map((r) => r.global_health_area)).toEqual(Array.from(FIXED_AREA_ORDER));
   });
 
   it("byArea snapshot values match tracked DB", () => {
-    const byKey = Object.fromEntries(
-      baseline.byArea.map((r) => [r.global_health_area, r]),
-    );
+    const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
     expect(byKey["Neglected disease"].diseasesWithPriority).toBe(6);
     expect(byKey["Neglected disease"].totalDiseases).toBe(203);
     expect(byKey["Emerging infectious disease"].diseasesWithPriority).toBe(6);
@@ -115,8 +111,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 
   it("byArea sharePercentage = diseasesWithPriority / totalDiseases", () => {
     for (const row of baseline.byArea) {
-      const expected =
-        row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0;
+      const expected = row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0;
       expect(row.sharePercentage).toBeCloseTo(expected, 6);
     }
   });
@@ -197,9 +192,7 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
     const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
     expect(filtered.byArea).toHaveLength(3);
-    expect(filtered.byArea.map((r) => r.global_health_area)).toEqual(
-      Array.from(FIXED_AREA_ORDER),
-    );
+    expect(filtered.byArea.map((r) => r.global_health_area)).toEqual(Array.from(FIXED_AREA_ORDER));
   });
 
   it("byArea zero-denominator GHAs render sharePercentage = 0", async () => {
@@ -224,14 +217,8 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
   it("productTypeBreakdown total candidates ≤ baseline total", async () => {
     const firstOption = filterTarget;
     const filtered = await fetchOverview([firstOption.disease_key]);
-    const baselineTotal = baseline.productTypeBreakdown.reduce(
-      (s, r) => s + r.candidateCount,
-      0,
-    );
-    const filteredTotal = filtered.productTypeBreakdown.reduce(
-      (s, r) => s + r.candidateCount,
-      0,
-    );
+    const baselineTotal = baseline.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
+    const filteredTotal = filtered.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
     expect(filteredTotal).toBeLessThanOrEqual(baselineTotal);
   });
 

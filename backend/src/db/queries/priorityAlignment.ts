@@ -28,8 +28,7 @@ const FIXED_GHA_ORDER = [
 // and diseaseOptions. A disease with only stub rows behaves as if it
 // had no priority at all.
 
-const NON_EMPTY_PRIORITY =
-  "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''";
+const NON_EMPTY_PRIORITY = "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''";
 
 // =========================================================
 // Disease-keys filter helper
@@ -118,8 +117,7 @@ export function getPriorityAlignmentOverview(
     };
     return {
       ...row,
-      sharePercentage:
-        row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0,
+      sharePercentage: row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0,
     };
   });
 
