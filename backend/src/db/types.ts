@@ -499,3 +499,40 @@ export interface CandidateGeography {
   iso_code: string | null;
   location_scope: string | null;
 }
+
+// =============================================================================
+// Priority Alignment (Home section)
+// =============================================================================
+
+export interface PriorityAlignmentAreaShare {
+  global_health_area: string;
+  diseasesWithPriority: number;
+  totalDiseases: number;
+  sharePercentage: number; // 0.0 – 1.0
+}
+
+export interface PriorityAlignmentProductType {
+  product_name: string;
+  candidateCount: number;
+}
+
+export interface PriorityAlignmentDiseaseOption {
+  disease_key: number;
+  disease_name: string;
+  // Nullable: some priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis)
+  // are not categorised into the three WHO global health areas in dim_disease.
+  // They still appear in the dropdown; the section's per-GHA share cards
+  // simply won't reflect them.
+  global_health_area: string | null;
+}
+
+export interface PriorityAlignmentOverview {
+  totalPriorities: number;
+  byArea: PriorityAlignmentAreaShare[];
+  productTypeBreakdown: PriorityAlignmentProductType[];
+  diseaseOptions: PriorityAlignmentDiseaseOption[];
+}
+
+export interface PriorityAlignmentInput {
+  diseaseKeys?: number[] | null;
+}

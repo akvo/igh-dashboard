@@ -1,0 +1,118 @@
+'use client';
+
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+
+// =========================================================
+// PriorityShareCard
+// =========================================================
+// Small stat card with a title, description, and a mini ring chart on
+// the right showing a single share value (e.g. "Neglected diseases —
+// 20% share with dedicated priority").
+//
+// Designed for the Home page's WHO Priority Alignment section. Three
+// instances render side-by-side (one per GHA). Shape is intentionally
+// narrow — title/description/loading/zero-denominator are the only
+// states the section produces.
+//
+// Inputs:
+//   title          — card heading (e.g. "Neglected diseases")
+//   description    — single-line subtitle under the title
+//   diseasesWithPriority / totalDiseases — drive the percentage and ring
+//   loading        — render an animated skeleton
+//
+// Special cases:
+//   totalDiseases === 0 → render "—" + "No diseases in selection",
+//   ring fills as a uniform light-gray circle.
+
+const ACCENT_COLOR = '#CBAFDE';   // light purple, matches the screenshot accent
+const TRACK_COLOR = '#E5E7EB';    // gray-200 track for the unfilled portion
+
+const RING_SIZE = 56;             // px, sized to the screenshot
+const INNER_RADIUS = 18;
+const OUTER_RADIUS = 26;
+
+export default function PriorityShareCard({
+  title,
+  description,
+  diseasesWithPriority = 0,
+  totalDiseases = 0,
+  loading = false,
+}) {
+  if (loading) {
+    return (
+      <div className="bg-white border border-gray-200 p-4 flex items-center justify-between gap-3 animate-pulse">
+        <div className="flex-1">
+          <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+        </div>
+        <div
+          className="rounded-full bg-gray-200"
+          style={{ width: RING_SIZE, height: RING_SIZE }}
+        />
+      </div>
+    );
+  }
+
+  const hasData = totalDiseases > 0;
+  // Clamp so a caller bug (or future data anomaly) can't produce a label like
+  // "133%" alongside a visually-full ring. The backend SQL guarantees
+  // diseasesWithPriority ≤ totalDiseases today, but a prop-driven component
+  // shouldn't rely on that invariant holding everywhere it's wired up.
+  const filledCount = Math.min(Math.max(diseasesWithPriority, 0), totalDiseases);
+  const sharePercent = hasData ? Math.round((filledCount / totalDiseases) * 100) : null;
+
+  // Two-slice pie: filled portion + remaining track. When totalDiseases
+  // is 0 we render the track only (uniform light-gray ring).
+  const pieData = hasData
+    ? [
+        { name: 'filled', value: filledCount, color: ACCENT_COLOR },
+        {
+          name: 'rest',
+          value: totalDiseases - filledCount,
+          color: TRACK_COLOR,
+        },
+      ]
+    : [{ name: 'empty', value: 1, color: TRACK_COLOR }];
+
+  return (
+    <div className="bg-white border border-gray-200 p-4 flex items-start justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-semibold text-black mb-1">{title}</h4>
+        <p className="text-xs text-gray-500">
+          {hasData ? description : 'No diseases in selection'}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-sm font-semibold text-black tabular-nums">
+          {hasData ? `${sharePercent}%` : '—'}
+        </span>
+        {/* The ring is decorative — the share percentage is already in the
+            <span> above. Hide from assistive tech so screen readers don't
+            try to walk the recharts SVG. */}
+        <div style={{ width: RING_SIZE, height: RING_SIZE }} aria-hidden="true">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={INNER_RADIUS}
+                outerRadius={OUTER_RADIUS}
+                startAngle={90}
+                endAngle={-270}
+                dataKey="value"
+                stroke="none"
+                isAnimationActive={false}
+              >
+                {pieData.map((entry, idx) => (
+                  <Cell key={idx} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}

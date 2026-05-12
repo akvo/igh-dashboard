@@ -8,3 +8,4 @@ export { default as TabNav } from './TabNav';
 export { default as ChartMenu } from './ChartMenu';
 export { default as DiseaseListPanel } from './DiseaseListPanel';
 export { DataTable } from './data-table';
+export { default as PriorityShareCard } from './PriorityShareCard';

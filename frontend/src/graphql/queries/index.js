@@ -443,3 +443,32 @@ export const GET_PHASES = gql`
     }
   }
 `;
+
+// =========================================================
+// WHO Priority Alignment — Home section
+// =========================================================
+// Single consolidated payload powering all four left cards, the middle
+// product types donut, and the disease dropdown. `diseaseKeys` may be
+// null/empty for the unfiltered view.
+export const GET_HOME_PRIORITY_ALIGNMENT = gql`
+  query HomePriorityAlignment($diseaseKeys: [Int!]) {
+    priorityAlignmentOverview(diseaseKeys: $diseaseKeys) {
+      totalPriorities
+      byArea {
+        global_health_area
+        diseasesWithPriority
+        totalDiseases
+        sharePercentage
+      }
+      productTypeBreakdown {
+        product_name
+        candidateCount
+      }
+      diseaseOptions {
+        disease_key
+        disease_name
+        global_health_area
+      }
+    }
+  }
+`;

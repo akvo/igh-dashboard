@@ -8,13 +8,14 @@ import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { chartColors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
   StackedBarChart,
   WorldMap,
   ChartEmptyState,
+  DonutChart,
 } from '@/components/charts';
 import {
   PieChartIcon,
@@ -26,6 +27,7 @@ import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
   useGhaProductTypeSummaries,
+  useHomePriorityAlignment,
   useDiseaseSummaries,
   useDiseaseProductTypeSummaries,
   useCandidateTypeDistribution,
@@ -41,7 +43,7 @@ import {
   usePipelineFilterPairs,
   useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
+import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
 import {
   consolidateProductOptionsByKey,
   expandProductKeySelection,
@@ -77,6 +79,8 @@ export default function Home() {
   // (not visible) keeps the URL short when most phases are shown.
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
+  // WHO Priority Alignment section — multi-select disease filter.
+  const [whoDiseases, setWhoDiseases] = useUrlState('whoDis', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
   // Page number for the bubble-chart drill-down DataTable. Lives in
   // the parent because DataTable's pagination is controlled. Reset to
@@ -251,6 +255,29 @@ export default function Home() {
     availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
     expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
+  );
+
+  // WHO Priority Alignment data — single consolidated query feeds all four
+  // cards, the product types donut, and the disease dropdown options.
+  const whoDiseaseKeys = useMemo(
+    () => (whoDiseases.length > 0 ? whoDiseases.map((v) => parseInt(v, 10)) : null),
+    [whoDiseases],
+  );
+  const {
+    totalPriorities: whoTotalPriorities,
+    byArea: whoByArea,
+    productTypeChartData: whoProductTypeChartData,
+    diseaseOptions: whoDiseaseOptionsRaw,
+    loading: whoLoading,
+  } = useHomePriorityAlignment(whoDiseaseKeys);
+
+  // Shape `diseaseOptions` for the shared Dropdown component (value = key as string).
+  const whoDiseaseOptions = useMemo(
+    () => whoDiseaseOptionsRaw.map((d) => ({
+      label: d.disease_name,
+      value: String(d.disease_key),
+    })),
+    [whoDiseaseOptionsRaw],
   );
 
   // Candidate type distribution with filters
@@ -712,6 +739,139 @@ export default function Home() {
             )}
           </div>
 
+          {/* WHO Priority Alignment */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-black">
+                  Priority Alignment
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Compare WHO priorities with pipeline
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-[240px]">
+                  <Dropdown
+                    value={whoDiseases}
+                    onChange={setWhoDiseases}
+                    placeholder="Select disease"
+                    options={whoDiseaseOptions}
+                    multiSelect={true}
+                    showSearch={true}
+                    showClearText={true}
+                    loading={whoLoading}
+                  />
+                </div>
+                {/* "View all" uses screenshot styling (white bg, gray border)
+                    rather than the orange CTA used by other sections. The
+                    UX pattern is the same — it links to the dedicated WHO
+                    page — but the visual is intentionally distinct. Route
+                    doesn't exist yet; will 404 until built separately. */}
+                <a
+                  href="/who-priority-alignment"
+                  className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
+                >
+                  View all
+                </a>
+              </div>
+            </div>
+            <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr_1fr] gap-4">
+              {/* Column 1: 4 stacked cards */}
+              <div className="flex flex-col gap-4">
+                {whoLoading ? (
+                  <>
+                    <div className="bg-white border border-gray-200 p-4 animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                      <div className="h-10 bg-gray-200 rounded w-1/3 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                    </div>
+                    {[0, 1, 2].map((i) => (
+                      <PriorityShareCard key={i} loading />
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white border border-gray-200 p-4 flex flex-col gap-4">
+                      <h4 className="text-sm font-semibold text-black">Priorities</h4>
+                      <div>
+                        <div
+                          className="text-[40px] font-extrabold text-black leading-tight"
+                          style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}
+                        >
+                          {whoTotalPriorities.toLocaleString()}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Total number of priorities</p>
+                      </div>
+                    </div>
+                    {whoByArea.map((area) => (
+                      <PriorityShareCard
+                        key={area.global_health_area}
+                        title={displayHealthArea(area.global_health_area)}
+                        description="Share with dedicated priority."
+                        diseasesWithPriority={area.diseasesWithPriority}
+                        totalDiseases={area.totalDiseases}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+
+              {/* Column 2: Product types donut */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+                <h4 className="text-base font-bold text-black mb-1">Product types</h4>
+                <p className="text-sm text-gray-500 mb-3">
+                  Distribution of R&D pipeline across product types.
+                </p>
+                <div className="flex-1">
+                  {whoLoading ? (
+                    <div className="h-[280px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading chart...</div>
+                    </div>
+                  ) : whoProductTypeChartData.length === 0 ? (
+                    <ChartEmptyState variant="donut" height={280} />
+                  ) : (
+                    <DonutChart
+                      data={whoProductTypeChartData}
+                      height={280}
+                      legendPosition="top"
+                      innerRadius={50}
+                      outerRadius={90}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Column 3: Women / children placeholder.
+                  Awaiting a classification column from the data team;
+                  for now we render the empty-state donut so the section
+                  visually balances. Replace this block with a live donut
+                  once the backend exposes `womenOrChildrenShare`. */}
+              <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h4 className="text-base font-bold text-black">
+                    Share of priorities dedicated to women or children
+                  </h4>
+                  <span
+                    className="text-[10px] uppercase tracking-wide text-gray-500 border border-gray-300 rounded px-2 py-0.5 shrink-0"
+                    title="Awaiting classification column from data team"
+                  >
+                    Coming soon
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <ChartEmptyState
+                    variant="donut"
+                    height={280}
+                    title="Data not yet available"
+                    description="The classification column for women / children priorities is being added by the data team."
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
           <ReportsAndInsights />
         </div>

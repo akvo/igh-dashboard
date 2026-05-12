@@ -534,6 +534,37 @@ export const typeDefs = `#graphql
   }
 
   # =============================================================================
+  # PRIORITY ALIGNMENT TYPES (Home section)
+  # =============================================================================
+
+  type PriorityAlignmentAreaShare {
+    global_health_area: String!
+    diseasesWithPriority: Int!
+    totalDiseases: Int!
+    sharePercentage: Float!
+  }
+
+  type PriorityAlignmentProductType {
+    product_name: String!
+    candidateCount: Int!
+  }
+
+  type PriorityAlignmentDiseaseOption {
+    disease_key: Int!
+    disease_name: String!
+    # Nullable: 7 of the 19 priority-bearing diseases (HIV/AIDS,
+    # Tuberculosis, etc.) are not categorised into the three WHO areas.
+    global_health_area: String
+  }
+
+  type PriorityAlignmentOverview {
+    totalPriorities: Int!
+    byArea: [PriorityAlignmentAreaShare!]!
+    productTypeBreakdown: [PriorityAlignmentProductType!]!
+    diseaseOptions: [PriorityAlignmentDiseaseOption!]!
+  }
+
+  # =============================================================================
   # QUERY ROOT
   # =============================================================================
 
@@ -596,6 +627,9 @@ export const typeDefs = `#graphql
 
     # Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): RegulatoryDistribution!
+
+    # WHO Priority alignment — Home section (single consolidated payload).
+    priorityAlignmentOverview(diseaseKeys: [Int!]): PriorityAlignmentOverview!
 
     # Portfolio analysis - product distribution (donut chart)
     productDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!

@@ -20,6 +20,7 @@ import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribut
 import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";
 import { getProductDistribution } from "../db/queries/productDistribution.js";
 import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
+import { getPriorityAlignmentOverview } from "../db/queries/priorityAlignment.js";
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
@@ -273,6 +274,10 @@ export const resolvers = {
         product_names: args.product_names,
         phase_names: args.phase_names,
       }),
+
+    // WHO Priority alignment — single consolidated payload for the Home section.
+    priorityAlignmentOverview: (_: unknown, args: { diseaseKeys?: number[] | null }) =>
+      getPriorityAlignmentOverview({ diseaseKeys: args.diseaseKeys ?? null }),
 
     // Portfolio analysis - product distribution (donut chart)
     productDistribution: (
