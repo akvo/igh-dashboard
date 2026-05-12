@@ -106,30 +106,34 @@ export default function Sidebar({
     return group.children.some((c) => pathname === c.href);
   };
 
-  // Per-group expand state. Initialized open if the current
-  // pathname matches any child route, OR if an explicit `activeId`
-  // override (Storybook stories) targets a child. Session-only —
-  // no localStorage. Reload always opens the group when on a
-  // sub-route.
-  const [expandedGroups, setExpandedGroups] = useState(() => {
-    const initial = {};
-    menuItems.forEach((section) => {
-      section.items.forEach((item) => {
-        if (!item.children) return;
-        const matchesActiveId =
-          activeId !== undefined &&
-          item.children.some((c) => c.id === activeId);
-        const matchesPathname =
-          typeof window !== 'undefined' &&
-          item.children.some((c) => window.location.pathname === c.href);
-        initial[item.id] = matchesActiveId || matchesPathname;
-      });
-    });
-    return initial;
-  });
+  // Per-group expand state.
+  //
+  // The open state is *derived* from the current route: when the
+  // pathname matches one of a group's child routes, the group is
+  // open. We do not seed `useState` from `window.location.pathname`
+  // because during a Next.js App Router client-side navigation the
+  // URL is committed only after the new tree renders — so the
+  // freshly-mounted Sidebar would read the *previous* route and
+  // either collapse a group we just navigated into or leave one
+  // expanded after we've navigated out. `usePathname()` already
+  // reflects the in-flight route during the transition, so deriving
+  // from it sidesteps the timing race entirely.
+  //
+  // `userOverride[groupId]` is the user's manual chevron toggle. It
+  // wins over the derived default when set, so a user can still
+  // close a group while on one of its sub-routes, or open one while
+  // browsing elsewhere. It is session-only and remounts with the
+  // Sidebar on each page navigation.
+  const [userOverride, setUserOverride] = useState({});
 
-  const toggleGroup = (groupId) => {
-    setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  const isGroupOpen = (group) => {
+    if (userOverride[group.id] !== undefined) return userOverride[group.id];
+    return isGroupActive(group);
+  };
+
+  const toggleGroup = (group) => {
+    const currentOpen = isGroupOpen(group);
+    setUserOverride((prev) => ({ ...prev, [group.id]: !currentOpen }));
   };
 
   // Sibling-to-sibling navigation within /portfolio-analysis carries
@@ -195,7 +199,7 @@ export default function Sidebar({
                 const Icon = item.icon;
                 const hasChildren = Array.isArray(item.children) && item.children.length > 0;
                 const isActive = !hasChildren && isItemActive(item);
-                const isGroupOpen = hasChildren && expandedGroups[item.id];
+                const groupOpen = hasChildren && isGroupOpen(item);
                 const isGroupHighlighted = hasChildren && isGroupActive(item);
 
                 if (!hasChildren) {
@@ -270,8 +274,8 @@ export default function Sidebar({
                   <li key={item.id}>
                     <button
                       type="button"
-                      onClick={() => toggleGroup(item.id)}
-                      aria-expanded={isGroupOpen}
+                      onClick={() => toggleGroup(item)}
+                      aria-expanded={groupOpen}
                       className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
                     >
                       <Icon
@@ -281,13 +285,13 @@ export default function Sidebar({
                       <span className="flex-1 text-left text-sm font-normal text-sidebar-text group-hover:text-black transition-colors">
                         {item.label}
                       </span>
-                      {isGroupOpen ? (
+                      {groupOpen ? (
                         <ChevronUpIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
                       ) : (
                         <ChevronDownIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
                       )}
                     </button>
-                    {isGroupOpen && (
+                    {groupOpen && (
                       <ul className="bg-black/[0.03] rounded-lg mt-1 mb-1 py-1">
                         {item.children.map((child) => {
                           const ChildIcon = child.icon;
