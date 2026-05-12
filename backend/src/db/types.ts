@@ -153,6 +153,7 @@ export interface FactClinicalTrialEvent {
   start_date_key: number | null;
   end_date_key: number | null;
   last_updated_key: number | null;
+  primary_completion_date_key: number | null;
   trial_phase: string | null;
   enrollment_count: number | null;
   status: string | null;
@@ -166,6 +167,13 @@ export interface FactClinicalTrialEvent {
   age_groups: string | null;
   study_type: string | null;
   source_text: string | null;
+  description: string | null;
+  collaborator: string | null;
+  funder_type: string | null;
+  interventions: string | null;
+  sex: string | null;
+  study_design: string | null;
+  conditions: string | null;
 }
 
 // =============================================================================
@@ -535,4 +543,61 @@ export interface PriorityAlignmentOverview {
 
 export interface PriorityAlignmentInput {
   diseaseKeys?: number[] | null;
+}
+
+// =============================================================================
+// Slide-in composite shapes (Aggregated Portfolio Explore panels)
+// =============================================================================
+
+export interface PipelineHistoryEntry {
+  year: number;
+  phase_name: string;
+}
+
+export interface SlideInDeveloper {
+  name: string;
+  org_type: string | null;
+}
+
+export interface RegulatoryInfo {
+  approval_status: string | null;
+  who_prequalification: string | null;
+  approving_authorities: string[];
+}
+
+export interface DiseaseSummaryPair {
+  primary: string;
+  secondary: string | null;
+}
+
+export interface DimPublication {
+  publication_id: number;
+  candidate_key: number | null;
+  title: string | null;
+  url: string | null;
+  description: string | null;
+}
+
+export interface SlideInCandidate {
+  candidate: DimCandidateCore;
+  product: DimProduct | null;
+  subProduct: DimProduct | null;
+  technologyType: string | null;
+  diseases: DiseaseSummaryPair;
+  ageGroups: string[];
+  pipelineHistory: PipelineHistoryEntry[];
+  developers: SlideInDeveloper[];
+  trials: FactClinicalTrialEvent[];
+  priorities: DimPriority[];
+  publications: DimPublication[];
+}
+
+export interface SlideInProduct extends SlideInCandidate {
+  regulatory: RegulatoryInfo;
+}
+
+export interface SlideInTrial {
+  trial: FactClinicalTrialEvent;
+  candidate: DimCandidateCore | null;
+  disease: DimDisease | null;
 }
