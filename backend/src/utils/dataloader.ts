@@ -11,11 +11,8 @@ import type {
   FactPipelineSnapshot,
   DimCandidateCore,
   DimCandidateRegulatory,
-  DimCandidateTech,
   DimPublication,
   PipelineHistoryEntry,
-  SlideInDeveloper,
-  RegulatoryInfo,
 } from "../db/types.js";
 
 /**
@@ -326,7 +323,7 @@ export function createLoaders() {
         )
         .all(...candidateKeys) as Array<{ candidate_key: number; technology_type: string | null }>;
       const map = new Map(rows.map((r) => [r.candidate_key, r.technology_type]));
-      return candidateKeys.map((k) => map.get(k) ?? null);
+      return candidateKeys.map((k) => map.get(k) || null);
     }),
 
     // Batch load sub-product per candidate (active snapshot's sub_product_key)
@@ -346,7 +343,7 @@ export function createLoaders() {
         `,
           )
           .all(...candidateKeys) as (DimProduct & { candidate_key: number })[];
-        const map = new Map(rows.map((r) => [r.candidate_key, r as DimProduct]));
+        const map = new Map(rows.map((r) => [r.candidate_key, r]));
         return candidateKeys.map((k) => map.get(k) || null);
       },
     ),
