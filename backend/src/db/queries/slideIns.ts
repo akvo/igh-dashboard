@@ -67,7 +67,7 @@ export function getTrialForSlideIn(trial_id: number): FactClinicalTrialEvent | n
  * disease_key denormalised from their candidate, so the lookup is direct
  * (no FK_VIA_CANDIDATE chase here).
  */
-export function getDiseaseByKey(disease_key: number): DimDisease | null {
+export function getDiseaseForSlideIn(disease_key: number): DimDisease | null {
   const db = getDatabase();
   const row = db
     .prepare(
