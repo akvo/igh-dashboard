@@ -472,3 +472,10 @@ export const GET_HOME_PRIORITY_ALIGNMENT = gql`
     }
   }
 `;
+
+// Aggregated Portfolio slide-in queries
+export {
+  GET_SLIDE_IN_CANDIDATE,
+  GET_SLIDE_IN_PRODUCT,
+  GET_SLIDE_IN_TRIAL,
+} from './slideIns';
