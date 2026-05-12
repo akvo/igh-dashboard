@@ -125,6 +125,14 @@ export interface DimDeveloper {
   developer_name: string | null;
 }
 
+export interface DimPublication {
+  publication_id: number;
+  candidate_key: number | null;
+  title: string | null;
+  url: string | null;
+  description: string | null;
+}
+
 // =============================================================================
 // FACT TABLES
 // =============================================================================
@@ -568,14 +576,6 @@ export interface RegulatoryInfo {
 export interface DiseaseSummaryPair {
   primary: string;
   secondary: string | null;
-}
-
-export interface DimPublication {
-  publication_id: number;
-  candidate_key: number | null;
-  title: string | null;
-  url: string | null;
-  description: string | null;
 }
 
 export interface SlideInCandidate {
