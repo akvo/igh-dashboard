@@ -78,11 +78,11 @@ export default function Home() {
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
-  // Page number for the bubble-chart drill-down DataTable. Lives in the
-  // parent because DataTable's pagination is controlled. The
-  // `key={bubbleView}` remount on the table itself resets DataTable's
-  // internal state cleanly, and DataTable's own page-snap effect pulls
-  // this value back to 1 if the new view has fewer pages.
+  // Page number for the bubble-chart drill-down DataTable. Lives in
+  // the parent because DataTable's pagination is controlled. Reset to
+  // 1 on view change in the effect below — the `key={bubbleView}`
+  // remount on the table only resets DataTable's own internal state
+  // (column widths, sticky measurements), not this parent-owned page.
   const [bubblePage, setBubblePage] = useState(1);
   // Sort + visible-column state for the drill-down table. Reset when
   // the bubble view tab changes — each view has a different column
@@ -93,6 +93,7 @@ export default function Home() {
   useEffect(() => {
     setBubbleSort(null);
     setBubbleVisibleColumns([]);
+    setBubblePage(1);
   }, [bubbleView]);
 
   const bubbleChartRef = useRef(null);
@@ -472,12 +473,12 @@ export default function Home() {
                 />
               ) : (
                 <DataTable
-                  // Remount on tab change so DataTable's internal state
-                  // (column widths, sticky measurements) resets cleanly.
-                  // The parent owns page state via useState; resetting it
-                  // here would require a separate effect, but the
-                  // snap-back inside DataTable already pulls `page` back
-                  // to 1 when the new view has fewer pages.
+                  // Remount on tab change so DataTable's internal
+                  // state (column widths, sticky measurements) resets
+                  // cleanly. Parent-owned `bubblePage` resets to 1 in
+                  // the view-change effect above, so each tab opens on
+                  // page 1 regardless of where the previous tab left
+                  // off.
                   key={bubbleView}
                   tableId={`bubble-drill-${bubbleView}`}
                   serverSide={false}

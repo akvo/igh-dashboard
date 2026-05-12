@@ -294,10 +294,19 @@ export default function DataTable({
   // Snap back to page 1 if the user filtered down to fewer pages than
   // their current page index — otherwise pagination shows "page 5"
   // when the filtered set has only 2 pages.
+  //
+  // Client-side only. Server-side callers reset the page explicitly
+  // from their own onFiltersChange / onSortChange handlers, and their
+  // Apollo hooks use `fetchPolicy: 'network-only'` — which surfaces
+  // `totalCount = 0` (so `totalPages = 1`) for one or more renders
+  // while a page-change refetch is in flight. Running this effect in
+  // server-side mode would catch that transient and snap the user
+  // back to page 1 every time they navigated to page 2+.
   useEffect(() => {
+    if (serverSide) return;
     if (page > totalPages) onPageChange(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPages]);
+  }, [totalPages, serverSide]);
 
   if (loading && visibleRows.length === 0) {
     return (
