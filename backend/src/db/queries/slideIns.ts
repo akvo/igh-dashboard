@@ -2,9 +2,7 @@ import { getDatabase } from "../connection.js";
 import type {
   DimCandidateCore,
   DimDisease,
-  DimProduct,
   FactClinicalTrialEvent,
-  DimCandidateRegulatory,
 } from "../types.js";
 
 /**
@@ -80,55 +78,6 @@ export function getDiseaseForSlideIn(disease_key: number): DimDisease | null {
     `,
     )
     .get(disease_key) as DimDisease | undefined;
-  return row || null;
-}
-
-/**
- * Product on a candidate slide-in's "At a glance" card. The candidate's
- * active pipeline snapshot points at the top-level product_key, so we
- * resolve it here rather than re-querying in the resolver.
- */
-export function getProductForCandidate(candidate_key: number): DimProduct | null {
-  const db = getDatabase();
-  const row = db
-    .prepare(
-      `
-      SELECT p.product_key, p.vin_productid, p.product_name, p.product_type
-      FROM fact_pipeline_snapshot f
-      JOIN dim_product p ON f.product_key = p.product_key
-      WHERE f.candidate_key = ?
-        AND f.is_active_flag = 1
-      LIMIT 1
-    `,
-    )
-    .get(candidate_key) as DimProduct | undefined;
-  return row || null;
-}
-
-/**
- * Returns the candidate's active-snapshot regulatory row. Approved-
- * products specifically need this; for candidates it is unused.
- */
-export function getRegulatoryForCandidate(
-  candidate_key: number,
-): DimCandidateRegulatory | null {
-  const db = getDatabase();
-  const row = db
-    .prepare(
-      `
-      SELECT r.regulatory_key, r.approval_status, r.fda_approval_date,
-             r.who_prequal_date, r.who_prequalification,
-             r.nra_approval_status, r.sra_approval_status,
-             r.ema_approval_status, r.japanese_mhlw_approval_status,
-             r.us_fda_approval_status
-      FROM fact_pipeline_snapshot f
-      JOIN dim_candidate_regulatory r ON f.regulatory_key = r.regulatory_key
-      WHERE f.candidate_key = ?
-        AND f.is_active_flag = 1
-      LIMIT 1
-    `,
-    )
-    .get(candidate_key) as DimCandidateRegulatory | undefined;
   return row || null;
 }
 
