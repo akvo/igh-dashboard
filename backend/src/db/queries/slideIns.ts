@@ -1,9 +1,5 @@
 import { getDatabase } from "../connection.js";
-import type {
-  DimCandidateCore,
-  DimDisease,
-  FactClinicalTrialEvent,
-} from "../types.js";
+import type { DimCandidateCore, DimDisease, FactClinicalTrialEvent } from "../types.js";
 
 /**
  * Load a single candidate row by key. Returned by the slide-in resolver as
@@ -88,8 +84,8 @@ export function getDiseaseForSlideIn(disease_key: number): DimDisease | null {
 export function getDateString(date_key: number | null): string | null {
   if (date_key == null) return null;
   const db = getDatabase();
-  const row = db
-    .prepare(`SELECT full_date FROM dim_date WHERE date_key = ?`)
-    .get(date_key) as { full_date: string | null } | undefined;
+  const row = db.prepare(`SELECT full_date FROM dim_date WHERE date_key = ?`).get(date_key) as
+    | { full_date: string | null }
+    | undefined;
   return row?.full_date ?? null;
 }
