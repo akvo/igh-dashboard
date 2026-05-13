@@ -8,6 +8,13 @@
  *
  * Violet is the one exception: theme.js has no purple-family
  * palette, so the Phase 2 chip keeps the mock's violet values.
+ *
+ * NOTE on !important: globals.css applies
+ *   *:not([class*="rounded-full"]) { border-radius: 0 !important; }
+ * site-wide to enforce a square aesthetic. Every border-radius below
+ * is marked !important so the slide-in's intentionally-rounded chips,
+ * pills, and cards survive that reset. Don't strip the !important
+ * tags or the panel collapses into a grid of rectangles.
  */
 .si-root {
   /* Surfaces and text — mapped to theme.colors gray / black / cream */
@@ -86,7 +93,7 @@
 .si-eyebrow { font-size: 13px; font-weight: 600; color: var(--ink-2); }
 .si-icon-btn {
   width: 32px; height: 32px;
-  border: none; background: transparent; border-radius: 8px; cursor: pointer;
+  border: none; background: transparent; border-radius: 8px !important; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--ink-2);
 }
@@ -105,7 +112,7 @@
 
 .si-chip {
   display: inline-flex; align-items: center; height: 22px;
-  padding: 0 10px; border-radius: 4px;
+  padding: 0 10px; border-radius: 4px !important;
   font-size: 11px; font-weight: 600;
   text-transform: uppercase;
 }
@@ -122,12 +129,12 @@
 .si-who-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px 6px 10px;
-  border-radius: 999px;
+  border-radius: 999px !important;
   background: var(--bg-page); border: 1px solid var(--rule-2);
   font-size: 12px; font-weight: 500; color: var(--ink-2);
 }
 .si-who-badge .dot {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50% !important;
   background: var(--peach-500);
   /* Halo tinted to orange-500 — rgb(254,116,73) */
   box-shadow: 0 0 0 3px rgba(254,116,73,0.18);
@@ -145,7 +152,7 @@
 
 .si-glance-card {
   background: var(--peach-50);
-  border-radius: 12px; padding: 18px 20px;
+  border-radius: 12px !important; padding: 18px 20px;
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 18px 24px;
 }
@@ -158,7 +165,7 @@
   font-size: 14px; font-weight: 600; color: var(--ink-1); margin: 0;
 }
 
-.si-timeline-card { background: var(--peach-50); border-radius: 12px; padding: 18px 20px 14px; }
+.si-timeline-card { background: var(--peach-50); border-radius: 12px !important; padding: 18px 20px 14px; }
 .si-timeline-grid { display: grid; gap: 12px 16px; align-items: center; }
 .si-timeline-row-label {
   font-size: 11px; font-weight: 600; color: var(--ink-3);
@@ -168,7 +175,7 @@
 
 .si-phase-pill {
   display: inline-flex; align-items: center; justify-content: center;
-  height: 26px; padding: 0 12px; border-radius: 999px;
+  height: 26px; padding: 0 12px; border-radius: 999px !important;
   font-size: 12px; font-weight: 600; width: 100%; max-width: 110px;
 }
 /* Phase chips. Discovery + Phase 1 are warm (orange); Phase 2 is violet
@@ -192,7 +199,7 @@
 .si-def-value p { margin: 0 0 8px; }
 .si-def-value p:last-child { margin-bottom: 0; }
 
-.si-table-wrap { border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.si-table-wrap { border: 1px solid var(--rule); border-radius: 10px !important; overflow: hidden; }
 .si-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .si-table thead th {
   background: var(--peach-50); text-align: left;
@@ -210,14 +217,14 @@
 
 .si-status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 9px; border-radius: 999px;
+  padding: 3px 9px; border-radius: 999px !important;
   font-size: 11px; font-weight: 600;
 }
 .si-status-pill.active { background: var(--green-bg); color: var(--green-text); }
 .si-status-pill.completed { background: #e4e0d6; color: var(--ink-2); }  /* cream-600 / gray-700 */
 .si-status-pill.unknown { background: #F3F4F6; color: var(--ink-4); }    /* gray-100 / gray-500 */
 .si-status-pill .sdot {
-  width: 6px; height: 6px; border-radius: 50%; background: currentColor;
+  width: 6px; height: 6px; border-radius: 50% !important; background: currentColor;
 }
 
 .si-url-link {
@@ -227,7 +234,7 @@
 .si-url-link:hover { text-decoration: underline; }
 
 .si-empty-state {
-  background: var(--peach-50); border-radius: 12px;
+  background: var(--peach-50); border-radius: 12px !important;
   padding: 18px 20px;
   display: flex; align-items: flex-start; gap: 14px;
 }
@@ -235,7 +242,7 @@
 .si-empty-body { font-size: 12.5px; color: var(--ink-3); line-height: 1.5; margin: 0; }
 
 .si-pub-card {
-  background: #fff; border: 1px solid var(--rule); border-radius: 10px;
+  background: #fff; border: 1px solid var(--rule); border-radius: 10px !important;
   padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
 }
 .si-pub-card:hover { border-color: var(--peach-200); }
@@ -247,7 +254,7 @@
 }
 .si-pub-action:hover { color: var(--peach-700); }
 
-.si-updates-card { background: var(--peach-50); border-radius: 12px; padding: 14px 18px; }
+.si-updates-card { background: var(--peach-50); border-radius: 12px !important; padding: 14px 18px; }
 .si-updates-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .si-updates-item {
   display: flex; align-items: flex-start; gap: 12px;
@@ -257,14 +264,14 @@
 .si-updates-item:last-child { padding-bottom: 0; border-bottom: none; }
 .si-update-marker {
   flex-shrink: 0; width: 6px; height: 6px;
-  margin-top: 7px; border-radius: 50%;
+  margin-top: 7px; border-radius: 50% !important;
   background: var(--peach-500);
   /* Halo tinted to orange-500 — rgb(254,116,73) */
   box-shadow: 0 0 0 3px rgba(254,116,73,0.15);
 }
 
 .si-reg-card {
-  background: var(--peach-50); border-radius: 12px;
+  background: var(--peach-50); border-radius: 12px !important;
   padding: 14px 18px;
   display: grid; grid-template-columns: 1fr 1fr 1fr;
   gap: 12px 18px;
@@ -279,7 +286,7 @@
 }
 .si-reg-status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 999px;
+  padding: 3px 10px; border-radius: 999px !important;
   background: var(--green-bg); color: var(--green-text);
   font-size: 12px; font-weight: 600;
 }
@@ -287,13 +294,13 @@
 .si-receptor-tag {
   display: inline-block; background: var(--bg-page);
   border: 1px solid var(--rule-2);
-  padding: 4px 10px; border-radius: 6px;
+  padding: 4px 10px; border-radius: 6px !important;
   font-size: 12px; color: var(--ink-2);
   margin: 2px 4px 2px 0; line-height: 1.3;
 }
 .si-tag-row { display: flex; flex-wrap: wrap; gap: 4px; }
 
-.si-ppc-card { background: #fff; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.si-ppc-card { background: #fff; border: 1px solid var(--rule); border-radius: 12px !important; overflow: hidden; }
 .si-ppc-head {
   display: flex; align-items: flex-start; gap: 12px;
   padding: 14px 16px 12px;
@@ -302,7 +309,7 @@
 }
 .si-ppc-tag {
   flex-shrink: 0; display: inline-flex; align-items: center;
-  height: 22px; padding: 0 8px; border-radius: 4px;
+  height: 22px; padding: 0 8px; border-radius: 4px !important;
   background: var(--peach-500); color: #fff;
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -320,14 +327,14 @@
 
 .si-btn-close {
   display: inline-flex; align-items: center; gap: 8px;
-  height: 38px; padding: 0 22px; border-radius: 9px;
+  height: 38px; padding: 0 22px; border-radius: 9px !important;
   background: var(--ink-1); color: #fff;
   border: none; font-size: 13px; font-weight: 600;
   cursor: pointer;
 }
 .si-btn-close:hover { background: #1F2937; } /* gray-800 */
 .si-empty-table {
-  background: var(--peach-50); border-radius: 10px;
+  background: var(--peach-50); border-radius: 10px !important;
   padding: 18px 20px;
   font-size: 12.5px; color: var(--ink-3);
   text-align: center; line-height: 1.5; font-style: italic;
@@ -342,7 +349,7 @@
   text-decoration: none; color: var(--ink-2);
   font-size: 12px;
   background: var(--bg-page); border: 1px solid var(--rule-2);
-  padding: 4px 10px; border-radius: 6px;
+  padding: 4px 10px; border-radius: 6px !important;
 }
 .si-ct-registry-label {
   color: var(--ink-3); font-size: 11px;
@@ -352,32 +359,32 @@
   font-family: 'JetBrains Mono', monospace;
   font-weight: 600; color: var(--ink-1); font-size: 12px;
 }
-.si-details-card { background: var(--peach-50); border-radius: 12px; padding: 16px 18px; }
+.si-details-card { background: var(--peach-50); border-radius: 12px !important; padding: 16px 18px; }
 .si-details-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px 20px; }
 .si-details-grid.two-col { grid-template-columns: 1fr 1fr; }
 .si-timeline-strip {
-  background: var(--peach-50); border-radius: 12px;
+  background: var(--peach-50); border-radius: 12px !important;
   padding: 18px 20px 16px;
   display: grid; grid-template-columns: 1fr 24px 1fr 24px 1fr;
   align-items: start; margin-bottom: 12px;
 }
 /* Timeline strip dots — halos tinted to orange-500 (peach-500 token)
  * and the end dot to theme.black rgb(38,38,38). */
-.si-ts-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--peach-500); box-shadow: 0 0 0 3px rgba(254,116,73,0.18); margin-bottom: 8px; }
+.si-ts-dot { width: 12px; height: 12px; border-radius: 50% !important; background: var(--peach-500); box-shadow: 0 0 0 3px rgba(254,116,73,0.18); margin-bottom: 8px; }
 .si-ts-dot--mid { background: var(--peach-300); box-shadow: 0 0 0 3px rgba(254,116,73,0.12); }
 .si-ts-dot--end { background: var(--ink-1); box-shadow: 0 0 0 3px rgba(38,38,38,0.12); }
-.si-ts-bar { height: 2px; background: var(--peach-200); margin-top: 5px; border-radius: 1px; }
+.si-ts-bar { height: 2px; background: var(--peach-200); margin-top: 5px; border-radius: 1px !important; }
 .si-ts-label { font-size: 10.5px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 3px; }
 .si-ts-value { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0; line-height: 1.3; }
 
 .si-location-card {
   background: #fff; border: 1px solid var(--rule);
-  border-radius: 10px; padding: 14px 16px;
+  border-radius: 10px !important; padding: 14px 16px;
   display: flex; gap: 12px; align-items: flex-start;
 }
 .si-location-pin {
   flex-shrink: 0; width: 36px; height: 36px;
-  border-radius: 8px;
+  border-radius: 8px !important;
   background: var(--peach-50); color: var(--peach-600);
   display: inline-flex; align-items: center; justify-content: center;
 }
@@ -387,13 +394,13 @@
 .si-source-card {
   display: flex; align-items: center; gap: 14px;
   padding: 14px 16px;
-  background: #fff; border: 1px solid var(--rule); border-radius: 10px;
+  background: #fff; border: 1px solid var(--rule); border-radius: 10px !important;
   text-decoration: none; color: var(--ink-1);
 }
 .si-source-card:hover { border-color: var(--peach-200); }
 .si-source-icon {
   flex-shrink: 0; width: 38px; height: 38px;
-  border-radius: 8px;
+  border-radius: 8px !important;
   background: var(--peach-50); color: var(--peach-600);
   display: inline-flex; align-items: center; justify-content: center;
 }
