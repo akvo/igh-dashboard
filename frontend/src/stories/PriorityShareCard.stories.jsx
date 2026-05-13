@@ -1,4 +1,5 @@
 import PriorityShareCard from '../components/ui/PriorityShareCard';
+import { chartColors } from '@/lib/theme';
 
 export default {
   title: 'UI/PriorityShareCard',
@@ -57,5 +58,18 @@ export const Loading = {
     title: 'Neglected diseases',
     description: 'Share with dedicated priority.',
     loading: true,
+  },
+};
+
+// Exercise the per-GHA accent override. ND/EID/WH on the Home page each
+// pass a different `accentColor` from `chartColors.primary`; this story
+// pins the green variant so the override path stays covered.
+export const GreenAccent = {
+  args: {
+    title: 'Emerging infectious diseases',
+    description: 'Share with dedicated priority.',
+    diseasesWithPriority: 6,
+    totalDiseases: 30,
+    accentColor: chartColors.primary[7],
   },
 };

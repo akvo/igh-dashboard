@@ -6,7 +6,7 @@ import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 import { createBubbleColorScale } from '@/lib/bubbleColorScale';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
-import { chartColors } from '@/lib/theme';
+import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
@@ -63,6 +63,39 @@ const bubbleViewTabs = [
   { value: 'ghaType', label: 'GHA and product types' },
   { value: 'disease', label: 'Diseases' },
   { value: 'diseaseType', label: 'Disease and product types' },
+];
+
+// WHO Priority Alignment ring accents — keyed by the raw DB GHA strings
+// returned by `priorityAlignmentOverview.byArea`. Sourced from
+// `chartColors.primary` so the rings stay in sync with the rest of the
+// data-viz palette and matches the screenshot mock: ND uses the light
+// purple accent, EID and WH share the green accent. (Diseases without a
+// GHA never reach a ring, so this map is exhaustive for what `byArea`
+// can return.)
+const WHO_RING_COLORS = {
+  'Neglected disease': chartColors.primary[1],          // #CBAFDE Light Purple
+  'Emerging infectious disease': chartColors.primary[7], // #6AB085 Green
+  'Womens Health': chartColors.primary[7],              // #6AB085 Green
+};
+
+// Product types donut palette for the WHO Priority Alignment section.
+// `DonutChart` consumes the array positionally — wedge[i] takes
+// palette[i % palette.length] — and `productTypeBreakdown` is sorted by
+// candidate count descending. The screenshot has the largest wedge
+// (Vaccines) in brand orange, the second (Drugs) in light purple, and
+// the rest stepping through the brandbook palette. We deliberately
+// override DonutChart's default palette (which leads with Gold) for
+// this section only; other donuts on the page keep their defaults.
+const WHO_PRODUCT_TYPE_COLORS = [
+  colors.orange[500],     // #fe7449 — Vaccines (largest wedge in the screenshot)
+  chartColors.primary[1], // #CBAFDE Light Purple — Drugs
+  chartColors.primary[2], // #B08888 Mauve — Diagnostics
+  chartColors.primary[3], // #E3D6C1 Beige — Biologics
+  chartColors.primary[4], // #F9A78D Peach — VCP
+  chartColors.primary[5], // #FFDCD1 Light Pink — Dietary supplements
+  chartColors.primary[0], // #F0B456 Gold — Microbicides
+  chartColors.primary[6], // #CC9949 Dark Gold — Microbial interventions
+  chartColors.primary[7], // #6AB085 Green — overflow for any extra product type
 ];
 
 
@@ -813,6 +846,7 @@ export default function Home() {
                         description="Share with dedicated priority."
                         diseasesWithPriority={area.diseasesWithPriority}
                         totalDiseases={area.totalDiseases}
+                        accentColor={WHO_RING_COLORS[area.global_health_area]}
                       />
                     ))}
                   </>
@@ -835,6 +869,7 @@ export default function Home() {
                   ) : (
                     <DonutChart
                       data={whoProductTypeChartData}
+                      colors={WHO_PRODUCT_TYPE_COLORS}
                       height={280}
                       legendPosition="top"
                       innerRadius={50}
