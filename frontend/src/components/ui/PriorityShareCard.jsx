@@ -1,6 +1,7 @@
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { chartColors } from '@/lib/theme';
 
 // =========================================================
 // PriorityShareCard
@@ -18,13 +19,20 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 //   title          — card heading (e.g. "Neglected diseases")
 //   description    — single-line subtitle under the title
 //   diseasesWithPriority / totalDiseases — drive the percentage and ring
+//   accentColor    — filled-arc colour. Default matches the screenshot's
+//                    ND card (light purple). Callers pass other tokens
+//                    from `chartColors.primary` so each GHA card can
+//                    have its own accent.
 //   loading        — render an animated skeleton
 //
 // Special cases:
 //   totalDiseases === 0 → render "—" + "No diseases in selection",
 //   ring fills as a uniform light-gray circle.
 
-const ACCENT_COLOR = '#CBAFDE';   // light purple, matches the screenshot accent
+// Default accent = chartColors.primary[1] (Light Purple, #CBAFDE).
+// Pulled from the theme so this card stays in sync with the rest of the
+// data-viz palette if a brand refresh tweaks the colour tokens.
+const DEFAULT_ACCENT_COLOR = chartColors.primary[1];
 const TRACK_COLOR = '#E5E7EB';    // gray-200 track for the unfilled portion
 
 const RING_SIZE = 56;             // px, sized to the screenshot
@@ -37,6 +45,7 @@ export default function PriorityShareCard({
   diseasesWithPriority = 0,
   totalDiseases = 0,
   loading = false,
+  accentColor = DEFAULT_ACCENT_COLOR,
 }) {
   if (loading) {
     return (
@@ -65,7 +74,7 @@ export default function PriorityShareCard({
   // is 0 we render the track only (uniform light-gray ring).
   const pieData = hasData
     ? [
-        { name: 'filled', value: filledCount, color: ACCENT_COLOR },
+        { name: 'filled', value: filledCount, color: accentColor },
         {
           name: 'rest',
           value: totalDiseases - filledCount,
