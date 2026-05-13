@@ -10,27 +10,56 @@ function phaseClass(stage) {
   return 'si-phase-pill si-phase-1';
 }
 
+/**
+ * Development history is a fixed-width "R&D stage" label sitting beside
+ * a horizontally scrollable timeline (years on top, phase pills below).
+ * Splitting the label out of the scroll viewport — instead of sticking
+ * a grid cell to `left: 0` — keeps the label always-visible without the
+ * sticky cell visually colliding with pill content as the user scrolls.
+ *
+ * The aside reserves an invisible year-height spacer above the label so
+ * the label vertically aligns with the pill row regardless of how many
+ * lines the pill text wraps onto.
+ */
 export function DevHistorySection({ history }) {
   if (!history?.length) return null;
   const cols = history.length;
-  const gridCols = `110px repeat(${cols}, 1fr)`;
+  // Each year column gets a fixed minimum width so columns stay legible
+  // for long pipelines; beyond what fits the panel, the timeline
+  // scrolls horizontally inside its own container.
+  const colTemplate = `repeat(${cols}, minmax(68px, 1fr))`;
   return (
     <div className="si-section">
       <div className="si-section-head">
         <h2 className="si-section-title">Development history</h2>
       </div>
       <div className="si-timeline-card">
-        <div className="si-timeline-grid" style={{ gridTemplateColumns: gridCols }}>
-          <div />
-          {history.map((h) => (
-            <div key={`y-${h.year}`} className="si-timeline-year">{h.year}</div>
-          ))}
+        <div className="si-timeline-aside">
+          <div className="si-timeline-aside-spacer" aria-hidden="true">
+            &nbsp;
+          </div>
           <div className="si-timeline-row-label">R&D stage</div>
-          {history.map((h) => (
-            <div key={`s-${h.year}`} style={{ display: 'flex', justifyContent: 'center' }}>
-              <span className={phaseClass(h.phase_name)}>{h.phase_name}</span>
+        </div>
+        <div className="si-timeline-scroll">
+          <div
+            className="si-timeline-grid"
+            style={{ '--si-tl-cols': colTemplate }}
+          >
+            <div className="si-timeline-row si-timeline-row--years">
+              {history.map((h) => (
+                <div key={`y-${h.year}`} className="si-timeline-year">
+                  {h.year}
+                </div>
+              ))}
             </div>
-          ))}
+            <div className="si-timeline-row si-timeline-row--pills">
+              {history.map((h) => (
+                <div key={`s-${h.year}`} className="si-timeline-cell">
+                  <span className={phaseClass(h.phase_name)}>{h.phase_name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

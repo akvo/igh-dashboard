@@ -28,14 +28,14 @@ export function ProductSlideIn({ candidateKey, onClose }) {
 
   if (loading) {
     return (
-      <SlideInPanel eyebrow="Key product information" onClose={onClose}>
+      <SlideInPanel eyebrow="Key approved product information" onClose={onClose}>
         <div style={{ padding: '24px 0', color: 'var(--ink-3)' }}>Loading…</div>
       </SlideInPanel>
     );
   }
   if (error || !slideIn) {
     return (
-      <SlideInPanel eyebrow="Key product information" onClose={onClose}>
+      <SlideInPanel eyebrow="Key approved product information" onClose={onClose}>
         <div style={{ padding: '24px 0', color: 'var(--ink-3)' }}>
           {error ? 'Failed to load product.' : 'Product not found.'}
         </div>
@@ -49,7 +49,7 @@ export function ProductSlideIn({ candidateKey, onClose }) {
     : diseases.primary;
 
   return (
-    <SlideInPanel eyebrow="Key product information" onClose={onClose}>
+    <SlideInPanel eyebrow="Key approved product information" onClose={onClose}>
       <IdentitySection
         productType={product?.product_type}
         name={candidate.candidate_name}

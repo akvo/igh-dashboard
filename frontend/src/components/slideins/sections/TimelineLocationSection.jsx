@@ -11,6 +11,14 @@ function fmtDate(iso) {
   return `${month} ${m[1]}`;
 }
 
+/**
+ * Timeline & location matches the original design template at
+ * igh-design/slide ins/slidein-3-clinical-trial.html: each milestone is
+ * a column with a dot above its label and value, and the three columns
+ * are separated by short connecting bars at the dot's vertical level.
+ * The grid lays this out as `1fr 24px 1fr 24px 1fr` with align-items:
+ * start so the bars sit at the top alongside the dots.
+ */
 export function TimelineLocationSection({ start, primaryCompletion, end, location }) {
   return (
     <div className="si-section">
@@ -18,20 +26,20 @@ export function TimelineLocationSection({ start, primaryCompletion, end, locatio
         <h2 className="si-section-title">Timeline &amp; location</h2>
       </div>
       <div className="si-timeline-strip">
-        <div>
-          <span className="si-ts-dot" />
+        <div className="si-ts-item">
+          <span className="si-ts-dot si-ts-dot--start" aria-hidden="true" />
           <p className="si-ts-label">Start</p>
           <p className="si-ts-value">{fmtDate(start)}</p>
         </div>
-        <div className="si-ts-bar" />
-        <div>
-          <span className="si-ts-dot si-ts-dot--mid" />
+        <div className="si-ts-bar" aria-hidden="true" />
+        <div className="si-ts-item">
+          <span className="si-ts-dot si-ts-dot--mid" aria-hidden="true" />
           <p className="si-ts-label">Primary completion</p>
           <p className="si-ts-value">{fmtDate(primaryCompletion)}</p>
         </div>
-        <div className="si-ts-bar" />
-        <div>
-          <span className="si-ts-dot si-ts-dot--end" />
+        <div className="si-ts-bar" aria-hidden="true" />
+        <div className="si-ts-item">
+          <span className="si-ts-dot si-ts-dot--end" aria-hidden="true" />
           <p className="si-ts-label">End</p>
           <p className="si-ts-value">{fmtDate(end)}</p>
         </div>

@@ -134,7 +134,7 @@
 .si-who-badge {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px 6px 10px;
-  border-radius: 999px !important;
+  border-radius: 6px !important;
   background: var(--bg-page); border: 1px solid var(--rule-2);
   font-size: 12px; font-weight: 500; color: var(--ink-2);
 }
@@ -170,18 +170,79 @@
   font-size: 14px; font-weight: 600; color: var(--ink-1); margin: 0;
 }
 
-.si-timeline-card { background: var(--peach-50); border-radius: 12px !important; padding: 18px 20px 14px; }
-.si-timeline-grid { display: grid; gap: 12px 16px; align-items: center; }
+/* Development-history card has two columns: a fixed-width aside on the
+ * left holding the "R&D stage" row label, and the scrollable timeline
+ * on the right. Keeping them as siblings (rather than a single grid
+ * with a sticky leading column) means the label never visually overlaps
+ * the scrolling pill content. */
+.si-timeline-card {
+  background: var(--peach-50); border-radius: 12px !important;
+  padding: 18px 20px 14px;
+  display: flex; align-items: stretch; gap: 16px;
+}
+.si-timeline-aside {
+  flex: 0 0 110px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+/* Invisible placeholder sized like a year cell — pushes the label
+ * below to vertically align with the pill row regardless of how many
+ * lines the pills wrap onto. */
+.si-timeline-aside-spacer {
+  visibility: hidden;
+  font-size: 13px; font-weight: 600; line-height: 1.3;
+}
 .si-timeline-row-label {
+  flex: 1 1 auto;
+  display: flex; align-items: center;
   font-size: 11px; font-weight: 600; color: var(--ink-3);
   text-transform: uppercase; letter-spacing: 0.06em;
 }
-.si-timeline-year { font-size: 13px; font-weight: 600; color: var(--ink-2); text-align: center; }
 
+/* The right column scrolls horizontally when the candidate's pipeline
+ * is longer than the panel can fit. Each year column has a 68px floor
+ * so pills stay legible; beyond that, the wrapper scrolls. Bottom
+ * padding keeps the scrollbar from kissing the pill row, and the
+ * neutral ink-tinted thumb avoids visually blending with the peach
+ * phase chips. */
+.si-timeline-scroll {
+  flex: 1 1 auto; min-width: 0;
+  overflow-x: auto; padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(38, 38, 38, 0.18) transparent;
+}
+.si-timeline-scroll::-webkit-scrollbar { height: 6px; }
+.si-timeline-scroll::-webkit-scrollbar-track { background: transparent; }
+.si-timeline-scroll::-webkit-scrollbar-thumb {
+  background: rgba(38, 38, 38, 0.18);
+  border-radius: 3px !important;
+}
+.si-timeline-scroll::-webkit-scrollbar-thumb:hover { background: rgba(38, 38, 38, 0.32); }
+
+/* Two stacked rows (years on top, pills below) share a single grid
+ * column template via the inline `--si-tl-cols` custom property so
+ * year text always sits directly above its phase pill. */
+.si-timeline-grid {
+  display: flex; flex-direction: column; gap: 12px;
+  min-width: max-content;
+}
+.si-timeline-row {
+  display: grid; grid-template-columns: var(--si-tl-cols);
+  gap: 16px; align-items: center;
+}
+.si-timeline-year { font-size: 13px; font-weight: 600; color: var(--ink-2); text-align: center; line-height: 1.3; }
+.si-timeline-cell { display: flex; justify-content: center; }
+
+/* Phase chips render as compact rounded squares (not pill-shaped) so
+ * the timeline stays scannable. Text wraps onto two lines when the
+ * column is too narrow to hold the full label inline (e.g. "Phase III")
+ * — the padding-based sizing lets the chip grow vertically rather than
+ * clipping the second line. */
 .si-phase-pill {
   display: inline-flex; align-items: center; justify-content: center;
-  height: 26px; padding: 0 12px; border-radius: 999px !important;
-  font-size: 12px; font-weight: 600; width: 100%; max-width: 110px;
+  min-height: 22px; padding: 3px 10px; border-radius: 6px !important;
+  font-size: 11.5px; font-weight: 600; line-height: 1.2;
+  width: 100%; max-width: 84px;
+  white-space: normal; text-align: center; overflow-wrap: anywhere;
 }
 /* Phase chips. Discovery + Phase 1 are warm (orange); Phase 2 is violet
  * (no theme equivalent — kept custom); Phase 3 cool (blue); Approved
@@ -200,9 +261,27 @@
 }
 .si-def-value {
   font-size: 13.5px; color: var(--ink-1); line-height: 1.55; margin: 0;
+  overflow-wrap: anywhere;
 }
 .si-def-value p { margin: 0 0 8px; }
 .si-def-value p:last-child { margin-bottom: 0; }
+
+/* Defensive overflow handling for every user-data text container in
+ * the slide-in: source fields routinely include long URLs, registry
+ * IDs, or chemical names with no breaks, and without this they would
+ * push past their card edges (the Recent updates regression that
+ * prompted this rule, plus the equivalents in candidate description,
+ * glance values, locations, and WHO PPC bodies). */
+.si-sub,
+.si-glance-value,
+.si-pub-title,
+.si-ppc-body-text,
+.si-ppc-meta-value,
+.si-location-value,
+.si-reg-value,
+.si-title {
+  overflow-wrap: anywhere;
+}
 
 .si-table-wrap { border: 1px solid var(--rule); border-radius: 10px !important; overflow: hidden; }
 .si-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
@@ -220,9 +299,11 @@
 .si-table tbody tr:last-child td { border-bottom: none; }
 .si-table tbody tr:hover td { background: var(--peach-50); }
 
+/* Status pills share the phase-pill silhouette (square with 6px corners)
+ * so the two read as part of the same chip vocabulary across the panel. */
 .si-status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 9px; border-radius: 999px !important;
+  padding: 3px 9px; border-radius: 6px !important;
   font-size: 11px; font-weight: 600;
 }
 .si-status-pill.active { background: var(--green-bg); color: var(--green-text); }
@@ -261,10 +342,18 @@
 
 .si-updates-card { background: var(--peach-50); border-radius: 12px !important; padding: 14px 18px; }
 .si-updates-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+/* `min-width: 0` releases the flex child from its content-implied
+ * minimum so the inner text span can shrink and wrap; `overflow-wrap:
+ * anywhere` then breaks long unbroken strings (typically URLs pasted
+ * into the source field) so they don't run past the card edge. */
 .si-updates-item {
   display: flex; align-items: flex-start; gap: 12px;
   font-size: 13px; line-height: 1.5; color: var(--ink-1);
   padding-bottom: 10px; border-bottom: 1px solid var(--peach-100);
+  min-width: 0;
+}
+.si-updates-item > span:last-child {
+  min-width: 0; overflow-wrap: anywhere;
 }
 .si-updates-item:last-child { padding-bottom: 0; border-bottom: none; }
 .si-update-marker {
@@ -291,7 +380,7 @@
 }
 .si-reg-status-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 999px !important;
+  padding: 3px 10px; border-radius: 6px !important;
   background: var(--green-bg); color: var(--green-text);
   font-size: 12px; font-weight: 600;
 }
@@ -367,19 +456,32 @@
 .si-details-card { background: var(--peach-50); border-radius: 12px !important; padding: 16px 18px; }
 .si-details-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px 20px; }
 .si-details-grid.two-col { grid-template-columns: 1fr 1fr; }
+/* Trial timeline strip mirrors the original design template:
+ * `1fr 24px 1fr 24px 1fr` so each milestone sits in a column with a
+ * dot above its label and value, and the 24px columns hold short bars
+ * that visually connect the dots. `align-items: start` keeps the bars
+ * level with the dots regardless of label/value height. */
 .si-timeline-strip {
   background: var(--peach-50); border-radius: 12px !important;
   padding: 18px 20px 16px;
   display: grid; grid-template-columns: 1fr 24px 1fr 24px 1fr;
   align-items: start; margin-bottom: 12px;
 }
-/* Timeline strip dots — halos tinted to orange-500 (peach-500 token)
- * and the end dot to theme.black rgb(38,38,38). */
-.si-ts-dot { width: 12px; height: 12px; border-radius: 50% !important; background: var(--peach-500); box-shadow: 0 0 0 3px rgba(254,116,73,0.18); margin-bottom: 8px; }
+.si-ts-item { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+/* Dot halos tinted to orange-500 (peach-500 token); the end dot uses
+ * theme.black rgb(38,38,38) to match the original design's accent. */
+.si-ts-dot {
+  width: 12px; height: 12px; border-radius: 50% !important;
+  background: var(--peach-500); box-shadow: 0 0 0 3px rgba(254,116,73,0.18);
+  margin-bottom: 8px;
+}
 .si-ts-dot--mid { background: var(--peach-300); box-shadow: 0 0 0 3px rgba(254,116,73,0.12); }
 .si-ts-dot--end { background: var(--ink-1); box-shadow: 0 0 0 3px rgba(38,38,38,0.12); }
 .si-ts-bar { height: 2px; background: var(--peach-200); margin-top: 5px; border-radius: 1px !important; }
-.si-ts-label { font-size: 10.5px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 3px; }
+.si-ts-label {
+  font-size: 10.5px; font-weight: 500; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 3px;
+}
 .si-ts-value { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0; line-height: 1.3; }
 
 .si-location-card {
