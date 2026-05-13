@@ -1,28 +1,52 @@
+/* Slide-in design tokens.
+ *
+ * The variable names mirror the design mock's "peach / coral / ink"
+ * vocabulary so the rest of this file reads the same as the
+ * reference, but the *values* are sourced from /src/lib/theme.js
+ * (orange / cream / green / blue / gray) so the slide-in lives inside
+ * the dashboard's actual brand palette.
+ *
+ * Violet is the one exception: theme.js has no purple-family
+ * palette, so the Phase 2 chip keeps the mock's violet values.
+ */
 .si-root {
-  --bg-page: #f3f1ee;
-  --panel: #ffffff;
-  --ink-1: #1a1a1c;
-  --ink-2: #3b3a3a;
-  --ink-3: #6c6a6a;
-  --ink-4: #9a9794;
-  --rule: #ece8e3;
-  --rule-2: #e3ddd5;
-  --peach-50: #fdf3ec;
-  --peach-100: #fae6d8;
-  --peach-200: #f5d2b8;
-  --peach-300: #efb78f;
-  --peach-500: #e07b3b;
-  --peach-600: #c05f23;
-  --peach-700: #8c4316;
-  --coral-bg: #fde8d8;
-  --coral-text: #8c4316;
-  --green-bg: #dcebd6;
-  --green-text: #3d6b2a;
+  /* Surfaces and text — mapped to theme.colors gray / black / cream */
+  --bg-page: #fcf8ef;        /* cream-400 */
+  --panel: #ffffff;          /* white */
+  --ink-1: #262626;          /* black */
+  --ink-2: #374151;          /* gray-700 */
+  --ink-3: #5B616D;          /* gray-600 */
+  --ink-4: #8C929C;          /* gray-500 */
+  --rule: #E5E7EB;           /* gray-200 */
+  --rule-2: #D1D5DB;         /* gray-300 */
+
+  /* Primary tint, formerly "peach" — mapped to theme.colors.orange */
+  --peach-50: #fff1ed;       /* orange-50 */
+  --peach-100: #ffd4c7;      /* orange-100 */
+  --peach-200: #ffbfab;      /* orange-200 */
+  --peach-300: #fea285;      /* orange-300 */
+  --peach-500: #fe7449;      /* orange-500 — primary brand */
+  --peach-600: #e76a42;      /* orange-600 */
+  --peach-700: #8c4028;      /* orange-800 — darkest readable on light bg */
+
+  /* Identity chip — orange-100 background, orange-800 text */
+  --coral-bg: #ffd4c7;
+  --coral-text: #8c4028;
+
+  /* Functional green (success / Active / Approved) — theme.colors.green */
+  --green-bg: #dcf2e4;       /* green-100 */
+  --green-text: #4e765d;     /* green-800 */
+
+  /* Functional blue (Phase 3) — theme.colors.blue */
+  --blue-bg: #deeef4;        /* blue-100 */
+  --blue-text: #516f7a;      /* blue-800 */
+
+  /* Violet (Phase 2) — kept custom; theme has no purple token */
   --violet-bg: #e8d8f0;
   --violet-text: #6b3582;
-  --blue-bg: #d8e4f0;
-  --blue-text: #2f5680;
-  --shadow-panel: -24px 0 60px rgba(20,18,14,0.18), -2px 0 8px rgba(20,18,14,0.06);
+
+  /* Drop shadow tinted to theme.colors.black at low opacity */
+  --shadow-panel: -24px 0 60px rgba(38,38,38,0.18), -2px 0 8px rgba(38,38,38,0.06);
 }
 
 @keyframes si-fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -33,13 +57,13 @@
 
 .si-backdrop {
   position: fixed; inset: 0;
-  background: rgba(20,18,14,0.32);
+  background: rgba(38,38,38,0.32);
   backdrop-filter: blur(2px);
-  /* Sit above the page header (z-[1000]) so the slide-in's full height,
-     including the area behind the 90px-tall header, is covered. Stay
-     below the popover tier (z-[9999]) so dropdowns can still surface
-     above if needed. */
-  z-index: 1100;
+  /* Sit BELOW the page header (z-[1000]) so the 90px-tall header
+     remains visible above the slide-in. Mirrors the home page's
+     DiseaseListPanel pattern (z-40 / z-50). The panel spans the full
+     viewport — the header naturally overlays its top edge. */
+  z-index: 40;
   animation: si-fadeIn 200ms ease both;
 }
 .si-panel {
@@ -47,7 +71,7 @@
   width: 560px; max-width: 96vw;
   background: var(--panel);
   box-shadow: var(--shadow-panel);
-  z-index: 1110;
+  z-index: 50;
   display: flex; flex-direction: column;
   animation: si-slideIn 320ms cubic-bezier(0.22,0.61,0.36,1) both;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -99,13 +123,14 @@
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 12px 6px 10px;
   border-radius: 999px;
-  background: #f5f1ec; border: 1px solid var(--rule-2);
+  background: var(--bg-page); border: 1px solid var(--rule-2);
   font-size: 12px; font-weight: 500; color: var(--ink-2);
 }
 .si-who-badge .dot {
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--peach-500);
-  box-shadow: 0 0 0 3px rgba(224,123,59,0.18);
+  /* Halo tinted to orange-500 — rgb(254,116,73) */
+  box-shadow: 0 0 0 3px rgba(254,116,73,0.18);
 }
 
 .si-section { margin-top: 28px; }
@@ -146,11 +171,15 @@
   height: 26px; padding: 0 12px; border-radius: 999px;
   font-size: 12px; font-weight: 600; width: 100%; max-width: 110px;
 }
-.si-phase-discovery { background: #f5d8c2; color: #8c4316; }
-.si-phase-1 { background: #f8d4b3; color: #8c4316; }
-.si-phase-2 { background: #e6c8db; color: #6b3582; }
-.si-phase-3 { background: #c8d8ec; color: #2f5680; }
-.si-phase-approved { background: #cfe5d3; color: #2c6839; }
+/* Phase chips. Discovery + Phase 1 are warm (orange); Phase 2 is violet
+ * (no theme equivalent — kept custom); Phase 3 cool (blue); Approved
+ * green. Background uses the -200 tint and text the -800 tone for each
+ * theme palette so contrast holds. */
+.si-phase-discovery { background: var(--peach-100); color: var(--peach-700); }
+.si-phase-1 { background: var(--peach-200); color: var(--peach-700); }
+.si-phase-2 { background: var(--violet-bg); color: var(--violet-text); }
+.si-phase-3 { background: #cee6ef; color: var(--blue-text); }      /* blue-200 / blue-800 */
+.si-phase-approved { background: #cbecd7; color: var(--green-text); } /* green-200 / green-800 */
 
 .si-def-list { display: flex; flex-direction: column; gap: 16px; }
 .si-def-label {
@@ -177,7 +206,7 @@
   vertical-align: middle; line-height: 1.45;
 }
 .si-table tbody tr:last-child td { border-bottom: none; }
-.si-table tbody tr:hover td { background: #fbf7f2; }
+.si-table tbody tr:hover td { background: var(--peach-50); }
 
 .si-status-pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -185,8 +214,8 @@
   font-size: 11px; font-weight: 600;
 }
 .si-status-pill.active { background: var(--green-bg); color: var(--green-text); }
-.si-status-pill.completed { background: #e3e0d8; color: #555048; }
-.si-status-pill.unknown { background: #f1eee9; color: var(--ink-4); }
+.si-status-pill.completed { background: #e4e0d6; color: var(--ink-2); }  /* cream-600 / gray-700 */
+.si-status-pill.unknown { background: #F3F4F6; color: var(--ink-4); }    /* gray-100 / gray-500 */
 .si-status-pill .sdot {
   width: 6px; height: 6px; border-radius: 50%; background: currentColor;
 }
@@ -230,7 +259,8 @@
   flex-shrink: 0; width: 6px; height: 6px;
   margin-top: 7px; border-radius: 50%;
   background: var(--peach-500);
-  box-shadow: 0 0 0 3px rgba(224,123,59,0.15);
+  /* Halo tinted to orange-500 — rgb(254,116,73) */
+  box-shadow: 0 0 0 3px rgba(254,116,73,0.15);
 }
 
 .si-reg-card {
@@ -255,7 +285,7 @@
 }
 
 .si-receptor-tag {
-  display: inline-block; background: #f5f1ec;
+  display: inline-block; background: var(--bg-page);
   border: 1px solid var(--rule-2);
   padding: 4px 10px; border-radius: 6px;
   font-size: 12px; color: var(--ink-2);
@@ -295,7 +325,7 @@
   border: none; font-size: 13px; font-weight: 600;
   cursor: pointer;
 }
-.si-btn-close:hover { background: #2c2a28; }
+.si-btn-close:hover { background: #1F2937; } /* gray-800 */
 .si-empty-table {
   background: var(--peach-50); border-radius: 10px;
   padding: 18px 20px;
@@ -311,7 +341,7 @@
   display: inline-flex; align-items: center; gap: 8px;
   text-decoration: none; color: var(--ink-2);
   font-size: 12px;
-  background: #f5f1ec; border: 1px solid var(--rule-2);
+  background: var(--bg-page); border: 1px solid var(--rule-2);
   padding: 4px 10px; border-radius: 6px;
 }
 .si-ct-registry-label {
@@ -331,9 +361,11 @@
   display: grid; grid-template-columns: 1fr 24px 1fr 24px 1fr;
   align-items: start; margin-bottom: 12px;
 }
-.si-ts-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--peach-500); box-shadow: 0 0 0 3px rgba(224,123,59,0.18); margin-bottom: 8px; }
-.si-ts-dot--mid { background: var(--peach-300); box-shadow: 0 0 0 3px rgba(224,123,59,0.12); }
-.si-ts-dot--end { background: var(--ink-1); box-shadow: 0 0 0 3px rgba(20,18,14,0.12); }
+/* Timeline strip dots — halos tinted to orange-500 (peach-500 token)
+ * and the end dot to theme.black rgb(38,38,38). */
+.si-ts-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--peach-500); box-shadow: 0 0 0 3px rgba(254,116,73,0.18); margin-bottom: 8px; }
+.si-ts-dot--mid { background: var(--peach-300); box-shadow: 0 0 0 3px rgba(254,116,73,0.12); }
+.si-ts-dot--end { background: var(--ink-1); box-shadow: 0 0 0 3px rgba(38,38,38,0.12); }
 .si-ts-bar { height: 2px; background: var(--peach-200); margin-top: 5px; border-radius: 1px; }
 .si-ts-label { font-size: 10.5px; font-weight: 500; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 3px; }
 .si-ts-value { font-size: 13px; font-weight: 600; color: var(--ink-1); margin: 0; line-height: 1.3; }
