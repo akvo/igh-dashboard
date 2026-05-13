@@ -129,6 +129,8 @@ export const typeDefs = `#graphql
     candidate_key: Int
     start_date_key: Int
     last_updated_key: Int
+    end_date_key: Int
+    primary_completion_date_key: Int
     trial_phase: String
     enrollment_count: Int
     status: String
@@ -142,6 +144,24 @@ export const typeDefs = `#graphql
     age_groups: String
     study_type: String
     source_text: String
+    description: String
+    collaborator: String
+    funder_type: String
+    interventions: String
+    sex: String
+    study_design: String
+    conditions: String
+
+    # Date strings resolved from FKs
+    start_date: String
+    end_date: String
+    primary_completion_date: String
+
+    # Parsed helpers derived from study_design
+    allocation: String
+    intervention_model: String
+    masking: String
+    primary_purpose: String
   }
 
   # =============================================================================
@@ -565,6 +585,74 @@ export const typeDefs = `#graphql
   }
 
   # =============================================================================
+  # Slide-in composite types (Aggregated Portfolio Explore panels)
+  # =============================================================================
+
+  type PipelineHistoryEntry {
+    year: Int!
+    phase_name: String!
+  }
+
+  type SlideInDeveloper {
+    name: String!
+    org_type: String
+  }
+
+  type RegulatoryInfo {
+    approval_status: String
+    who_prequalification: String
+    approving_authorities: [String!]!
+  }
+
+  type DiseaseSummaryPair {
+    primary: String!
+    secondary: String
+  }
+
+  type FactPublication {
+    publication_id: Int!
+    candidate_key: Int
+    title: String
+    url: String
+    description: String
+  }
+
+  type SlideInCandidate {
+    candidate: DimCandidateCore!
+    product: DimProduct
+    subProduct: DimProduct
+    technologyType: String
+    diseases: DiseaseSummaryPair!
+    ageGroups: [String!]!
+    pipelineHistory: [PipelineHistoryEntry!]!
+    developers: [SlideInDeveloper!]!
+    trials: [FactClinicalTrialEvent!]!
+    priorities: [DimPriority!]!
+    publications: [FactPublication!]!
+  }
+
+  type SlideInProduct {
+    candidate: DimCandidateCore!
+    product: DimProduct
+    subProduct: DimProduct
+    technologyType: String
+    diseases: DiseaseSummaryPair!
+    ageGroups: [String!]!
+    pipelineHistory: [PipelineHistoryEntry!]!
+    developers: [SlideInDeveloper!]!
+    trials: [FactClinicalTrialEvent!]!
+    priorities: [DimPriority!]!
+    publications: [FactPublication!]!
+    regulatory: RegulatoryInfo!
+  }
+
+  type SlideInTrial {
+    trial: FactClinicalTrialEvent!
+    candidate: DimCandidateCore
+    disease: DimDisease
+  }
+
+  # =============================================================================
   # QUERY ROOT
   # =============================================================================
 
@@ -650,5 +738,10 @@ export const typeDefs = `#graphql
     availableYears: [Int!]!
     locationScopes: [String!]!
     lastSyncDate: String
+
+    # Aggregated Portfolio slide-ins
+    slideInCandidate(candidate_key: Int!): SlideInCandidate
+    slideInProduct(candidate_key: Int!): SlideInProduct
+    slideInTrial(trial_id: Int!): SlideInTrial
   }
 `;

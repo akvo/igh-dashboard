@@ -25,3 +25,6 @@ export { useRdPrioritiesWithCandidates, useRdPriorities } from './useRdPrioritie
 export { usePipelineFilterPairs } from './usePipelineFilterPairs';
 export { useActivePipelineFilterPairs } from './useActivePipelineFilterPairs';
 export { useHomePriorityAlignment } from './useHomePriorityAlignment';
+export { useSlideInCandidate } from './useSlideInCandidate';
+export { useSlideInProduct } from './useSlideInProduct';
+export { useSlideInTrial } from './useSlideInTrial';

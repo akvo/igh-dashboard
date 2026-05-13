@@ -1,5 +1,5 @@
 import type { Loaders } from "../utils/dataloader.js";
-import type { DimCandidateCore, CandidateFilter } from "../db/types.js";
+import type { DimCandidateCore, CandidateFilter, FactClinicalTrialEvent } from "../db/types.js";
 
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
@@ -16,6 +16,11 @@ import {
   getActivePipelineFilterPairs,
 } from "../db/queries/temporal.js";
 import { getCandidates, getCandidateByKey } from "../db/queries/candidates.js";
+import {
+  getCandidateForSlideIn,
+  getTrialForSlideIn,
+  getDateString,
+} from "../db/queries/slideIns.js";
 import { getProductPhaseDistribution } from "../db/queries/productPhaseDistribution.js";
 import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistribution.js";
 import { getProductDistribution } from "../db/queries/productDistribution.js";
@@ -35,6 +40,27 @@ import {
   getCountries,
 } from "../db/queries/lookups.js";
 import { getLastSyncDate } from "../db/queries/metadata.js";
+
+/**
+ * Pull a single labelled value out of fact_clinical_trial_event.study_design,
+ * whose source format is pipe-separated key:value pairs, e.g.
+ *
+ *   "Allocation: RANDOMIZED|Intervention Model: PARALLEL|Masking: TRIPLE (PARTICIPANT, CARE_PROVIDER, INVESTIGATOR)|Primary Purpose: PREVENTION"
+ *
+ * Returns the value for `label`, or null if absent. Case-sensitive on the
+ * label, matching the source.
+ */
+function parseStudyDesignField(studyDesign: string | null, label: string): string | null {
+  if (!studyDesign) return null;
+  const parts = studyDesign.split("|").map((p) => p.trim());
+  const prefix = `${label}:`;
+  for (const part of parts) {
+    if (part.startsWith(prefix)) {
+      return part.slice(prefix.length).trim() || null;
+    }
+  }
+  return null;
+}
 
 // Context type for resolvers
 interface Context {
@@ -342,6 +368,25 @@ export const resolvers = {
         phase_names: args.phase_names,
       }),
 
+    // Aggregated Portfolio slide-ins
+    slideInCandidate: (_: unknown, args: { candidate_key: number }) => {
+      const candidate = getCandidateForSlideIn(args.candidate_key);
+      if (!candidate) return null;
+      return { candidate };
+    },
+
+    slideInProduct: (_: unknown, args: { candidate_key: number }) => {
+      const candidate = getCandidateForSlideIn(args.candidate_key);
+      if (!candidate) return null;
+      return { candidate };
+    },
+
+    slideInTrial: (_: unknown, args: { trial_id: number }) => {
+      const trial = getTrialForSlideIn(args.trial_id);
+      if (!trial) return null;
+      return { trial };
+    },
+
     // Filter dropdowns
     diseases: () => getDiseases(),
     secondaryDiseases: () => getSecondaryDiseases(),
@@ -386,5 +431,152 @@ export const resolvers = {
 
     clinicalTrials: (parent: DimCandidateCore, _: unknown, ctx: Context) =>
       ctx.loaders.clinicalTrialsByCandidateLoader.load(parent.candidate_key),
+  },
+
+  // Resolve date FKs and parse study_design into helper fields
+  FactClinicalTrialEvent: {
+    start_date: (parent: FactClinicalTrialEvent) => getDateString(parent.start_date_key),
+    end_date: (parent: FactClinicalTrialEvent) => getDateString(parent.end_date_key),
+    primary_completion_date: (parent: FactClinicalTrialEvent) =>
+      getDateString(parent.primary_completion_date_key),
+    allocation: (parent: FactClinicalTrialEvent) =>
+      parseStudyDesignField(parent.study_design, "Allocation"),
+    intervention_model: (parent: FactClinicalTrialEvent) =>
+      parseStudyDesignField(parent.study_design, "Intervention Model"),
+    masking: (parent: FactClinicalTrialEvent) =>
+      parseStudyDesignField(parent.study_design, "Masking"),
+    primary_purpose: (parent: FactClinicalTrialEvent) =>
+      parseStudyDesignField(parent.study_design, "Primary Purpose"),
+  },
+
+  SlideInCandidate: {
+    product: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
+      if (!snapshot?.product_key) return null;
+      return ctx.loaders.productLoader.load(snapshot.product_key);
+    },
+    subProduct: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.subProductByCandidateLoader.load(parent.candidate.candidate_key),
+    technologyType: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.techByCandidateLoader.load(parent.candidate.candidate_key),
+    diseases: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
+      return {
+        primary: d?.disease_name || "Unknown",
+        secondary: d?.secondary_disease_name || null,
+      };
+    },
+    ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.ageGroupsByCandidateLoader.load(parent.candidate.candidate_key),
+    pipelineHistory: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.pipelineHistoryByCandidateLoader.load(parent.candidate.candidate_key),
+    developers: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const [devs, orgs] = await Promise.all([
+        ctx.loaders.developersByCandidateLoader.load(parent.candidate.candidate_key),
+        ctx.loaders.organizationsByCandidateLoader.load(parent.candidate.candidate_key),
+      ]);
+      // Match developer name to org name on a normalised basis (lowercase,
+      // collapsed whitespace) for the org_type subtype. Misses render org_type
+      // as null, which the UI shows as "—". This is documented in the
+      // unresolvable-data doc as a known fuzziness.
+      const norm = (s: string | null | undefined) =>
+        (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const orgMap = new Map<string, string | null>();
+      for (const o of orgs) {
+        if (o.org_name) orgMap.set(norm(o.org_name), o.org_type ?? null);
+      }
+      return devs.map((d) => ({
+        name: d.developer_name || "",
+        org_type: orgMap.get(norm(d.developer_name)) ?? null,
+      }));
+    },
+    trials: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.clinicalTrialsByCandidateLoader.load(parent.candidate.candidate_key),
+    priorities: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.prioritiesByCandidateLoader.load(parent.candidate.candidate_key),
+    publications: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.publicationsByCandidateLoader.load(parent.candidate.candidate_key),
+  },
+
+  // SlideInProduct shares every field of SlideInCandidate plus regulatory.
+  // GraphQL doesn't inherit resolvers across types, so duplicate the field
+  // resolvers; only the `regulatory` field is product-specific.
+  SlideInProduct: {
+    product: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
+      if (!snapshot?.product_key) return null;
+      return ctx.loaders.productLoader.load(snapshot.product_key);
+    },
+    subProduct: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.subProductByCandidateLoader.load(parent.candidate.candidate_key),
+    technologyType: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.techByCandidateLoader.load(parent.candidate.candidate_key),
+    diseases: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
+      return {
+        primary: d?.disease_name || "Unknown",
+        secondary: d?.secondary_disease_name || null,
+      };
+    },
+    ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.ageGroupsByCandidateLoader.load(parent.candidate.candidate_key),
+    pipelineHistory: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.pipelineHistoryByCandidateLoader.load(parent.candidate.candidate_key),
+    developers: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const [devs, orgs] = await Promise.all([
+        ctx.loaders.developersByCandidateLoader.load(parent.candidate.candidate_key),
+        ctx.loaders.organizationsByCandidateLoader.load(parent.candidate.candidate_key),
+      ]);
+      const norm = (s: string | null | undefined) =>
+        (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+      const orgMap = new Map<string, string | null>();
+      for (const o of orgs) {
+        if (o.org_name) orgMap.set(norm(o.org_name), o.org_type ?? null);
+      }
+      return devs.map((d) => ({
+        name: d.developer_name || "",
+        org_type: orgMap.get(norm(d.developer_name)) ?? null,
+      }));
+    },
+    trials: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.clinicalTrialsByCandidateLoader.load(parent.candidate.candidate_key),
+    priorities: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.prioritiesByCandidateLoader.load(parent.candidate.candidate_key),
+    publications: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
+      ctx.loaders.publicationsByCandidateLoader.load(parent.candidate.candidate_key),
+    regulatory: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
+      const [reg, authorities] = await Promise.all([
+        ctx.loaders.regulatoryByCandidateLoader.load(parent.candidate.candidate_key),
+        ctx.loaders.approvingAuthoritiesByCandidateLoader.load(parent.candidate.candidate_key),
+      ]);
+      return {
+        approval_status: reg?.approval_status ?? null,
+        who_prequalification: reg?.who_prequalification ?? null,
+        approving_authorities: authorities,
+      };
+    },
+  },
+
+  SlideInTrial: {
+    candidate: (parent: { trial: FactClinicalTrialEvent }, _: unknown, ctx: Context) => {
+      if (!parent.trial.candidate_key) return null;
+      return ctx.loaders.candidateByKeyLoader.load(parent.trial.candidate_key);
+    },
+    disease: (parent: { trial: FactClinicalTrialEvent }, _: unknown, ctx: Context) => {
+      if (!parent.trial.disease_key) return null;
+      return ctx.loaders.diseaseLoader.load(parent.trial.disease_key);
+    },
   },
 };

@@ -54,11 +54,19 @@ import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { createHeatmapScale } from '@/lib/heatmap';
 import {
+  buildCandidateColumns,
+  buildApprovedProductColumns,
+  buildClinicalTrialColumns,
+  toCSVColumns,
   CANDIDATE_COLUMNS,
   APPROVED_PRODUCT_COLUMNS,
   CLINICAL_TRIAL_COLUMNS,
-  toCSVColumns,
 } from '@/lib/exploreColumnConfig';
+import {
+  CandidateSlideIn,
+  ProductSlideIn,
+  TrialSlideIn,
+} from '@/components/slideins';
 import {
   useGlobalFilters,
   GlobalFilterBar,
@@ -168,6 +176,13 @@ export default function AggregatedPortfolioPage() {
   const [approvalHiddenItems, setApprovalHiddenItems] = useUrlState('apphide', [], arraySerializer);
   const [trialStatusHiddenItems, setTrialStatusHiddenItems] = useUrlState('tshide', [], arraySerializer);
   const [geoTrialStatus, setGeoTrialStatus] = useUrlState('trialStatus', [], arraySerializer);
+  const [slideInOpen, setSlideInOpen] = useUrlState('slide', null, stringSerializer);
+  const [slideInKey, setSlideInKey] = useUrlState('slideKey', null, numberSerializer);
+
+  const closeSlideIn = useCallback(() => {
+    setSlideInOpen(null);
+    setSlideInKey(null);
+  }, [setSlideInOpen, setSlideInKey]);
 
   // =========================================================
   // Local-only state
@@ -194,6 +209,46 @@ export default function AggregatedPortfolioPage() {
     productNames: expandedProduct,
     phaseNames: rdPhase,
   };
+
+  // =========================================================
+  // Per-tab column definitions with Explore handlers
+  // =========================================================
+  //
+  // Each factory injects an `onExplore` callback that sets the
+  // URL-backed slide-in type + key, opening the appropriate panel.
+
+  const candidateColumns = useMemo(
+    () =>
+      buildCandidateColumns({
+        onExplore: (row) => {
+          setSlideInOpen('candidate');
+          setSlideInKey(row.candidate_key);
+        },
+      }),
+    [setSlideInOpen, setSlideInKey],
+  );
+
+  const approvedColumns = useMemo(
+    () =>
+      buildApprovedProductColumns({
+        onExplore: (row) => {
+          setSlideInOpen('product');
+          setSlideInKey(row.candidate_key);
+        },
+      }),
+    [setSlideInOpen, setSlideInKey],
+  );
+
+  const trialColumns = useMemo(
+    () =>
+      buildClinicalTrialColumns({
+        onExplore: (row) => {
+          setSlideInOpen('trial');
+          setSlideInKey(row.trial_id);
+        },
+      }),
+    [setSlideInOpen, setSlideInKey],
+  );
 
   // =========================================================
   // Data hooks
@@ -543,7 +598,7 @@ export default function AggregatedPortfolioPage() {
                   tableId="candidates"
                   graphqlTable="PORTFOLIO_CANDIDATES"
                   filterContext={candidatesFilterContext}
-                  columns={CANDIDATE_COLUMNS}
+                  columns={candidateColumns}
                   data={candidatesData}
                   rowKey="candidate_key"
                   page={candidatesPage}
@@ -740,7 +795,7 @@ export default function AggregatedPortfolioPage() {
                     tableId="approved"
                     graphqlTable="PORTFOLIO_CANDIDATES"
                     filterContext={approvedFilterContext}
-                    columns={APPROVED_PRODUCT_COLUMNS}
+                    columns={approvedColumns}
                     data={approvedProductsData}
                     rowKey="candidate_key"
                     page={approvedPage}
@@ -937,7 +992,7 @@ export default function AggregatedPortfolioPage() {
                     tableId="trials"
                     graphqlTable="CLINICAL_TRIALS"
                     filterContext={trialsFilterContext}
-                    columns={CLINICAL_TRIAL_COLUMNS}
+                    columns={trialColumns}
                     data={clinicalTrialsTableData}
                     rowKey="trial_id"
                     page={trialsPage}
@@ -1065,6 +1120,15 @@ export default function AggregatedPortfolioPage() {
             )}
           </div>
         </div>
+        {slideInOpen === 'candidate' && slideInKey != null && (
+          <CandidateSlideIn candidateKey={slideInKey} onClose={closeSlideIn} />
+        )}
+        {slideInOpen === 'product' && slideInKey != null && (
+          <ProductSlideIn candidateKey={slideInKey} onClose={closeSlideIn} />
+        )}
+        {slideInOpen === 'trial' && slideInKey != null && (
+          <TrialSlideIn trialId={slideInKey} onClose={closeSlideIn} />
+        )}
       </main>
     </div>
   );
