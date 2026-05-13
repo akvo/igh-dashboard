@@ -74,7 +74,12 @@
   animation: si-fadeIn 200ms ease both;
 }
 .si-panel {
-  position: fixed; top: 0; right: 0; bottom: 0;
+  /* Offset by the page header's height (90px, from Header.jsx) so the
+     panel's own header (eyebrow + close button) is fully visible
+     instead of sitting behind the fixed page chrome. The backdrop
+     still spans the full viewport — only the panel itself is nudged
+     down. */
+  position: fixed; top: 90px; right: 0; bottom: 0;
   width: 560px; max-width: 96vw;
   background: var(--panel);
   box-shadow: var(--shadow-panel);
