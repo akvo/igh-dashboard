@@ -60,7 +60,25 @@ export default function PortfolioAnalysisPage() {
     if (pathname !== '/portfolio-analysis') return;
     const targetId = hash || 'explore';
     const el = document.getElementById(targetId);
-    if (!el) return;
+    if (!el || !mainRef.current) return;
+
+    // Skip the scroll when the target section is already in the
+    // spy's active band — that's the case when (a) the spy wrote
+    // the hash because the user scrolled here naturally, or (b)
+    // the user clicked the link for a section they're already on.
+    // Either way, snapping `block: 'start'` would visibly fight
+    // the user's existing scroll position. The band corresponds
+    // to the spy's rootMargin: -30% 0px -60% 0px, so a section is
+    // "in the band" when its top edge sits between 0 and ~30% of
+    // the container's height relative to the container.
+    const containerRect = mainRef.current.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const offsetWithinContainer = elRect.top - containerRect.top;
+    const inActiveBand =
+      offsetWithinContainer >= 0 &&
+      offsetWithinContainer <= containerRect.height * 0.3;
+    if (inActiveBand) return;
+
     suppressUntil(800);
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [pathname, hash, suppressUntil]);
