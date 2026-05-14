@@ -22,6 +22,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
 } from '../icons';
+import SidebarFilterBox from './SidebarFilterBox';
 
 const defaultMenuItems = [
   {
@@ -386,6 +387,9 @@ export default function Sidebar({
           </div>
         ))}
       </nav>
+
+      {/* Filter box — only renders on portfolio-analysis pages */}
+      <SidebarFilterBox isExpanded={isExpanded} />
 
       {/* Footer */}
       <div className="p-3 border-t border-black-12">
