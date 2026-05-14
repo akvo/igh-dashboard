@@ -76,6 +76,21 @@ export default function Sidebar({
     if (onNavigate) {
       onNavigate(item);
     }
+    // Next.js's <Link> calls history.pushState() to update the URL,
+    // which per spec does NOT fire `hashchange` natively. Without
+    // this synthetic dispatch, useHash() consumers (this Sidebar's
+    // own active-state, the Portfolio Analysis page's scroll effect)
+    // would not react to same-route hash changes — e.g. clicking
+    // "Aggregated portfolio" from "Portfolio analysis" on the same
+    // route would update the URL but no React state. The microtask
+    // defers the dispatch until after Next.js's own onClick handler
+    // runs pushState, so `window.location.hash` is fresh when our
+    // listeners read it.
+    queueMicrotask(() => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('hashchange'));
+      }
+    });
   };
 
   // =========================================================

@@ -43,7 +43,7 @@ export default function PortfolioAnalysisPage() {
     [],
   );
 
-  const { suppressUntil } = usePortfolioScrollSpy({
+  const { suppressUntil, consumeSpyWriteFlag } = usePortfolioScrollSpy({
     rootRef: mainRef,
     sections,
   });
@@ -54,34 +54,35 @@ export default function PortfolioAnalysisPage() {
   // /portfolio-analysis#aggregated — smooth-scroll the matching
   // section into view. Suppress the spy briefly so it doesn't
   // overwrite the hash mid-scroll.
+  //
+  // Distinguishing click-driven from spy-driven hash changes is
+  // done via `consumeSpyWriteFlag` rather than a geometry check.
+  // The geometry-check approach mis-fired on initial page mount
+  // (the #explore section's natural offset of ~230px is past the
+  // band threshold, so a no-hash cold load would scroll past the
+  // page header band — exactly what we don't want).
+  //
+  // Empty hash is treated as "scroll to the top of the page", not
+  // "scrollIntoView on #explore" — the page header band lives
+  // ABOVE #explore inside <main>, so block:'start' on #explore
+  // would hide the header. `scrollTo({top: 0})` on the main
+  // element shows the header + KPIs together.
   const pathname = usePathname();
   const hash = useHash();
   useEffect(() => {
     if (pathname !== '/portfolio-analysis') return;
-    const targetId = hash || 'explore';
-    const el = document.getElementById(targetId);
-    if (!el || !mainRef.current) return;
+    if (consumeSpyWriteFlag()) return;
 
-    // Skip the scroll when the target section is already in the
-    // spy's active band — that's the case when (a) the spy wrote
-    // the hash because the user scrolled here naturally, or (b)
-    // the user clicked the link for a section they're already on.
-    // Either way, snapping `block: 'start'` would visibly fight
-    // the user's existing scroll position. The band corresponds
-    // to the spy's rootMargin: -30% 0px -60% 0px, so a section is
-    // "in the band" when its top edge sits between 0 and ~30% of
-    // the container's height relative to the container.
-    const containerRect = mainRef.current.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const offsetWithinContainer = elRect.top - containerRect.top;
-    const inActiveBand =
-      offsetWithinContainer >= 0 &&
-      offsetWithinContainer <= containerRect.height * 0.3;
-    if (inActiveBand) return;
+    if (!hash) {
+      mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
 
+    const el = document.getElementById(hash);
+    if (!el) return;
     suppressUntil(800);
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [pathname, hash, suppressUntil]);
+  }, [pathname, hash, suppressUntil, consumeSpyWriteFlag]);
 
   return (
     <div className="flex h-[calc(100vh-74px)] bg-cream-200">

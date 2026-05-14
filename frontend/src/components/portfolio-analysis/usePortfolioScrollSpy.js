@@ -20,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 //      synthetic dispatch the Sidebar wouldn't know the active
 //      section changed.
 //
-// Returns `{ activeId, suppressUntil }`:
+// Returns `{ activeId, suppressUntil, consumeSpyWriteFlag }`:
 //
 //   - activeId: the current in-view section ID. Mostly
 //     informational for the page; the Sidebar reads the hash
@@ -31,14 +31,30 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 //     spy ignores intersection changes, so it doesn't fight the
 //     click by rewriting the hash to whichever section happens
 //     to be passing through the active band during the animation.
+//
+//   - consumeSpyWriteFlag(): returns true (and resets the flag)
+//     if the most recent hash change was a spy-driven write. The
+//     page's hash effect uses this to tell click-driven hash
+//     changes (user wants a scroll) from spy-driven ones (user
+//     is already at the right scroll position because that's why
+//     the spy fired). Without this the spy's own `hashchange`
+//     dispatch would re-trigger `scrollIntoView` and fight the
+//     user's natural scroll position.
 
 export function usePortfolioScrollSpy({ rootRef, sections }) {
   const [activeId, setActiveId] = useState(null);
   const suppressUntilRef = useRef(0);
   const lastWrittenRef = useRef(null);
+  const spyWriteRef = useRef(false);
 
   const suppressUntil = useCallback((ms) => {
     suppressUntilRef.current = Date.now() + ms;
+  }, []);
+
+  const consumeSpyWriteFlag = useCallback(() => {
+    const was = spyWriteRef.current;
+    spyWriteRef.current = false;
+    return was;
   }, []);
 
   useEffect(() => {
@@ -74,7 +90,25 @@ export function usePortfolioScrollSpy({ rootRef, sections }) {
         // the hash entirely in that case so the URL stays clean
         // when the user is at the top of the page.
         const nextHash = id === 'explore' ? '' : `#${id}`;
+
+        // Skip the URL write + dispatch when the location hash is
+        // already what we'd write — typically on initial mount when
+        // the URL came in with a hash that the spy is now "syncing"
+        // its internal state to. Without this gate, spyWriteRef
+        // would be set but no state change ever follows (useHash
+        // sees the same value and doesn't re-render), leaving the
+        // flag set indefinitely. The next click-driven hash change
+        // would then run the page effect with a stale spy flag and
+        // incorrectly skip its scroll — requiring the user to click
+        // a second time before anything scrolls.
+        if (window.location.hash === nextHash) return;
+
         const url = `${window.location.pathname}${window.location.search}${nextHash}`;
+        // Mark this write as spy-driven BEFORE dispatching the
+        // synthetic hashchange — the page's hash effect reads the
+        // flag during the listener cascade triggered by the
+        // dispatch below.
+        spyWriteRef.current = true;
         history.replaceState(null, '', url);
         window.dispatchEvent(new Event('hashchange'));
       },
@@ -90,5 +124,5 @@ export function usePortfolioScrollSpy({ rootRef, sections }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rootRef, sections.length]);
 
-  return { activeId, suppressUntil };
+  return { activeId, suppressUntil, consumeSpyWriteFlag };
 }
