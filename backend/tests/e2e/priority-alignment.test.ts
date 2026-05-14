@@ -2,8 +2,9 @@
  * E2E Tests — priorityAlignmentOverview query (Home page WHO Priority section).
  *
  * Validates the consolidated payload (totalPriorities, byArea, productTypeBreakdown,
- * diseaseOptions) both unfiltered and with a diseaseKeys filter. Asserts the fixed
- * 3-row byArea ordering (ND, EID, WH) and that stub priorities are excluded.
+ * diseaseOptions, womenOrChildrenShare) both unfiltered and with a diseaseKeys
+ * filter. Asserts the fixed 3-row byArea ordering (ND, EID, WH) and that stub
+ * priorities are excluded.
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -31,11 +32,18 @@ interface DiseaseOption {
   global_health_area: string | null;
 }
 
+interface WomenChildrenShare {
+  yes: number;
+  no: number;
+  unknown: number;
+}
+
 interface Overview {
   totalPriorities: number;
   byArea: AreaShare[];
   productTypeBreakdown: ProductTypeRow[];
   diseaseOptions: DiseaseOption[];
+  womenOrChildrenShare: WomenChildrenShare;
 }
 
 const FIXED_AREA_ORDER = [
@@ -67,6 +75,11 @@ async function fetchOverview(diseaseKeys?: number[]): Promise<Overview> {
           disease_key
           disease_name
           global_health_area
+        }
+        womenOrChildrenShare {
+          yes
+          no
+          unknown
         }
       }
     }`,
@@ -160,6 +173,21 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const keys = baseline.diseaseOptions.map((o) => o.disease_key);
     expect(new Set(keys).size).toBe(keys.length);
   });
+
+  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 1 unknown)", () => {
+    // Distribution pinned against the gold DB regenerated 2026-05-14 after
+    // the silver→gold projection of crc8b_dedicatedtowomenorchildren landed
+    // in igh-data-transform. Tracks total = totalPriorities so the buckets
+    // are mutually exclusive and cover the whole population.
+    expect(baseline.womenOrChildrenShare.yes).toBe(34);
+    expect(baseline.womenOrChildrenShare.no).toBe(31);
+    expect(baseline.womenOrChildrenShare.unknown).toBe(1);
+    const sum =
+      baseline.womenOrChildrenShare.yes +
+      baseline.womenOrChildrenShare.no +
+      baseline.womenOrChildrenShare.unknown;
+    expect(sum).toBe(baseline.totalPriorities);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -226,5 +254,26 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
     const filtered = await fetchOverview([]);
     expect(filtered.totalPriorities).toBe(baseline.totalPriorities);
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
+  });
+
+  it("womenOrChildrenShare narrows under the filter and stays ≤ baseline", async () => {
+    const firstOption = filterTarget;
+    const filtered = await fetchOverview([firstOption.disease_key]);
+    expect(filtered.womenOrChildrenShare.yes).toBeLessThanOrEqual(
+      baseline.womenOrChildrenShare.yes,
+    );
+    expect(filtered.womenOrChildrenShare.no).toBeLessThanOrEqual(
+      baseline.womenOrChildrenShare.no,
+    );
+    expect(filtered.womenOrChildrenShare.unknown).toBeLessThanOrEqual(
+      baseline.womenOrChildrenShare.unknown,
+    );
+    // Bucket sum still equals the filter's totalPriorities — every priority
+    // lands in exactly one bucket regardless of filtering.
+    const sum =
+      filtered.womenOrChildrenShare.yes +
+      filtered.womenOrChildrenShare.no +
+      filtered.womenOrChildrenShare.unknown;
+    expect(sum).toBe(filtered.totalPriorities);
   });
 });

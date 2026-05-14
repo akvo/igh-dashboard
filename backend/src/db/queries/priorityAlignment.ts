@@ -5,6 +5,7 @@ import type {
   PriorityAlignmentInput,
   PriorityAlignmentOverview,
   PriorityAlignmentProductType,
+  PriorityAlignmentWomenChildrenShare,
 } from "../types.js";
 
 // =========================================================
@@ -180,10 +181,49 @@ export function getPriorityAlignmentOverview(
     )
     .all() as PriorityAlignmentDiseaseOption[];
 
+  // -----------------------------------------------------------------------
+  // 5. womenOrChildrenShare — Yes/No/unknown bucket counts for the
+  //    "Share of priorities dedicated to women or children" donut.
+  //
+  // `dedicated_to_women_or_children` lands in dim_priority as the
+  // Two-Options label ("Yes" / "No") — projected via OPTIONSET in the
+  // silver→gold ETL. Anything else (null, blank, unexpected) collapses
+  // into `unknown` so we don't silently drop priorities the field hasn't
+  // been classified on yet.
+  //
+  // Honors the section-wide `diseaseKeys` filter; stub priorities are
+  // excluded via the shared NON_EMPTY_PRIORITY predicate.
+  // -----------------------------------------------------------------------
+  const wcParams: (string | number)[] = [];
+  const wcClause = diseaseKeysClause(diseaseKeys, "p.disease_key", wcParams);
+  const wcRow = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN p.dedicated_to_women_or_children = 'Yes' THEN 1 ELSE 0 END) AS yes,
+         SUM(CASE WHEN p.dedicated_to_women_or_children = 'No'  THEN 1 ELSE 0 END) AS no,
+         SUM(CASE WHEN p.dedicated_to_women_or_children IS NULL
+                    OR p.dedicated_to_women_or_children NOT IN ('Yes','No')
+                  THEN 1 ELSE 0 END) AS unknown
+       FROM dim_priority p
+       WHERE ${NON_EMPTY_PRIORITY}${wcClause}`,
+    )
+    .get(...wcParams) as {
+    yes: number | null;
+    no: number | null;
+    unknown: number | null;
+  };
+
+  const womenOrChildrenShare: PriorityAlignmentWomenChildrenShare = {
+    yes: wcRow.yes ?? 0,
+    no: wcRow.no ?? 0,
+    unknown: wcRow.unknown ?? 0,
+  };
+
   return {
     totalPriorities: totalRow.total,
     byArea,
     productTypeBreakdown,
     diseaseOptions,
+    womenOrChildrenShare,
   };
 }

@@ -469,6 +469,11 @@ export const GET_HOME_PRIORITY_ALIGNMENT = gql`
         disease_name
         global_health_area
       }
+      womenOrChildrenShare {
+        yes
+        no
+        unknown
+      }
     }
   }
 `;

@@ -577,11 +577,22 @@ export const typeDefs = `#graphql
     global_health_area: String
   }
 
+  # Counts feeding the "Share of priorities dedicated to women or children"
+  # donut. The unknown bucket captures priorities where the Dataverse
+  # Two-Options field crc8b_dedicatedtowomenorchildren is unset (null in
+  # dim_priority).
+  type PriorityAlignmentWomenChildrenShare {
+    yes: Int!
+    no: Int!
+    unknown: Int!
+  }
+
   type PriorityAlignmentOverview {
     totalPriorities: Int!
     byArea: [PriorityAlignmentAreaShare!]!
     productTypeBreakdown: [PriorityAlignmentProductType!]!
     diseaseOptions: [PriorityAlignmentDiseaseOption!]!
+    womenOrChildrenShare: PriorityAlignmentWomenChildrenShare!
   }
 
   # =============================================================================
