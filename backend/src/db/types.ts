@@ -542,11 +542,23 @@ export interface PriorityAlignmentDiseaseOption {
   global_health_area: string | null;
 }
 
+// Shape powering the "Share of priorities dedicated to women or children"
+// donut. Three buckets — Yes, No, and unknown (null in dim_priority) — so
+// the frontend can render any visual it likes without needing additional
+// passes over the data. `unknown` reflects priorities where the Dataverse
+// `crc8b_dedicatedtowomenorchildren` Two-Options field is unset.
+export interface PriorityAlignmentWomenChildrenShare {
+  yes: number;
+  no: number;
+  unknown: number;
+}
+
 export interface PriorityAlignmentOverview {
   totalPriorities: number;
   byArea: PriorityAlignmentAreaShare[];
   productTypeBreakdown: PriorityAlignmentProductType[];
   diseaseOptions: PriorityAlignmentDiseaseOption[];
+  womenOrChildrenShare: PriorityAlignmentWomenChildrenShare;
 }
 
 export interface PriorityAlignmentInput {

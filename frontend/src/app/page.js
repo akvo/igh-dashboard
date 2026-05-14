@@ -98,6 +98,17 @@ const WHO_PRODUCT_TYPE_COLORS = [
   chartColors.primary[7], // #6AB085 Green — overflow for any extra product type
 ];
 
+// Yes / NA / No palette for the women-or-children donut, matching the
+// brand designer's screenshot: Yes in the section's light purple
+// accent, NA in beige to read as "unclassified", and No in brand
+// orange. Keyed by slice name so the mapping stays correct even when
+// a filter zeroes a slice out and the hook trims it from the array.
+const WHO_W_OR_C_COLORS = {
+  Yes: chartColors.primary[1], // #CBAFDE Light Purple
+  NA: chartColors.primary[3],  // #E3D6C1 Beige
+  No: colors.orange[500],      // #fe7449
+};
+
 
 export default function Home() {
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
@@ -135,6 +146,8 @@ export default function Home() {
 
   const bubbleChartRef = useRef(null);
   const worldMapRef = useRef(null);
+  const productTypesChartRef = useRef(null);
+  const womenChildrenChartRef = useRef(null);
 
   const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
   const { kpis, loading: kpisLoading } = usePortfolioKPIs();
@@ -301,6 +314,7 @@ export default function Home() {
     byArea: whoByArea,
     productTypeChartData: whoProductTypeChartData,
     diseaseOptions: whoDiseaseOptionsRaw,
+    womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
   } = useHomePriorityAlignment(whoDiseaseKeys);
 
@@ -854,12 +868,27 @@ export default function Home() {
               </div>
 
               {/* Column 2: Product types donut */}
-              <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
-                <h4 className="text-base font-bold text-black mb-1">Product types</h4>
+              <div ref={productTypesChartRef} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h4 className="text-base font-bold text-black">Product types</h4>
+                  <ChartMenu
+                    onDownloadCSV={() => {
+                      const csv = buildCSV(
+                        [
+                          { label: 'Product type', accessor: 'name' },
+                          { label: 'Candidates', accessor: 'value' },
+                        ],
+                        whoProductTypeChartData,
+                      );
+                      downloadCSVFile(csv, 'priority-alignment-product-types');
+                    }}
+                    onDownloadPNG={() => downloadPNG(productTypesChartRef, 'priority-alignment-product-types')}
+                  />
+                </div>
                 <p className="text-sm text-gray-500 mb-3">
                   Distribution of R&D pipeline across product types.
                 </p>
-                <div className="flex-1">
+                <div className="flex-1 flex items-center justify-center">
                   {whoLoading ? (
                     <div className="h-[280px] flex items-center justify-center">
                       <div className="animate-pulse text-gray-400">Loading chart...</div>
@@ -867,42 +896,65 @@ export default function Home() {
                   ) : whoProductTypeChartData.length === 0 ? (
                     <ChartEmptyState variant="donut" height={280} />
                   ) : (
-                    <DonutChart
-                      data={whoProductTypeChartData}
-                      colors={WHO_PRODUCT_TYPE_COLORS}
-                      height={280}
-                      legendPosition="top"
-                      innerRadius={50}
-                      outerRadius={90}
-                    />
+                    <div className="w-full">
+                      <DonutChart
+                        data={whoProductTypeChartData}
+                        colors={WHO_PRODUCT_TYPE_COLORS}
+                        height={280}
+                        legendPosition="top"
+                        innerRadius={50}
+                        outerRadius={90}
+                      />
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Column 3: Women / children placeholder.
-                  Awaiting a classification column from the data team;
-                  for now we render the empty-state donut so the section
-                  visually balances. Replace this block with a live donut
-                  once the backend exposes `womenOrChildrenShare`. */}
-              <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+              {/* Column 3: Women / children donut.
+                  Fed by dim_priority.dedicated_to_women_or_children, the
+                  "Yes"/"No"/null Two-Options field projected from
+                  Dataverse's crc8b_dedicatedtowomenorchildren. */}
+              <div ref={womenChildrenChartRef} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h4 className="text-base font-bold text-black">
                     Share of priorities dedicated to women or children
                   </h4>
-                  <span
-                    className="text-[10px] uppercase tracking-wide text-gray-500 border border-gray-300 rounded px-2 py-0.5 shrink-0"
-                    title="Awaiting classification column from data team"
-                  >
-                    Coming soon
-                  </span>
-                </div>
-                <div className="flex-1">
-                  <ChartEmptyState
-                    variant="donut"
-                    height={280}
-                    title="Data not yet available"
-                    description="The classification column for women / children priorities is being added by the data team."
+                  <ChartMenu
+                    onDownloadCSV={() => {
+                      const csv = buildCSV(
+                        [
+                          { label: 'Category', accessor: 'name' },
+                          { label: 'Count', accessor: 'value' },
+                        ],
+                        whoWomenChildrenChartData,
+                      );
+                      downloadCSVFile(csv, 'priority-alignment-women-or-children');
+                    }}
+                    onDownloadPNG={() => downloadPNG(womenChildrenChartRef, 'priority-alignment-women-or-children')}
                   />
+                </div>
+                <p className="text-sm text-gray-500 mb-3">
+                  Yes / No split with priorities still awaiting classification shown as NA.
+                </p>
+                <div className="flex-1 flex items-center justify-center">
+                  {whoLoading ? (
+                    <div className="h-[280px] flex items-center justify-center">
+                      <div className="animate-pulse text-gray-400">Loading chart...</div>
+                    </div>
+                  ) : whoWomenChildrenChartData.length === 0 ? (
+                    <ChartEmptyState variant="donut" height={280} />
+                  ) : (
+                    <div className="w-full">
+                      <DonutChart
+                        data={whoWomenChildrenChartData}
+                        colors={whoWomenChildrenChartData.map((slice) => WHO_W_OR_C_COLORS[slice.name])}
+                        height={280}
+                        legendPosition="bottom"
+                        innerRadius={50}
+                        outerRadius={90}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

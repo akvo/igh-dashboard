@@ -12,6 +12,7 @@ const EMPTY = Object.freeze({
   byArea: [],
   productTypeBreakdown: [],
   diseaseOptions: [],
+  womenOrChildrenShare: Object.freeze({ yes: 0, no: 0, unknown: 0 }),
 });
 
 /**
@@ -50,11 +51,28 @@ export function useHomePriorityAlignment(diseaseKeys) {
     [payload.productTypeBreakdown],
   );
 
+  // Shape women/children share for DonutChart. We expose Yes/NA/No in
+  // the design's legend order (Yes | NA | No) and surface "NA" — the
+  // priorities where the Two-Options field is unset — as its own slice
+  // rather than hiding it. Pretending the denominator is just Yes+No
+  // would inflate the headline percentage. Empty buckets are filtered
+  // out so the donut doesn't render zero-area wedges.
+  const womenOrChildrenChartData = useMemo(() => {
+    const share = payload.womenOrChildrenShare;
+    return [
+      { name: 'Yes', value: share.yes },
+      { name: 'NA', value: share.unknown },
+      { name: 'No', value: share.no },
+    ].filter((slice) => slice.value > 0);
+  }, [payload.womenOrChildrenShare]);
+
   return {
     totalPriorities: payload.totalPriorities,
     byArea: payload.byArea,
     productTypeChartData,
     diseaseOptions: payload.diseaseOptions,
+    womenOrChildrenShare: payload.womenOrChildrenShare,
+    womenOrChildrenChartData,
     loading: loading && !cachedData,
     error,
     usingCache: !!cachedData,
