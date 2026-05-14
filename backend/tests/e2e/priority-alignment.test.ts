@@ -262,9 +262,7 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
     expect(filtered.womenOrChildrenShare.yes).toBeLessThanOrEqual(
       baseline.womenOrChildrenShare.yes,
     );
-    expect(filtered.womenOrChildrenShare.no).toBeLessThanOrEqual(
-      baseline.womenOrChildrenShare.no,
-    );
+    expect(filtered.womenOrChildrenShare.no).toBeLessThanOrEqual(baseline.womenOrChildrenShare.no);
     expect(filtered.womenOrChildrenShare.unknown).toBeLessThanOrEqual(
       baseline.womenOrChildrenShare.unknown,
     );
