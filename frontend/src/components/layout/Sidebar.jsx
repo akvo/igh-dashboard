@@ -349,7 +349,7 @@ export default function Sidebar({
                               <Link
                                 href={buildHref(child.href)}
                                 onClick={() => handleItemClick(child)}
-                                className={`group flex items-center gap-3 pl-11 pr-3 py-2.5 rounded-lg transition-colors ${
+                                className={`group flex items-center gap-3 pl-11 pr-3 py-2.5 rounded-lg transition-colors min-w-0 ${
                                   childActive
                                     ? 'bg-white'
                                     : 'hover:bg-sidebar-hover'
@@ -364,11 +364,12 @@ export default function Sidebar({
                                   strokeWidth={2.5}
                                 />
                                 <span
-                                  className={`text-sm transition-colors ${
+                                  className={`text-sm transition-colors truncate ${
                                     childActive
                                       ? 'font-semibold text-black'
                                       : 'font-normal text-sidebar-text group-hover:text-black'
                                   }`}
+                                  title={child.label}
                                 >
                                   {child.label}
                                 </span>
