@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Watches a list of section elements inside the given scroll
 // container and reports which one is currently the in-view "active"
@@ -37,9 +37,9 @@ export function usePortfolioScrollSpy({ rootRef, sections }) {
   const suppressUntilRef = useRef(0);
   const lastWrittenRef = useRef(null);
 
-  const suppressUntil = (ms) => {
+  const suppressUntil = useCallback((ms) => {
     suppressUntilRef.current = Date.now() + ms;
-  };
+  }, []);
 
   useEffect(() => {
     if (!rootRef.current) return;
@@ -81,7 +81,7 @@ export function usePortfolioScrollSpy({ rootRef, sections }) {
       {
         root: rootRef.current,
         rootMargin: '-30% 0px -60% 0px',
-        threshold: [0, 0.25, 0.5, 0.75, 1],
+        threshold: 0,
       },
     );
 
