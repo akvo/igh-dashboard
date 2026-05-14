@@ -16,7 +16,7 @@
 // their filter selections; the sidebar's sibling-aware query
 // forwarding does the carry-over for free.
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -43,9 +43,7 @@ import {
   useClinicalTrials,
   useRdPrioritiesWithCandidates,
   useRdPriorities,
-  usePhases,
 } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { fetchAllPrioritiesWithCandidates, fetchAllPriorities } from '@/lib/fetchAllPriorities';
@@ -74,6 +72,7 @@ export default function ExtractCustomDetailsPage() {
     healthAreaOptions,
     narrowedHierarchy,
     productOptions,
+    rdPhaseOptions,
   } = useGlobalFilters();
 
   // =========================================================
@@ -193,7 +192,6 @@ export default function ExtractCustomDetailsPage() {
 
   const itemsPerPage = 10;
   const apolloClient = useApolloClient();
-  const { phases } = usePhases();
 
   const effectiveExtractPhases = extractRdStage.length > 0
     ? extractRdStage
@@ -331,17 +329,20 @@ export default function ExtractCustomDetailsPage() {
     );
   }, [availableColumns, appliedColumns, columnSearchQuery]);
 
-  // R&D stage options for the candidates-approved tab. Always
-  // shows all phases (not narrowed by other selections) so that
-  // an empty-state user can still pick a stage.
-  const rdStageOptions = useMemo(
-    () =>
-      phases.map((p) => ({
-        label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-        value: p.name,
-      })),
-    [phases],
-  );
+  // R&D stage options for the candidates-approved tab. Uses the
+  // cross-filtered rdPhaseOptions so that only phases reachable
+  // under the current product / disease / GHA selections appear.
+  const rdStageOptions = rdPhaseOptions;
+
+  // Prune stale extractRdStage selections when cross-filtering
+  // removes a previously valid phase (mirrors the global rdPhase
+  // pruning in useCrossFilteredOptions).
+  useEffect(() => {
+    if (extractRdStage.length === 0 || rdStageOptions.length === 0) return;
+    const validValues = new Set(rdStageOptions.map((o) => o.value));
+    const valid = extractRdStage.filter((v) => validValues.has(v));
+    if (valid.length !== extractRdStage.length) setExtractRdStage(valid);
+  }, [rdStageOptions, extractRdStage, setExtractRdStage]);
 
   // =========================================================
   // Drag-and-drop reordering and picker handlers
