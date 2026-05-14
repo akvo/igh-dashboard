@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQueryParams } from '@/lib/useQueryParams';
+import { useHash } from '@/lib/useHash';
 import {
   HomeIcon,
   ChartIcon,
@@ -39,7 +40,7 @@ const defaultMenuItems = [
         children: [
           { id: 'portfolio-analysis-explore', label: 'Portfolio Analysis', icon: PieChartIcon, href: '/portfolio-analysis' },
           { id: 'portfolio-analysis-extract', label: 'Extract custom details', icon: ListIcon, href: '/portfolio-analysis/extract' },
-          { id: 'portfolio-analysis-aggregated', label: 'Aggregated portfolio', icon: LayersIcon, href: '/portfolio-analysis/aggregated' },
+          { id: 'portfolio-analysis-aggregated', label: 'Aggregated portfolio', icon: LayersIcon, href: '/portfolio-analysis#aggregated' },
         ],
       },
       { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
@@ -75,6 +76,21 @@ export default function Sidebar({
     if (onNavigate) {
       onNavigate(item);
     }
+    // Next.js's <Link> calls history.pushState() to update the URL,
+    // which per spec does NOT fire `hashchange` natively. Without
+    // this synthetic dispatch, useHash() consumers (this Sidebar's
+    // own active-state, the Portfolio Analysis page's scroll effect)
+    // would not react to same-route hash changes — e.g. clicking
+    // "Aggregated portfolio" from "Portfolio analysis" on the same
+    // route would update the URL but no React state. The microtask
+    // defers the dispatch until after Next.js's own onClick handler
+    // runs pushState, so `window.location.hash` is fresh when our
+    // listeners read it.
+    queueMicrotask(() => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('hashchange'));
+      }
+    });
   };
 
   // =========================================================
@@ -87,23 +103,45 @@ export default function Sidebar({
   // pathname context.
 
   const pathname = usePathname();
+  const hash = useHash();
   // Read query params via the project's reactive store rather than
-  // Next's useSearchParams() — the latter forces a Suspense
-  // boundary around any consumer during static prerender, and the
-  // Sidebar renders on every page in the app.
+  // Next's useSearchParams() — the latter forces a Suspense boundary
+  // around any consumer during static prerender, and the Sidebar
+  // renders on every page in the app.
   const [params] = useQueryParams();
+
+  // matchesChildHref handles the case where a child's href contains a
+  // fragment (`/portfolio-analysis#aggregated`). The pathname must
+  // match the path portion, AND on /portfolio-analysis the current
+  // hash must match the child's hash (with empty hash treated as
+  // equivalent to `#explore`, the default section).
+  const matchesChildHref = (childHref) => {
+    const [childPath, childHash = ''] = childHref.split('#');
+    if (pathname !== childPath) return false;
+    if (childPath === '/portfolio-analysis') {
+      const wanted = childHash || 'explore';
+      const current = hash || 'explore';
+      return wanted === current;
+    }
+    return true;
+  };
 
   const isItemActive = (item) => {
     if (activeId !== undefined) return activeId === item.id;
     if (!pathname) return false;
-    return pathname === item.href;
+    return matchesChildHref(item.href);
   };
 
   const isGroupActive = (group) => {
     if (!group.children) return false;
     if (activeId !== undefined) return group.children.some((c) => c.id === activeId);
     if (!pathname) return false;
-    return group.children.some((c) => pathname === c.href);
+    // Group highlighting and expand state are pathname-only — every
+    // child in the group counts as "in group" regardless of hash.
+    return group.children.some((c) => {
+      const childPath = c.href.split('#')[0];
+      return pathname === childPath;
+    });
   };
 
   // Per-group expand state.
@@ -141,18 +179,28 @@ export default function Sidebar({
   // retired) so filter and sub-tab state persist across sibling
   // page swaps. All other navigations carry no query — global
   // filters live with this feature group, not the whole app.
+  //
+  // If the target href contains a fragment (e.g. `…#aggregated`),
+  // the fragment is appended after the query string so the
+  // resulting Next.js navigation drives both the route and the
+  // scroll-target hash in one go.
   const buildHref = (targetHref) => {
+    const [targetPath, targetHash = ''] = targetHref.split('#');
     const bothInGroup =
       pathname &&
       pathname.startsWith('/portfolio-analysis') &&
-      targetHref.startsWith('/portfolio-analysis');
-    if (!bothInGroup) return targetHref;
-    const out = new URLSearchParams();
-    params.forEach((v, k) => {
-      if (k !== 'tab') out.set(k, v);
-    });
-    const qs = out.toString();
-    return qs ? `${targetHref}?${qs}` : targetHref;
+      targetPath.startsWith('/portfolio-analysis');
+    let href = targetPath;
+    if (bothInGroup) {
+      const out = new URLSearchParams();
+      params.forEach((v, k) => {
+        if (k !== 'tab') out.set(k, v);
+      });
+      const qs = out.toString();
+      if (qs) href = `${targetPath}?${qs}`;
+    }
+    if (targetHash) href = `${href}#${targetHash}`;
+    return href;
   };
 
   return (
