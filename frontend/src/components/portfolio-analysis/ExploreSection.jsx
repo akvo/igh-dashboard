@@ -80,6 +80,8 @@ export default function ExploreSection() {
     [rawProductTypesData],
   );
 
+  // Convert hidden-phase array (URL-friendly) into the
+  // {key: boolean} visibility map that StackedBarChart expects.
   const pipelineVisiblePhases = useMemo(
     () => pipelinePhases.reduce(
       (acc, p) => ({ ...acc, [p.key]: !pipelineHiddenPhases.includes(p.key) }),
