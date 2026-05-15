@@ -7,7 +7,7 @@
 // The "Explore visual insights" half of the combined Portfolio
 // Analysis page. Extracted from the old page-level component so
 // the new `/portfolio-analysis` route can compose this alongside
-// `<AggregatedSection/>` with a single shared `<PortfolioPageHeader/>`
+// `<AggregatedSection/>` with a single shared `<PageHeader/>`
 // and `<GlobalFilterBar/>` at the top of the page.
 //
 // Owns its own page-local URL state (`productType`, `phide`) and

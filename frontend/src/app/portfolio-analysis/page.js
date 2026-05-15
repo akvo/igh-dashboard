@@ -26,9 +26,9 @@ import {
   ExploreSection,
   AggregatedSection,
   GlobalFilterBar,
-  PortfolioPageHeader,
   usePortfolioScrollSpy,
 } from '@/components/portfolio-analysis';
+import PageHeader from '@/components/layout/PageHeader';
 
 export default function PortfolioAnalysisPage() {
   const mainRef = useRef(null);
@@ -92,7 +92,7 @@ export default function PortfolioAnalysisPage() {
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Single page header band */}
           <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-0">
-            <PortfolioPageHeader
+            <PageHeader
               title="Portfolio analysis"
               description="Explore the global R&D pipeline across health areas, diseases and product types through two complementary views. Use interactive charts and maps to visualize portfolio trends and apply filters (across the complete visual insights view) or switch to the table view to build a custom dataset and export it as .csv for further analysis."
             />
