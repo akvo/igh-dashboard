@@ -45,6 +45,7 @@ const defaultMenuItems = [
         ],
       },
       { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
+      { id: 'who-priority-alignment', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority-alignment' },
     ],
   },
 ];
