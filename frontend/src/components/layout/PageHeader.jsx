@@ -1,18 +1,18 @@
 'use client';
 
 // =========================================================
-// <PortfolioPageHeader/> — title + description + Share button
+// <PageHeader/> — title + description + Share button
 // =========================================================
 //
-// Renders the consistent header used at the top of every page in
-// the Portfolio Analysis group. The Share button copies the
-// current URL to the clipboard so a teammate can land on the same
-// view (filters carried via query string).
+// Generic page header used at the top of dashboard pages.
+// The Share button copies the current URL to the clipboard
+// so a teammate can land on the same view (filters carried
+// via query string).
 
 import { useState } from 'react';
 import { UploadIcon } from '@/components/icons';
 
-export default function PortfolioPageHeader({ title, description }) {
+export default function PageHeader({ title, description }) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = () => {

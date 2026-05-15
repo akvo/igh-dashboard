@@ -52,10 +52,8 @@ import {
   EXTRACT_TAB_COLUMNS,
   EXTRACT_ROW_KEY,
 } from '@/lib/extractColumnConfig';
-import {
-  useGlobalFilters,
-  PortfolioPageHeader,
-} from '@/components/portfolio-analysis';
+import { useGlobalFilters } from '@/components/portfolio-analysis';
+import PageHeader from '@/components/layout/PageHeader';
 
 export default function ExtractCustomDetailsPage() {
   const {
@@ -470,7 +468,7 @@ export default function ExtractCustomDetailsPage() {
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Page header band */}
           <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-8 !pb-0">
-            <PortfolioPageHeader
+            <PageHeader
               title="Portfolio analysis"
               description="Explore the global R&D pipeline for each global health area, disease, or product type through two lenses. Use the Extract custom details tab to build a tailored portfolio across candidate & approved products, R&D priorities, and clinical trials, then export the data as a CSV file for further analysis and reporting. Switch to the Explore visual insights view to analyse portfolio trends through interactive charts and maps."
             />
