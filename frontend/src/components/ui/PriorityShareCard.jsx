@@ -18,7 +18,7 @@ import { chartColors } from '@/lib/theme';
 // Inputs:
 //   title          — card heading (e.g. "Neglected diseases")
 //   description    — single-line subtitle under the title
-//   diseasesWithPriority / totalDiseases — drive the percentage and ring
+//   candidatesWithPriority / totalCandidates — drive the percentage and ring
 //   accentColor    — filled-arc colour. Default matches the screenshot's
 //                    ND card (light purple). Callers pass other tokens
 //                    from `chartColors.primary` so each GHA card can
@@ -26,7 +26,7 @@ import { chartColors } from '@/lib/theme';
 //   loading        — render an animated skeleton
 //
 // Special cases:
-//   totalDiseases === 0 → render "—" + "No diseases in selection",
+//   totalCandidates === 0 → render "—" + "No candidates in selection",
 //   ring fills as a uniform light-gray circle.
 
 // Default accent = chartColors.primary[1] (Light Purple, #CBAFDE).
@@ -42,8 +42,8 @@ const OUTER_RADIUS = 26;
 export default function PriorityShareCard({
   title,
   description,
-  diseasesWithPriority = 0,
-  totalDiseases = 0,
+  candidatesWithPriority = 0,
+  totalCandidates = 0,
   loading = false,
   accentColor = DEFAULT_ACCENT_COLOR,
 }) {
@@ -62,22 +62,23 @@ export default function PriorityShareCard({
     );
   }
 
-  const hasData = totalDiseases > 0;
+  const hasData = totalCandidates > 0;
   // Clamp so a caller bug (or future data anomaly) can't produce a label like
   // "133%" alongside a visually-full ring. The backend SQL guarantees
-  // diseasesWithPriority ≤ totalDiseases today, but a prop-driven component
-  // shouldn't rely on that invariant holding everywhere it's wired up.
-  const filledCount = Math.min(Math.max(diseasesWithPriority, 0), totalDiseases);
-  const sharePercent = hasData ? Math.round((filledCount / totalDiseases) * 100) : null;
+  // candidatesWithPriority ≤ totalCandidates today, but a prop-driven
+  // component shouldn't rely on that invariant holding everywhere it's
+  // wired up.
+  const filledCount = Math.min(Math.max(candidatesWithPriority, 0), totalCandidates);
+  const sharePercent = hasData ? Math.round((filledCount / totalCandidates) * 100) : null;
 
-  // Two-slice pie: filled portion + remaining track. When totalDiseases
+  // Two-slice pie: filled portion + remaining track. When totalCandidates
   // is 0 we render the track only (uniform light-gray ring).
   const pieData = hasData
     ? [
         { name: 'filled', value: filledCount, color: accentColor },
         {
           name: 'rest',
-          value: totalDiseases - filledCount,
+          value: totalCandidates - filledCount,
           color: TRACK_COLOR,
         },
       ]
@@ -88,7 +89,7 @@ export default function PriorityShareCard({
       <div className="flex-1 min-w-0">
         <h4 className="text-sm font-semibold text-black mb-1">{title}</h4>
         <p className="text-xs text-gray-500">
-          {hasData ? description : 'No diseases in selection'}
+          {hasData ? description : 'No candidates in selection'}
         </p>
       </div>
 

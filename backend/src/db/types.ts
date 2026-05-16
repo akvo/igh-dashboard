@@ -522,8 +522,8 @@ export interface CandidateGeography {
 
 export interface PriorityAlignmentAreaShare {
   global_health_area: string;
-  diseasesWithPriority: number;
-  totalDiseases: number;
+  candidatesWithPriority: number;
+  totalCandidates: number;
   sharePercentage: number; // 0.0 – 1.0
 }
 

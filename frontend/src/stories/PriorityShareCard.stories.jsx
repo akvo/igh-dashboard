@@ -20,43 +20,43 @@ export default {
 export const Typical = {
   args: {
     title: 'Neglected diseases',
-    description: 'Share with dedicated priority.',
-    diseasesWithPriority: 6,
-    totalDiseases: 30,
+    description: 'Pipeline aligned with a WHO priority.',
+    candidatesWithPriority: 180,
+    totalCandidates: 900,
   },
 };
 
 export const ZeroShare = {
   args: {
     title: "Women's health",
-    description: 'Share with dedicated priority.',
-    diseasesWithPriority: 0,
-    totalDiseases: 59,
+    description: 'Pipeline aligned with a WHO priority.',
+    candidatesWithPriority: 0,
+    totalCandidates: 1119,
   },
 };
 
 export const FullShare = {
   args: {
     title: 'Neglected diseases',
-    description: 'Share with dedicated priority.',
-    diseasesWithPriority: 12,
-    totalDiseases: 12,
+    description: 'Pipeline aligned with a WHO priority.',
+    candidatesWithPriority: 400,
+    totalCandidates: 400,
   },
 };
 
 export const NoDenominator = {
   args: {
     title: 'Emerging infectious diseases',
-    description: 'Share with dedicated priority.',
-    diseasesWithPriority: 0,
-    totalDiseases: 0,
+    description: 'Pipeline aligned with a WHO priority.',
+    candidatesWithPriority: 0,
+    totalCandidates: 0,
   },
 };
 
 export const Loading = {
   args: {
     title: 'Neglected diseases',
-    description: 'Share with dedicated priority.',
+    description: 'Pipeline aligned with a WHO priority.',
     loading: true,
   },
 };
@@ -67,9 +67,9 @@ export const Loading = {
 export const GreenAccent = {
   args: {
     title: 'Emerging infectious diseases',
-    description: 'Share with dedicated priority.',
-    diseasesWithPriority: 6,
-    totalDiseases: 30,
+    description: 'Pipeline aligned with a WHO priority.',
+    candidatesWithPriority: 180,
+    totalCandidates: 900,
     accentColor: chartColors.primary[7],
   },
 };

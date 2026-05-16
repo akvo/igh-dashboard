@@ -1,4 +1,5 @@
 import { getDatabase } from "../connection.js";
+import { PIPELINE_FILTER } from "./filterUtils.js";
 import type {
   PriorityAlignmentAreaShare,
   PriorityAlignmentDiseaseOption,
@@ -81,44 +82,67 @@ export function getPriorityAlignmentOverview(
     .get(...totalParams) as { total: number };
 
   // -----------------------------------------------------------------------
-  // 2. byArea — per-GHA share, padded to fixed order
+  // 2. byArea — per-GHA candidate-level alignment, padded to fixed order
+  //
+  // Counts active-pipeline candidates whose disease falls under each of
+  // the three WHO global health areas (ND / EID / WH). The numerator is
+  // the subset of those candidates that have at least one bridge row to
+  // a non-stub priority. We have to check `p.priority_name` after the
+  // dim_priority join rather than `bp.priority_key IS NOT NULL` —
+  // candidates mapped exclusively to stub priorities would otherwise be
+  // counted.
+  //
+  // `LEFT JOIN bridge_candidate_priority` keeps candidates with no
+  // priority mapping in the denominator (an INNER join would silently
+  // collapse denominator into numerator).
+  //
+  // When `diseaseKeys` narrows the filter, both numerator and denominator
+  // restrict to candidates whose disease is in the selected set —
+  // matching the existing UX where GHAs outside the selection drop to
+  // 0/0 and the frontend renders `—`.
+  //
+  // `COUNT(DISTINCT f.candidate_key)` — rather than COUNT(*) — is needed
+  // on both the denominator and numerator because the two LEFT JOINs fan
+  // out: a candidate mapped to N priorities produces N output rows per
+  // snapshot row. DISTINCT collapses them back to one row per candidate.
   // -----------------------------------------------------------------------
   const areaParams: (string | number)[] = [];
-  const areaInnerClause = diseaseKeysClause(diseaseKeys, "d.disease_key", areaParams);
+  const areaDiseaseClause = diseaseKeysClause(diseaseKeys, "d.disease_key", areaParams);
   const areaRows = db
     .prepare(
       `SELECT
-         inner_d.global_health_area,
-         SUM(CASE WHEN has_real > 0 THEN 1 ELSE 0 END) AS diseasesWithPriority,
-         COUNT(*) AS totalDiseases
-       FROM (
-         SELECT
-           d.disease_key,
-           d.global_health_area,
-           SUM(CASE WHEN ${NON_EMPTY_PRIORITY} THEN 1 ELSE 0 END) AS has_real
-         FROM dim_disease d
-         LEFT JOIN dim_priority p ON p.disease_key = d.disease_key
-         WHERE d.global_health_area IN ('Neglected disease','Emerging infectious disease','Womens Health')${areaInnerClause}
-         GROUP BY d.disease_key, d.global_health_area
-       ) inner_d
-       GROUP BY inner_d.global_health_area`,
+         d.global_health_area,
+         COUNT(DISTINCT f.candidate_key) AS totalCandidates,
+         COUNT(DISTINCT CASE
+                          WHEN ${NON_EMPTY_PRIORITY}
+                          THEN f.candidate_key
+                        END) AS candidatesWithPriority
+       FROM fact_pipeline_snapshot f
+       JOIN dim_disease d ON d.disease_key = f.disease_key
+       LEFT JOIN bridge_candidate_priority bp ON bp.candidate_key = f.candidate_key
+       LEFT JOIN dim_priority p              ON p.priority_key   = bp.priority_key
+       WHERE f.is_active_flag = 1
+         AND ${PIPELINE_FILTER}
+         AND d.global_health_area IN ('Neglected disease','Emerging infectious disease','Womens Health')${areaDiseaseClause}
+       GROUP BY d.global_health_area`,
     )
     .all(...areaParams) as Array<{
     global_health_area: string;
-    diseasesWithPriority: number;
-    totalDiseases: number;
+    candidatesWithPriority: number;
+    totalCandidates: number;
   }>;
 
   const areaMap = new Map(areaRows.map((r) => [r.global_health_area, r]));
   const byArea: PriorityAlignmentAreaShare[] = FIXED_GHA_ORDER.map((gha) => {
     const row = areaMap.get(gha) ?? {
       global_health_area: gha,
-      diseasesWithPriority: 0,
-      totalDiseases: 0,
+      candidatesWithPriority: 0,
+      totalCandidates: 0,
     };
     return {
       ...row,
-      sharePercentage: row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0,
+      sharePercentage:
+        row.totalCandidates > 0 ? row.candidatesWithPriority / row.totalCandidates : 0,
     };
   });
 

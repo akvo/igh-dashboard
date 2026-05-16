@@ -16,8 +16,8 @@ import { query } from "../helpers/graphql.js";
 
 interface AreaShare {
   global_health_area: string;
-  diseasesWithPriority: number;
-  totalDiseases: number;
+  candidatesWithPriority: number;
+  totalCandidates: number;
   sharePercentage: number;
 }
 
@@ -63,8 +63,8 @@ async function fetchOverview(diseaseKeys?: number[]): Promise<Overview> {
         totalPriorities
         byArea {
           global_health_area
-          diseasesWithPriority
-          totalDiseases
+          candidatesWithPriority
+          totalCandidates
           sharePercentage
         }
         productTypeBreakdown {
@@ -114,17 +114,21 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 
   it("byArea snapshot values match tracked DB", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
-    expect(byKey["Neglected disease"].diseasesWithPriority).toBe(6);
-    expect(byKey["Neglected disease"].totalDiseases).toBe(203);
-    expect(byKey["Emerging infectious disease"].diseasesWithPriority).toBe(6);
-    expect(byKey["Emerging infectious disease"].totalDiseases).toBe(186);
-    expect(byKey["Womens Health"].diseasesWithPriority).toBe(0);
-    expect(byKey["Womens Health"].totalDiseases).toBe(59);
+    // ND total drifted 1778 → 1777 after the gold DB was regenerated
+    // 2026-05-14; the analyst's original reading reported 1778. Verified
+    // by independent SQL probe before re-pinning.
+    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(183);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1777);
+    expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
+    expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
+    expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
+    expect(byKey["Womens Health"].totalCandidates).toBe(1119);
   });
 
-  it("byArea sharePercentage = diseasesWithPriority / totalDiseases", () => {
+  it("byArea sharePercentage = candidatesWithPriority / totalCandidates", () => {
     for (const row of baseline.byArea) {
-      const expected = row.totalDiseases > 0 ? row.diseasesWithPriority / row.totalDiseases : 0;
+      const expected =
+        row.totalCandidates > 0 ? row.candidatesWithPriority / row.totalCandidates : 0;
       expect(row.sharePercentage).toBeCloseTo(expected, 6);
     }
   });
@@ -229,8 +233,8 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
     const targetArea = firstOption.global_health_area;
     for (const row of filtered.byArea) {
       if (row.global_health_area !== targetArea) {
-        expect(row.totalDiseases).toBe(0);
-        expect(row.diseasesWithPriority).toBe(0);
+        expect(row.totalCandidates).toBe(0);
+        expect(row.candidatesWithPriority).toBe(0);
         expect(row.sharePercentage).toBe(0);
       }
     }
