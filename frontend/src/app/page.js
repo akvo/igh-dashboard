@@ -857,9 +857,9 @@ export default function Home() {
                       <PriorityShareCard
                         key={area.global_health_area}
                         title={displayHealthArea(area.global_health_area)}
-                        description="Share with dedicated priority."
-                        diseasesWithPriority={area.diseasesWithPriority}
-                        totalDiseases={area.totalDiseases}
+                        description="Pipeline aligned with a WHO priority."
+                        candidatesWithPriority={area.candidatesWithPriority}
+                        totalCandidates={area.totalCandidates}
                         accentColor={WHO_RING_COLORS[area.global_health_area]}
                       />
                     ))}

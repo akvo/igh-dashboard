@@ -456,8 +456,8 @@ export const GET_HOME_PRIORITY_ALIGNMENT = gql`
       totalPriorities
       byArea {
         global_health_area
-        diseasesWithPriority
-        totalDiseases
+        candidatesWithPriority
+        totalCandidates
         sharePercentage
       }
       productTypeBreakdown {

@@ -559,8 +559,8 @@ export const typeDefs = `#graphql
 
   type PriorityAlignmentAreaShare {
     global_health_area: String!
-    diseasesWithPriority: Int!
-    totalDiseases: Int!
+    candidatesWithPriority: Int!
+    totalCandidates: Int!
     sharePercentage: Float!
   }
 
