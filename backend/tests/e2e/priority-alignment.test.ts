@@ -117,9 +117,32 @@ async function fetchOverview(filters: FilterArgs = {}): Promise<Overview> {
 // ---------------------------------------------------------------------------
 
 let baseline: Overview;
+// Shared across describe blocks 2, 3 (priorities list + applicable arrays).
+let filterTarget: { disease_filter: string; global_health_area: string };
 
 beforeAll(async () => {
   baseline = await fetchOverview();
+});
+
+beforeAll(() => {
+  // Pick the first priority-bearing disease that has a non-null GHA, so
+  // the "other GHAs are zero" assertion below has a meaningful target.
+  const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
+  const row = db
+    .prepare(
+      `SELECT DISTINCT d.disease_filter, d.global_health_area
+         FROM dim_disease d
+         JOIN dim_priority p ON p.disease_key = d.disease_key
+        WHERE d.global_health_area IS NOT NULL
+          AND d.disease_filter IS NOT NULL
+          AND TRIM(p.priority_name) != ''
+        ORDER BY d.disease_filter
+        LIMIT 1`,
+    )
+    .get() as { disease_filter: string; global_health_area: string } | undefined;
+  db.close();
+  if (!row) throw new Error("expected at least one priority-bearing disease with non-null GHA");
+  filterTarget = row;
 });
 
 // ---------------------------------------------------------------------------
@@ -232,31 +255,6 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — filtered by primary_disease_names", () => {
-  // Pick the first priority-bearing disease that has a non-null GHA, so
-  // the "other GHAs are zero" assertion below has a meaningful target.
-  let filterTarget: { disease_filter: string; global_health_area: string };
-  beforeAll(() => {
-    // Query the gold DB directly rather than relying on diseaseOptions (which
-    // carries disease_name, not disease_filter). We need disease_filter
-    // because that is the canonical primary grouping column the resolver uses.
-    const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
-    const row = db
-      .prepare(
-        `SELECT DISTINCT d.disease_filter, d.global_health_area
-           FROM dim_disease d
-           JOIN dim_priority p ON p.disease_key = d.disease_key
-          WHERE d.global_health_area IS NOT NULL
-            AND d.disease_filter IS NOT NULL
-            AND TRIM(p.priority_name) != ''
-          ORDER BY d.disease_filter
-          LIMIT 1`,
-      )
-      .get() as { disease_filter: string; global_health_area: string } | undefined;
-    db.close();
-    if (!row) throw new Error("expected at least one priority-bearing disease with non-null GHA");
-    filterTarget = row;
-  });
-
   it("totalPriorities narrows to selected diseases only", async () => {
     const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     expect(filtered.totalPriorities).toBeGreaterThan(0);
@@ -320,5 +318,130 @@ describe("priorityAlignmentOverview — filtered by primary_disease_names", () =
       filtered.womenOrChildrenShare.no +
       filtered.womenOrChildrenShare.unknown;
     expect(sum).toBe(filtered.totalPriorities);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 3. New fields: priorities, applicableDiseases, applicableProductNames
+// ---------------------------------------------------------------------------
+
+interface AreaShareWithApplicable extends AreaShare {
+  applicableDiseases: string[];
+  applicableProductNames: string[];
+}
+
+interface PriorityRow {
+  priority_key: number;
+  priority_name: string;
+}
+
+interface OverviewWithExtras extends Overview {
+  priorities: PriorityRow[];
+  byArea: AreaShareWithApplicable[];
+}
+
+async function fetchOverviewWithExtras(filters: FilterArgs = {}): Promise<OverviewWithExtras> {
+  const { data } = await query<{ priorityAlignmentOverview: OverviewWithExtras }>(
+    `query (
+       $globalHealthAreas: [String!],
+       $primaryDiseaseNames: [String!],
+       $secondaryDiseaseNames: [String!],
+       $productNames: [String!]
+     ) {
+      priorityAlignmentOverview(
+        global_health_areas: $globalHealthAreas,
+        primary_disease_names: $primaryDiseaseNames,
+        secondary_disease_names: $secondaryDiseaseNames,
+        product_names: $productNames,
+      ) {
+        totalPriorities
+        byArea {
+          global_health_area
+          candidatesWithPriority
+          totalCandidates
+          sharePercentage
+          applicableDiseases
+          applicableProductNames
+        }
+        productTypeBreakdown { product_name candidateCount }
+        diseaseOptions { disease_key disease_name disease_filter global_health_area }
+        womenOrChildrenShare { yes no unknown }
+        priorities { priority_key priority_name }
+      }
+    }`,
+    {
+      globalHealthAreas: filters.global_health_areas,
+      primaryDiseaseNames: filters.primary_disease_names,
+      secondaryDiseaseNames: filters.secondary_disease_names,
+      productNames: filters.product_names,
+    },
+  );
+  return data.priorityAlignmentOverview;
+}
+
+describe("priorityAlignmentOverview — priorities list", () => {
+  it("returns alphabetical non-stub priorities unfiltered", async () => {
+    const overview = await fetchOverviewWithExtras();
+    expect(overview.priorities.length).toBeGreaterThan(0);
+    expect(overview.priorities.length).toBe(overview.totalPriorities);
+    const names = overview.priorities.map((p) => p.priority_name);
+    const sorted = [...names].sort();
+    expect(names).toEqual(sorted);
+    for (const p of overview.priorities) {
+      expect(p.priority_key).toBeGreaterThan(0);
+      expect(p.priority_name.trim()).not.toEqual("");
+    }
+  });
+
+  it("narrows the priorities list under a disease filter", async () => {
+    const baselineCount = (await fetchOverviewWithExtras()).priorities.length;
+    const filtered = await fetchOverviewWithExtras({
+      primary_disease_names: [filterTarget.disease_filter],
+    });
+    expect(filtered.priorities.length).toBeGreaterThan(0);
+    expect(filtered.priorities.length).toBeLessThanOrEqual(baselineCount);
+    expect(filtered.priorities.length).toBe(filtered.totalPriorities);
+  });
+});
+
+describe("priorityAlignmentOverview — applicableDiseases / applicableProductNames", () => {
+  it("applicableDiseases is empty for every GHA when no disease filter is set", async () => {
+    const overview = await fetchOverviewWithExtras();
+    for (const row of overview.byArea) {
+      expect(row.applicableDiseases).toEqual([]);
+    }
+  });
+
+  it("applicableDiseases lists the selected primary on its GHA only", async () => {
+    const overview = await fetchOverviewWithExtras({
+      primary_disease_names: [filterTarget.disease_filter],
+    });
+    for (const row of overview.byArea) {
+      if (row.global_health_area === filterTarget.global_health_area) {
+        expect(row.applicableDiseases).toEqual([filterTarget.disease_filter]);
+      } else {
+        expect(row.applicableDiseases).toEqual([]);
+      }
+    }
+  });
+
+  it("applicableProductNames is empty for every GHA when no product filter is set", async () => {
+    const overview = await fetchOverviewWithExtras();
+    for (const row of overview.byArea) {
+      expect(row.applicableProductNames).toEqual([]);
+    }
+  });
+
+  it("applicableProductNames lists the selected product per GHA that contains it", async () => {
+    const overview = await fetchOverviewWithExtras({ product_names: ["Vaccines"] });
+    let anyApplicable = false;
+    for (const row of overview.byArea) {
+      if (row.applicableProductNames.length > 0) {
+        anyApplicable = true;
+        expect(row.applicableProductNames).toContain("Vaccines");
+        expect(row.totalCandidates).toBeGreaterThan(0);
+      }
+    }
+    expect(anyApplicable).toBe(true);
   });
 });

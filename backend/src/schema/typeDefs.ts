@@ -562,6 +562,11 @@ export const typeDefs = `#graphql
     candidatesWithPriority: Int!
     totalCandidates: Int!
     sharePercentage: Float!
+    # Alphabetical lists of selected items relevant to this GHA only.
+    # Drive the title pill on PriorityShareCard. Both empty when no
+    # disease/product filter is set.
+    applicableDiseases: [String!]!
+    applicableProductNames: [String!]!
   }
 
   type PriorityAlignmentProductType {
@@ -591,12 +596,20 @@ export const typeDefs = `#graphql
     unknown: Int!
   }
 
+  type PriorityAlignmentPriority {
+    priority_key: Int!
+    priority_name: String!
+  }
+
   type PriorityAlignmentOverview {
     totalPriorities: Int!
     byArea: [PriorityAlignmentAreaShare!]!
     productTypeBreakdown: [PriorityAlignmentProductType!]!
     diseaseOptions: [PriorityAlignmentDiseaseOption!]!
     womenOrChildrenShare: PriorityAlignmentWomenChildrenShare!
+    # Filtered, alphabetical non-stub priority list. Drives
+    # PriorityListCard preview + PriorityListPanel slide-in.
+    priorities: [PriorityAlignmentPriority!]!
   }
 
   # =============================================================================
