@@ -264,6 +264,10 @@ function runByArea(
     params,
   );
   if (filters.product_names && filters.product_names.length > 0) {
+    // Inline the product join here (rather than delegating to
+    // applyProductFilters) because runByArea already includes
+    // `f.is_active_flag = 1` and PIPELINE_FILTER in its base conditions —
+    // calling applyProductFilters would duplicate them.
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
   }
@@ -385,7 +389,13 @@ function runWomenOrChildrenShare(
   if (needsDisease) applyDiseaseFilters(filters, joins, conditions, params);
   if (needsProduct) applyProductFilters(filters, joins, conditions, params);
 
-  // Use COUNT(DISTINCT) when the product join is active — it fans out rows.
+  // Use COUNT(DISTINCT) only when the product join is active, because the
+  // bridge_candidate_priority → fact_pipeline_snapshot → dim_product chain
+  // can produce multiple rows per priority (one per matching candidate).
+  // The dim_disease join added by applyDiseaseFilters does NOT fan out —
+  // dim_priority has exactly one disease_key per row (a 1:1 relationship
+  // through to dim_disease), so a plain SUM is safe there and avoids the
+  // overhead of deduplication.
   const sql = needsProduct ? WC_SQL_FANOUT(joins, conditions) : WC_SQL_SIMPLE(joins, conditions);
 
   const row = db.prepare(sql).get(...params) as {
@@ -436,6 +446,10 @@ function resolveApplicableDiseaseSelection(
   if (filters.primary_disease_names && filters.primary_disease_names.length > 0) {
     return { column: "d.disease_filter", values: filters.primary_disease_names };
   }
+  // GHA-only selection intentionally returns null here (→ empty arrays).
+  // The title pill on a GHA card only appears when a Disease or Product
+  // filter is active; GHA filtering alone keeps the plain `<GHA name>`
+  // title per the spec's filter-mode rules.
   return null;
 }
 
@@ -445,8 +459,12 @@ function groupRowsByGha(
   seed: Record<string, string[]>,
 ): Record<string, string[]> {
   const result: Record<string, string[]> = { ...seed };
+  // Initialise any GHA key that isn't already present in the seed so that
+  // the push below never needs to check for undefined — keeps this O(n)
+  // rather than the O(n²) spread-concatenation pattern it replaced.
   for (const row of rows) {
-    result[row.global_health_area] = [...(result[row.global_health_area] ?? []), row.name];
+    if (!result[row.global_health_area]) result[row.global_health_area] = [];
+    result[row.global_health_area].push(row.name);
   }
   return Object.fromEntries(
     Object.entries(result).map(([gha, names]) => [gha, Array.from(new Set(names)).sort()]),
