@@ -8,7 +8,7 @@ import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -841,29 +841,14 @@ export default function Home() {
               <div className="flex flex-col gap-4">
                 {whoLoading ? (
                   <>
-                    <div className="bg-white border border-gray-200 p-4 animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                      <div className="h-10 bg-gray-200 rounded w-1/3 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    </div>
+                    <PriorityTotalCard loading />
                     {[0, 1, 2].map((i) => (
                       <PriorityShareCard key={i} loading />
                     ))}
                   </>
                 ) : (
                   <>
-                    <div className="bg-white border border-gray-200 p-4 flex flex-col gap-4">
-                      <h4 className="text-sm font-semibold text-black">Priorities</h4>
-                      <div>
-                        <div
-                          className="text-[40px] font-extrabold text-black leading-tight"
-                          style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}
-                        >
-                          {whoTotalPriorities.toLocaleString()}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">Total number of priorities</p>
-                      </div>
-                    </div>
+                    <PriorityTotalCard total={whoTotalPriorities} />
                     {whoByArea.map((area) => (
                       <PriorityShareCard
                         key={area.global_health_area}
