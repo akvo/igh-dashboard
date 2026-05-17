@@ -470,6 +470,8 @@ export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
         candidatesWithPriority
         totalCandidates
         sharePercentage
+        applicableDiseases
+        applicableProductNames
       }
       productTypeBreakdown {
         product_name
@@ -485,6 +487,10 @@ export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
         yes
         no
         unknown
+      }
+      priorities {
+        priority_key
+        priority_name
       }
     }
   }

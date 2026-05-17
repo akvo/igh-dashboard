@@ -13,6 +13,7 @@ const EMPTY = Object.freeze({
   productTypeBreakdown: [],
   diseaseOptions: [],
   womenOrChildrenShare: Object.freeze({ yes: 0, no: 0, unknown: 0 }),
+  priorities: [],
 });
 
 /**
@@ -96,6 +97,7 @@ export function usePriorityAlignment(
     diseaseOptions: payload.diseaseOptions,
     womenOrChildrenShare: payload.womenOrChildrenShare,
     womenOrChildrenChartData,
+    priorities: payload.priorities,
     loading: loading && !cachedData,
     error,
     usingCache: !!cachedData,
