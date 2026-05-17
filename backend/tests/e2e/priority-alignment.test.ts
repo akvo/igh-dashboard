@@ -127,12 +127,12 @@ beforeAll(async () => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (65)", () => {
-    // The new query joins dim_disease unconditionally so that GHA/disease
-    // filter args can reach the column. Priority key 5 ("Test_TO") has a
-    // null disease_key in the gold DB and is therefore excluded from the
-    // total. The old COUNT(*) on dim_priority alone returned 66.
-    expect(baseline.totalPriorities).toBe(65);
+  it("totalPriorities matches snapshot (66)", () => {
+    // dim_disease is joined only when a GHA/disease filter is active.
+    // The unfiltered query is a bare COUNT(DISTINCT) on dim_priority, so
+    // priority key 5 ("Test_TO") — which has a null disease_key — is
+    // correctly included in the total.
+    expect(baseline.totalPriorities).toBe(66);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -213,14 +213,9 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     // the silver→gold projection of crc8b_dedicatedtowomenorchildren landed
     // in igh-data-transform.
     //
-    // Note: the unfiltered womenOrChildrenShare query scans dim_priority
-    // directly without joining dim_disease (no filter axes are active), so
-    // it includes all 66 non-stub priorities — including priority key 5
-    // ("Test_TO") which has a null disease_key. The totalPriorities query
-    // always joins dim_disease to support GHA/disease filter args, so it
-    // returns 65. The two counts therefore diverge by 1 when unfiltered;
-    // the sum = totalPriorities invariant holds only when at least one
-    // disease-side filter is active.
+    // Both womenOrChildrenShare and totalPriorities use the same unfiltered
+    // path (no dim_disease join when no filter axes are active), so the
+    // bucket sum always equals totalPriorities.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
     expect(baseline.womenOrChildrenShare.no).toBe(31);
     expect(baseline.womenOrChildrenShare.unknown).toBe(1);
@@ -228,7 +223,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +
       baseline.womenOrChildrenShare.unknown;
-    expect(sum).toBe(66);
+    expect(sum).toBe(baseline.totalPriorities);
   });
 });
 

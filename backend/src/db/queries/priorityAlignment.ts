@@ -56,12 +56,12 @@ export function getPriorityAlignmentOverview(
   // ---------------------------------------------------------------------
   // 1. totalPriorities — single scalar.
   //
-  // Joins dim_disease always (every priority has a disease_key, and the
-  // GHA/disease filters need the join). When product_names is set, we
-  // also join through bridge_candidate_priority + fact_pipeline_snapshot
-  // + dim_product so the filter can reach priorities via candidates with
-  // the selected product type. COUNT(DISTINCT) protects against fan-out
-  // when a priority is mapped to multiple candidates.
+  // Uses the same conditional-join pattern as womenOrChildrenShare and
+  // runPriorities: dim_disease is joined only when a GHA/disease filter
+  // is active, and the pipeline bridge tables are joined only when a
+  // product filter is active. The unfiltered case is a bare COUNT(DISTINCT)
+  // on dim_priority so that priorities with a NULL disease_key (e.g. key 5
+  // "Test_TO") are correctly included, keeping totalPriorities at 66.
   // ---------------------------------------------------------------------
   const totalRow = runTotalPriorities(db, filters);
 
@@ -208,34 +208,25 @@ function applyProductFilters(
   addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
 }
 
+// Count distinct non-stub priorities, mirroring the conditional-join pattern
+// used by `runWomenOrChildrenShare` and `runPriorities`. The dim_disease join
+// is added only when a disease-side or GHA filter is active; without it, the
+// query is a plain COUNT(DISTINCT) on dim_priority, which correctly includes
+// priority key 5 ("Test_TO") whose disease_key is NULL. An unconditional join
+// would silently exclude that row and shift the unfiltered total from 66 → 65.
 function runTotalPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): { total: number } {
-  const joins: string[] = ["JOIN dim_disease d ON d.disease_key = p.disease_key"];
+  const needsDisease = hasAnyDiseaseFilter(filters);
+  const needsProduct = (filters.product_names?.length ?? 0) > 0;
+
+  const joins: string[] = [];
   const conditions = [NON_EMPTY_PRIORITY];
   const params: (string | number)[] = [];
 
-  addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-  addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(
-    filters.secondary_disease_names,
-    "d.secondary_disease_name",
-    conditions,
-    params,
-  );
-
-  // Product filter reaches priorities via the candidate bridge. We only
-  // add the joins when the filter is present so the unfiltered query
-  // stays cheap.
-  if (filters.product_names && filters.product_names.length > 0) {
-    joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
-    joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
-    joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
-    conditions.push("f.is_active_flag = 1");
-    conditions.push(PIPELINE_FILTER);
-    addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
-  }
+  if (needsDisease) applyDiseaseFilters(filters, joins, conditions, params);
+  if (needsProduct) applyProductFilters(filters, joins, conditions, params);
 
   const sql = `SELECT COUNT(DISTINCT p.priority_key) AS total
                FROM dim_priority p
