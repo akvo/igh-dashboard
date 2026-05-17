@@ -525,6 +525,8 @@ export interface PriorityAlignmentAreaShare {
   candidatesWithPriority: number;
   totalCandidates: number;
   sharePercentage: number; // 0.0 – 1.0
+  applicableDiseases: string[];
+  applicableProductNames: string[];
 }
 
 export interface PriorityAlignmentProductType {
@@ -553,16 +555,25 @@ export interface PriorityAlignmentWomenChildrenShare {
   unknown: number;
 }
 
+export interface PriorityAlignmentPriority {
+  priority_key: number;
+  priority_name: string;
+}
+
 export interface PriorityAlignmentOverview {
   totalPriorities: number;
   byArea: PriorityAlignmentAreaShare[];
   productTypeBreakdown: PriorityAlignmentProductType[];
   diseaseOptions: PriorityAlignmentDiseaseOption[];
   womenOrChildrenShare: PriorityAlignmentWomenChildrenShare;
+  priorities: PriorityAlignmentPriority[];
 }
 
 export interface PriorityAlignmentInput {
-  diseaseKeys?: number[] | null;
+  global_health_areas?: string[] | null;
+  primary_disease_names?: string[] | null;
+  secondary_disease_names?: string[] | null;
+  product_names?: string[] | null;
 }
 
 // =============================================================================

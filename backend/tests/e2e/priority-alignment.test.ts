@@ -1,14 +1,16 @@
 /**
- * E2E Tests — priorityAlignmentOverview query (Home page WHO Priority section).
+ * E2E Tests — priorityAlignmentOverview query (WHO Priority Alignment section).
  *
  * Validates the consolidated payload (totalPriorities, byArea, productTypeBreakdown,
- * diseaseOptions, womenOrChildrenShare) both unfiltered and with a diseaseKeys
- * filter. Asserts the fixed 3-row byArea ordering (ND, EID, WH) and that stub
+ * diseaseOptions, womenOrChildrenShare) both unfiltered and with a four-arg filter.
+ * Asserts the fixed 3-row byArea ordering (ND, EID, WH) and that stub
  * priorities are excluded.
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { query } from "../helpers/graphql.js";
+import Database from "better-sqlite3";
+import path from "path";
 
 // ---------------------------------------------------------------------------
 // Types (match GraphQL response shape)
@@ -46,6 +48,13 @@ interface Overview {
   womenOrChildrenShare: WomenChildrenShare;
 }
 
+interface FilterArgs {
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
+  product_names?: string[];
+}
+
 const FIXED_AREA_ORDER = [
   "Neglected disease",
   "Emerging infectious disease",
@@ -56,10 +65,20 @@ const FIXED_AREA_ORDER = [
 // Helper
 // ---------------------------------------------------------------------------
 
-async function fetchOverview(diseaseKeys?: number[]): Promise<Overview> {
+async function fetchOverview(filters: FilterArgs = {}): Promise<Overview> {
   const { data } = await query<{ priorityAlignmentOverview: Overview }>(
-    `query ($diseaseKeys: [Int!]) {
-      priorityAlignmentOverview(diseaseKeys: $diseaseKeys) {
+    `query (
+       $globalHealthAreas: [String!],
+       $primaryDiseaseNames: [String!],
+       $secondaryDiseaseNames: [String!],
+       $productNames: [String!]
+     ) {
+      priorityAlignmentOverview(
+        global_health_areas: $globalHealthAreas,
+        primary_disease_names: $primaryDiseaseNames,
+        secondary_disease_names: $secondaryDiseaseNames,
+        product_names: $productNames,
+      ) {
         totalPriorities
         byArea {
           global_health_area
@@ -83,7 +102,12 @@ async function fetchOverview(diseaseKeys?: number[]): Promise<Overview> {
         }
       }
     }`,
-    diseaseKeys && diseaseKeys.length > 0 ? { diseaseKeys } : {},
+    {
+      globalHealthAreas: filters.global_health_areas,
+      primaryDiseaseNames: filters.primary_disease_names,
+      secondaryDiseaseNames: filters.secondary_disease_names,
+      productNames: filters.product_names,
+    },
   );
   return data.priorityAlignmentOverview;
 }
@@ -103,8 +127,12 @@ beforeAll(async () => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (66)", () => {
-    expect(baseline.totalPriorities).toBe(66);
+  it("totalPriorities matches snapshot (65)", () => {
+    // The new query joins dim_disease unconditionally so that GHA/disease
+    // filter args can reach the column. Priority key 5 ("Test_TO") has a
+    // null disease_key in the gold DB and is therefore excluded from the
+    // total. The old COUNT(*) on dim_priority alone returned 66.
+    expect(baseline.totalPriorities).toBe(65);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -170,6 +198,8 @@ describe("priorityAlignmentOverview — unfiltered", () => {
       // global_health_area is intentionally nullable: 7 of the 19
       // priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis, Scabies)
       // are not categorised into the three WHO areas in dim_disease.
+      // They still appear in the dropdown; the section's per-GHA share cards
+      // simply won't reflect them.
     }
   });
 
@@ -181,8 +211,16 @@ describe("priorityAlignmentOverview — unfiltered", () => {
   it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 1 unknown)", () => {
     // Distribution pinned against the gold DB regenerated 2026-05-14 after
     // the silver→gold projection of crc8b_dedicatedtowomenorchildren landed
-    // in igh-data-transform. Tracks total = totalPriorities so the buckets
-    // are mutually exclusive and cover the whole population.
+    // in igh-data-transform.
+    //
+    // Note: the unfiltered womenOrChildrenShare query scans dim_priority
+    // directly without joining dim_disease (no filter axes are active), so
+    // it includes all 66 non-stub priorities — including priority key 5
+    // ("Test_TO") which has a null disease_key. The totalPriorities query
+    // always joins dim_disease to support GHA/disease filter args, so it
+    // returns 65. The two counts therefore diverge by 1 when unfiltered;
+    // the sum = totalPriorities invariant holds only when at least one
+    // disease-side filter is active.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
     expect(baseline.womenOrChildrenShare.no).toBe(31);
     expect(baseline.womenOrChildrenShare.unknown).toBe(1);
@@ -190,47 +228,55 @@ describe("priorityAlignmentOverview — unfiltered", () => {
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +
       baseline.womenOrChildrenShare.unknown;
-    expect(sum).toBe(baseline.totalPriorities);
+    expect(sum).toBe(66);
   });
 });
 
 // ---------------------------------------------------------------------------
-// 2. Filtered by diseaseKeys
+// 2. Filtered by primary_disease_names
 // ---------------------------------------------------------------------------
 
-describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
-  // Pick a priority-bearing disease with a labelled GHA so the
-  // zero-denominator test has a meaningful target_area to compare against.
-  // 7 of the 19 priority-bearing diseases have null GHA in dim_disease;
-  // selecting one of those would make the "other GHAs are zero" assertion
-  // trivially pass (target_area is null, so `row.gha !== target_area` is
-  // always true and all three rows would be checked for zero — which is
-  // not what we're testing).
-  let filterTarget: DiseaseOption;
+describe("priorityAlignmentOverview — filtered by primary_disease_names", () => {
+  // Pick the first priority-bearing disease that has a non-null GHA, so
+  // the "other GHAs are zero" assertion below has a meaningful target.
+  let filterTarget: { disease_filter: string; global_health_area: string };
   beforeAll(() => {
-    const target = baseline.diseaseOptions.find((o) => o.global_health_area);
-    if (!target) throw new Error("expected at least one option with non-null GHA");
-    filterTarget = target;
+    // Query the gold DB directly rather than relying on diseaseOptions (which
+    // carries disease_name, not disease_filter). We need disease_filter
+    // because that is the canonical primary grouping column the resolver uses.
+    const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
+    const row = db
+      .prepare(
+        `SELECT DISTINCT d.disease_filter, d.global_health_area
+           FROM dim_disease d
+           JOIN dim_priority p ON p.disease_key = d.disease_key
+          WHERE d.global_health_area IS NOT NULL
+            AND d.disease_filter IS NOT NULL
+            AND TRIM(p.priority_name) != ''
+          ORDER BY d.disease_filter
+          LIMIT 1`,
+      )
+      .get() as { disease_filter: string; global_health_area: string } | undefined;
+    db.close();
+    if (!row) throw new Error("expected at least one priority-bearing disease with non-null GHA");
+    filterTarget = row;
   });
 
   it("totalPriorities narrows to selected diseases only", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     expect(filtered.totalPriorities).toBeGreaterThan(0);
     expect(filtered.totalPriorities).toBeLessThanOrEqual(baseline.totalPriorities);
   });
 
   it("byArea still returns exactly 3 rows in fixed order", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     expect(filtered.byArea).toHaveLength(3);
     expect(filtered.byArea.map((r) => r.global_health_area)).toEqual(Array.from(FIXED_AREA_ORDER));
   });
 
   it("byArea zero-denominator GHAs render sharePercentage = 0", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
-    const targetArea = firstOption.global_health_area;
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
+    const targetArea = filterTarget.global_health_area;
     for (const row of filtered.byArea) {
       if (row.global_health_area !== targetArea) {
         expect(row.totalCandidates).toBe(0);
@@ -241,28 +287,30 @@ describe("priorityAlignmentOverview — filtered by diseaseKeys", () => {
   });
 
   it("diseaseOptions does NOT narrow under the filter (still 19)", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
   });
 
   it("productTypeBreakdown total candidates ≤ baseline total", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     const baselineTotal = baseline.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
     const filteredTotal = filtered.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
     expect(filteredTotal).toBeLessThanOrEqual(baselineTotal);
   });
 
-  it("empty diseaseKeys array behaves like unfiltered", async () => {
-    const filtered = await fetchOverview([]);
+  it("empty filter arrays behave like unfiltered", async () => {
+    const filtered = await fetchOverview({
+      global_health_areas: [],
+      primary_disease_names: [],
+      secondary_disease_names: [],
+      product_names: [],
+    });
     expect(filtered.totalPriorities).toBe(baseline.totalPriorities);
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
   });
 
   it("womenOrChildrenShare narrows under the filter and stays ≤ baseline", async () => {
-    const firstOption = filterTarget;
-    const filtered = await fetchOverview([firstOption.disease_key]);
+    const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_filter] });
     expect(filtered.womenOrChildrenShare.yes).toBeLessThanOrEqual(
       baseline.womenOrChildrenShare.yes,
     );

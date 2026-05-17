@@ -727,8 +727,13 @@ export const typeDefs = `#graphql
     # Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): RegulatoryDistribution!
 
-    # WHO Priority alignment — Home section (single consolidated payload).
-    priorityAlignmentOverview(diseaseKeys: [Int!]): PriorityAlignmentOverview!
+    # WHO Priority alignment — single consolidated payload (Home + WHO page).
+    priorityAlignmentOverview(
+      global_health_areas: [String!],
+      primary_disease_names: [String!],
+      secondary_disease_names: [String!],
+      product_names: [String!],
+    ): PriorityAlignmentOverview!
 
     # Portfolio analysis - product distribution (donut chart)
     productDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!
