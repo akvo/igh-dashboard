@@ -62,7 +62,7 @@ export default function PriorityListCard({ priorities = [], onSeeAll, loading = 
         <button
           type="button"
           onClick={onSeeAll}
-          className="self-start text-xs font-medium text-black border border-gray-300 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
+          className="w-full text-center text-xs font-medium text-black border border-gray-300 px-3 py-2 hover:bg-gray-50 transition-colors cursor-pointer bg-white"
         >
           See all
         </button>

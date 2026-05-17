@@ -35,7 +35,11 @@ export default function PriorityListPanel({ isOpen, onClose, priorities = [] }) 
         />
       )}
       <div
-        className={`fixed top-0 right-0 h-full w-full max-w-lg bg-white z-50 shadow-xl transform transition-transform duration-300 ease-in-out ${
+        // Offset by the global Header's height (fixed at z-[1000],
+        // minHeight 90px in app/layout.js) so the slide-in's title bar
+        // sits visibly below the main nav rather than being occluded
+        // by it. The body height calc inside follows from this.
+        className={`fixed top-[90px] right-0 h-[calc(100%-90px)] w-full max-w-lg bg-white z-50 shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         role="dialog"
