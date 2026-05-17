@@ -321,22 +321,36 @@ export default function Home() {
     null,
   );
 
-  // Dropdown values are the `disease_filter` canonical strings that the
-  // resolver's `primary_disease_names` filter matches against
-  // (`dim_disease.disease_filter IN (...)`). Rows where `disease_filter`
-  // is null cannot be selected by the resolver at all, so we exclude them
-  // entirely rather than falling back to `disease_name` (which would
-  // silently produce a filter value the resolver cannot match, zeroing the
-  // entire section). The URL serializer is unchanged; any existing shared
-  // URL that stored a disease_name string for a null-disease_filter row
-  // will simply not match an option and drop on next render — accepted as
-  // a one-off break for an unstable feature surface.
-  const whoDiseaseOptions = useMemo(
-    () => whoDiseaseOptionsRaw
-      .filter((d) => d.disease_filter && d.disease_filter.trim() !== '')
-      .map((d) => ({ label: d.disease_name, value: d.disease_filter })),
-    [whoDiseaseOptionsRaw],
-  );
+  // Build the disease dropdown options from all priority-bearing rows.
+  //
+  // The resolver's `applyDiseaseFilters` now matches `primary_disease_names`
+  // against BOTH `dim_disease.disease_filter` AND `TRIM(dim_disease.disease_name)`,
+  // so we no longer need to exclude rows with a null `disease_filter`. We
+  // prefer `disease_filter` when it is set (Mpox is the only
+  // priority-bearing disease that has one) and fall back to the trimmed
+  // name for the other 17 diseases — both values resolve correctly on the
+  // resolver side.
+  //
+  // Mpox has two rows in the payload — "Mpox (monkeypox) - Drugs" and
+  // "Mpox (monkeypox) - Vaccines" — both sharing the same `disease_filter`.
+  // We dedup by `value` (first-seen wins) so the user only sees one
+  // "Mpox (monkeypox)" entry in the dropdown; the label for that entry
+  // comes from `disease_filter` itself rather than either sub-variant name.
+  const whoDiseaseOptions = useMemo(() => {
+    const seen = new Map();
+    for (const d of whoDiseaseOptionsRaw) {
+      const trimmedName = d.disease_name?.trim() ?? '';
+      const value = d.disease_filter || trimmedName;
+      if (!seen.has(value)) {
+        // For Mpox-style rows where multiple sub-variants share a
+        // disease_filter, collapse them to a single option labelled by
+        // the disease_filter (canonical primary name).
+        const label = d.disease_filter ?? trimmedName;
+        seen.set(value, { label, value });
+      }
+    }
+    return Array.from(seen.values());
+  }, [whoDiseaseOptionsRaw]);
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
