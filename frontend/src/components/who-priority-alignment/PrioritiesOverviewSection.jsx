@@ -167,6 +167,7 @@ export default function PrioritiesOverviewSection() {
               <PriorityShareCard loading />
               <PriorityShareCard loading />
               <PriorityShareCard loading />
+              {filterMode === 'narrow' && <PriorityListCard loading />}
             </>
           ) : (
             <>
