@@ -95,6 +95,7 @@ export function getPriorityAlignmentOverview(
       `SELECT DISTINCT
          d.disease_key,
          d.disease_name,
+         d.disease_filter,
          d.global_health_area
        FROM dim_disease d
        INNER JOIN dim_priority p ON p.disease_key = d.disease_key

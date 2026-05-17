@@ -27,7 +27,7 @@ import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
   useGhaProductTypeSummaries,
-  useHomePriorityAlignment,
+  usePriorityAlignment,
   useDiseaseSummaries,
   useDiseaseProductTypeSummaries,
   useCandidateTypeDistribution,
@@ -304,11 +304,9 @@ export default function Home() {
   );
 
   // WHO Priority Alignment data — single consolidated query feeds all four
-  // cards, the product types donut, and the disease dropdown options.
-  const whoDiseaseKeys = useMemo(
-    () => (whoDiseases.length > 0 ? whoDiseases.map((v) => parseInt(v, 10)) : null),
-    [whoDiseases],
-  );
+  // cards, the product types donut, and the disease dropdown options. The
+  // Home section only narrows by Disease today; GHA + Product filtering
+  // happens on the dedicated WHO page.
   const {
     totalPriorities: whoTotalPriorities,
     byArea: whoByArea,
@@ -316,13 +314,23 @@ export default function Home() {
     diseaseOptions: whoDiseaseOptionsRaw,
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
-  } = useHomePriorityAlignment(whoDiseaseKeys);
+  } = usePriorityAlignment({
+    primaryDiseaseNames: whoDiseases.length > 0 ? whoDiseases : null,
+  });
 
-  // Shape `diseaseOptions` for the shared Dropdown component (value = key as string).
+  // Dropdown values are disease NAMES (matching `dim_disease.disease_filter`
+  // semantics the resolver filters on). The URL serializer is unchanged;
+  // existing shared URLs that contained numeric disease_key strings will
+  // not match an option and silently drop on next render — accepted as a
+  // one-off break for unstable feature surface.
   const whoDiseaseOptions = useMemo(
     () => whoDiseaseOptionsRaw.map((d) => ({
       label: d.disease_name,
-      value: String(d.disease_key),
+      // Use disease_filter (primary-name canonical column) as the value
+      // so the resolver's `primary_disease_names` filter matches. Fall
+      // back to disease_name when disease_filter is null (handful of
+      // niche diseases) — the resolver's NULL handling will skip them.
+      value: d.disease_filter || d.disease_name,
     })),
     [whoDiseaseOptionsRaw],
   );

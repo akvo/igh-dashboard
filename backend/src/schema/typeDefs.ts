@@ -572,6 +572,10 @@ export const typeDefs = `#graphql
   type PriorityAlignmentDiseaseOption {
     disease_key: Int!
     disease_name: String!
+    # Canonical primary-grouping column used by the resolver's
+    # primary_disease_names filter. Null for a handful of niche diseases
+    # whose dim_disease.disease_filter is unset.
+    disease_filter: String
     # Nullable: 7 of the 19 priority-bearing diseases (HIV/AIDS,
     # Tuberculosis, etc.) are not categorised into the three WHO areas.
     global_health_area: String

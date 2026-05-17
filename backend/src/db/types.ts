@@ -537,6 +537,10 @@ export interface PriorityAlignmentProductType {
 export interface PriorityAlignmentDiseaseOption {
   disease_key: number;
   disease_name: string;
+  // Canonical primary-grouping column used by the resolver's
+  // `primary_disease_names` filter. Null for a handful of niche diseases
+  // whose `dim_disease.disease_filter` is unset.
+  disease_filter: string | null;
   // Nullable: some priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis)
   // are not categorised into the three WHO global health areas in dim_disease.
   // They still appear in the dropdown; the section's per-GHA share cards
