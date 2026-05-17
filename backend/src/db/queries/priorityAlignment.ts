@@ -184,7 +184,32 @@ function applyDiseaseFilters(
 ): void {
   joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
   addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-  addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+
+  // The gold DB contains two kinds of dim_disease rows that reference the
+  // same conceptual disease:
+  //
+  //   - Candidate-side rows (joined via fact_pipeline_snapshot) have
+  //     `disease_filter` populated for almost every disease in the
+  //     hierarchical filter (e.g. `disease_filter = 'Malaria'`).
+  //   - Priority-side rows (joined from dim_priority.disease_key) have
+  //     `disease_filter = NULL` for 17 of the 19 priority-bearing diseases —
+  //     only Mpox carries a non-null `disease_filter`. These rows DO carry
+  //     the clean disease name in `disease_name`, but with a trailing space
+  //     (e.g. `'Malaria '`).
+  //
+  // Matching on `disease_filter` alone therefore returns zero priorities for
+  // all diseases except Mpox. The OR clause below makes both sides work: we
+  // accept a match on `disease_filter` (candidate-side) OR on the trimmed
+  // `disease_name` (priority-side), passing the selected names twice so each
+  // placeholder gets a value.
+  if (filters.primary_disease_names && filters.primary_disease_names.length > 0) {
+    const placeholders = filters.primary_disease_names.map(() => "?").join(", ");
+    conditions.push(
+      `(d.disease_filter IN (${placeholders}) OR TRIM(d.disease_name) IN (${placeholders}))`,
+    );
+    params.push(...filters.primary_disease_names, ...filters.primary_disease_names);
+  }
+
   addArrayCondition(
     filters.secondary_disease_names,
     "d.secondary_disease_name",

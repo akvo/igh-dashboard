@@ -402,6 +402,22 @@ describe("priorityAlignmentOverview — priorities list", () => {
     expect(filtered.priorities.length).toBeLessThanOrEqual(baselineCount);
     expect(filtered.priorities.length).toBe(filtered.totalPriorities);
   });
+
+  // Regression: priority-side dim_disease rows have disease_filter = NULL for
+  // 17 of 19 priority-bearing diseases. Before the fix, filtering by such a
+  // disease name produced totalPriorities = 0 / priorities = []. Malaria is a
+  // stable example: it has >0 priorities in the gold DB and a NULL
+  // disease_filter on its priority-side dim_disease row.
+  it("primary_disease_names filter works for diseases with NULL disease_filter (Malaria)", async () => {
+    const filtered = await fetchOverviewWithExtras({ primary_disease_names: ["Malaria"] });
+    expect(filtered.totalPriorities).toBeGreaterThan(0);
+    expect(filtered.priorities.length).toBeGreaterThan(0);
+    expect(filtered.priorities.length).toBe(filtered.totalPriorities);
+    // The Neglected disease GHA card should report the selected disease name.
+    const ndRow = filtered.byArea.find((r) => r.global_health_area === "Neglected disease");
+    expect(ndRow).toBeDefined();
+    expect(ndRow!.applicableDiseases).toContain("Malaria");
+  });
 });
 
 describe("priorityAlignmentOverview — applicableDiseases / applicableProductNames", () => {
