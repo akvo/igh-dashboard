@@ -19,38 +19,39 @@ const EMPTY = Object.freeze({
  * Apollo hook wrapping `priorityAlignmentOverview`.
  *
  * Both the Home page WHO Priority Alignment section and the WHO Priority
- * alignment page share this hook. Home calls it with `primaryDiseaseNames`
- * only; the WHO page passes all four filter arrays.
+ * alignment page share this hook.
  *
- * @param {object} filters
- * @param {string[]|null|undefined} filters.globalHealthAreas
- * @param {string[]|null|undefined} filters.primaryDiseaseNames
- * @param {string[]|null|undefined} filters.secondaryDiseaseNames
- * @param {string[]|null|undefined} filters.productNames
+ * @param {string[]|null|undefined} globalHealthAreas
+ * @param {string[]|null|undefined} primaryDiseaseNames
+ * @param {string[]|null|undefined} secondaryDiseaseNames
+ * @param {string[]|null|undefined} productNames
  */
-export function usePriorityAlignment(filters = {}) {
+export function usePriorityAlignment(
+  globalHealthAreas,
+  primaryDiseaseNames,
+  secondaryDiseaseNames,
+  productNames,
+) {
   const { actions } = useDashboardStore();
-  const normalized = {
-    globalHealthAreas:
-      filters.globalHealthAreas && filters.globalHealthAreas.length > 0
-        ? filters.globalHealthAreas
-        : undefined,
-    primaryDiseaseNames:
-      filters.primaryDiseaseNames && filters.primaryDiseaseNames.length > 0
-        ? filters.primaryDiseaseNames
-        : undefined,
-    secondaryDiseaseNames:
-      filters.secondaryDiseaseNames && filters.secondaryDiseaseNames.length > 0
-        ? filters.secondaryDiseaseNames
-        : undefined,
-    productNames:
-      filters.productNames && filters.productNames.length > 0 ? filters.productNames : undefined,
-  };
-  const cacheKey = getCacheKey('priorityAlignment', normalized);
+
+  // Memoising the variables object prevents `useQuery` from seeing a new
+  // reference on every render and issuing a redundant network request. Each
+  // array is coerced to `undefined` when empty so the GraphQL resolver
+  // receives no filter (i.e. "all") rather than an empty-list filter.
+  const variables = useMemo(
+    () => ({
+      globalHealthAreas: globalHealthAreas && globalHealthAreas.length > 0 ? globalHealthAreas : undefined,
+      primaryDiseaseNames: primaryDiseaseNames && primaryDiseaseNames.length > 0 ? primaryDiseaseNames : undefined,
+      secondaryDiseaseNames: secondaryDiseaseNames && secondaryDiseaseNames.length > 0 ? secondaryDiseaseNames : undefined,
+      productNames: productNames && productNames.length > 0 ? productNames : undefined,
+    }),
+    [globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames],
+  );
+  const cacheKey = getCacheKey('priorityAlignment', variables);
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_PRIORITY_ALIGNMENT_OVERVIEW, {
-    variables: normalized,
+    variables,
     skip: !!cachedData,
     fetchPolicy: 'network-only',
     onCompleted: (result) => {
@@ -73,6 +74,12 @@ export function usePriorityAlignment(filters = {}) {
 
   // Yes / NA / No legend order; trim zero-area wedges so the donut
   // doesn't render empty slices.
+  //
+  // The NA (unknown) bucket is kept as its own slice rather than folded
+  // into Yes or No. This keeps the headline "Yes" percentage honest: the
+  // denominator is the full priority count (Yes + No + unknown), so the
+  // share isn't artificially inflated by pretending unclassified
+  // priorities lean one way or the other.
   const womenOrChildrenChartData = useMemo(() => {
     const share = payload.womenOrChildrenShare;
     return [

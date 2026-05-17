@@ -314,24 +314,27 @@ export default function Home() {
     diseaseOptions: whoDiseaseOptionsRaw,
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
-  } = usePriorityAlignment({
-    primaryDiseaseNames: whoDiseases.length > 0 ? whoDiseases : null,
-  });
+  } = usePriorityAlignment(
+    null,
+    whoDiseases.length > 0 ? whoDiseases : null,
+    null,
+    null,
+  );
 
-  // Dropdown values are disease NAMES (matching `dim_disease.disease_filter`
-  // semantics the resolver filters on). The URL serializer is unchanged;
-  // existing shared URLs that contained numeric disease_key strings will
-  // not match an option and silently drop on next render — accepted as a
-  // one-off break for unstable feature surface.
+  // Dropdown values are the `disease_filter` canonical strings that the
+  // resolver's `primary_disease_names` filter matches against
+  // (`dim_disease.disease_filter IN (...)`). Rows where `disease_filter`
+  // is null cannot be selected by the resolver at all, so we exclude them
+  // entirely rather than falling back to `disease_name` (which would
+  // silently produce a filter value the resolver cannot match, zeroing the
+  // entire section). The URL serializer is unchanged; any existing shared
+  // URL that stored a disease_name string for a null-disease_filter row
+  // will simply not match an option and drop on next render — accepted as
+  // a one-off break for an unstable feature surface.
   const whoDiseaseOptions = useMemo(
-    () => whoDiseaseOptionsRaw.map((d) => ({
-      label: d.disease_name,
-      // Use disease_filter (primary-name canonical column) as the value
-      // so the resolver's `primary_disease_names` filter matches. Fall
-      // back to disease_name when disease_filter is null (handful of
-      // niche diseases) — the resolver's NULL handling will skip them.
-      value: d.disease_filter || d.disease_name,
-    })),
+    () => whoDiseaseOptionsRaw
+      .filter((d) => d.disease_filter && d.disease_filter.trim() !== '')
+      .map((d) => ({ label: d.disease_name, value: d.disease_filter })),
     [whoDiseaseOptionsRaw],
   );
 
