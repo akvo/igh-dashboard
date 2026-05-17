@@ -445,20 +445,33 @@ export const GET_PHASES = gql`
 `;
 
 // =========================================================
-// WHO Priority Alignment — Home section
+// WHO Priority Alignment — shared between Home and WHO page
 // =========================================================
-// Single consolidated payload powering all four left cards, the middle
-// product types donut, and the disease dropdown. `diseaseKeys` may be
-// null/empty for the unfiltered view.
-export const GET_HOME_PRIORITY_ALIGNMENT = gql`
-  query HomePriorityAlignment($diseaseKeys: [Int!]) {
-    priorityAlignmentOverview(diseaseKeys: $diseaseKeys) {
+// Single consolidated payload powering both the Home section's
+// cards/donuts and the WHO page's Priorities overview section.
+// The four filter args mirror the standard filter convention used by
+// `portfolioKPIs`, `productDistribution`, etc.
+export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
+  query PriorityAlignmentOverview(
+    $globalHealthAreas: [String!],
+    $primaryDiseaseNames: [String!],
+    $secondaryDiseaseNames: [String!],
+    $productNames: [String!]
+  ) {
+    priorityAlignmentOverview(
+      global_health_areas: $globalHealthAreas,
+      primary_disease_names: $primaryDiseaseNames,
+      secondary_disease_names: $secondaryDiseaseNames,
+      product_names: $productNames,
+    ) {
       totalPriorities
       byArea {
         global_health_area
         candidatesWithPriority
         totalCandidates
         sharePercentage
+        applicableDiseases
+        applicableProductNames
       }
       productTypeBreakdown {
         product_name
@@ -467,12 +480,17 @@ export const GET_HOME_PRIORITY_ALIGNMENT = gql`
       diseaseOptions {
         disease_key
         disease_name
+        disease_filter
         global_health_area
       }
       womenOrChildrenShare {
         yes
         no
         unknown
+      }
+      priorities {
+        priority_key
+        priority_name
       }
     }
   }

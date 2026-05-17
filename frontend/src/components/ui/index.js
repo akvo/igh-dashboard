@@ -9,3 +9,6 @@ export { default as ChartMenu } from './ChartMenu';
 export { default as DiseaseListPanel } from './DiseaseListPanel';
 export { DataTable } from './data-table';
 export { default as PriorityShareCard } from './PriorityShareCard';
+export { default as PriorityTotalCard } from './PriorityTotalCard';
+export { default as PriorityListCard } from './PriorityListCard';
+export { default as PriorityListPanel } from './PriorityListPanel';

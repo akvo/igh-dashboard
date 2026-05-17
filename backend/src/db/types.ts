@@ -525,6 +525,8 @@ export interface PriorityAlignmentAreaShare {
   candidatesWithPriority: number;
   totalCandidates: number;
   sharePercentage: number; // 0.0 – 1.0
+  applicableDiseases: string[];
+  applicableProductNames: string[];
 }
 
 export interface PriorityAlignmentProductType {
@@ -535,6 +537,10 @@ export interface PriorityAlignmentProductType {
 export interface PriorityAlignmentDiseaseOption {
   disease_key: number;
   disease_name: string;
+  // Canonical primary-grouping column used by the resolver's
+  // `primary_disease_names` filter. Null for a handful of niche diseases
+  // whose `dim_disease.disease_filter` is unset.
+  disease_filter: string | null;
   // Nullable: some priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis)
   // are not categorised into the three WHO global health areas in dim_disease.
   // They still appear in the dropdown; the section's per-GHA share cards
@@ -553,16 +559,25 @@ export interface PriorityAlignmentWomenChildrenShare {
   unknown: number;
 }
 
+export interface PriorityAlignmentPriority {
+  priority_key: number;
+  priority_name: string;
+}
+
 export interface PriorityAlignmentOverview {
   totalPriorities: number;
   byArea: PriorityAlignmentAreaShare[];
   productTypeBreakdown: PriorityAlignmentProductType[];
   diseaseOptions: PriorityAlignmentDiseaseOption[];
   womenOrChildrenShare: PriorityAlignmentWomenChildrenShare;
+  priorities: PriorityAlignmentPriority[];
 }
 
 export interface PriorityAlignmentInput {
-  diseaseKeys?: number[] | null;
+  global_health_areas?: string[] | null;
+  primary_disease_names?: string[] | null;
+  secondary_disease_names?: string[] | null;
+  product_names?: string[] | null;
 }
 
 // =============================================================================

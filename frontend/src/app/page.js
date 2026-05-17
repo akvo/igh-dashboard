@@ -8,7 +8,7 @@ import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
-import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard } from '@/components/ui';
+import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -27,7 +27,7 @@ import {
   usePortfolioKPIs,
   useGlobalHealthAreaSummaries,
   useGhaProductTypeSummaries,
-  useHomePriorityAlignment,
+  usePriorityAlignment,
   useDiseaseSummaries,
   useDiseaseProductTypeSummaries,
   useCandidateTypeDistribution,
@@ -304,11 +304,9 @@ export default function Home() {
   );
 
   // WHO Priority Alignment data — single consolidated query feeds all four
-  // cards, the product types donut, and the disease dropdown options.
-  const whoDiseaseKeys = useMemo(
-    () => (whoDiseases.length > 0 ? whoDiseases.map((v) => parseInt(v, 10)) : null),
-    [whoDiseases],
-  );
+  // cards, the product types donut, and the disease dropdown options. The
+  // Home section only narrows by Disease today; GHA + Product filtering
+  // happens on the dedicated WHO page.
   const {
     totalPriorities: whoTotalPriorities,
     byArea: whoByArea,
@@ -316,16 +314,43 @@ export default function Home() {
     diseaseOptions: whoDiseaseOptionsRaw,
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
-  } = useHomePriorityAlignment(whoDiseaseKeys);
-
-  // Shape `diseaseOptions` for the shared Dropdown component (value = key as string).
-  const whoDiseaseOptions = useMemo(
-    () => whoDiseaseOptionsRaw.map((d) => ({
-      label: d.disease_name,
-      value: String(d.disease_key),
-    })),
-    [whoDiseaseOptionsRaw],
+  } = usePriorityAlignment(
+    null,
+    whoDiseases.length > 0 ? whoDiseases : null,
+    null,
+    null,
   );
+
+  // Build the disease dropdown options from all priority-bearing rows.
+  //
+  // The resolver's `applyDiseaseFilters` now matches `primary_disease_names`
+  // against BOTH `dim_disease.disease_filter` AND `TRIM(dim_disease.disease_name)`,
+  // so we no longer need to exclude rows with a null `disease_filter`. We
+  // prefer `disease_filter` when it is set (Mpox is the only
+  // priority-bearing disease that has one) and fall back to the trimmed
+  // name for the other 17 diseases — both values resolve correctly on the
+  // resolver side.
+  //
+  // Mpox has two rows in the payload — "Mpox (monkeypox) - Drugs" and
+  // "Mpox (monkeypox) - Vaccines" — both sharing the same `disease_filter`.
+  // We dedup by `value` (first-seen wins) so the user only sees one
+  // "Mpox (monkeypox)" entry in the dropdown; the label for that entry
+  // comes from `disease_filter` itself rather than either sub-variant name.
+  const whoDiseaseOptions = useMemo(() => {
+    const seen = new Map();
+    for (const d of whoDiseaseOptionsRaw) {
+      const trimmedName = d.disease_name?.trim() ?? '';
+      const value = d.disease_filter || trimmedName;
+      if (!seen.has(value)) {
+        // For Mpox-style rows where multiple sub-variants share a
+        // disease_filter, collapse them to a single option labelled by
+        // the disease_filter (canonical primary name).
+        const label = d.disease_filter ?? trimmedName;
+        seen.set(value, { label, value });
+      }
+    }
+    return Array.from(seen.values());
+  }, [whoDiseaseOptionsRaw]);
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
@@ -830,29 +855,14 @@ export default function Home() {
               <div className="flex flex-col gap-4">
                 {whoLoading ? (
                   <>
-                    <div className="bg-white border border-gray-200 p-4 animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                      <div className="h-10 bg-gray-200 rounded w-1/3 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    </div>
+                    <PriorityTotalCard loading />
                     {[0, 1, 2].map((i) => (
                       <PriorityShareCard key={i} loading />
                     ))}
                   </>
                 ) : (
                   <>
-                    <div className="bg-white border border-gray-200 p-4 flex flex-col gap-4">
-                      <h4 className="text-sm font-semibold text-black">Priorities</h4>
-                      <div>
-                        <div
-                          className="text-[40px] font-extrabold text-black leading-tight"
-                          style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}
-                        >
-                          {whoTotalPriorities.toLocaleString()}
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">Total number of priorities</p>
-                      </div>
-                    </div>
+                    <PriorityTotalCard total={whoTotalPriorities} />
                     {whoByArea.map((area) => (
                       <PriorityShareCard
                         key={area.global_health_area}

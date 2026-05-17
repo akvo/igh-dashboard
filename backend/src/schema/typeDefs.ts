@@ -562,6 +562,11 @@ export const typeDefs = `#graphql
     candidatesWithPriority: Int!
     totalCandidates: Int!
     sharePercentage: Float!
+    # Alphabetical lists of selected items relevant to this GHA only.
+    # Drive the title pill on PriorityShareCard. Both empty when no
+    # disease/product filter is set.
+    applicableDiseases: [String!]!
+    applicableProductNames: [String!]!
   }
 
   type PriorityAlignmentProductType {
@@ -572,6 +577,10 @@ export const typeDefs = `#graphql
   type PriorityAlignmentDiseaseOption {
     disease_key: Int!
     disease_name: String!
+    # Canonical primary-grouping column used by the resolver's
+    # primary_disease_names filter. Null for a handful of niche diseases
+    # whose dim_disease.disease_filter is unset.
+    disease_filter: String
     # Nullable: 7 of the 19 priority-bearing diseases (HIV/AIDS,
     # Tuberculosis, etc.) are not categorised into the three WHO areas.
     global_health_area: String
@@ -587,12 +596,20 @@ export const typeDefs = `#graphql
     unknown: Int!
   }
 
+  type PriorityAlignmentPriority {
+    priority_key: Int!
+    priority_name: String!
+  }
+
   type PriorityAlignmentOverview {
     totalPriorities: Int!
     byArea: [PriorityAlignmentAreaShare!]!
     productTypeBreakdown: [PriorityAlignmentProductType!]!
     diseaseOptions: [PriorityAlignmentDiseaseOption!]!
     womenOrChildrenShare: PriorityAlignmentWomenChildrenShare!
+    # Filtered, alphabetical non-stub priority list. Drives
+    # PriorityListCard preview + PriorityListPanel slide-in.
+    priorities: [PriorityAlignmentPriority!]!
   }
 
   # =============================================================================
@@ -727,8 +744,13 @@ export const typeDefs = `#graphql
     # Portfolio analysis - regulatory distribution (approved products tab)
     regulatoryDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): RegulatoryDistribution!
 
-    # WHO Priority alignment — Home section (single consolidated payload).
-    priorityAlignmentOverview(diseaseKeys: [Int!]): PriorityAlignmentOverview!
+    # WHO Priority alignment — single consolidated payload (Home + WHO page).
+    priorityAlignmentOverview(
+      global_health_areas: [String!],
+      primary_disease_names: [String!],
+      secondary_disease_names: [String!],
+      product_names: [String!],
+    ): PriorityAlignmentOverview!
 
     # Portfolio analysis - product distribution (donut chart)
     productDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!

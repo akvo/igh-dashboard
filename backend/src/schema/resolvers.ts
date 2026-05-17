@@ -301,9 +301,22 @@ export const resolvers = {
         phase_names: args.phase_names,
       }),
 
-    // WHO Priority alignment — single consolidated payload for the Home section.
-    priorityAlignmentOverview: (_: unknown, args: { diseaseKeys?: number[] | null }) =>
-      getPriorityAlignmentOverview({ diseaseKeys: args.diseaseKeys ?? null }),
+    // WHO Priority alignment — single consolidated payload (Home + WHO page).
+    priorityAlignmentOverview: (
+      _: unknown,
+      args: {
+        global_health_areas?: string[] | null;
+        primary_disease_names?: string[] | null;
+        secondary_disease_names?: string[] | null;
+        product_names?: string[] | null;
+      },
+    ) =>
+      getPriorityAlignmentOverview({
+        global_health_areas: args.global_health_areas ?? null,
+        primary_disease_names: args.primary_disease_names ?? null,
+        secondary_disease_names: args.secondary_disease_names ?? null,
+        product_names: args.product_names ?? null,
+      }),
 
     // Portfolio analysis - product distribution (donut chart)
     productDistribution: (
