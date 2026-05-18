@@ -49,6 +49,7 @@ import {
   expandProductKeySelection,
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
+import { useGlobalFilters } from '@/components/portfolio-analysis';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -111,8 +112,11 @@ const WHO_W_OR_C_COLORS = {
 
 
 export default function Home() {
-  const [product, setProduct] = useUrlState('product', [], arraySerializer);
-  const [rdStage, setRdStage] = useUrlState('rdStage', [], arraySerializer);
+  // Global filters from sidebar filter box (shared across all pages).
+  const globalFilters = useGlobalFilters();
+
+  const [product, setProduct] = useUrlState('hProduct', [], arraySerializer);
+  const [rdStage, setRdStage] = useUrlState('hRdStage', [], arraySerializer);
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
   const [bubbleView, setBubbleView] = useUrlState('bubbleView', 'gha', stringSerializer);
   const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
@@ -398,12 +402,7 @@ export default function Home() {
       product,
       rdPhase: rdStage,
     },
-    setters: {
-      setHealthArea: () => {},
-      setDisease: () => {},
-      setProduct,
-      setRdPhase: setRdStage,
-    },
+    setters: {},
     loading: {
       healthAreas: false,
       diseases: diseasesLoading,
@@ -420,10 +419,39 @@ export default function Home() {
   } = useCrossFilteredOptions({
     data: { healthAreas: gqlBubbleData, diseasesRaw, pairs, allProductOptions },
     selections: { healthArea: crossGlobalHealthArea, disease: [], product: crossProduct },
-    setters: { setHealthArea: setCrossGlobalHealthArea, setDisease: () => {}, setProduct: setCrossProduct },
+    setters: {},
     loading: { healthAreas: bubbleLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
     mode: 'by-key',
   });
+
+  // Local pruning: clear stale homepage-local selections when options narrow.
+  useEffect(() => {
+    if (product.length === 0 || productOptions.length === 0) return;
+    const validValues = new Set(productOptions.map((o) => o.value));
+    const valid = product.filter((v) => validValues.has(v));
+    if (valid.length !== product.length) setProduct(valid);
+  }, [productOptions, product, setProduct]);
+
+  useEffect(() => {
+    if (rdStage.length === 0 || rdStageOptions.length === 0) return;
+    const validValues = new Set(rdStageOptions.map((o) => o.value));
+    const valid = rdStage.filter((v) => validValues.has(v));
+    if (valid.length !== rdStage.length) setRdStage(valid);
+  }, [rdStageOptions, rdStage, setRdStage]);
+
+  useEffect(() => {
+    if (crossGlobalHealthArea.length === 0 || crossHealthAreaOptions.length === 0) return;
+    const validValues = new Set(crossHealthAreaOptions.map((o) => o.value));
+    const valid = crossGlobalHealthArea.filter((v) => validValues.has(v));
+    if (valid.length !== crossGlobalHealthArea.length) setCrossGlobalHealthArea(valid);
+  }, [crossHealthAreaOptions, crossGlobalHealthArea, setCrossGlobalHealthArea]);
+
+  useEffect(() => {
+    if (crossProduct.length === 0 || crossProductFilteredOptions.length === 0) return;
+    const validValues = new Set(crossProductFilteredOptions.map((o) => o.value));
+    const valid = crossProduct.filter((v) => validValues.has(v));
+    if (valid.length !== crossProduct.length) setCrossProduct(valid);
+  }, [crossProductFilteredOptions, crossProduct, setCrossProduct]);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const portfolioVisiblePhases = useMemo(() =>
@@ -477,6 +505,17 @@ export default function Home() {
                 )}
               </span>
             </div>
+          </div>
+
+          {/* DEBUG: Global filter state */}
+          <div className="bg-yellow-100 border border-yellow-400 rounded p-3 mb-4 text-xs font-mono">
+            <strong>DEBUG Global Filters:</strong>{' '}
+            GHA=[{globalFilters.healthArea.join(', ')}]{' '}
+            Primary=[{globalFilters.primary.join(', ')}]{' '}
+            Secondary=[{globalFilters.secondary.join(', ')}]{' '}
+            Product=[{globalFilters.product.join(', ')}]{' '}
+            RdPhase=[{globalFilters.rdPhase.join(', ')}]{' '}
+            | URL: {typeof window !== 'undefined' ? window.location.search : ''}
           </div>
 
           {/* Stat Cards - Connected to GraphQL */}
