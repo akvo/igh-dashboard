@@ -5,6 +5,7 @@ import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
 import Analytics from '@/components/Analytics';
 import { ResponsiveGate } from '@/components/layout';
+import { GlobalFiltersProvider } from '@/components/portfolio-analysis/useGlobalFilters';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -108,10 +109,12 @@ export default function RootLayout({ children }) {
       <Analytics />
       <body className={`${publicSans.variable} ${align.variable} antialiased`}>
         <ApolloProvider>
-          <Header navItems={navItems} />
-          <div style={{ paddingTop: 90 }}>
-            <ResponsiveGate>{children}</ResponsiveGate>
-          </div>
+          <GlobalFiltersProvider>
+            <Header navItems={navItems} />
+            <div style={{ paddingTop: 90 }}>
+              <ResponsiveGate>{children}</ResponsiveGate>
+            </div>
+          </GlobalFiltersProvider>
         </ApolloProvider>
       </body>
     </html>

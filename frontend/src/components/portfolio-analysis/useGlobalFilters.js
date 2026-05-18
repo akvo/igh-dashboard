@@ -7,12 +7,14 @@
 // Encapsulates URL-backed state for Global health area, Disease
 // (hierarchical primary + secondary), Product type, and R&D phase,
 // plus the cross-filtered option lists and narrowed disease
-// hierarchy that drive the filter dropdowns. Returned shape is
-// shared by the page components (which need the values for data
-// hooks) and by <GlobalFilterBar/> (which needs the options +
-// setters to render the dropdowns).
+// hierarchy that drive the filter dropdowns.
+//
+// A single instance is shared via <GlobalFiltersProvider> in the
+// app layout — every call to useGlobalFilters() returns the same
+// context object, avoiding duplicate GraphQL queries and racing
+// pruning effects.
 
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
 import {
@@ -30,22 +32,44 @@ import {
   useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
 
+// ---- Context ----
+
+const GlobalFiltersContext = createContext(null);
+
+export function GlobalFiltersProvider({ children }) {
+  const filters = useGlobalFiltersCore();
+  return (
+    <GlobalFiltersContext.Provider value={filters}>
+      {children}
+    </GlobalFiltersContext.Provider>
+  );
+}
+
+/**
+ * Public hook — returns the shared context value from the
+ * <GlobalFiltersProvider> in the app layout.
+ */
 export function useGlobalFilters() {
-  // URL-backed selections. Keys (`gha`, `primary`, `secondary`, `product`,
-  // `rdPhase`) match what the existing page already writes to the URL.
+  const ctx = useContext(GlobalFiltersContext);
+  if (!ctx) {
+    throw new Error(
+      'useGlobalFilters() requires a <GlobalFiltersProvider> ancestor.',
+    );
+  }
+  return ctx;
+}
+
+// ---- Core implementation ----
+
+function useGlobalFiltersCore() {
   const [healthArea, setHealthArea] = useUrlState('gha', [], arraySerializer);
   const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
   const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
   const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
 
-  // Expand "Vector control products" composite selection into its
-  // subtype names for downstream API calls. The disease axis is
-  // hierarchical and produces canonical lists directly, so no
-  // disease-side expansion step is needed.
   const expandedProduct = expandProductNameSelection(product);
 
-  // Source data for the dropdowns and cross-filtering.
   const { bubbleData: healthAreas, loading: healthAreasLoading } =
     useGlobalHealthAreaSummaries();
   const { products: productsList, loading: productsLoading } = useProducts();
@@ -104,7 +128,6 @@ export function useGlobalFilters() {
   };
 
   return {
-    // URL-backed values
     healthArea,
     primary,
     secondary,
@@ -112,20 +135,17 @@ export function useGlobalFilters() {
     rdPhase,
     expandedProduct,
 
-    // setters
     setHealthArea,
     setPrimary,
     setSecondary,
     setProduct,
     setRdPhase,
 
-    // pre-cross-filtered options for the dropdowns
     healthAreaOptions,
     narrowedHierarchy,
     productOptions,
     rdPhaseOptions,
 
-    // loading flags from the underlying queries
     loading: {
       gha: healthAreasLoading,
       diseases: hierarchyLoading || diseasesLoading,
@@ -133,7 +153,6 @@ export function useGlobalFilters() {
       phases: phasesLoading || pairsLoading,
     },
 
-    // helpers
     hasFilters,
     clearAll,
   };

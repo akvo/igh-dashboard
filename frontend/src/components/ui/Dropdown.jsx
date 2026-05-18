@@ -27,7 +27,13 @@ const Dropdown = ({
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setMenuPosition({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      const menuHeight = 288; // max-h-72 = 18rem = 288px
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const fitsBelow = spaceBelow >= menuHeight + 4;
+      const top = fitsBelow
+        ? rect.bottom + 4
+        : Math.max(4, rect.top - menuHeight - 4);
+      setMenuPosition({ top, left: rect.left, width: rect.width });
     }
   }, []);
 

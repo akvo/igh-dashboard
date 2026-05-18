@@ -18,20 +18,27 @@ import {
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import {
+  consolidateProductOptionsByName,
   consolidateProductOptionsByKey,
-  expandProductKeySelection,
+  expandProductNameSelection,
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import { useGlobalFilters } from '@/components/portfolio-analysis';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {
-  const [selectedHealthArea, setSelectedHealthArea] = useUrlState('gha', [], arraySerializer);
-  // Disease selection is hierarchical: `primary` is the high-level
-  // group ("Malaria"), `secondary` is the explicit sub-disease.
-  const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
-  const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
-  const [selectedProduct, setSelectedProduct] = useUrlState('product', [], arraySerializer);
+  // Shared global filters (synced with sidebar filter box).
+  const {
+    healthArea: selectedHealthArea,
+    primary,
+    secondary,
+    product: selectedProduct,
+    setHealthArea: setSelectedHealthArea,
+    setPrimary,
+    setSecondary,
+    setProduct: setSelectedProduct,
+  } = useGlobalFilters();
 
   // Fetch filter options first
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
@@ -40,11 +47,24 @@ export default function CrossPipelineAnalytics() {
   const { hierarchy: diseaseHierarchy, loading: diseasesLoading } = useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
 
-  // Build filter arrays for API. The hierarchical filter already
-  // emits canonical primary / secondary lists -- no expansion step.
+  // Convert product names to keys for the temporal snapshots API.
+  const nameToKeyMap = useMemo(() => {
+    const map = new Map();
+    (productsList || []).forEach((p) => map.set(p.product_name, p.product_key));
+    return map;
+  }, [productsList]);
+
+  const expandedProductNames = expandProductNameSelection(selectedProduct);
+
+  // Build filter arrays for API.
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
-  const expandedProductKeys = expandProductKeySelection(selectedProduct);
-  const selectedProductKeys = expandedProductKeys.length > 0 ? expandedProductKeys.map(v => parseInt(v)) : null;
+  const selectedProductKeys = useMemo(() => {
+    if (expandedProductNames.length === 0) return null;
+    const keys = expandedProductNames
+      .map((name) => nameToKeyMap.get(name))
+      .filter((k) => k != null);
+    return keys.length > 0 ? keys : null;
+  }, [expandedProductNames, nameToKeyMap]);
   const selectedPrimary = primary.length > 0 ? primary : null;
   const selectedSecondary = secondary.length > 0 ? secondary : null;
 
@@ -60,18 +80,31 @@ export default function CrossPipelineAnalytics() {
   const crossPipelineChartRef = useRef(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // All product options (before cross-filtering), with VC consolidation
+  // All product options (before cross-filtering), by-name with VC consolidation
   const allProductOptions = useMemo(() => {
-    const raw = (productsList || []).map(p => ({ value: String(p.product_key), label: p.product_name }));
+    const names = (productsList || []).map((p) => p.product_name);
+    return consolidateProductOptionsByName(names);
+  }, [productsList]);
+
+  // By-key product options for TemporalTrendsSection (uses key-based
+  // cross-filtering internally).
+  const productOptionsByKey = useMemo(() => {
+    const raw = (productsList || []).map((p) => ({ value: String(p.product_key), label: p.product_name }));
     return consolidateProductOptionsByKey(raw);
   }, [productsList]);
 
+  // Cross-filtering uses by-name mode (same as portfolio pages) with
+  // the all-pipeline pairs so the dropdowns only offer options that
+  // actually exist in the temporal dataset.
   const { healthAreaOptions, narrowedHierarchy, productOptions } = useCrossFilteredOptions({
     data: { healthAreas, diseaseHierarchy, pairs, allProductOptions },
     selections: { healthArea: selectedHealthArea, primary, secondary, product: selectedProduct },
-    setters: { setHealthArea: setSelectedHealthArea, setPrimary, setSecondary, setProduct: setSelectedProduct },
+    // No setters — pruning is handled by the global provider.
+    // Passing setters here would create duplicate pruning effects
+    // that race against the provider's (different pair datasets).
+    setters: {},
     loading: { healthAreas: healthAreasLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
-    mode: 'by-key',
+    mode: 'by-name',
   });
 
   // Use API phases with consistent colors, enforcing lifecycle ordering
@@ -177,7 +210,7 @@ export default function CrossPipelineAnalytics() {
                     options={healthAreaOptions}
                     multiSelect={true}
 
-                    loading={healthAreasLoading}
+                    loading={false}
                   />
                 </div>
                 <div className="min-w-[220px]">
@@ -257,7 +290,7 @@ export default function CrossPipelineAnalytics() {
           {/* Temporal trends & portfolio comparison */}
           <TemporalTrendsSection
             narrowedHierarchy={narrowedHierarchy}
-            productOptions={productOptions}
+            productOptions={productOptionsByKey}
             availableYears={availableYears}
           />
 

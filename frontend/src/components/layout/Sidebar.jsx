@@ -176,16 +176,17 @@ export default function Sidebar({
     setUserOverride((prev) => ({ ...prev, [group.id]: !currentOpen }));
   };
 
-  // Sibling-to-sibling navigation within /portfolio-analysis carries
-  // the current query string (minus `tab`, which the page split
-  // retired) so filter and sub-tab state persist across sibling
-  // page swaps. All other navigations carry no query — global
-  // filters live with this feature group, not the whole app.
+  // Navigation carries global filter query params (gha, primary,
+  // secondary, product, rdPhase) across ALL pages so the sidebar
+  // filter box stays in sync. Page-specific params (extTab, cols*,
+  // etc.) are only carried between portfolio-analysis siblings.
   //
   // If the target href contains a fragment (e.g. `…#aggregated`),
   // the fragment is appended after the query string so the
   // resulting Next.js navigation drives both the route and the
   // scroll-target hash in one go.
+  const GLOBAL_FILTER_KEYS = new Set(['gha', 'primary', 'secondary', 'product', 'rdPhase']);
+
   const buildHref = (targetHref) => {
     const [targetPath, targetHash = ''] = targetHref.split('#');
     const bothInGroup =
@@ -193,14 +194,17 @@ export default function Sidebar({
       pathname.startsWith('/portfolio-analysis') &&
       targetPath.startsWith('/portfolio-analysis');
     let href = targetPath;
-    if (bothInGroup) {
-      const out = new URLSearchParams();
-      params.forEach((v, k) => {
-        if (k !== 'tab') out.set(k, v);
-      });
-      const qs = out.toString();
-      if (qs) href = `${targetPath}?${qs}`;
-    }
+    const out = new URLSearchParams();
+    params.forEach((v, k) => {
+      if (k === 'tab') return;
+      // Always carry global filter keys; carry other keys only
+      // between portfolio-analysis siblings.
+      if (GLOBAL_FILTER_KEYS.has(k) || bothInGroup) {
+        out.set(k, v);
+      }
+    });
+    const qs = out.toString();
+    if (qs) href = `${targetPath}?${qs}`;
     if (targetHash) href = `${href}#${targetHash}`;
     return href;
   };
@@ -389,7 +393,7 @@ export default function Sidebar({
         ))}
       </nav>
 
-      {/* Filter box — only renders on portfolio-analysis pages */}
+      {/* Global filter box */}
       <SidebarFilterBox isExpanded={isExpanded} />
 
       {/* Footer */}

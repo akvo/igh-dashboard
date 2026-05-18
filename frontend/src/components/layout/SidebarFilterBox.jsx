@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
 import { Dropdown } from '@/components/ui';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import {
@@ -12,13 +11,7 @@ import {
 import { useGlobalFilters } from '@/components/portfolio-analysis';
 
 export default function SidebarFilterBox({ isExpanded }) {
-  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-
-  // Only show on portfolio-analysis pages.
-  const isPortfolioPage =
-    pathname && pathname.startsWith('/portfolio-analysis');
-  if (!isPortfolioPage) return null;
 
   return <SidebarFilterBoxInner isExpanded={isExpanded} isOpen={isOpen} setIsOpen={setIsOpen} />;
 }
