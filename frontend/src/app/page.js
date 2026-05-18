@@ -507,17 +507,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* DEBUG: Global filter state */}
-          <div className="bg-yellow-100 border border-yellow-400 rounded p-3 mb-4 text-xs font-mono">
-            <strong>DEBUG Global Filters:</strong>{' '}
-            GHA=[{globalFilters.healthArea.join(', ')}]{' '}
-            Primary=[{globalFilters.primary.join(', ')}]{' '}
-            Secondary=[{globalFilters.secondary.join(', ')}]{' '}
-            Product=[{globalFilters.product.join(', ')}]{' '}
-            RdPhase=[{globalFilters.rdPhase.join(', ')}]{' '}
-            | URL: {typeof window !== 'undefined' ? window.location.search : ''}
-          </div>
-
           {/* Stat Cards - Connected to GraphQL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {kpisLoading ? (
