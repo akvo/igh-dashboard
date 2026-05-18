@@ -26,8 +26,10 @@ export function DevHistorySection({ history }) {
   const cols = history.length;
   // Each year column gets a fixed minimum width so columns stay legible
   // for long pipelines; beyond what fits the panel, the timeline
-  // scrolls horizontally inside its own container.
-  const colTemplate = `repeat(${cols}, minmax(68px, 1fr))`;
+  // scrolls horizontally inside its own container. The floor is sized to
+  // accommodate common multi-word phase labels (e.g. "Early development")
+  // on two lines without breaking words mid-character.
+  const colTemplate = `repeat(${cols}, minmax(100px, 1fr))`;
   return (
     <div className="si-section">
       <div className="si-section-head">
@@ -55,7 +57,9 @@ export function DevHistorySection({ history }) {
             <div className="si-timeline-row si-timeline-row--pills">
               {history.map((h) => (
                 <div key={`s-${h.year}`} className="si-timeline-cell">
-                  <span className={phaseClass(h.phase_name)}>{h.phase_name}</span>
+                  <span className={phaseClass(h.phase_name)}>
+                    <span className="si-phase-pill-text">{h.phase_name}</span>
+                  </span>
                 </div>
               ))}
             </div>
