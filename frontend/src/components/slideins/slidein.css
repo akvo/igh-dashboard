@@ -233,16 +233,32 @@
 .si-timeline-cell { display: flex; justify-content: center; }
 
 /* Phase chips render as compact rounded squares (not pill-shaped) so
- * the timeline stays scannable. Text wraps onto two lines when the
- * column is too narrow to hold the full label inline (e.g. "Phase III")
- * — the padding-based sizing lets the chip grow vertically rather than
- * clipping the second line. */
+ * the timeline stays scannable. Multi-word labels wrap at spaces and
+ * the chip grows vertically rather than clipping the second line. The
+ * inner text span caps the visible label at three lines (see
+ * `.si-phase-pill-text`) so unusually long names like "PQ listing and
+ * regulatory approval" don't blow out the timeline's vertical rhythm. */
 .si-phase-pill {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 22px; padding: 3px 10px; border-radius: 6px !important;
   font-size: 11.5px; font-weight: 600; line-height: 1.2;
-  width: 100%; max-width: 84px;
-  white-space: normal; text-align: center; overflow-wrap: anywhere;
+  width: 100%; max-width: 120px;
+  white-space: normal; text-align: center; overflow-wrap: break-word;
+}
+/* The line-clamp pattern needs `display: -webkit-box`, which would
+ * undo the flex centering on the chip itself, so we apply it to a
+ * nested span that holds only the text. `break-word` keeps wrapping at
+ * spaces first and only breaks mid-word as a last resort, so common
+ * words like "development" no longer split across lines once the chip
+ * is wide enough to hold them inline. */
+.si-phase-pill-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+          line-clamp: 3;
+  overflow: hidden;
+  text-align: center;
+  overflow-wrap: break-word;
 }
 /* Phase chips. Discovery + Phase 1 are warm (orange); Phase 2 is violet
  * (no theme equivalent — kept custom); Phase 3 cool (blue); Approved
