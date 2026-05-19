@@ -24,6 +24,7 @@ function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITI
     conditions,
     params,
   );
+  addArrayCondition(filter?.priority_keys, "p.priority_key", conditions, params);
 
   if (filter?.column_filters) {
     const cf = buildColumnFilterClauses(table, filter.column_filters);

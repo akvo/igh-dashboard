@@ -541,6 +541,7 @@ export const typeDefs = `#graphql
     global_health_areas: [String!]
     primary_disease_names: [String!]
     secondary_disease_names: [String!]
+    priority_keys: [Int!]
     column_filters: [ColumnFilter!]
   }
 

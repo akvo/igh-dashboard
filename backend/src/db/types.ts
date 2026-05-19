@@ -496,6 +496,7 @@ export interface RdPriorityFilter {
   global_health_areas?: string[];
   primary_disease_names?: string[];
   secondary_disease_names?: string[];
+  priority_keys?: number[];
   column_filters?: ColumnFilterInput[];
 }
 
