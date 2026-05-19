@@ -99,3 +99,57 @@ export const CardGrid = {
     </div>
   ),
 };
+
+export const Text = {
+  args: {
+    title: 'Target population',
+    value:
+      'To maximize the public health impact of an infection-prevention vaccine, the immediate need will be to target populations or age groups who experience high incidence of infection.',
+    variant: 'text',
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '320px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const LoadingNumber = {
+  args: { title: 'Number of candidates', loading: true, variant: 'number' },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '320px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const LoadingText = {
+  args: { title: 'Target population', loading: true, variant: 'text' },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '320px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const Placeholder = {
+  args: {
+    title: 'Number of candidates linked to selected priority',
+    value: '—',
+    description: 'Pending data confirmation',
+    variant: 'number',
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ width: '320px' }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
