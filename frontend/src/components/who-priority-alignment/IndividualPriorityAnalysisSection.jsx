@@ -143,6 +143,13 @@ export default function IndividualPriorityAnalysisSection() {
   const selectedPriorityName =
     priorities.find((p) => p.priority_key === state.committedPriority)?.priority_name ?? null;
 
+  // Phase B handoff (Q19): when the page-bar filters change to exclude
+  // the committed priority, the active body keeps rendering but
+  // `selectedPriorityName` becomes null (Row A reads `—`). The
+  // dropdown placeholder shows the orphan key, but the rest of the
+  // section gives no signal that the user's selection is stale. The
+  // final UX (warning chip? auto-clear? grey-out body?) is gated on
+  // the designer's Q19 answer. Phase A leaves this as-is.
   const isCommittedInOptions =
     state.committedPriority == null ||
     priorities.some((p) => p.priority_key === state.committedPriority);
@@ -154,7 +161,7 @@ export default function IndividualPriorityAnalysisSection() {
   // Slide-in: fetch the committed priority's editorial record only when
   // the panel is open. `useRdPriorities` returns the one node we need.
   const slideinHook = useRdPriorities(
-    { priorityKeys: state.committedPriority ? [state.committedPriority] : null },
+    { priorityKeys: state.committedPriority != null ? [state.committedPriority] : null },
     1,
     0,
     { skip: !slideInOpen || state.committedPriority == null },
