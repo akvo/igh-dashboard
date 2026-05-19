@@ -10,6 +10,7 @@ export function buildPriorityFilterVars(filter) {
       filter?.primaryDiseaseNames?.length > 0 ? filter.primaryDiseaseNames : undefined,
     secondary_disease_names:
       filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
+    priority_keys: filter?.priorityKeys?.length > 0 ? filter.priorityKeys : undefined,
     column_filters: filter?.columnFilters,
   };
 }
