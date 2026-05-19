@@ -201,7 +201,9 @@ export default function IndividualPriorityAnalysisSection() {
 
       <div className="flex flex-wrap items-end gap-4 mb-4">
         <div
-          className={`min-w-[260px] ${dropdownDisabled ? 'pointer-events-none opacity-50' : ''}`}
+          className={`min-w-[260px] ${dropdownDisabled ? 'opacity-50' : ''}`}
+          aria-disabled={dropdownDisabled || undefined}
+          {...(dropdownDisabled ? { inert: '' } : {})}
         >
           <Dropdown
             label="Select WHO Priority"
