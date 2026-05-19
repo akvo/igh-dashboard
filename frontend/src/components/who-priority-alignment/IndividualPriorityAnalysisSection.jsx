@@ -87,7 +87,7 @@ function ActiveBody({ selectedPriorityName, onExplore }) {
         <button
           type="button"
           onClick={onExplore}
-          className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors cursor-pointer"
         >
           Explore selected priority
         </button>
@@ -186,26 +186,14 @@ export default function IndividualPriorityAnalysisSection() {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div>
-          <h3 className="text-base sm:text-lg font-bold text-black">
-            Individual priority analysis
-          </h3>
-          {/* Q10: section description copy pending designer. */}
-          <p className="text-sm text-gray-500">
-            Pending designer copy — section description to be defined.
-          </p>
-        </div>
-        {/* Q12: kebab menu items pending — rendered as a visual-only placeholder. */}
-        <button
-          type="button"
-          aria-label="Section menu"
-          className="p-2 rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50 cursor-pointer"
-        >
-          <span className="block w-1 h-1 rounded-full bg-gray-500 mb-0.5" />
-          <span className="block w-1 h-1 rounded-full bg-gray-500 mb-0.5" />
-          <span className="block w-1 h-1 rounded-full bg-gray-500" />
-        </button>
+      <div className="mb-2">
+        <h3 className="text-base sm:text-lg font-bold text-black">
+          Individual priority analysis
+        </h3>
+        {/* Q10: section description copy pending designer. */}
+        <p className="text-sm text-gray-500">
+          Pending designer copy — section description to be defined.
+        </p>
       </div>
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -246,10 +234,10 @@ export default function IndividualPriorityAnalysisSection() {
           type="button"
           onClick={state.apply}
           disabled={!state.hasPending}
-          className={`flex items-center justify-center text-sm px-6 h-[44px] whitespace-nowrap transition-colors ${
+          className={`flex items-center justify-center text-sm font-medium px-6 h-[44px] whitespace-nowrap transition-colors ${
             !state.hasPending
               ? 'text-gray-400 bg-gray-100 border border-gray-200 cursor-not-allowed'
-              : 'text-white bg-orange-500 hover:bg-orange-600 border border-orange-500 cursor-pointer'
+              : 'text-black bg-orange-500 hover:bg-black hover:text-white cursor-pointer'
           }`}
         >
           Apply
