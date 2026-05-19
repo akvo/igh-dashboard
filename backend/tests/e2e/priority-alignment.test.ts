@@ -461,3 +461,60 @@ describe("priorityAlignmentOverview — applicableDiseases / applicableProductNa
     expect(anyApplicable).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 4. priority_keys filter on rdPriorities
+// ---------------------------------------------------------------------------
+
+describe("rdPriorities — priority_keys filter", () => {
+  it("returns exactly the priority matching the supplied key", async () => {
+    const dbPath = path.resolve(__dirname, "../star_schema.db");
+    const db = new Database(dbPath, { readonly: true });
+    const row = db
+      .prepare(
+        `SELECT priority_key, priority_name
+         FROM dim_priority
+         WHERE priority_name IS NOT NULL AND TRIM(priority_name) != ''
+         ORDER BY priority_key
+         LIMIT 1`,
+      )
+      .get() as { priority_key: number; priority_name: string };
+    db.close();
+
+    const { data: result } = await query<{
+      rdPriorities: {
+        totalCount: number;
+        nodes: { priority_key: number; priority_name: string }[];
+      };
+    }>(
+      `query Q($filter: RdPriorityFilter) {
+         rdPriorities(filter: $filter, limit: 5) {
+           totalCount
+           nodes { priority_key priority_name }
+         }
+       }`,
+      { filter: { priority_keys: [row.priority_key] } },
+    );
+
+    expect(result.rdPriorities.totalCount).toBe(1);
+    expect(result.rdPriorities.nodes).toHaveLength(1);
+    expect(result.rdPriorities.nodes[0]!.priority_key).toBe(row.priority_key);
+  });
+
+  it("returns zero rows for a non-existent priority key", async () => {
+    const { data: result } = await query<{
+      rdPriorities: { totalCount: number; nodes: unknown[] };
+    }>(
+      `query Q($filter: RdPriorityFilter) {
+         rdPriorities(filter: $filter, limit: 5) {
+           totalCount
+           nodes { priority_key }
+         }
+       }`,
+      { filter: { priority_keys: [-1] } },
+    );
+
+    expect(result.rdPriorities.totalCount).toBe(0);
+    expect(result.rdPriorities.nodes).toEqual([]);
+  });
+});

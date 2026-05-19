@@ -205,6 +205,7 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
+          priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
@@ -227,6 +228,7 @@ export const resolvers = {
           global_health_areas?: string[];
           primary_disease_names?: string[];
           secondary_disease_names?: string[];
+          priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;

@@ -25,6 +25,12 @@ function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITI
     params,
   );
 
+  if (filter?.priority_keys && filter.priority_keys.length > 0) {
+    const placeholders = filter.priority_keys.map(() => "?").join(", ");
+    conditions.push(`p.priority_key IN (${placeholders})`);
+    params.push(...filter.priority_keys);
+  }
+
   if (filter?.column_filters) {
     const cf = buildColumnFilterClauses(table, filter.column_filters);
     conditions.push(...cf.conditions);
