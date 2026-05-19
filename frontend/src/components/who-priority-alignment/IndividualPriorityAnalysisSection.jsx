@@ -58,16 +58,16 @@ function PlaceholderChart() {
 
 function PlaceholderTable() {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h4 className="text-base font-bold text-black">Candidates linked to priority</h4>
-          <Chip>— Candidates</Chip>
+          <Chip variant="primary">— Candidates</Chip>
         </div>
         {/* Search and Download CSV land alongside the real table in
            Phase B (Q4/Q9 gate the row source and column mapping). */}
       </div>
-      <div className="border border-gray-200 rounded-xl p-8 text-center">
+      <div className="text-center py-8">
         <p className="text-sm text-gray-500">
           Pending data confirmation — row source and column mapping to be defined (Q4/Q9).
         </p>
@@ -93,29 +93,32 @@ function ActiveBody({ selectedPriorityName, onExplore }) {
         </button>
       </div>
 
-      {/* Row B — three stat cards (Q1/Q2/Q3 gate the counts) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <StatCard
-          title="Number of candidates linked to selected priority"
-          value="—"
-          description="Pending data confirmation"
-          variant="number"
-        />
-        <StatCard
-          title="Number of approved products linked to selected priority"
-          value="—"
-          description="Pending data confirmation"
-          variant="number"
-        />
-        <StatCard
-          title="Target population"
-          value="Pending data confirmation."
-          variant="text"
-        />
-      </div>
+      {/* Rows B+C — two-column grid: left = stat-card stack, right = pipeline chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+        {/* Column 1 — stacked stat cards (Q1/Q2/Q3 gate the counts) */}
+        <div className="flex flex-col gap-4">
+          <StatCard
+            title="Number of candidates linked to selected priority"
+            value="—"
+            description="Pending data confirmation"
+            variant="number"
+          />
+          <StatCard
+            title="Number of approved products linked to selected priority"
+            value="—"
+            description="Pending data confirmation"
+            variant="number"
+          />
+          <StatCard
+            title="Target population"
+            value="Pending data confirmation."
+            variant="text"
+          />
+        </div>
 
-      {/* Row C — Pipeline build up chart (Q5/Q6/Q11) */}
-      <PlaceholderChart />
+        {/* Column 2 — Pipeline build up chart (Q5/Q6/Q11) */}
+        <PlaceholderChart />
+      </div>
 
       {/* Row D — Candidates table (Q4/Q9) */}
       <PlaceholderTable />
