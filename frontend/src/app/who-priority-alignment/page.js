@@ -16,6 +16,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import {
   WhoFilterBar,
   PrioritiesOverviewSection,
+  IndividualPriorityAnalysisSection,
 } from '@/components/who-priority-alignment';
 
 export default function WhoPriorityAlignmentPage() {
@@ -35,6 +36,7 @@ export default function WhoPriorityAlignmentPage() {
 
           <WhoFilterBar />
           <PrioritiesOverviewSection />
+          <IndividualPriorityAnalysisSection />
         </div>
       </main>
     </div>
