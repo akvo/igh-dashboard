@@ -100,6 +100,14 @@ export const CardGrid = {
   ),
 };
 
+export const Number = {
+  args: {
+    title: 'Number of candidates linked to selected priority',
+    value: 454,
+    variant: 'number',
+  },
+};
+
 export const Text = {
   args: {
     title: 'Target population',
