@@ -13,6 +13,7 @@ export function buildCandidateFilterVars(filter) {
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     candidate_type: filter?.candidateType || undefined,
     phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
+    priority_keys: filter?.priorityKeys?.length > 0 ? filter.priorityKeys : undefined,
     column_filters: filter?.columnFilters,
   };
 }
