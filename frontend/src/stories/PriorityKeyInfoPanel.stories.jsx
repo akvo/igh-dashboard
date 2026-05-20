@@ -3,7 +3,9 @@ import PriorityKeyInfoPanel from '@/components/who-priority-alignment/PriorityKe
 const full = {
   priority_key: 1,
   priority_name: 'Vaccines to reduce malaria morbidity and mortality',
-  intended_use: 'To prevent infection with Malaria',
+  indication: 'To prevent infection with Malaria',
+  intended_use:
+    'To maximize the public health impact of a malaria infection-prevention vaccine, the immediate need will be to target populations or age groups who experience high incidence of clinical malaria.',
   target_population:
     'To maximize the public health impact of an infection-prevention vaccine, the immediate need will be to target populations or age groups who experience high incidence of infection.',
   efficacy:
@@ -23,12 +25,26 @@ export const Full = {
   args: { isOpen: true, onClose: () => {}, priority: full },
 };
 
+export const OnlyIntendedUse = {
+  args: {
+    isOpen: true,
+    onClose: () => {},
+    priority: {
+      ...full,
+      indication: null,
+      // intended_use stays populated; subtitle should fall back to it.
+    },
+  },
+};
+
 export const MissingOptionalFields = {
   args: {
     isOpen: true,
     onClose: () => {},
     priority: {
       ...full,
+      indication: null,
+      intended_use: null,
       target_population: null,
       efficacy: null,
       publication_date: null,

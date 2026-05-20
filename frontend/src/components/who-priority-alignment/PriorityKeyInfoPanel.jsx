@@ -9,18 +9,21 @@ import { CloseIcon } from '@/components/icons';
 // Mirrors PriorityListPanel's chrome (right-anchored, backdrop,
 // Escape / backdrop / close-X dismissal). Renders one priority's
 // editorial record: PPC tag, title, intended-use subtitle,
-// `Published <date>` line, then labelled sections (Target population
-// / Efficacy / Safety) followed by a Read more link (opens `source`
-// in a new tab) and a Close button.
+// `Published <date>` line, then labelled sections (Intended use /
+// Target population / Efficacy / Safety) followed by a Read more
+// link (opens `source` in a new tab) and a Close button.
 //
 // Q16 — for now `Read more` only renders when `source` matches the
 // URL pattern. If `source` is non-empty but a citation, the button is
 // hidden. Designer to confirm whether we should instead surface the
 // citation text.
 //
-// Q20 — `intended_use` renders only as the italic subtitle; the
-// labelled "Intended use" section is intentionally omitted in Phase A
-// because both slots would source the same field.
+// Q20 — italic subtitle reads `indication` (the analyst's "new
+// indication" field, already in the gold DB under that column per
+// the silver→gold transformation). The labelled "Intended use"
+// section sources `intended_use` separately. When `indication` is
+// null/empty the subtitle falls back to `intended_use` to avoid an
+// empty hero block.
 
 const URL_LIKE = /^https?:\/\//;
 
@@ -110,13 +113,16 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
               <h2 className="text-2xl font-bold text-black leading-tight">
                 {priority.priority_name}
               </h2>
-              {priority.intended_use && (
-                <p className="text-sm text-gray-600 italic">{priority.intended_use}</p>
+              {(priority.indication || priority.intended_use) && (
+                <p className="text-sm text-gray-600 italic">
+                  {priority.indication || priority.intended_use}
+                </p>
               )}
               {publishedLine && (
                 <p className="text-xs text-gray-500">Published {publishedLine}</p>
               )}
 
+              <Section label="Intended use" body={priority.intended_use} />
               <Section label="Target population" body={priority.target_population} />
               <Section label="Efficacy" body={priority.efficacy} />
               <Section label="Safety" body={priority.safety} />
