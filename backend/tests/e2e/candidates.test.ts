@@ -290,20 +290,25 @@ describe("Candidate Detail", () => {
 describe("portfolioCandidates — priority_keys filter", () => {
   it("narrows results to candidates bridged to the chosen priority", async () => {
     const dbPath = path.resolve(__dirname, "../star_schema.db");
+
     const db = new Database(dbPath, { readonly: true });
-    const row = db
-      .prepare(
-        `SELECT bp.priority_key, COUNT(DISTINCT bp.candidate_key) AS n
-         FROM bridge_candidate_priority bp
-         JOIN dim_priority p ON p.priority_key = bp.priority_key
-         WHERE p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''
-         GROUP BY bp.priority_key
-         HAVING n > 0
-         ORDER BY n DESC
-         LIMIT 1`,
-      )
-      .get() as { priority_key: number; n: number };
-    db.close();
+    let row: { priority_key: number; n: number };
+    try {
+      row = db
+        .prepare(
+          `SELECT bp.priority_key, COUNT(DISTINCT bp.candidate_key) AS n
+           FROM bridge_candidate_priority bp
+           JOIN dim_priority p ON p.priority_key = bp.priority_key
+           WHERE p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''
+           GROUP BY bp.priority_key
+           HAVING n > 0
+           ORDER BY n DESC
+           LIMIT 1`,
+        )
+        .get() as { priority_key: number; n: number };
+    } finally {
+      db.close();
+    }
 
     const { data: result } = await query<{
       portfolioCandidates: { totalCount: number; nodes: { candidate_key: number }[] };
@@ -322,13 +327,17 @@ describe("portfolioCandidates — priority_keys filter", () => {
 
     // Every returned candidate must appear in the bridge for this priority.
     const reopen = new Database(dbPath, { readonly: true });
-    const bridgeKeys = new Set(
-      reopen
-        .prepare(`SELECT candidate_key FROM bridge_candidate_priority WHERE priority_key = ?`)
-        .all(row.priority_key)
-        .map((r: any) => r.candidate_key as number),
-    );
-    reopen.close();
+    let bridgeKeys: Set<number>;
+    try {
+      bridgeKeys = new Set(
+        reopen
+          .prepare(`SELECT candidate_key FROM bridge_candidate_priority WHERE priority_key = ?`)
+          .all(row.priority_key)
+          .map((r: any) => r.candidate_key as number),
+      );
+    } finally {
+      reopen.close();
+    }
     for (const node of result.portfolioCandidates.nodes) {
       expect(bridgeKeys.has(node.candidate_key)).toBe(true);
     }
