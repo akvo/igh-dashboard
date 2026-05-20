@@ -614,6 +614,20 @@ export const typeDefs = `#graphql
     priorities: [PriorityAlignmentPriority!]!
   }
 
+  type PipelineBuildUpRow {
+    product_name: String!
+    phase_name: String!
+    sort_order: Int!
+    candidateCount: Int!
+  }
+
+  type IndividualPriorityAnalysis {
+    candidatesCount: Int!
+    approvedProductsCount: Int!
+    targetPopulation: String
+    pipelineBuildUp: [PipelineBuildUpRow!]!
+  }
+
   # =============================================================================
   # Slide-in composite types (Aggregated Portfolio Explore panels)
   # =============================================================================
@@ -753,6 +767,15 @@ export const typeDefs = `#graphql
       secondary_disease_names: [String!],
       product_names: [String!],
     ): PriorityAlignmentOverview!
+
+    # WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
+    individualPriorityAnalysis(
+      priority_key: Int!,
+      global_health_areas: [String!],
+      primary_disease_names: [String!],
+      secondary_disease_names: [String!],
+      product_names: [String!],
+    ): IndividualPriorityAnalysis!
 
     # Portfolio analysis - product distribution (donut chart)
     productDistribution(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], candidate_type: String, phase_names: [String!]): [ProductDistributionRow!]!

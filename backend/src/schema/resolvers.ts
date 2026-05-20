@@ -26,6 +26,7 @@ import { getTechnologyTypeDistribution } from "../db/queries/technologyTypeDistr
 import { getProductDistribution } from "../db/queries/productDistribution.js";
 import { getRegulatoryDistribution } from "../db/queries/regulatoryDistribution.js";
 import { getPriorityAlignmentOverview } from "../db/queries/priorityAlignment.js";
+import { getIndividualPriorityAnalysis } from "../db/queries/individualPriorityAnalysis.js";
 import { getClinicalTrialStats } from "../db/queries/clinicalTrialStats.js";
 import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
@@ -315,6 +316,25 @@ export const resolvers = {
       },
     ) =>
       getPriorityAlignmentOverview({
+        global_health_areas: args.global_health_areas ?? null,
+        primary_disease_names: args.primary_disease_names ?? null,
+        secondary_disease_names: args.secondary_disease_names ?? null,
+        product_names: args.product_names ?? null,
+      }),
+
+    // WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
+    individualPriorityAnalysis: (
+      _: unknown,
+      args: {
+        priority_key: number;
+        global_health_areas?: string[] | null;
+        primary_disease_names?: string[] | null;
+        secondary_disease_names?: string[] | null;
+        product_names?: string[] | null;
+      },
+    ) =>
+      getIndividualPriorityAnalysis({
+        priority_key: args.priority_key,
         global_health_areas: args.global_health_areas ?? null,
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,

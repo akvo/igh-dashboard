@@ -583,6 +583,32 @@ export interface PriorityAlignmentInput {
 }
 
 // =============================================================================
+// Individual Priority Analysis (WHO page — second section)
+// =============================================================================
+
+export interface IndividualPriorityAnalysisInput {
+  priority_key: number;
+  global_health_areas?: string[] | null;
+  primary_disease_names?: string[] | null;
+  secondary_disease_names?: string[] | null;
+  product_names?: string[] | null;
+}
+
+export interface PipelineBuildUpRow {
+  product_name: string;
+  phase_name: string;
+  sort_order: number;
+  candidateCount: number;
+}
+
+export interface IndividualPriorityAnalysis {
+  candidatesCount: number;
+  approvedProductsCount: number;
+  targetPopulation: string | null;
+  pipelineBuildUp: PipelineBuildUpRow[];
+}
+
+// =============================================================================
 // Slide-in composite shapes (Aggregated Portfolio Explore panels)
 // =============================================================================
 
