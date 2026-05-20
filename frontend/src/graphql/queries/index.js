@@ -496,6 +496,36 @@ export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
   }
 `;
 
+// Individual priority drill-down — counts + target_population + pipeline build-up
+// for one priority on the WHO Priority Alignment page.
+export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
+  query IndividualPriorityAnalysis(
+    $priorityKey: Int!
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+  ) {
+    individualPriorityAnalysis(
+      priority_key: $priorityKey
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+    ) {
+      candidatesCount
+      approvedProductsCount
+      targetPopulation
+      pipelineBuildUp {
+        product_name
+        phase_name
+        sort_order
+        candidateCount
+      }
+    }
+  }
+`;
+
 // Aggregated Portfolio slide-in queries
 export {
   GET_SLIDE_IN_CANDIDATE,
