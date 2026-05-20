@@ -30,7 +30,7 @@ import {
   usePortfolioCandidates,
 } from '@/graphql/hooks';
 import { transformProductPhaseDistribution } from '@/lib/transformations/productPhaseDistribution';
-import { buildCandidateColumns, CANDIDATE_COLUMNS, toCSVColumns } from '@/lib/exploreColumnConfig';
+import { CANDIDATE_COLUMNS, toCSVColumns } from '@/lib/exploreColumnConfig';
 import {
   encodeFilters,
   decodeFilters,
@@ -47,6 +47,10 @@ import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
+
+// Page size for the candidates table — kept module-scope so the
+// hook fetch size and the DataTable pagination UI never drift.
+const ITEMS_PER_PAGE = 20;
 
 function EmptyState() {
   return (
@@ -172,7 +176,7 @@ function CandidatesTable({
         onPageChange={onPageChange}
         totalCount={totalCount}
         hasNextPage={hasNextPage}
-        itemsPerPage={20}
+        itemsPerPage={ITEMS_PER_PAGE}
         loading={loading}
         filters={filters}
         onFiltersChange={onFiltersChange}
@@ -423,8 +427,6 @@ export default function IndividualPriorityAnalysisSection() {
       candidatesColumnFilters,
     ],
   );
-
-  const ITEMS_PER_PAGE = 20;
 
   const table = usePortfolioCandidates(
     {
