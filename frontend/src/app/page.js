@@ -9,6 +9,7 @@ import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -127,8 +128,6 @@ export default function Home() {
   // (not visible) keeps the URL short when most phases are shown.
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
   const [crossHiddenPhases, setCrossHiddenPhases] = useUrlState('cphide', [], arraySerializer);
-  // WHO Priority Alignment section — multi-select disease filter.
-  const [whoDiseases, setWhoDiseases] = useUrlState('whoDis', [], arraySerializer);
   const [diseasePanelOpen, setDiseasePanelOpen] = useState(false);
   // Page number for the bubble-chart drill-down DataTable. Lives in
   // the parent because DataTable's pagination is controlled. Reset to
@@ -307,54 +306,46 @@ export default function Home() {
     expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
   );
 
-  // WHO Priority Alignment data — single consolidated query feeds all four
-  // cards, the product types donut, and the disease dropdown options. The
-  // Home section only narrows by Disease today; GHA + Product filtering
-  // happens on the dedicated WHO page.
+  // WHO Priority Alignment data — single consolidated query feeds the
+  // three GHA cards plus both donut charts. All four filter axes are
+  // sourced from the sidebar's global filters so this section stays in
+  // lockstep with every other page rather than maintaining its own
+  // disconnected dropdown state.
   const {
     totalPriorities: whoTotalPriorities,
     byArea: whoByArea,
     productTypeChartData: whoProductTypeChartData,
-    diseaseOptions: whoDiseaseOptionsRaw,
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
   } = usePriorityAlignment(
-    null,
-    whoDiseases.length > 0 ? whoDiseases : null,
-    null,
-    null,
+    globalFilters.healthArea,
+    globalFilters.primary,
+    globalFilters.secondary,
+    globalFilters.expandedProduct,
   );
 
-  // Build the disease dropdown options from all priority-bearing rows.
-  //
-  // The resolver's `applyDiseaseFilters` now matches `primary_disease_names`
-  // against BOTH `dim_disease.disease_filter` AND `TRIM(dim_disease.disease_name)`,
-  // so we no longer need to exclude rows with a null `disease_filter`. We
-  // prefer `disease_filter` when it is set (Mpox is the only
-  // priority-bearing disease that has one) and fall back to the trimmed
-  // name for the other 17 diseases — both values resolve correctly on the
-  // resolver side.
-  //
-  // Mpox has two rows in the payload — "Mpox (monkeypox) - Drugs" and
-  // "Mpox (monkeypox) - Vaccines" — both sharing the same `disease_filter`.
-  // We dedup by `value` (first-seen wins) so the user only sees one
-  // "Mpox (monkeypox)" entry in the dropdown; the label for that entry
-  // comes from `disease_filter` itself rather than either sub-variant name.
-  const whoDiseaseOptions = useMemo(() => {
-    const seen = new Map();
-    for (const d of whoDiseaseOptionsRaw) {
-      const trimmedName = d.disease_name?.trim() ?? '';
-      const value = d.disease_filter || trimmedName;
-      if (!seen.has(value)) {
-        // For Mpox-style rows where multiple sub-variants share a
-        // disease_filter, collapse them to a single option labelled by
-        // the disease_filter (canonical primary name).
-        const label = d.disease_filter ?? trimmedName;
-        seen.set(value, { label, value });
-      }
-    }
-    return Array.from(seen.values());
-  }, [whoDiseaseOptionsRaw]);
+  // Build the /who-priority-alignment link with the four shared URL
+  // keys so navigation preserves the active selection. A plain
+  // <a href="/who-priority-alignment"> drops the query string, which
+  // is why the destination page used to boot unfiltered. The WHO
+  // page's useWhoPageFilters reads `gha`, `primary`, `secondary`,
+  // `product` — same encoding (comma-joined arrays via
+  // arraySerializer) — so we encode each non-empty axis below and
+  // skip empties to keep the URL short.
+  const exploreHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (globalFilters.healthArea.length > 0) params.set('gha', globalFilters.healthArea.join(','));
+    if (globalFilters.primary.length > 0) params.set('primary', globalFilters.primary.join(','));
+    if (globalFilters.secondary.length > 0) params.set('secondary', globalFilters.secondary.join(','));
+    if (globalFilters.product.length > 0) params.set('product', globalFilters.product.join(','));
+    const qs = params.toString();
+    return qs ? `/who-priority-alignment?${qs}` : '/who-priority-alignment';
+  }, [
+    globalFilters.healthArea,
+    globalFilters.primary,
+    globalFilters.secondary,
+    globalFilters.product,
+  ]);
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
@@ -850,30 +841,44 @@ export default function Home() {
                   Compare WHO priorities with pipeline
                 </p>
               </div>
+              {/* In-section disease dropdown is bound to the same
+                  primary/secondary URL params as the sidebar's Disease
+                  filter, so picking a disease here updates the sidebar
+                  too (and vice versa). The neighbouring button flips
+                  from white/border "View all" to the orange "Explore
+                  selected" CTA as soon as any global filter axis is
+                  active — pairing them visually so the state change
+                  is obvious without making users hunt for the sidebar.
+                  Destination page reads the same URL keys via
+                  `useWhoPageFilters`, so the selection carries over. */}
               <div className="flex items-center gap-2">
                 <div className="w-[240px]">
-                  <Dropdown
-                    value={whoDiseases}
-                    onChange={setWhoDiseases}
+                  <HierarchicalDiseaseFilter
+                    hierarchy={globalFilters.narrowedHierarchy}
+                    primarySelected={globalFilters.primary}
+                    secondarySelected={globalFilters.secondary}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      globalFilters.setPrimary(primarySelected);
+                      globalFilters.setSecondary(secondarySelected);
+                    }}
                     placeholder="Select disease"
-                    options={whoDiseaseOptions}
-                    multiSelect={true}
-                    showSearch={true}
-                    showClearText={true}
-                    loading={whoLoading}
                   />
                 </div>
-                {/* "View all" uses screenshot styling (white bg, gray border)
-                    rather than the orange CTA used by other sections. The
-                    UX pattern is the same — it links to the dedicated WHO
-                    page — but the visual is intentionally distinct. Route
-                    doesn't exist yet; will 404 until built separately. */}
-                <a
-                  href="/who-priority-alignment"
-                  className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  View all
-                </a>
+                {globalFilters.hasFilters ? (
+                  <a
+                    href={exploreHref}
+                    className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
+                  >
+                    Explore selected
+                  </a>
+                ) : (
+                  <a
+                    href={exploreHref}
+                    className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    View all
+                  </a>
+                )}
               </div>
             </div>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
