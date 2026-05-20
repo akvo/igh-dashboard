@@ -9,8 +9,22 @@ import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./
 
 const MAX_LIMIT = 100;
 
-const BRIDGE_JOIN =
-  "JOIN bridge_candidate_priority bp ON bp.candidate_key = c.candidate_key";
+const BRIDGE_JOIN = "JOIN bridge_candidate_priority bp ON bp.candidate_key = c.candidate_key";
+
+// Priority filter: join bridge_candidate_priority on demand and
+// constrain by priority_key. Unfiltered queries keep their existing
+// plan. Extracted from `buildWhere` so the parent stays under the
+// cyclomatic-complexity threshold.
+function applyPriorityKeysFilter(
+  filter: PortfolioCandidateFilter | undefined,
+  conditions: string[],
+  params: (string | number)[],
+  extraJoins: string[],
+): void {
+  if (!filter?.priority_keys || filter.priority_keys.length === 0) return;
+  extraJoins.push(BRIDGE_JOIN);
+  addArrayCondition(filter.priority_keys, "bp.priority_key", conditions, params);
+}
 
 function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
@@ -33,13 +47,7 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     params.push(filter.candidate_type);
   }
 
-  // Priority filter: join bridge_candidate_priority and constrain by
-  // priority_key. The join is added on demand so unfiltered queries
-  // keep their existing plan.
-  if (filter?.priority_keys && filter.priority_keys.length > 0) {
-    extraJoins.push(BRIDGE_JOIN);
-    addArrayCondition(filter.priority_keys, "bp.priority_key", conditions, params);
-  }
+  applyPriorityKeysFilter(filter, conditions, params, extraJoins);
 
   if (filter?.column_filters) {
     const cf = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", filter.column_filters);

@@ -40,8 +40,18 @@ function buildPipelineWhere(input: IndividualPriorityAnalysisInput) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, "bp.priority_key = ?"];
   const params: (string | number)[] = [input.priority_key];
 
-  addArrayCondition(input.global_health_areas ?? undefined, "d.global_health_area", conditions, params);
-  addArrayCondition(input.primary_disease_names ?? undefined, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    input.global_health_areas ?? undefined,
+    "d.global_health_area",
+    conditions,
+    params,
+  );
+  addArrayCondition(
+    input.primary_disease_names ?? undefined,
+    "d.disease_filter",
+    conditions,
+    params,
+  );
   addArrayCondition(
     input.secondary_disease_names ?? undefined,
     "d.secondary_disease_name",

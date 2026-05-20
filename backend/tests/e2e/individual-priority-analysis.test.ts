@@ -71,7 +71,11 @@ beforeAll(() => {
            AND p.priority_key IN (SELECT priority_key FROM bridge_candidate_priority)
          LIMIT 1`,
       )
-      .get() as { priority_key: number; target_population: string; global_health_area: string | null };
+      .get() as {
+      priority_key: number;
+      target_population: string;
+      global_health_area: string | null;
+    };
     pickedPriorityKey = row.priority_key;
     pickedTargetPopulation = row.target_population;
     pickedGha = row.global_health_area;

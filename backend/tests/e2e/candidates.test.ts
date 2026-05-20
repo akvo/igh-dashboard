@@ -329,12 +329,10 @@ describe("portfolioCandidates — priority_keys filter", () => {
     const reopen = new Database(dbPath, { readonly: true });
     let bridgeKeys: Set<number>;
     try {
-      bridgeKeys = new Set(
-        reopen
-          .prepare(`SELECT candidate_key FROM bridge_candidate_priority WHERE priority_key = ?`)
-          .all(row.priority_key)
-          .map((r: any) => r.candidate_key as number),
-      );
+      const bridgeRows = reopen
+        .prepare(`SELECT candidate_key FROM bridge_candidate_priority WHERE priority_key = ?`)
+        .all(row.priority_key) as { candidate_key: number }[];
+      bridgeKeys = new Set(bridgeRows.map((r) => r.candidate_key));
     } finally {
       reopen.close();
     }
