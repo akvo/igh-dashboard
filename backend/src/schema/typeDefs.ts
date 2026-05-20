@@ -525,6 +525,7 @@ export const typeDefs = `#graphql
     product_names: [String!]
     candidate_type: String
     phase_names: [String!]
+    priority_keys: [Int!]
     column_filters: [ColumnFilter!]
   }
 

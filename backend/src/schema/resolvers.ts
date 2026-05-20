@@ -189,6 +189,7 @@ export const resolvers = {
           product_names?: string[];
           candidate_type?: string;
           phase_names?: string[];
+          priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
         sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
