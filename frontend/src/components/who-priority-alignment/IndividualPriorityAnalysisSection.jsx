@@ -1,23 +1,56 @@
 'use client';
 
 // =========================================================
-// IndividualPriorityAnalysisSection — Phase A scaffold.
+// IndividualPriorityAnalysisSection — Phase B wiring.
 // =========================================================
-// Ships the section's chrome, sub-filter row, empty state, URL state,
-// and the `Explore selected priority` slide-in. The active body
-// renders explicit placeholders for the stat cards, pipeline chart,
-// and candidates table. Each placeholder marks the open question
-// gating its real implementation; see
-// docs/superpowers/notes/2026-05-19-individual-priority-analysis-questions.md.
+// Replaces Phase A's four placeholders with live data:
+//
+//   • Three stat cards — counts and target_population from
+//     `useIndividualPriorityAnalysis`.
+//   • Pipeline build-up stacked bar chart fed through the
+//     `transformProductPhaseDistribution` helper.
+//   • Candidates table via `usePortfolioCandidates`, scoped
+//     to `candidate_type = 'Candidate'` + the committed priority
+//     key. URL-backed filter / sort / pagination / visible-columns
+//     state lives under the `who-priority` namespace so it
+//     doesn't collide with Portfolio Analysis's `*.candidates` keys.
+//
+// The slide-in panel, dropdown, Apply/Clear row, and EmptyState
+// are preserved exactly as Phase A left them.
 
-import { useState } from 'react';
-import { Dropdown, StatCard, Chip } from '@/components/ui';
-import { ChartEmptyState } from '@/components/charts';
-import { InfoIcon, RefreshIcon } from '@/components/icons';
-import { usePriorityAlignment, useRdPriorities } from '@/graphql/hooks';
+import { useState, useMemo, useCallback, useRef } from 'react';
+import { useApolloClient } from '@apollo/client/react';
+import { Dropdown, StatCard, Chip, DataTable, ChartMenu } from '@/components/ui';
+import { StackedBarChart, ChartEmptyState } from '@/components/charts';
+import { InfoIcon, RefreshIcon, CloudDownloadIcon } from '@/components/icons';
+import {
+  usePriorityAlignment,
+  useRdPriorities,
+  useIndividualPriorityAnalysis,
+  usePortfolioCandidates,
+} from '@/graphql/hooks';
+import { transformProductPhaseDistribution } from '@/lib/transformations/productPhaseDistribution';
+import { CANDIDATE_COLUMNS, toCSVColumns } from '@/lib/exploreColumnConfig';
+import {
+  encodeFilters,
+  decodeFilters,
+  hydrateFiltersFromUrl,
+  encodeSort,
+  decodeSort,
+} from '@/lib/dataTableUrl';
+import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { downloadPNG } from '@/lib/png';
+import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
+
+// Page size for the candidates table — kept module-scope so the
+// hook fetch size and the DataTable pagination UI never drift.
+const ITEMS_PER_PAGE = 20;
 
 function EmptyState() {
   return (
@@ -33,50 +66,154 @@ function EmptyState() {
   );
 }
 
-function PlaceholderChart() {
+function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
+  const chartRef = useRef(null);
+
+  const { chartData, phases } = useMemo(
+    () => transformProductPhaseDistribution(pipelineBuildUp ?? []),
+    [pipelineBuildUp],
+  );
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
+    <div
+      ref={chartRef}
+      className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col"
+    >
       <div className="flex items-start justify-between gap-2 mb-1">
         <div>
           <h4 className="text-base font-bold text-black">Pipeline build up</h4>
+          {/* Q11: chart subtitle copy pending designer. */}
           <p className="text-sm text-gray-500">
             This visual shows the build up of the pipeline for this priority.
           </p>
         </div>
-      </div>
-      <div className="flex-1 mt-2">
-        <ChartEmptyState
-          variant="bar"
-          height={280}
-          title="Pending data confirmation"
-          description="Chart grouping and copy to be defined (Q5/Q6/Q11)."
+        <ChartMenu
+          onDownloadCSV={() => {
+            const csv = buildCSV(
+              [
+                { label: 'Product type', accessor: 'category' },
+                ...phases.map((p) => ({ label: p.label, accessor: p.key })),
+              ],
+              chartData,
+            );
+            downloadCSV(csv, 'who-individual-priority-pipeline-build-up');
+          }}
+          onDownloadPNG={() =>
+            downloadPNG(chartRef, 'who-individual-priority-pipeline-build-up')
+          }
         />
       </div>
+      <div className="flex-1 mt-2">
+        {loading ? (
+          <div className="h-[280px] flex items-center justify-center">
+            <div className="animate-pulse text-gray-400">Loading chart...</div>
+          </div>
+        ) : chartData.length === 0 ? (
+          <ChartEmptyState variant="bar" height={280} />
+        ) : (
+          <StackedBarChart
+            data={chartData}
+            phases={phases}
+            categoryKey="category"
+            layout="vertical"
+            height={Math.max(220, chartData.length * 60)}
+            xAxisLabel="Amount"
+            barRadius={0}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function PlaceholderTable() {
+function CandidatesTable({
+  candidates,
+  totalCount,
+  hasNextPage,
+  loading,
+  filterContext,
+  filters,
+  onFiltersChange,
+  sort,
+  onSortChange,
+  page,
+  onPageChange,
+  visibleColumns,
+  onVisibleColumnsChange,
+  onDownloadCSV,
+  downloading,
+}) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <h4 className="text-base font-bold text-black">Candidates linked to priority</h4>
-          <Chip variant="primary">— Candidates</Chip>
+    <div className="border border-gray-200">
+      <div className="flex items-center justify-between p-4 pb-0 mb-4">
+        <div className="flex items-center gap-3">
+          <h4 className="text-xl font-bold text-black leading-none">
+            Candidates linked to priority
+          </h4>
+          <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+            {totalCount} Candidates
+          </span>
         </div>
-        {/* Search and Download CSV land alongside the real table in
-           Phase B (Q4/Q9 gate the row source and column mapping). */}
+        <div className="flex items-center gap-3 h-[36px]">
+          <button
+            onClick={onDownloadCSV}
+            disabled={downloading || totalCount === 0}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            <CloudDownloadIcon className="w-4 h-4" />
+            {downloading ? 'Downloading...' : 'Download CSV'}
+          </button>
+        </div>
       </div>
-      <div className="text-center py-8">
-        <p className="text-sm text-gray-500">
-          Pending data confirmation — row source and column mapping to be defined (Q4/Q9).
-        </p>
-      </div>
+      <DataTable
+        tableId="who-priority-candidates"
+        graphqlTable="PORTFOLIO_CANDIDATES"
+        filterContext={filterContext}
+        columns={CANDIDATE_COLUMNS}
+        data={candidates}
+        rowKey="candidate_key"
+        page={page}
+        onPageChange={onPageChange}
+        totalCount={totalCount}
+        hasNextPage={hasNextPage}
+        itemsPerPage={ITEMS_PER_PAGE}
+        loading={loading}
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        sort={sort}
+        onSortChange={onSortChange}
+        visibleColumns={visibleColumns}
+        onVisibleColumnsChange={onVisibleColumnsChange}
+        emptyState={
+          Object.keys(filters || {}).length > 0
+            ? {
+                title: 'No candidates found',
+                description: 'No rows match the active filters. Clear them to see more.',
+              }
+            : { title: 'No candidates linked to this priority' }
+        }
+      />
     </div>
   );
 }
 
-function ActiveBody({ selectedPriorityName, onExplore }) {
+function ActiveBody({
+  selectedPriorityName,
+  onExplore,
+  analysis,
+  table,
+  filterContext,
+  filters,
+  onFiltersChange,
+  sort,
+  onSortChange,
+  page,
+  onPageChange,
+  visibleColumns,
+  onVisibleColumnsChange,
+  onDownloadCSV,
+  downloading,
+}) {
   return (
     <div className="flex flex-col gap-6">
       {/* Row A — Pipeline header */}
@@ -95,33 +232,57 @@ function ActiveBody({ selectedPriorityName, onExplore }) {
 
       {/* Rows B+C — two-column grid: left = stat-card stack, right = pipeline chart */}
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
-        {/* Column 1 — stacked stat cards (Q1/Q2/Q3 gate the counts) */}
+        {/* Column 1 — stacked stat cards bound to the analysis hook */}
         <div className="flex flex-col gap-4">
           <StatCard
             title="Number of candidates linked to selected priority"
-            value="—"
-            description="Pending data confirmation"
+            value={analysis.counts.candidatesCount}
             variant="number"
+            loading={analysis.loading}
           />
           <StatCard
             title="Number of approved products linked to selected priority"
-            value="—"
-            description="Pending data confirmation"
+            value={analysis.counts.approvedProductsCount}
             variant="number"
+            loading={analysis.loading}
           />
           <StatCard
             title="Target population"
-            value="Pending data confirmation."
+            value={
+              analysis.targetPopulation && analysis.targetPopulation.length > 0
+                ? analysis.targetPopulation
+                : 'Not specified for this priority.'
+            }
             variant="text"
+            loading={analysis.loading}
           />
         </div>
 
-        {/* Column 2 — Pipeline build up chart (Q5/Q6/Q11) */}
-        <PlaceholderChart />
+        {/* Column 2 — Pipeline build up chart */}
+        <PipelineBuildUpCard
+          pipelineBuildUp={analysis.pipelineBuildUp}
+          loading={analysis.loading}
+        />
       </div>
 
-      {/* Row D — Candidates table (Q4/Q9) */}
-      <PlaceholderTable />
+      {/* Row D — Candidates table */}
+      <CandidatesTable
+        candidates={table.candidates}
+        totalCount={table.totalCount}
+        hasNextPage={table.hasNextPage}
+        loading={table.loading}
+        filterContext={filterContext}
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        sort={sort}
+        onSortChange={onSortChange}
+        page={page}
+        onPageChange={onPageChange}
+        visibleColumns={visibleColumns}
+        onVisibleColumnsChange={onVisibleColumnsChange}
+        onDownloadCSV={onDownloadCSV}
+        downloading={downloading}
+      />
     </div>
   );
 }
@@ -129,6 +290,7 @@ function ActiveBody({ selectedPriorityName, onExplore }) {
 export default function IndividualPriorityAnalysisSection() {
   const page = useWhoPageFilters();
   const state = useIndividualPriorityState();
+  const apolloClient = useApolloClient();
   const [slideInOpen, setSlideInOpen] = useState(false);
 
   const { priorities, loading: prioritiesLoading } = usePriorityAlignment(
@@ -183,6 +345,142 @@ export default function IndividualPriorityAnalysisSection() {
   // wrapping div that suppresses pointer events when the options list is
   // empty or still loading.
   const dropdownDisabled = prioritiesLoading || dropdownOptions.length === 0;
+
+  // =========================================================
+  // Live data wiring for the active body
+  // =========================================================
+
+  // Analysis: counts + target_population + pipeline build-up.
+  const analysis = useIndividualPriorityAnalysis({
+    priorityKey: state.committedPriority,
+    globalHealthAreas: page.healthArea,
+    primaryDiseaseNames: page.primary,
+    secondaryDiseaseNames: page.secondary,
+    productNames: page.expandedProduct,
+  });
+
+  // Table state — mirrors AggregatedSection's `f.candidates`/`s.candidates`/
+  // `cols.candidates`/`cPage` pattern but with a `who-priority` namespace
+  // so we don't collide with Portfolio Analysis's keys.
+  const candidatesFilterSerializer = useMemo(
+    () => ({
+      serialize: encodeFilters,
+      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CANDIDATE_COLUMNS),
+      debounceMs: 500,
+    }),
+    [],
+  );
+  const sortSerializer = useMemo(
+    () => ({ serialize: encodeSort, deserialize: decodeSort }),
+    [],
+  );
+
+  const [candidatesFilters, setCandidatesFilters] = useUrlState(
+    'f.who-priority',
+    {},
+    candidatesFilterSerializer,
+  );
+  const [candidatesSort, setCandidatesSort] = useUrlState(
+    's.who-priority',
+    null,
+    sortSerializer,
+  );
+  const [candidatesVisibleCols, setCandidatesVisibleCols] = useUrlState(
+    'cols.who-priority',
+    [],
+    arraySerializer,
+  );
+  const [candidatesPage, setCandidatesPage] = useUrlState(
+    'who-priority-page',
+    1,
+    numberSerializer,
+  );
+
+  const candidatesColumnFilters = useMemo(
+    () => toColumnFilters(candidatesFilters),
+    [candidatesFilters],
+  );
+  const candidatesSortVar = useMemo(
+    () => toColumnSort(candidatesSort),
+    [candidatesSort],
+  );
+
+  // filterContext is forwarded to `<DataTable>` so it can issue
+  // server-side filter-options queries scoped to the current priority.
+  const candidatesFilterContext = useMemo(
+    () => ({
+      global_health_areas: page.healthArea?.length > 0 ? page.healthArea : undefined,
+      primary_disease_names: page.primary?.length > 0 ? page.primary : undefined,
+      secondary_disease_names: page.secondary?.length > 0 ? page.secondary : undefined,
+      product_names: page.expandedProduct?.length > 0 ? page.expandedProduct : undefined,
+      candidate_type: 'Candidate',
+      priority_keys:
+        state.committedPriority != null ? [state.committedPriority] : undefined,
+      column_filters: candidatesColumnFilters,
+    }),
+    [
+      page.healthArea,
+      page.primary,
+      page.secondary,
+      page.expandedProduct,
+      state.committedPriority,
+      candidatesColumnFilters,
+    ],
+  );
+
+  const table = usePortfolioCandidates(
+    {
+      globalHealthAreas: page.healthArea,
+      primaryDiseaseNames: page.primary,
+      secondaryDiseaseNames: page.secondary,
+      productNames: page.expandedProduct,
+      candidateType: 'Candidate',
+      priorityKeys:
+        state.committedPriority != null ? [state.committedPriority] : null,
+      columnFilters: candidatesColumnFilters,
+    },
+    ITEMS_PER_PAGE,
+    (candidatesPage - 1) * ITEMS_PER_PAGE,
+    {
+      skip: state.committedPriority == null,
+      sort: candidatesSortVar,
+    },
+  );
+
+  // CSV download: fetches all rows via the paginating `fetchAllCandidates`
+  // helper (same pattern as AggregatedSection) so the export isn't
+  // capped at the visible page.
+  const [candidatesDownloading, setCandidatesDownloading] = useState(false);
+  const handleCandidatesDownloadCSV = useCallback(async () => {
+    setCandidatesDownloading(true);
+    try {
+      const allRows = await fetchAllCandidates(apolloClient, {
+        globalHealthAreas: page.healthArea,
+        primaryDiseaseNames: page.primary,
+        secondaryDiseaseNames: page.secondary,
+        productNames: page.expandedProduct,
+        candidateType: 'Candidate',
+        priorityKeys:
+          state.committedPriority != null ? [state.committedPriority] : null,
+        columnFilters: candidatesColumnFilters,
+      });
+      const csv = buildCSV(toCSVColumns(CANDIDATE_COLUMNS), allRows);
+      downloadCSV(csv, 'who-individual-priority-candidates');
+    } catch (err) {
+      console.error('Candidates CSV download failed:', err);
+    } finally {
+      setCandidatesDownloading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    apolloClient,
+    page.healthArea,
+    page.primary,
+    page.secondary,
+    page.expandedProduct,
+    state.committedPriority,
+    candidatesColumnFilters,
+  ]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
@@ -252,6 +550,25 @@ export default function IndividualPriorityAnalysisSection() {
         <ActiveBody
           selectedPriorityName={selectedPriorityName}
           onExplore={() => setSlideInOpen(true)}
+          analysis={analysis}
+          table={table}
+          filterContext={candidatesFilterContext}
+          filters={candidatesFilters}
+          onFiltersChange={(next) => {
+            setCandidatesFilters(next);
+            setCandidatesPage(1);
+          }}
+          sort={candidatesSort}
+          onSortChange={(next) => {
+            setCandidatesSort(next);
+            setCandidatesPage(1);
+          }}
+          page={candidatesPage}
+          onPageChange={setCandidatesPage}
+          visibleColumns={candidatesVisibleCols}
+          onVisibleColumnsChange={setCandidatesVisibleCols}
+          onDownloadCSV={handleCandidatesDownloadCSV}
+          downloading={candidatesDownloading}
         />
       )}
 

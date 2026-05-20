@@ -3,6 +3,8 @@
  */
 
 import { describe, it, expect } from "vitest";
+import Database from "better-sqlite3";
+import path from "path";
 import { query } from "../helpers/graphql.js";
 import type { CandidateNode, CandidateConnection } from "../helpers/types.js";
 
@@ -282,5 +284,60 @@ describe("Candidate Detail", () => {
     );
 
     expect(data.candidate).toBeNull();
+  });
+});
+
+describe("portfolioCandidates — priority_keys filter", () => {
+  it("narrows results to candidates bridged to the chosen priority", async () => {
+    const dbPath = path.resolve(__dirname, "../star_schema.db");
+
+    const db = new Database(dbPath, { readonly: true });
+    let row: { priority_key: number; n: number };
+    try {
+      row = db
+        .prepare(
+          `SELECT bp.priority_key, COUNT(DISTINCT bp.candidate_key) AS n
+           FROM bridge_candidate_priority bp
+           JOIN dim_priority p ON p.priority_key = bp.priority_key
+           WHERE p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''
+           GROUP BY bp.priority_key
+           HAVING n > 0
+           ORDER BY n DESC
+           LIMIT 1`,
+        )
+        .get() as { priority_key: number; n: number };
+    } finally {
+      db.close();
+    }
+
+    const { data: result } = await query<{
+      portfolioCandidates: { totalCount: number; nodes: { candidate_key: number }[] };
+    }>(
+      `query Q($filter: PortfolioCandidateFilter) {
+         portfolioCandidates(filter: $filter, limit: 100) {
+           totalCount
+           nodes { candidate_key }
+         }
+       }`,
+      { filter: { priority_keys: [row.priority_key] } },
+    );
+
+    expect(result.portfolioCandidates.totalCount).toBeGreaterThan(0);
+    expect(result.portfolioCandidates.totalCount).toBeLessThanOrEqual(row.n);
+
+    // Every returned candidate must appear in the bridge for this priority.
+    const reopen = new Database(dbPath, { readonly: true });
+    let bridgeKeys: Set<number>;
+    try {
+      const bridgeRows = reopen
+        .prepare(`SELECT candidate_key FROM bridge_candidate_priority WHERE priority_key = ?`)
+        .all(row.priority_key) as { candidate_key: number }[];
+      bridgeKeys = new Set(bridgeRows.map((r) => r.candidate_key));
+    } finally {
+      reopen.close();
+    }
+    for (const node of result.portfolioCandidates.nodes) {
+      expect(bridgeKeys.has(node.candidate_key)).toBe(true);
+    }
   });
 });

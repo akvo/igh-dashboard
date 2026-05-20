@@ -9,9 +9,27 @@ import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./
 
 const MAX_LIMIT = 100;
 
+const BRIDGE_JOIN = "JOIN bridge_candidate_priority bp ON bp.candidate_key = c.candidate_key";
+
+// Priority filter: join bridge_candidate_priority on demand and
+// constrain by priority_key. Unfiltered queries keep their existing
+// plan. Extracted from `buildWhere` so the parent stays under the
+// cyclomatic-complexity threshold.
+function applyPriorityKeysFilter(
+  filter: PortfolioCandidateFilter | undefined,
+  conditions: string[],
+  params: (string | number)[],
+  extraJoins: string[],
+): void {
+  if (!filter?.priority_keys || filter.priority_keys.length === 0) return;
+  extraJoins.push(BRIDGE_JOIN);
+  addArrayCondition(filter.priority_keys, "bp.priority_key", conditions, params);
+}
+
 function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
+  const extraJoins: string[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
@@ -29,13 +47,19 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     params.push(filter.candidate_type);
   }
 
+  applyPriorityKeysFilter(filter, conditions, params, extraJoins);
+
   if (filter?.column_filters) {
     const cf = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", filter.column_filters);
     conditions.push(...cf.conditions);
     params.push(...cf.params);
   }
 
-  return { whereClause: `WHERE ${conditions.join(" AND ")}`, params };
+  return {
+    whereClause: `WHERE ${conditions.join(" AND ")}`,
+    extraJoins: extraJoins.join("\n    "),
+    params,
+  };
 }
 
 const JOINS = `
@@ -60,7 +84,7 @@ export function getPortfolioCandidates(
 ): PortfolioCandidateConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter);
+  const { whereClause, extraJoins, params } = buildWhere(filter);
 
   const orderBy =
     buildOrderBy("PORTFOLIO_CANDIDATES", sort) ?? "ORDER BY c.candidate_name NULLS LAST";
@@ -69,6 +93,7 @@ export function getPortfolioCandidates(
     SELECT COUNT(DISTINCT c.candidate_key) as total
     FROM dim_candidate_core c
     ${JOINS}
+    ${extraJoins}
     ${whereClause}
   `;
   const countResult = db.prepare(countSql).get(...params) as { total: number };
@@ -120,6 +145,7 @@ export function getPortfolioCandidates(
         r.us_fda_approval_status
       FROM dim_candidate_core c
       ${JOINS}
+      ${extraJoins}
       ${whereClause}
       ${orderBy}
       LIMIT ? OFFSET ?
