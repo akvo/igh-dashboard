@@ -1,9 +1,11 @@
 import { getDatabase } from "../connection.js";
 import type { DiseaseSummary } from "../types.js";
-import { PIPELINE_FILTER } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface DiseaseFilters {
   candidate_types?: string[];
+  product_names?: string[];
+  technology_types?: string[];
 }
 
 /**
@@ -32,6 +34,12 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
     conditions.push(`c.candidate_type IN (${placeholders})`);
     params.push(...filters.candidate_types);
   }
+
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+
+  const techCtx = { joins, join: "JOIN dim_candidate_tech t ON f.technology_key = t.technology_key" };
+  addArrayCondition(filters?.technology_types, "t.technology_type", conditions, params, techCtx);
 
   const sql = `
     SELECT
