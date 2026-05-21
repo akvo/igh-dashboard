@@ -38,7 +38,10 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
 
-  const techCtx = { joins, join: "JOIN dim_candidate_tech t ON f.technology_key = t.technology_key" };
+  const techCtx = {
+    joins,
+    join: "JOIN dim_candidate_tech t ON f.technology_key = t.technology_key",
+  };
   addArrayCondition(filters?.technology_types, "t.technology_type", conditions, params, techCtx);
 
   const sql = `
