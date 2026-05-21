@@ -707,7 +707,7 @@ export const typeDefs = `#graphql
     # Bubble chart — four views
     globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
     ghaProductTypeSummaries(candidate_types: [String!]): [GhaProductTypeSummary!]!
-    diseaseSummaries(candidate_types: [String!]): [DiseaseSummary!]!
+    diseaseSummaries(candidate_types: [String!], product_names: [String!], technology_types: [String!]): [DiseaseSummary!]!
     diseaseProductTypeSummaries(candidate_types: [String!]): [DiseaseProductTypeSummary!]!
 
     # Stacked bar chart

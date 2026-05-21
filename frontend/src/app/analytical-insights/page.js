@@ -302,6 +302,16 @@ export default function AnalyticalInsights() {
     null, null,
   );
 
+  // Disease summaries filtered by selected product + tech type (for coverage accordion)
+  const { bubbleData: techDiseaseBubble, loading: techDiseasesLoading } = useDiseaseSummaries(
+    null,
+    {
+      productNames: techFilterProductNames,
+      technologyTypes: selectedTechType ? [selectedTechType] : undefined,
+      skip: !selectedTechType,
+    },
+  );
+
   // =========================================================
   // Table data (DataTable with server-side pagination)
   // =========================================================
@@ -356,23 +366,35 @@ export default function AnalyticalInsights() {
     { sort: trialsSortVar },
   );
 
-  // Tech accordion table: candidates filtered by tech type + disease
+  // Tech accordion table: candidates filtered by tech type + disease + product
+  // Column filters for the tech accordion table.
+  // disease_name column maps to disease_group_name in the backend (matching the coverage chart).
+  // primaryDiseaseNames would filter on disease_filter instead, which can differ.
   const techAccColumnFilters = useMemo(() => {
     const base = toColumnFilters(techAccFilters) || [];
     const extra = [];
     if (selectedTechType) extra.push({ column: 'technology_type', kind: 'CATEGORY', values: [selectedTechType] });
     if (selectedDisease) extra.push({ column: 'disease_name', kind: 'CATEGORY', values: [selectedDisease] });
-    const productForFilter = vcpSubProduct || selectedProductType;
-    if (productForFilter) extra.push({ column: 'product_name', kind: 'CATEGORY', values: [productForFilter] });
     return [...base, ...extra].length > 0 ? [...base, ...extra] : undefined;
-  }, [techAccFilters, selectedTechType, selectedDisease, selectedProductType]);
+  }, [techAccFilters, selectedTechType, selectedDisease]);
   const techAccSortVar = useMemo(() => toColumnSort(techAccSort), [techAccSort]);
 
+  // Product names for the filter param
+  const techAccProductNames = useMemo(() => {
+    if (vcpSubProduct) return [vcpSubProduct];
+    if (selectedProductType === VECTOR_CONTROL_CONSOLIDATED_NAME) return VECTOR_CONTROL_PRODUCT_NAMES;
+    if (selectedProductType) return [selectedProductType];
+    return undefined;
+  }, [vcpSubProduct, selectedProductType]);
+
   const { candidates: techAccData, totalCount: techAccTotalCount, hasNextPage: techAccHasNext, loading: techAccLoading } = usePortfolioCandidates(
-    { columnFilters: techAccColumnFilters },
+    {
+      columnFilters: techAccColumnFilters,
+      productNames: techAccProductNames,
+    },
     ITEMS_PER_PAGE,
     (techAccPage - 1) * ITEMS_PER_PAGE,
-    { sort: techAccSortVar, skip: !selectedDisease || !candidatesAccordionOpen },
+    { sort: techAccSortVar, skip: (!selectedDisease && !selectedTechType) || !candidatesAccordionOpen },
   );
 
   // Reset accordion table page when tech type / disease changes
@@ -505,16 +527,14 @@ export default function AnalyticalInsights() {
     return TECH_PHASES;
   }, [technologyPhases]);
 
-  // Disease coverage for selected tech type (from disease summaries filtered)
+  // Disease coverage for selected tech type (filtered by product + tech type)
   const diseaseCoverageData = useMemo(() => {
-    if (!selectedTechType || !diseaseBubble?.length) return [];
-    // Use top diseases as coverage placeholder — real API would filter by tech type
-    return diseaseBubble
+    if (!selectedTechType || !techDiseaseBubble?.length) return [];
+    return techDiseaseBubble
       .filter((d) => d.value > 0)
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5)
       .map((d) => ({ name: d.name, value: d.value, gha: d.group }));
-  }, [selectedTechType, diseaseBubble]);
+  }, [selectedTechType, techDiseaseBubble]);
 
   // Approving authorities chart data
   const authChartData = useMemo(() => {
@@ -545,10 +565,11 @@ export default function AnalyticalInsights() {
     [approvalStatusData],
   );
 
+  const WHO_PREQUAL_COLORS = { Yes: '#fe7449', No: '#e3d6c1', Unknown: '#B28FC9', Pending: '#54A5C4', 'N/A': '#8DD6A9' };
   const coloredWhoPrequal = useMemo(() =>
-    (whoPrequalData || []).map((d) => ({
+    (whoPrequalData || []).map((d, i) => ({
       ...d,
-      color: d.name === 'Yes' || d.name === 'yes' ? '#fe7449' : '#e3d6c1',
+      color: WHO_PREQUAL_COLORS[d.name] || STATUS_COLORS[i % STATUS_COLORS.length],
     })),
     [whoPrequalData],
   );
@@ -570,7 +591,8 @@ export default function AnalyticalInsights() {
 
   const techAccFilterContext = useMemo(() => ({
     column_filters: techAccColumnFilters,
-  }), [techAccColumnFilters]);
+    product_names: techAccProductNames,
+  }), [techAccColumnFilters, techAccProductNames]);
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -733,12 +755,12 @@ export default function AnalyticalInsights() {
                   ) : (
                     <>
                       <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={coloredApprovalStatus} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
-                          <YAxis tick={{ fontSize: 12 }} />
+                        <BarChart data={coloredApprovalStatus} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                          <XAxis type="number" tick={{ fontSize: 12 }} />
+                          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
                           <Tooltip content={<BarTooltip />} />
-                          <Bar dataKey="value" barSize={28}>
+                          <Bar dataKey="value" barSize={20} radius={[0, 4, 4, 0]}>
                             {coloredApprovalStatus.map((entry) => (
                               <Cell key={entry.name} fill={entry.color} />
                             ))}
@@ -1103,11 +1125,12 @@ export default function AnalyticalInsights() {
                                   barSize={18}
                                   cursor="pointer"
                                   onClick={(data) => {
-                                    setSelectedTechType(data?.technology_type || data?.name || null);
+                                    const row = data?.payload || data;
+                                    setSelectedTechType(row?.technology_type || row?.name || null);
                                     setCoverageOpen(true);
+                                    setCandidatesAccordionOpen(true);
                                     setSelectedDisease(null);
                                     setTimeout(() => accordionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-                                setCandidatesAccordionOpen(false);
                               }}
                             />
                           ))}
@@ -1158,7 +1181,7 @@ export default function AnalyticalInsights() {
                               <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
                               <Tooltip />
                               <Bar dataKey="value" barSize={16} radius={[0, 4, 4, 0]} cursor="pointer"
-                                onClick={(data) => { setSelectedDisease(data?.name || null); setCandidatesAccordionOpen(true); }}
+                                onClick={(data) => { const row = data?.payload || data; setSelectedDisease(row?.name || null); setCandidatesAccordionOpen(true); }}
                               >
                                 {diseaseCoverageData.map((entry) => (
                                   <Cell key={entry.name} fill={GHA_COLORS[entry.gha] || '#B28FC9'} />
@@ -1200,7 +1223,7 @@ export default function AnalyticalInsights() {
                   </button>
                   {candidatesAccordionOpen && (
                     <div className="px-6 pb-6 pt-4">
-                      {selectedDisease ? (
+                      {selectedTechType ? (
                         <>
                           <div className="flex items-center gap-3 mb-4">
                             <h4 className="text-lg font-bold text-black">
@@ -1229,12 +1252,12 @@ export default function AnalyticalInsights() {
                             onSortChange={(next) => { setTechAccSort(next); setTechAccPage(1); }}
                             visibleColumns={techAccVisibleCols}
                             onVisibleColumnsChange={setTechAccVisibleCols}
-                            emptyState={{ title: 'No candidates found', description: 'No candidates match the selected technology type and disease.' }}
+                            emptyState={{ title: 'No candidates or approved products found', description: 'No rows match the selected filters.' }}
                           />
                         </>
                       ) : (
                         <div className="py-8 text-center text-gray-400">
-                          Select a disease from the coverage chart above to see candidates and approved products.
+                          Select a technology type from the bar chart above to see candidates and approved products.
                         </div>
                       )}
                     </div>

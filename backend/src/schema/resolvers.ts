@@ -96,8 +96,15 @@ export const resolvers = {
     ghaProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
       getGhaProductTypeSummaries({ candidate_types: args.candidate_types }),
 
-    diseaseSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getDiseaseSummaries({ candidate_types: args.candidate_types }),
+    diseaseSummaries: (
+      _: unknown,
+      args: { candidate_types?: string[]; product_names?: string[]; technology_types?: string[] },
+    ) =>
+      getDiseaseSummaries({
+        candidate_types: args.candidate_types,
+        product_names: args.product_names,
+        technology_types: args.technology_types,
+      }),
 
     diseaseProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
       getDiseaseProductTypeSummaries({ candidate_types: args.candidate_types }),

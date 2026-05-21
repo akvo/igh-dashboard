@@ -37,8 +37,8 @@ export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Bubble Chart — Disease view
 export const GET_DISEASE_SUMMARIES = gql`
-  query BubbleChartDisease($candidateTypes: [String!]) {
-    diseaseSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartDisease($candidateTypes: [String!], $productNames: [String!], $technologyTypes: [String!]) {
+    diseaseSummaries(candidate_types: $candidateTypes, product_names: $productNames, technology_types: $technologyTypes) {
       disease_group_name
       global_health_area
       candidateCount
