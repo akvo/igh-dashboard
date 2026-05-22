@@ -523,11 +523,11 @@ export default function ExtractCustomDetailsPage() {
                 <div className="flex items-center gap-3">
                   <button
                     className={`flex items-center gap-2 px-4 py-2 text-sm border transition-colors ${
-                      appliedColumns.length > 0 && !extractDownloading
-                        ? 'text-black bg-white border-black-24 hover:bg-gray-50'
-                        : 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
+                      extractDownloading
+                        ? 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
+                        : 'text-black bg-white border-black-24 hover:bg-gray-50'
                     }`}
-                    disabled={appliedColumns.length === 0 || extractDownloading}
+                    disabled={extractDownloading}
                     onClick={handleExtractDownloadCSV}
                   >
                     <CloudDownloadIcon className="w-4 h-4" />
