@@ -1,5 +1,8 @@
 'use client';
 
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { DownloadIcon } from '@/components/icons';
+
 function phaseClass(stage) {
   const s = (stage || '').toLowerCase();
   if (s.includes('approved')) return 'si-phase-pill si-phase-approved';
@@ -9,6 +12,11 @@ function phaseClass(stage) {
   if (s.includes('phase 3') || s.includes('phase iii')) return 'si-phase-pill si-phase-3';
   return 'si-phase-pill si-phase-1';
 }
+
+const CSV_COLUMNS = [
+  { label: 'Year', accessor: (row) => row.year },
+  { label: 'R&D stage', accessor: (row) => row.phase_name },
+];
 
 /**
  * Development history is a fixed-width "R&D stage" label sitting beside
@@ -21,19 +29,24 @@ function phaseClass(stage) {
  * the label vertically aligns with the pill row regardless of how many
  * lines the pill text wraps onto.
  */
-export function DevHistorySection({ history }) {
+export function DevHistorySection({ history, candidateKey }) {
   if (!history?.length) return null;
   const cols = history.length;
-  // Each year column gets a fixed minimum width so columns stay legible
-  // for long pipelines; beyond what fits the panel, the timeline
-  // scrolls horizontally inside its own container. The floor is sized to
-  // accommodate common multi-word phase labels (e.g. "Early development")
-  // on two lines without breaking words mid-character.
   const colTemplate = `repeat(${cols}, minmax(100px, 1fr))`;
+
+  const handleDownload = () => {
+    const csv = buildCSV(CSV_COLUMNS, history);
+    downloadCSV(csv, `development-history-${candidateKey}`);
+  };
+
   return (
     <div className="si-section">
       <div className="si-section-head">
         <h2 className="si-section-title">Development history</h2>
+        <button type="button" className="si-btn-csv" onClick={handleDownload}>
+          <DownloadIcon size={13} />
+          <span>Download CSV</span>
+        </button>
       </div>
       <div className="si-timeline-card">
         <div className="si-timeline-aside">
