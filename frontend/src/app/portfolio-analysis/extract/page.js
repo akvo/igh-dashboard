@@ -306,9 +306,19 @@ export default function ExtractCustomDetailsPage() {
   const extractHasNext = activeExtractData.hasNextPage;
   const extractLoading = activeExtractData.loading;
 
-  const activeExtractColumns = appliedColumns
-    .map((id) => availableColumns.find((col) => col.id === id))
-    .filter(Boolean);
+  // Mirror DataTable.jsx:80-88: an empty `appliedColumns` means the
+  // user is on the default view, which DataTable renders as every
+  // non-`defaultHidden` column in config order. The CSV needs the same
+  // fallback so a default-view download exports what's on screen, not
+  // an empty table. No column in EXTRACT_TAB_COLUMNS sets
+  // `defaultHidden` today, so the filter is a no-op in practice — kept
+  // so that adding a `defaultHidden: true` to the column config later
+  // also hides the column from the default CSV without further wiring.
+  const activeExtractColumns = appliedColumns.length === 0
+    ? availableColumns.filter((c) => !c.defaultHidden)
+    : appliedColumns
+        .map((id) => availableColumns.find((col) => col.id === id))
+        .filter(Boolean);
 
   // Build the picker column list respecting drag order: applied
   // columns in their reordered sequence first, then unapplied
@@ -426,7 +436,6 @@ export default function ExtractCustomDetailsPage() {
   // per request) so the export includes every matching row, not
   // just the current page.
   const handleExtractDownloadCSV = useCallback(async () => {
-    if (activeExtractColumns.length === 0) return;
     setExtractDownloading(true);
     try {
       let allRows;
