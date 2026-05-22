@@ -81,6 +81,35 @@ export default function ColumnsPopover({
     setDragOverId(null);
   };
 
+  // Append every accessor not in `visibleColumns`, in `columns` config
+  // order. Preserves the existing visible order. Membership check (not a
+  // length compare) so stale accessors in `visibleColumns` don't trip
+  // the all-visible guard.
+  const allVisible = columns.every((c) => visibleSet.has(c.accessor));
+  const handleSelectAll = () => {
+    if (allVisible) return;
+    const missing = allAccessors.filter((a) => !visibleSet.has(a));
+    onChange([...visibleColumns, ...missing]);
+  };
+
+  // Survivors = the column currently at index 0 (positional freeze) +
+  // every column with `hideable: false`. Frozen column stays at index 0;
+  // remaining locked columns follow in `columns` config order.
+  const frozenAccessor = visibleColumns[0];
+  const lockedAccessors = columns
+    .filter((c) => c.hideable === false && c.accessor !== frozenAccessor)
+    .map((c) => c.accessor);
+  const clearSurvivors = frozenAccessor
+    ? [frozenAccessor, ...lockedAccessors]
+    : lockedAccessors;
+  const hasTogglableVisible = visibleColumns.some(
+    (a) => !clearSurvivors.includes(a),
+  );
+  const handleClear = () => {
+    if (!hasTogglableVisible) return;
+    onChange(clearSurvivors);
+  };
+
   const toggle = (accessor) => {
     const next = new Set(visibleSet);
     if (next.has(accessor)) next.delete(accessor);
@@ -104,6 +133,32 @@ export default function ColumnsPopover({
 
       {open && (
         <div className="absolute z-50 mt-1 right-0 w-72 max-h-96 overflow-y-auto bg-white border border-gray-200 rounded shadow-lg">
+          <div className="sticky top-0 z-10 bg-white flex items-center justify-between px-3 py-2 border-b border-gray-200">
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              disabled={allVisible}
+              className={`text-xs border-none bg-transparent ${
+                allVisible
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-orange-500 hover:underline cursor-pointer'
+              }`}
+            >
+              Select all
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={!hasTogglableVisible}
+              className={`text-xs border-none bg-transparent ${
+                !hasTogglableVisible
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-orange-500 hover:underline cursor-pointer'
+              }`}
+            >
+              Clear
+            </button>
+          </div>
           {rowOrder.map((accessor, index) => {
             const col = columns.find((c) => c.accessor === accessor);
             if (!col) return null;
