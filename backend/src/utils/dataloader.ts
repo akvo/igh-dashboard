@@ -117,7 +117,8 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT bp.candidate_key, p.priority_key, p.rdpriorityid, p.priority_name, p.indication, p.intended_use, p.disease_key
+          SELECT bp.candidate_key, p.priority_key, p.rdpriorityid, p.priority_name,
+                 p.indication, p.intended_use, p.disease_key, p.author, p.source
           FROM dim_priority p
           JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
           WHERE bp.candidate_key IN (${placeholders})
@@ -136,6 +137,8 @@ export function createLoaders() {
           indication: row.indication,
           intended_use: row.intended_use,
           disease_key: row.disease_key,
+          author: row.author,
+          source: row.source,
         });
         map.set(row.candidate_key, existing);
       }

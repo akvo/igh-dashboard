@@ -64,6 +64,8 @@ export interface DimPriority {
   indication: string | null;
   intended_use: string | null;
   disease_key: number | null;
+  author: string | null;
+  source: string | null;
 }
 
 export interface DimDate {

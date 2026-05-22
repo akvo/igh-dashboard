@@ -50,6 +50,8 @@ export const typeDefs = `#graphql
     indication: String
     intended_use: String
     disease_key: Int
+    author: String
+    source: String
   }
 
   type DimDate {
