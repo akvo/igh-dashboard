@@ -226,7 +226,7 @@ export function getDevelopersByCandidateKey(candidate_key: number): DimDeveloper
   return db
     .prepare(
       `
-    SELECT d.developer_key, d.developer_name
+    SELECT d.developer_key, d.developer_name, d.org_type
     FROM dim_developer d
     JOIN bridge_candidate_developer bd ON d.developer_key = bd.developer_key
     WHERE bd.candidate_key = ?

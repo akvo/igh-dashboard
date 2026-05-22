@@ -123,6 +123,7 @@ export interface DimCandidateRegulatory {
 export interface DimDeveloper {
   developer_key: number;
   developer_name: string | null;
+  org_type: string | null;
 }
 
 export interface DimPublication {

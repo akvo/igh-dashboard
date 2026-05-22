@@ -83,6 +83,7 @@ export const typeDefs = `#graphql
   type DimDeveloper {
     developer_key: Int!
     developer_name: String
+    org_type: String
   }
 
   type DimCandidateCore {

@@ -77,14 +77,18 @@ export function createLoaders() {
       return keys.map((k) => map.get(k) || null);
     }),
 
-    // Batch load developers by candidate_key (one-to-many)
+    // Batch load developers by candidate_key (one-to-many). `org_type`
+    // is a column on `dim_developer` itself; empty strings are
+    // coerced to null so the UI's "no information available"
+    // placeholder kicks in for rows where the data team hasn't
+    // backfilled the field yet.
     developersByCandidateLoader: new DataLoader<number, DimDeveloper[]>(async (candidateKeys) => {
       const db = getDatabase();
       const placeholders = candidateKeys.map(() => "?").join(", ");
       const rows = db
         .prepare(
           `
-          SELECT bd.candidate_key, d.developer_key, d.developer_name
+          SELECT bd.candidate_key, d.developer_key, d.developer_name, d.org_type
           FROM dim_developer d
           JOIN bridge_candidate_developer bd ON d.developer_key = bd.developer_key
           WHERE bd.candidate_key IN (${placeholders})
@@ -99,6 +103,7 @@ export function createLoaders() {
         existing.push({
           developer_key: row.developer_key,
           developer_name: row.developer_name,
+          org_type: row.org_type || null,
         });
         map.set(row.candidate_key, existing);
       }
