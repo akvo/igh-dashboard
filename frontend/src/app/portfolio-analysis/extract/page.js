@@ -16,7 +16,7 @@
 // their filter selections; the sidebar's sibling-aware query
 // forwarding does the carry-over for free.
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -31,10 +31,7 @@ import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, DataTable } from '@/components/ui';
 import {
-  SearchIcon,
-  InfoIcon,
   CloudDownloadIcon,
-  ListFilterIcon,
   RefreshIcon,
 } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
@@ -85,11 +82,10 @@ export default function ExtractCustomDetailsPage() {
   // Visible-columns URL state, one slot per sub-tab. Default `[]`,
   // not a seeded identifier column: `arraySerializer.serialize([])`
   // returns `null` so the URL key is elided, and useUrlState
-  // re-applies the default on the next read. If we seeded with the
-  // name id, the Clear button on the rail would immediately revert
-  // to that seeded column — the user could never reach a true
-  // "no columns" state. First-time visitors instead land on the
-  // rail's instructive empty state until they tick a column.
+  // re-applies the default on the next read. With `[]` the
+  // DataTable falls back to all non-`defaultHidden` columns
+  // (DataTable.jsx:80-88), which is what the user sees on first
+  // load — no empty state, no manual column-pick required.
   const [colsCandidates, setColsCandidates] = useUrlState('cols1', [], arraySerializer);
   const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
@@ -138,16 +134,18 @@ export default function ExtractCustomDetailsPage() {
   const [ext4Sort, setExt4Sort] = useUrlState('s.ext4', null, sortSerializer);
 
   // =========================================================
-  // Local-only state (column picker search + download flag)
+  // Local-only state (download flag)
   // =========================================================
 
-  const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [extractDownloading, setExtractDownloading] = useState(false);
 
   // Applied columns come straight from URL state — the single source
-  // of truth driving the visible table. The rail mutates these
-  // directly (tick / drag / "Select all" / kebab "Hide column" all
-  // update URL state immediately, no Apply gate).
+  // of truth driving the visible table. DataTable's column popover
+  // mutates these via `onVisibleColumnsChange`, which the wrapper
+  // round-trips through the accessor↔id translation in
+  // `handleVisibleColumnsChange`. An empty array is treated as
+  // "default view" (all non-`defaultHidden` columns) by both the
+  // on-screen table and the CSV export.
   const appliedColumnsMap = {
     'candidates-approved': colsCandidates,
     'rd-priorities': colsRdPriorities,
@@ -306,26 +304,19 @@ export default function ExtractCustomDetailsPage() {
   const extractHasNext = activeExtractData.hasNextPage;
   const extractLoading = activeExtractData.loading;
 
-  const activeExtractColumns = appliedColumns
-    .map((id) => availableColumns.find((col) => col.id === id))
-    .filter(Boolean);
-
-  // Build the picker column list respecting drag order: applied
-  // columns in their reordered sequence first, then unapplied
-  // columns in original order, filtered by search. The rail binds
-  // directly to the URL state — no buffered "selected" mirror — so
-  // ticking a checkbox or finishing a drag updates the table
-  // immediately.
-  const filteredColumns = useMemo(() => {
-    const search = columnSearchQuery.toLowerCase();
-    const applied = appliedColumns
-      .map((id) => availableColumns.find((col) => col.id === id))
-      .filter(Boolean);
-    const unapplied = availableColumns.filter((col) => !appliedColumns.includes(col.id));
-    return [...applied, ...unapplied].filter((col) =>
-      col.label.toLowerCase().includes(search),
-    );
-  }, [availableColumns, appliedColumns, columnSearchQuery]);
+  // Mirror DataTable.jsx:80-88: an empty `appliedColumns` means the
+  // user is on the default view, which DataTable renders as every
+  // non-`defaultHidden` column in config order. The CSV needs the same
+  // fallback so a default-view download exports what's on screen, not
+  // an empty table. No column in EXTRACT_TAB_COLUMNS sets
+  // `defaultHidden` today, so the filter is a no-op in practice — kept
+  // so that adding a `defaultHidden: true` to the column config later
+  // also hides the column from the default CSV without further wiring.
+  const activeExtractColumns = appliedColumns.length === 0
+    ? availableColumns.filter((c) => !c.defaultHidden)
+    : appliedColumns
+        .map((id) => availableColumns.find((col) => col.id === id))
+        .filter(Boolean);
 
   // R&D stage options for the candidates-approved tab. Uses the
   // cross-filtered rdPhaseOptions so that only phases reachable
@@ -341,60 +332,6 @@ export default function ExtractCustomDetailsPage() {
     const valid = extractRdStage.filter((v) => validValues.has(v));
     if (valid.length !== extractRdStage.length) setExtractRdStage(valid);
   }, [rdStageOptions, extractRdStage, setExtractRdStage]);
-
-  // =========================================================
-  // Drag-and-drop reordering and picker handlers
-  // =========================================================
-  //
-  // The rail mutates `appliedColumns` (the URL state) directly. No
-  // Apply / Clear buttons mediate the change — ticking a checkbox or
-  // finishing a drag updates the URL and the table immediately. Page
-  // resets to 1 on each change so a filter narrowed below the user's
-  // current page doesn't leave them on a non-existent one.
-
-  const draggedColumnRef = useRef(null);
-  const [dragOverColumn, setDragOverColumn] = useState(null);
-
-  const handleDragStart = (colId) => {
-    draggedColumnRef.current = colId;
-  };
-
-  const handleDragOver = (e, colId) => {
-    e.preventDefault();
-    if (!draggedColumnRef.current || draggedColumnRef.current === colId) return;
-    if (!appliedColumns.includes(draggedColumnRef.current) || !appliedColumns.includes(colId)) return;
-    setDragOverColumn(colId);
-    setActiveCols((prev) => {
-      const draggedId = draggedColumnRef.current;
-      const fromIndex = prev.indexOf(draggedId);
-      const toIndex = prev.indexOf(colId);
-      if (fromIndex === -1 || toIndex === -1) return prev;
-      const next = [...prev];
-      next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, draggedId);
-      return next;
-    });
-  };
-
-  const handleDragEnd = () => {
-    draggedColumnRef.current = null;
-    setDragOverColumn(null);
-  };
-
-  const handleSelectAllColumns = () => {
-    setActiveCols((prev) => {
-      const allIds = availableColumns.map((col) => col.id);
-      const remaining = allIds.filter((id) => !prev.includes(id));
-      return [...prev, ...remaining];
-    });
-  };
-
-  const handleToggleColumn = (colId) => {
-    setActiveCols((prev) =>
-      prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId],
-    );
-    setExtractPage(1);
-  };
 
   // Reset clears the filter values the user can see on the
   // current sub-tab — the global GHA / disease / product
@@ -426,7 +363,6 @@ export default function ExtractCustomDetailsPage() {
   // per request) so the export includes every matching row, not
   // just the current page.
   const handleExtractDownloadCSV = useCallback(async () => {
-    if (activeExtractColumns.length === 0) return;
     setExtractDownloading(true);
     try {
       let allRows;
@@ -514,11 +450,11 @@ export default function ExtractCustomDetailsPage() {
                 <div className="flex items-center gap-3">
                   <button
                     className={`flex items-center gap-2 px-4 py-2 text-sm border transition-colors ${
-                      appliedColumns.length > 0 && !extractDownloading
-                        ? 'text-black bg-white border-black-24 hover:bg-gray-50'
-                        : 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
+                      extractDownloading
+                        ? 'text-gray-400 bg-white border-gray-200 cursor-not-allowed'
+                        : 'text-black bg-white border-black-24 hover:bg-gray-50'
                     }`}
-                    disabled={appliedColumns.length === 0 || extractDownloading}
+                    disabled={extractDownloading}
                     onClick={handleExtractDownloadCSV}
                   >
                     <CloudDownloadIcon className="w-4 h-4" />
@@ -610,153 +546,50 @@ export default function ExtractCustomDetailsPage() {
               </div>
             </div>
 
-            {/* Two-column layout: column picker (left) + table (right) */}
-            <div className="flex">
-              {/* Left: Available columns */}
-              <div className="w-[280px] border-r border-gray-200 p-4">
-                <h4 className="text-base font-bold text-black mb-4">Available columns</h4>
-                <div className="relative mb-4">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search item"
-                    value={columnSearchQuery}
-                    onChange={(e) => setColumnSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 border-none focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Select columns</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSelectAllColumns}
-                      className="text-sm text-orange-500 hover:underline cursor-pointer border-none bg-transparent"
-                    >
-                      Select all
-                    </button>
-                    {/* Reset the active sub-tab's visible-columns list.
-                        Useful when the user wants to start over —
-                        cheaper than unticking columns one by one. */}
-                    <button
-                      onClick={() => {
-                        setActiveCols([]);
-                        setExtractPage(1);
-                      }}
-                      disabled={appliedColumns.length === 0}
-                      className={`text-sm border-none bg-transparent ${
-                        appliedColumns.length === 0
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-orange-500 hover:underline cursor-pointer'
-                      }`}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                  {filteredColumns.map((col) => {
-                    const isApplied = appliedColumns.includes(col.id);
-                    const isDragging = draggedColumnRef.current === col.id;
-                    const isDragOver = dragOverColumn === col.id;
-                    return (
-                      <div
-                        key={col.id}
-                        draggable={isApplied}
-                        onDragStart={() => handleDragStart(col.id)}
-                        onDragOver={(e) => handleDragOver(e, col.id)}
-                        onDragEnd={handleDragEnd}
-                        className={`flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer select-none ${
-                          isDragging ? 'opacity-40' : ''
-                        } ${isDragOver && isApplied ? 'border-t-2 border-orange-400' : ''}`}
-                        onClick={() => handleToggleColumn(col.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                              isApplied
-                                ? 'border-orange-500 bg-orange-500'
-                                : 'border-gray-300 bg-white'
-                            }`}
-                          >
-                            {isApplied && (
-                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="text-sm text-gray-700">{col.label}</span>
-                        </div>
-                        <ListFilterIcon
-                          className={`w-4 h-4 ${isApplied ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right: data table or empty state */}
-              <div className="flex-1 min-w-0">
-                {appliedColumns.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-32">
-                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                      <InfoIcon className="w-6 h-6 text-orange-500" />
-                    </div>
-                    <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
-                    <p className="text-sm text-gray-500 text-center max-w-xs">
-                      Tick a column in the rail to add it to the table — changes apply immediately, no Apply button.
-                    </p>
-                  </div>
-                ) : (
-                  <ExtractDataTable
-                    key={extractTab}
-                    extractTab={extractTab}
-                    activeExtractColumns={activeExtractColumns}
-                    availableColumns={availableColumns}
-                    setActiveCols={setActiveCols}
-                    extractTableData={extractTableData}
-                    extractTotalCount={extractTotalCount}
-                    extractHasNext={extractHasNext}
-                    extractLoading={extractLoading}
-                    extractPage={extractPage}
-                    setExtractPage={setExtractPage}
-                    itemsPerPage={itemsPerPage}
-                    filtersByTab={{
-                      'candidates-approved': ext1Filters,
-                      'rd-priorities': ext2Filters,
-                      'clinical-trials': ext3Filters,
-                      'rd-only': ext4Filters,
-                    }}
-                    setFiltersByTab={{
-                      'candidates-approved': setExt1Filters,
-                      'rd-priorities': setExt2Filters,
-                      'clinical-trials': setExt3Filters,
-                      'rd-only': setExt4Filters,
-                    }}
-                    sortByTab={{
-                      'candidates-approved': ext1Sort,
-                      'rd-priorities': ext2Sort,
-                      'clinical-trials': ext3Sort,
-                      'rd-only': ext4Sort,
-                    }}
-                    setSortByTab={{
-                      'candidates-approved': setExt1Sort,
-                      'rd-priorities': setExt2Sort,
-                      'clinical-trials': setExt3Sort,
-                      'rd-only': setExt4Sort,
-                    }}
-                    filterContextByTab={{
-                      'candidates-approved': ext1FilterContext,
-                      'rd-priorities': ext2FilterContext,
-                      'clinical-trials': ext3FilterContext,
-                      'rd-only': ext4FilterContext,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
+            <ExtractDataTable
+              key={extractTab}
+              extractTab={extractTab}
+              activeExtractColumns={activeExtractColumns}
+              availableColumns={availableColumns}
+              setActiveCols={setActiveCols}
+              extractTableData={extractTableData}
+              extractTotalCount={extractTotalCount}
+              extractHasNext={extractHasNext}
+              extractLoading={extractLoading}
+              extractPage={extractPage}
+              setExtractPage={setExtractPage}
+              itemsPerPage={itemsPerPage}
+              filtersByTab={{
+                'candidates-approved': ext1Filters,
+                'rd-priorities': ext2Filters,
+                'clinical-trials': ext3Filters,
+                'rd-only': ext4Filters,
+              }}
+              setFiltersByTab={{
+                'candidates-approved': setExt1Filters,
+                'rd-priorities': setExt2Filters,
+                'clinical-trials': setExt3Filters,
+                'rd-only': setExt4Filters,
+              }}
+              sortByTab={{
+                'candidates-approved': ext1Sort,
+                'rd-priorities': ext2Sort,
+                'clinical-trials': ext3Sort,
+                'rd-only': ext4Sort,
+              }}
+              setSortByTab={{
+                'candidates-approved': setExt1Sort,
+                'rd-priorities': setExt2Sort,
+                'clinical-trials': setExt3Sort,
+                'rd-only': setExt4Sort,
+              }}
+              filterContextByTab={{
+                'candidates-approved': ext1FilterContext,
+                'rd-priorities': ext2FilterContext,
+                'clinical-trials': ext3FilterContext,
+                'rd-only': ext4FilterContext,
+              }}
+            />
           </div>
         </div>
       </main>
@@ -775,11 +608,12 @@ export default function ExtractCustomDetailsPage() {
 // `key={extractTab}` it so internal state (column widths, popover
 // open state) doesn't leak between sub-tabs.
 //
-// `_fixed` is the synthetic accessor for the always-visible first
-// column (Name / Title / Candidate name depending on sub-tab). It's
-// not in `availableColumns` and never appears in the rail; the
-// orchestrator just keeps it pinned at index 0 of `visibleColumns`.
-// `hideable: false` blocks the kebab's Hide-column option.
+// `hideable: false` on the first column of each tab (Name / Title /
+// Candidate name) marks it as a frozen-and-locked column: DataTable's
+// positional freeze keeps the first entry in `visibleColumns` sticky,
+// and `ColumnsPopover` renders its visibility checkbox disabled so
+// the user can't accidentally hide it. The same `hideable: false`
+// blocks the column-header kebab's Hide-column option.
 const SUB_TAB_GRAPHQL = {
   'candidates-approved': 'PORTFOLIO_CANDIDATES',
   'rd-priorities': 'RD_PRIORITIES_WITH_CANDIDATES',
@@ -818,12 +652,10 @@ function ExtractDataTable({
   const setSort = setSortByTab[extractTab] ?? (() => {});
   const filterContext = filterContextByTab[extractTab] ?? {};
 
-  // The rail already pins the "name" column at the top with
-  // `hideable: false`, so we don't need a synthetic always-on
-  // column here — that would double up the column when the user
-  // also ticks the name in the rail. DataTable's positional freeze
-  // means whichever column ends up first in the rail order is the
-  // sticky one.
+  // The first column of each tab is `hideable: false` (configured in
+  // EXTRACT_TAB_COLUMNS), which DataTable's positional-freeze + the
+  // popover's locked-checkbox combination treats as the sticky
+  // always-on column. No synthetic prefix column needed.
   const columns = activeExtractColumns.map((col) => ({
     header: col.label,
     accessor: col.accessor || col.id,
@@ -836,9 +668,11 @@ function ExtractDataTable({
 
   const visibleColumns = activeExtractColumns.map((c) => c.accessor || c.id);
 
-  // DataTable's kebab "Hide column" fires onVisibleColumnsChange with
-  // an accessor list. Translate the surviving accessors back to the
-  // rail's id space and persist via the per-sub-tab cols setter.
+  // DataTable's column popover (and the header kebab's "Hide column")
+  // fire onVisibleColumnsChange with an accessor list. Translate the
+  // surviving accessors back to id-space and persist to URL state via
+  // the per-sub-tab cols setter, so the `cols1`–`cols4` URL contract
+  // stays in id-space.
   const handleVisibleColumnsChange = (nextAccessors) => {
     const accessorToId = new Map(availableColumns.map((c) => [c.accessor, c.id]));
     const nextIds = nextAccessors
@@ -873,7 +707,6 @@ function ExtractDataTable({
       }}
       visibleColumns={visibleColumns}
       onVisibleColumnsChange={handleVisibleColumnsChange}
-      hideColumnsButton
       emptyState={
         Object.keys(filters).length > 0
           ? {
