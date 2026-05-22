@@ -44,7 +44,9 @@ import {
   usePortfolioCandidates,
   useGeographicDistribution,
   useTechnologyTypeDistribution,
+  useProductDistribution,
 } from '@/graphql/hooks';
+import { VECTOR_CONTROL_PRODUCT_NAMES, VECTOR_CONTROL_CONSOLIDATED_NAME } from '@/lib/filterGroups';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { fetchAllTrials } from '@/lib/fetchAllTrials';
 import { buildCSV, downloadCSV } from '@/lib/csv';
@@ -185,6 +187,8 @@ export default function AggregatedSection() {
   const [approvedDownloading, setApprovedDownloading] = useState(false);
   const [trialsDownloading, setTrialsDownloading] = useState(false);
   const [technologyDownloading, setTechnologyDownloading] = useState(false);
+  const [selectedProductType, setSelectedProductType] = useState(null);
+  const [vcpSubProduct, setVcpSubProduct] = useState(null);
 
   // Skip the first search-triggered page reset — during hydration
   // the search queries transition from '' to their URL value,
@@ -365,6 +369,83 @@ export default function AggregatedSection() {
     phases: technologyPhases,
     loading: technologyLoading,
   } = useTechnologyTypeDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
+
+  // Product distribution (for tech tab product type cards)
+  const { chartData: productDistData, loading: productDistLoading } = useProductDistribution(
+    healthArea, primary, secondary, expandedProduct, rdPhase,
+  );
+
+  // Product type cards: consolidate VCP sub-types into one card
+  const techProductTypeCards = useMemo(() => {
+    if (!productDistData?.length) return [];
+    let vcpTotal = 0;
+    const rest = [];
+    for (const p of productDistData) {
+      if (VECTOR_CONTROL_PRODUCT_NAMES.includes(p.name)) {
+        vcpTotal += p.value;
+      } else {
+        rest.push({ name: p.name, candidates: p.value });
+      }
+    }
+    if (vcpTotal > 0) {
+      rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal });
+    }
+    return rest.sort((a, b) => b.candidates - a.candidates);
+  }, [productDistData]);
+
+  // VCP sub-category cards
+  const vcpSubCategories = useMemo(() => {
+    if (!productDistData?.length) return [];
+    return productDistData
+      .filter((p) => VECTOR_CONTROL_PRODUCT_NAMES.includes(p.name))
+      .map((p) => ({ name: p.name, candidates: p.value }))
+      .sort((a, b) => b.candidates - a.candidates);
+  }, [productDistData]);
+
+  const isVcpSelected = selectedProductType === VECTOR_CONTROL_CONSOLIDATED_NAME;
+
+  // Auto-select first product type card when data loads
+  useEffect(() => {
+    if (techProductTypeCards.length > 0 && !selectedProductType) {
+      setSelectedProductType(techProductTypeCards[0].name);
+    }
+  }, [techProductTypeCards, selectedProductType]);
+
+  // Product names to send to the filtered tech distribution API
+  const techFilterProductNames = useMemo(() => {
+    if (!selectedProductType) return null;
+    if (selectedProductType === VECTOR_CONTROL_CONSOLIDATED_NAME) {
+      return vcpSubProduct ? [vcpSubProduct] : VECTOR_CONTROL_PRODUCT_NAMES;
+    }
+    return [selectedProductType];
+  }, [selectedProductType, vcpSubProduct]);
+
+  // Technology type distribution filtered by selected product (for chart)
+  const {
+    tableData: technologyTableDataFiltered,
+    loading: technologyFilteredLoading,
+  } = useTechnologyTypeDistribution(
+    healthArea, primary, secondary,
+    techFilterProductNames || expandedProduct,
+    rdPhase,
+  );
+
+  // Chart data for the selected product
+  const techChartData = useMemo(() => {
+    const source = selectedProductType ? technologyTableDataFiltered : technologyTableData;
+    if (!source?.length) return [];
+    return source;
+  }, [selectedProductType, technologyTableDataFiltered, technologyTableData]);
+
+  const selectedProductCandidateTotal = useMemo(() => {
+    if (selectedProductType) {
+      const card = techProductTypeCards.find((c) => c.name === selectedProductType);
+      if (card) return card.candidates;
+    }
+    return 0;
+  }, [selectedProductType, techProductTypeCards]);
+
+  const techChartRef = useRef(null);
 
   // =========================================================
   // Chart visibility (legend toggles synced to URL)
@@ -1016,95 +1097,230 @@ export default function AggregatedSection() {
 
         {/* Technology types */}
         {portfolioTab === 'technology' && (
-          <div className="border border-gray-200">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-2">
+          <>
+            {/* Product type cards + stacked bar chart */}
+            <div className="border border-gray-200 p-4 mb-6">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
-                  <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
-                  <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTableData.length} types</span>
-                </div>
-                <div className="flex items-center gap-3 h-[36px]">
-                  <button
-                    onClick={handleTechnologyDownloadCSV}
-                    disabled={technologyDownloading}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                  >
-                    <CloudDownloadIcon className="w-4 h-4" />
-                    {technologyDownloading ? 'Downloading...' : 'Download CSV'}
-                  </button>
+                  <h4 className="text-xl font-bold text-black leading-none">Product types and their technologies</h4>
+                  <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                    {selectedProductCandidateTotal} candidates
+                  </span>
                 </div>
               </div>
-              <p className="text-sm text-gray-500">
-                The technology type table is a matrix showing each technology category by stage of development, including approved products. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
+              <p className="text-sm text-gray-500 mb-6">
+                This matrix grid shows the technology types for which candidates are being developed against the R&D stages. It provides an overview of the portfolio&apos;s progress for each technology type.
               </p>
+
+              {/* Product type cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 mb-6">
+                {techProductTypeCards.map((pt) => {
+                  const isSelected = selectedProductType === pt.name;
+                  return (
+                    <button
+                      key={pt.name}
+                      onClick={() => {
+                        setSelectedProductType(pt.name);
+                        setVcpSubProduct(null);
+                      }}
+                      className="p-4 text-left transition-colors cursor-pointer"
+                      style={{
+                        borderRadius: 0,
+                        border: '1px solid #26262629',
+                        borderLeft: isSelected ? '3px solid #fe7449' : '1px solid #26262629',
+                        background: isSelected ? '#FEF0EC' : '#fff',
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="font-semibold text-sm text-black">{pt.name}</span>
+                        <span
+                          className="flex items-center justify-center flex-shrink-0 rounded-full"
+                          style={{
+                            width: 20,
+                            height: 20,
+                            border: isSelected ? '2px solid #fe7449' : '2px solid #26262652',
+                            background: isSelected ? '#fe7449' : 'transparent',
+                          }}
+                        >
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                        </span>
+                      </div>
+                      <div className="text-[32px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
+                        {pt.candidates}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Candidates</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* VCP sub-categories or stacked bar chart */}
+              <div className="border-t border-gray-200 pt-4">
+                {isVcpSelected && !vcpSubProduct ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="text-base sm:text-lg font-bold text-black">Vector Control Products - Sub-categories</h4>
+                      <div className="flex-1" />
+                      <ChartMenu onDownloadPNG={() => downloadPNG(techChartRef, 'vcp-sub-categories')} />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">Select a category to explore its technology breakdown</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {vcpSubCategories.map((sub) => (
+                        <div key={sub.name} className="border border-gray-200 p-4 flex flex-col">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="font-semibold text-sm text-black">{sub.name}</span>
+                          </div>
+                          <div className="text-[32px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
+                            {sub.candidates}
+                          </div>
+                          <div className="mt-auto pt-3">
+                            <button
+                              onClick={() => setVcpSubProduct(sub.name)}
+                              className="w-full py-2 text-sm font-medium text-black border border-gray-300 hover:bg-gray-50 transition-colors"
+                            >
+                              Explore
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h4 className="text-base sm:text-lg font-bold text-black">
+                        {isVcpSelected && vcpSubProduct
+                          ? `Vector Control Products - ${vcpSubProduct}`
+                          : selectedProductType || 'All'}
+                      </h4>
+                      {selectedProductType && (
+                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                          {selectedProductCandidateTotal} candidates
+                        </span>
+                      )}
+                      <div className="flex-1" />
+                      {isVcpSelected && vcpSubProduct && (
+                        <button
+                          onClick={() => setVcpSubProduct(null)}
+                          className="text-sm font-medium text-[#E76A42] hover:underline cursor-pointer"
+                        >
+                          Back to VCP
+                        </button>
+                      )}
+                      <ChartMenu onDownloadPNG={() => downloadPNG(techChartRef, 'technology-types')} />
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">
+                      This visualization shows how candidates have progressed through clinical phases toward market readiness for the selected product type.
+                    </p>
+
+                    <div ref={techChartRef}>
+                      {(technologyLoading || technologyFilteredLoading || productDistLoading) ? (
+                        <div className="h-[300px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
+                      ) : (
+                        <StackedBarChart
+                          data={techChartData}
+                          phases={technologyPhases}
+                          categoryKey="technology_type"
+                          layout="vertical"
+                          height={Math.max(300, (techChartData?.length || 3) * 36)}
+                          xAxisLabel="Number of candidates and approved products"
+                          showFilters={false}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            <DataTable
-              tableId="technology"
-              serverSide={false}
-              columns={[
-                {
-                  header: 'Name',
-                  accessor: 'technology_type',
-                  filter: { kind: 'text' },
-                  sortable: true,
-                  hideable: false,
-                },
-                ...technologyPhases.map((phase) => ({
-                  header: phase.label,
-                  accessor: phase.key,
-                  type: 'number',
-                  filter: { kind: 'number' },
-                  sortable: true,
-                  hideable: true,
-                  cellStyle: (value) => getHeatmapStyle(value),
-                  render: (value) => (
-                    <span className="tabular-nums text-center block">{value || 0}</span>
-                  ),
-                })),
-                {
-                  header: 'Total',
-                  accessor: '_total',
-                  type: 'number',
-                  filter: { kind: 'number' },
-                  sortable: true,
-                  hideable: true,
-                  // `_total` is materialised on each row up the tree
-                  // (technologyRowsWithTotal) so DataTable's filter +
-                  // sort can read the value directly.
-                  render: (value) => (
-                    <span className="tabular-nums text-center block font-semibold">{value || 0}</span>
-                  ),
-                },
-              ]}
-              data={technologyRowsWithTotal}
-              rowKey="technology_type"
-              page={currentPage}
-              onPageChange={setCurrentPage}
-              itemsPerPage={techItemsPerPage}
-              loading={technologyLoading}
-              filters={technologyFilters}
-              onFiltersChange={(next) => {
-                setTechnologyFilters(next);
-                setCurrentPage(1);
-              }}
-              sort={technologySort}
-              onSortChange={(next) => {
-                setTechnologySort(next);
-                setCurrentPage(1);
-              }}
-              visibleColumns={technologyVisibleCols}
-              onVisibleColumnsChange={setTechnologyVisibleCols}
-              emptyState={
-                Object.keys(technologyFilters).length > 0
-                  ? {
-                      title: 'No technology types found',
-                      description: 'No rows match the active filters. Clear them to see more.',
-                    }
-                  : { title: 'No technology types available' }
-              }
-            />
-          </div>
+            {/* Technology types matrix table */}
+            <div className="border border-gray-200">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <h4 className="text-xl font-bold text-black leading-none">Technology types</h4>
+                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{technologyTableData.length} types</span>
+                  </div>
+                  <div className="flex items-center gap-3 h-[36px]">
+                    <button
+                      onClick={handleTechnologyDownloadCSV}
+                      disabled={technologyDownloading}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                    >
+                      <CloudDownloadIcon className="w-4 h-4" />
+                      {technologyDownloading ? 'Downloading...' : 'Download CSV'}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  The technology type table is a matrix showing each technology category by stage of development, including approved products. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
+                </p>
+              </div>
+
+              <DataTable
+                tableId="technology"
+                serverSide={false}
+                columns={[
+                  {
+                    header: 'Name',
+                    accessor: 'technology_type',
+                    filter: { kind: 'text' },
+                    sortable: true,
+                    hideable: false,
+                  },
+                  ...technologyPhases.map((phase) => ({
+                    header: phase.label,
+                    accessor: phase.key,
+                    type: 'number',
+                    filter: { kind: 'number' },
+                    sortable: true,
+                    hideable: true,
+                    cellStyle: (value) => getHeatmapStyle(value),
+                    render: (value) => (
+                      <span className="tabular-nums text-center block">{value || 0}</span>
+                    ),
+                  })),
+                  {
+                    header: 'Total',
+                    accessor: '_total',
+                    type: 'number',
+                    filter: { kind: 'number' },
+                    sortable: true,
+                    hideable: true,
+                    render: (value) => (
+                      <span className="tabular-nums text-center block font-semibold">{value || 0}</span>
+                    ),
+                  },
+                ]}
+                data={technologyRowsWithTotal}
+                rowKey="technology_type"
+                page={currentPage}
+                onPageChange={setCurrentPage}
+                itemsPerPage={techItemsPerPage}
+                loading={technologyLoading}
+                filters={technologyFilters}
+                onFiltersChange={(next) => {
+                  setTechnologyFilters(next);
+                  setCurrentPage(1);
+                }}
+                sort={technologySort}
+                onSortChange={(next) => {
+                  setTechnologySort(next);
+                  setCurrentPage(1);
+                }}
+                visibleColumns={technologyVisibleCols}
+                onVisibleColumnsChange={setTechnologyVisibleCols}
+                emptyState={
+                  Object.keys(technologyFilters).length > 0
+                    ? {
+                        title: 'No technology types found',
+                        description: 'No rows match the active filters. Clear them to see more.',
+                      }
+                    : { title: 'No technology types available' }
+                }
+              />
+            </div>
+          </>
         )}
       </div>
       {slideInOpen === 'candidate' && slideInKey != null && (

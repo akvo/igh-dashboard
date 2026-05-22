@@ -515,12 +515,12 @@ export default function AnalyticalInsights() {
   // Count of tech types for the selected product
   const selectedProductTechCount = techChartData.length;
   const selectedProductCandidateTotal = useMemo(() => {
-    return techChartData.reduce((sum, row) => {
-      return sum + Object.entries(row).reduce(
-        (s, [key, val]) => (key !== 'technology_type' && key !== 'name' ? s + (val || 0) : s), 0
-      );
-    }, 0);
-  }, [techChartData]);
+    if (selectedProductType) {
+      const card = productTypeCards.find((c) => c.name === selectedProductType);
+      if (card) return card.candidates;
+    }
+    return 0;
+  }, [selectedProductType, productTypeCards]);
 
   const techPhases = useMemo(() => {
     if (technologyPhases?.length) return technologyPhases;
