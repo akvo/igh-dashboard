@@ -56,6 +56,8 @@ export const GET_SLIDE_IN_CANDIDATE = gql`
         priority_name
         indication
         intended_use
+        author
+        source
       }
       publications {
         publication_id
@@ -116,6 +118,8 @@ export const GET_SLIDE_IN_PRODUCT = gql`
         priority_name
         indication
         intended_use
+        author
+        source
       }
       publications {
         publication_id

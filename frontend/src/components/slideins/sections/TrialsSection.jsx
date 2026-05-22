@@ -1,5 +1,9 @@
 'use client';
 
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { DownloadIcon } from '@/components/icons';
+import { NoInfo } from '../NoInfo';
+
 function phaseClass(phase) {
   const s = (phase || '').toLowerCase();
   if (s.includes('3') || s.includes('iii')) return 'si-phase-pill si-phase-3';
@@ -15,13 +19,33 @@ function statusClass(status) {
   return 'si-status-pill unknown';
 }
 
-export function TrialsSection({ trials }) {
+const CSV_COLUMNS = [
+  { label: 'Title', accessor: (row) => row.trial_title ?? '' },
+  { label: 'Phase', accessor: (row) => row.trial_phase ?? '' },
+  { label: 'Status', accessor: (row) => row.status ?? '' },
+  { label: 'URL', accessor: (row) => row.source_text ?? '' },
+];
+
+export function TrialsSection({ trials, candidateKey }) {
+  const hasTrials = Boolean(trials?.length);
+
+  const handleDownload = () => {
+    const csv = buildCSV(CSV_COLUMNS, trials);
+    downloadCSV(csv, `clinical-trials-${candidateKey}`);
+  };
+
   return (
     <div className="si-section">
       <div className="si-section-head">
         <h2 className="si-section-title">Clinical trials</h2>
+        {hasTrials && (
+          <button type="button" className="si-btn-csv" onClick={handleDownload}>
+            <DownloadIcon size={13} />
+            <span>Download CSV</span>
+          </button>
+        )}
       </div>
-      {!trials?.length ? (
+      {!hasTrials ? (
         <div className="si-empty-table">No clinical trial data available yet.</div>
       ) : (
         <div className="si-table-wrap">
@@ -37,16 +61,16 @@ export function TrialsSection({ trials }) {
             <tbody>
               {trials.map((t) => (
                 <tr key={t.trial_id}>
-                  <td><div>{t.trial_title || '—'}</div></td>
+                  <td><div>{t.trial_title ? t.trial_title : <NoInfo />}</div></td>
                   <td>
                     <span className={phaseClass(t.trial_phase)} style={{ maxWidth: '72px' }}>
-                      {t.trial_phase || '—'}
+                      {t.trial_phase ? t.trial_phase : <NoInfo />}
                     </span>
                   </td>
                   <td>
                     <span className={statusClass(t.status)}>
                       <span className="sdot" />
-                      {t.status || '—'}
+                      {t.status ? t.status : <NoInfo />}
                     </span>
                   </td>
                   <td>
@@ -55,7 +79,7 @@ export function TrialsSection({ trials }) {
                         View
                       </a>
                     ) : (
-                      '—'
+                      <NoInfo />
                     )}
                   </td>
                 </tr>

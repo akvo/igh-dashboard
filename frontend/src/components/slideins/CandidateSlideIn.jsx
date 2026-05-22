@@ -64,7 +64,7 @@ export function CandidateSlideIn({ candidateKey, onClose }) {
           currentStage: candidate.current_rd_stage,
         }}
       />
-      <DevHistorySection history={slideIn.pipelineHistory} />
+      <DevHistorySection history={slideIn.pipelineHistory} candidateKey={candidate.candidate_key} />
       <RecentUpdatesSection text={candidate.recent_updates} />
       <UseCaseSection
         indicationType={candidate.indication_type}
@@ -72,8 +72,8 @@ export function CandidateSlideIn({ candidateKey, onClose }) {
       />
       <TechnicalSection moa={candidate.mechanism_of_action} target={candidate.target} />
       <KeyFeaturesSection keyFeatures={candidate.key_features} />
-      <DevelopersSection developers={slideIn.developers} />
-      <TrialsSection trials={slideIn.trials} />
+      <DevelopersSection developers={slideIn.developers} candidateKey={candidate.candidate_key} />
+      <TrialsSection trials={slideIn.trials} candidateKey={candidate.candidate_key} />
       <WhoPrioritiesSection priorities={slideIn.priorities} />
       <KeyResourcesSection publications={slideIn.publications} />
     </SlideInPanel>

@@ -520,23 +520,12 @@ export const resolvers = {
     pipelineHistory: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
       ctx.loaders.pipelineHistoryByCandidateLoader.load(parent.candidate.candidate_key),
     developers: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
-      const [devs, orgs] = await Promise.all([
-        ctx.loaders.developersByCandidateLoader.load(parent.candidate.candidate_key),
-        ctx.loaders.organizationsByCandidateLoader.load(parent.candidate.candidate_key),
-      ]);
-      // Match developer name to org name on a normalised basis (lowercase,
-      // collapsed whitespace) for the org_type subtype. Misses render org_type
-      // as null, which the UI shows as "—". This is documented in the
-      // unresolvable-data doc as a known fuzziness.
-      const norm = (s: string | null | undefined) =>
-        (s || "").trim().toLowerCase().replace(/\s+/g, " ");
-      const orgMap = new Map<string, string | null>();
-      for (const o of orgs) {
-        if (o.org_name) orgMap.set(norm(o.org_name), o.org_type ?? null);
-      }
+      const devs = await ctx.loaders.developersByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
       return devs.map((d) => ({
         name: d.developer_name || "",
-        org_type: orgMap.get(norm(d.developer_name)) ?? null,
+        org_type: d.org_type,
       }));
     },
     trials: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
@@ -578,19 +567,12 @@ export const resolvers = {
     pipelineHistory: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
       ctx.loaders.pipelineHistoryByCandidateLoader.load(parent.candidate.candidate_key),
     developers: async (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) => {
-      const [devs, orgs] = await Promise.all([
-        ctx.loaders.developersByCandidateLoader.load(parent.candidate.candidate_key),
-        ctx.loaders.organizationsByCandidateLoader.load(parent.candidate.candidate_key),
-      ]);
-      const norm = (s: string | null | undefined) =>
-        (s || "").trim().toLowerCase().replace(/\s+/g, " ");
-      const orgMap = new Map<string, string | null>();
-      for (const o of orgs) {
-        if (o.org_name) orgMap.set(norm(o.org_name), o.org_type ?? null);
-      }
+      const devs = await ctx.loaders.developersByCandidateLoader.load(
+        parent.candidate.candidate_key,
+      );
       return devs.map((d) => ({
         name: d.developer_name || "",
-        org_type: orgMap.get(norm(d.developer_name)) ?? null,
+        org_type: d.org_type,
       }));
     },
     trials: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>

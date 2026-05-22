@@ -1,7 +1,9 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 function fmtDate(iso) {
-  if (!iso) return '—';
+  if (!iso) return null;
   // dim_date.full_date is "YYYY-MM-DD". Format as "MMM YYYY" for the
   // strip; pad with placeholder month for safety.
   const m = /^(\d{4})-(\d{2})/.exec(iso);
@@ -20,6 +22,9 @@ function fmtDate(iso) {
  * start so the bars sit at the top alongside the dots.
  */
 export function TimelineLocationSection({ start, primaryCompletion, end, location }) {
+  const startLabel = fmtDate(start);
+  const midLabel = fmtDate(primaryCompletion);
+  const endLabel = fmtDate(end);
   return (
     <div className="si-section">
       <div className="si-section-head">
@@ -29,19 +34,19 @@ export function TimelineLocationSection({ start, primaryCompletion, end, locatio
         <div className="si-ts-item">
           <span className="si-ts-dot si-ts-dot--start" aria-hidden="true" />
           <p className="si-ts-label">Start</p>
-          <p className="si-ts-value">{fmtDate(start)}</p>
+          <p className="si-ts-value">{startLabel ?? <NoInfo />}</p>
         </div>
         <div className="si-ts-bar" aria-hidden="true" />
         <div className="si-ts-item">
           <span className="si-ts-dot si-ts-dot--mid" aria-hidden="true" />
           <p className="si-ts-label">Primary completion</p>
-          <p className="si-ts-value">{fmtDate(primaryCompletion)}</p>
+          <p className="si-ts-value">{midLabel ?? <NoInfo />}</p>
         </div>
         <div className="si-ts-bar" aria-hidden="true" />
         <div className="si-ts-item">
           <span className="si-ts-dot si-ts-dot--end" aria-hidden="true" />
           <p className="si-ts-label">End</p>
-          <p className="si-ts-value">{fmtDate(end)}</p>
+          <p className="si-ts-value">{endLabel ?? <NoInfo />}</p>
         </div>
       </div>
       <div className="si-location-card">
@@ -54,7 +59,7 @@ export function TimelineLocationSection({ start, primaryCompletion, end, locatio
         </div>
         <div>
           <p className="si-location-label">Location</p>
-          <p className="si-location-value">{location || '—'}</p>
+          <p className="si-location-value">{location ? location : <NoInfo />}</p>
         </div>
       </div>
     </div>

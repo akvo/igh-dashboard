@@ -1,5 +1,7 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 function splitTags(text) {
   if (!text) return [];
   // age_groups arrives pipe-delimited; interventions arrives with
@@ -37,15 +39,15 @@ export function StudyDetailsSection({ details }) {
         <div className="si-details-grid">
           <div>
             <p className="si-def-label">Sponsor</p>
-            <p className="si-def-value">{details.sponsor || '—'}</p>
+            <p className="si-def-value">{details.sponsor ? details.sponsor : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Collaborator</p>
-            <p className="si-def-value">{details.collaborator || '—'}</p>
+            <p className="si-def-value">{details.collaborator ? details.collaborator : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Funder type</p>
-            <p className="si-def-value">{details.funder_type || '—'}</p>
+            <p className="si-def-value">{details.funder_type ? details.funder_type : <NoInfo />}</p>
           </div>
         </div>
       </div>
@@ -54,7 +56,7 @@ export function StudyDetailsSection({ details }) {
         <div className="si-details-grid two-col">
           <div>
             <p className="si-def-label">Sex</p>
-            <p className="si-def-value">{details.sex || '—'}</p>
+            <p className="si-def-value">{details.sex ? details.sex : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Age</p>
@@ -62,25 +64,25 @@ export function StudyDetailsSection({ details }) {
               {ages.length ? (
                 ages.map((a, i) => <span key={i} className="si-receptor-tag">{a}</span>)
               ) : (
-                '—'
+                <NoInfo />
               )}
             </div>
           </div>
           <div>
             <p className="si-def-label">Allocation</p>
-            <p className="si-def-value">{details.allocation || '—'}</p>
+            <p className="si-def-value">{details.allocation ? details.allocation : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Intervention model</p>
-            <p className="si-def-value">{details.intervention_model || '—'}</p>
+            <p className="si-def-value">{details.intervention_model ? details.intervention_model : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Masking</p>
-            <p className="si-def-value">{details.masking || '—'}</p>
+            <p className="si-def-value">{details.masking ? details.masking : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Primary purpose</p>
-            <p className="si-def-value">{details.primary_purpose || '—'}</p>
+            <p className="si-def-value">{details.primary_purpose ? details.primary_purpose : <NoInfo />}</p>
           </div>
         </div>
       </div>
@@ -92,7 +94,7 @@ export function StudyDetailsSection({ details }) {
             {interventions.length ? (
               interventions.map((t, i) => <span key={i} className="si-receptor-tag">{t}</span>)
             ) : (
-              '—'
+              <NoInfo />
             )}
           </div>
         </div>
@@ -102,7 +104,7 @@ export function StudyDetailsSection({ details }) {
             {conditions.length ? (
               conditions.map((t, i) => <span key={i} className="si-receptor-tag">{t}</span>)
             ) : (
-              '—'
+              <NoInfo />
             )}
           </div>
         </div>

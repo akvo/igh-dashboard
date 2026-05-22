@@ -50,6 +50,8 @@ export const typeDefs = `#graphql
     indication: String
     intended_use: String
     disease_key: Int
+    author: String
+    source: String
   }
 
   type DimDate {
@@ -83,6 +85,7 @@ export const typeDefs = `#graphql
   type DimDeveloper {
     developer_key: Int!
     developer_name: String
+    org_type: String
   }
 
   type DimCandidateCore {

@@ -155,6 +155,21 @@
   font-size: 15px; font-weight: 700; color: var(--ink-1); margin: 0;
 }
 
+.si-btn-csv {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--rule-2);
+  font-size: 12px; font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer; transition: all 150ms;
+}
+.si-btn-csv:hover {
+  background: var(--peach-50);
+  border-color: var(--peach-200);
+}
+
 .si-glance-card {
   background: var(--peach-50);
   border-radius: 12px !important; padding: 18px 20px;
@@ -434,6 +449,14 @@
   color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em;
 }
 .si-ppc-body-text { margin: 0; font-size: 12.5px; line-height: 1.55; }
+.si-ppc-source {
+  color: var(--peach-600);
+  text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-weight: 500;
+  word-break: break-all;
+}
+.si-ppc-source:hover { text-decoration: underline; }
 
 .si-btn-close {
   display: inline-flex; align-items: center; gap: 8px;

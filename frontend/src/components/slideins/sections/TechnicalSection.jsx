@@ -1,5 +1,7 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 export function TechnicalSection({ moa, target }) {
   const paragraphs = (moa || '')
     .split(/\n\s*\n/)
@@ -22,7 +24,7 @@ export function TechnicalSection({ moa, target }) {
         )}
         <div>
           <p className="si-def-label">Target receptor</p>
-          <p className="si-def-value">{target || '—'}</p>
+          <p className="si-def-value">{target ? target : <NoInfo />}</p>
         </div>
       </div>
     </div>

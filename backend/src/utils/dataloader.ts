@@ -77,14 +77,18 @@ export function createLoaders() {
       return keys.map((k) => map.get(k) || null);
     }),
 
-    // Batch load developers by candidate_key (one-to-many)
+    // Batch load developers by candidate_key (one-to-many). `org_type`
+    // is a column on `dim_developer` itself; empty strings are
+    // coerced to null so the UI's "no information available"
+    // placeholder kicks in for rows where the data team hasn't
+    // backfilled the field yet.
     developersByCandidateLoader: new DataLoader<number, DimDeveloper[]>(async (candidateKeys) => {
       const db = getDatabase();
       const placeholders = candidateKeys.map(() => "?").join(", ");
       const rows = db
         .prepare(
           `
-          SELECT bd.candidate_key, d.developer_key, d.developer_name
+          SELECT bd.candidate_key, d.developer_key, d.developer_name, d.org_type
           FROM dim_developer d
           JOIN bridge_candidate_developer bd ON d.developer_key = bd.developer_key
           WHERE bd.candidate_key IN (${placeholders})
@@ -99,6 +103,7 @@ export function createLoaders() {
         existing.push({
           developer_key: row.developer_key,
           developer_name: row.developer_name,
+          org_type: row.org_type || null,
         });
         map.set(row.candidate_key, existing);
       }
@@ -112,7 +117,8 @@ export function createLoaders() {
       const rows = db
         .prepare(
           `
-          SELECT bp.candidate_key, p.priority_key, p.rdpriorityid, p.priority_name, p.indication, p.intended_use, p.disease_key
+          SELECT bp.candidate_key, p.priority_key, p.rdpriorityid, p.priority_name,
+                 p.indication, p.intended_use, p.disease_key, p.author, p.source
           FROM dim_priority p
           JOIN bridge_candidate_priority bp ON p.priority_key = bp.priority_key
           WHERE bp.candidate_key IN (${placeholders})
@@ -131,6 +137,8 @@ export function createLoaders() {
           indication: row.indication,
           intended_use: row.intended_use,
           disease_key: row.disease_key,
+          author: row.author,
+          source: row.source,
         });
         map.set(row.candidate_key, existing);
       }
@@ -419,36 +427,6 @@ export function createLoaders() {
       for (const row of rows) {
         const existing = map.get(row.candidate_key) || [];
         existing.push(row.age_group_name);
-        map.set(row.candidate_key, existing);
-      }
-      return candidateKeys.map((k) => map.get(k) || []);
-    }),
-
-    // Batch load org names linked to a candidate (used to enrich developer profiles)
-    organizationsByCandidateLoader: new DataLoader<
-      number,
-      Array<{ org_name: string | null; org_type: string | null }>
-    >(async (candidateKeys) => {
-      const db = getDatabase();
-      const placeholders = candidateKeys.map(() => "?").join(", ");
-      const rows = db
-        .prepare(
-          `
-        SELECT b.candidate_key, o.org_name, o.org_type
-        FROM bridge_candidate_organization b
-        JOIN dim_organization o ON b.organization_key = o.organization_key
-        WHERE b.candidate_key IN (${placeholders})
-      `,
-        )
-        .all(...candidateKeys) as Array<{
-        candidate_key: number;
-        org_name: string | null;
-        org_type: string | null;
-      }>;
-      const map = new Map<number, Array<{ org_name: string | null; org_type: string | null }>>();
-      for (const row of rows) {
-        const existing = map.get(row.candidate_key) || [];
-        existing.push({ org_name: row.org_name, org_type: row.org_type });
         map.set(row.candidate_key, existing);
       }
       return candidateKeys.map((k) => map.get(k) || []);
