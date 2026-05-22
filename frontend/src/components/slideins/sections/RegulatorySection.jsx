@@ -1,9 +1,11 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 export function RegulatorySection({ regulatory }) {
   if (!regulatory) return null;
   const { approval_status, who_prequalification, approving_authorities } = regulatory;
-  const authorities = (approving_authorities || []).join(' + ') || '—';
+  const authorities = (approving_authorities || []).join(' + ');
   return (
     <div className="si-section">
       <div className="si-section-head">
@@ -14,16 +16,16 @@ export function RegulatorySection({ regulatory }) {
           <p className="si-reg-label">Approval status</p>
           <span className="si-reg-status-pill">
             <span className="sdot" />
-            {approval_status || '—'}
+            {approval_status ? approval_status : <NoInfo />}
           </span>
         </div>
         <div>
           <p className="si-reg-label">Approving authority</p>
-          <p className="si-reg-value">{authorities}</p>
+          <p className="si-reg-value">{authorities ? authorities : <NoInfo />}</p>
         </div>
         <div>
           <p className="si-reg-label">WHO prequalification</p>
-          <p className="si-reg-value">{who_prequalification || '—'}</p>
+          <p className="si-reg-value">{who_prequalification ? who_prequalification : <NoInfo />}</p>
         </div>
       </div>
     </div>

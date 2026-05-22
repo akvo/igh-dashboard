@@ -1,5 +1,7 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 function phaseClass(phase) {
   const s = (phase || '').toLowerCase();
   if (s.includes('3') || s.includes('iii')) return 'si-phase-pill si-phase-3';
@@ -25,24 +27,24 @@ export function StudyOverviewSection({ phase, status, studyType, enrollment }) {
         <div>
           <p className="si-glance-label">Phase</p>
           <span className={phaseClass(phase)} style={{ maxWidth: '100px' }}>
-            {phase || '—'}
+            {phase ? phase : <NoInfo />}
           </span>
         </div>
         <div>
           <p className="si-glance-label">Status</p>
           <span className={statusClass(status)}>
             <span className="sdot" />
-            {status || '—'}
+            {status ? status : <NoInfo />}
           </span>
         </div>
         <div>
           <p className="si-glance-label">Study type</p>
-          <p className="si-glance-value">{studyType || '—'}</p>
+          <p className="si-glance-value">{studyType ? studyType : <NoInfo />}</p>
         </div>
         <div>
           <p className="si-glance-label">Enrolment</p>
           <p className="si-glance-value">
-            {enrollment != null ? String(enrollment) : '—'}
+            {enrollment != null ? String(enrollment) : <NoInfo />}
           </p>
         </div>
       </div>

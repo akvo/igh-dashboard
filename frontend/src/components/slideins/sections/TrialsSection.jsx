@@ -1,5 +1,7 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 function phaseClass(phase) {
   const s = (phase || '').toLowerCase();
   if (s.includes('3') || s.includes('iii')) return 'si-phase-pill si-phase-3';
@@ -37,16 +39,16 @@ export function TrialsSection({ trials }) {
             <tbody>
               {trials.map((t) => (
                 <tr key={t.trial_id}>
-                  <td><div>{t.trial_title || '—'}</div></td>
+                  <td><div>{t.trial_title ? t.trial_title : <NoInfo />}</div></td>
                   <td>
                     <span className={phaseClass(t.trial_phase)} style={{ maxWidth: '72px' }}>
-                      {t.trial_phase || '—'}
+                      {t.trial_phase ? t.trial_phase : <NoInfo />}
                     </span>
                   </td>
                   <td>
                     <span className={statusClass(t.status)}>
                       <span className="sdot" />
-                      {t.status || '—'}
+                      {t.status ? t.status : <NoInfo />}
                     </span>
                   </td>
                   <td>
@@ -55,7 +57,7 @@ export function TrialsSection({ trials }) {
                         View
                       </a>
                     ) : (
-                      '—'
+                      <NoInfo />
                     )}
                   </td>
                 </tr>

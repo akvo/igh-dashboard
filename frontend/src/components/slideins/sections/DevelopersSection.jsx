@@ -1,5 +1,7 @@
 'use client';
 
+import { NoInfo } from '../NoInfo';
+
 export function DevelopersSection({ developers }) {
   if (!developers?.length) return null;
   return (
@@ -19,7 +21,7 @@ export function DevelopersSection({ developers }) {
             {developers.map((d, i) => (
               <tr key={i}>
                 <td style={{ fontWeight: 500 }}>{d.name}</td>
-                <td style={{ color: 'var(--ink-2)' }}>{d.org_type || '—'}</td>
+                <td style={{ color: 'var(--ink-2)' }}>{d.org_type ? d.org_type : <NoInfo />}</td>
               </tr>
             ))}
           </tbody>
