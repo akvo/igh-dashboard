@@ -30,7 +30,12 @@ import {
   usePortfolioCandidates,
 } from '@/graphql/hooks';
 import { transformProductPhaseDistribution } from '@/lib/transformations/productPhaseDistribution';
-import { CANDIDATE_COLUMNS, toCSVColumns } from '@/lib/exploreColumnConfig';
+import {
+  CANDIDATE_COLUMNS,
+  buildCandidateColumns,
+  toCSVColumns,
+} from '@/lib/exploreColumnConfig';
+import { CandidateSlideIn } from '@/components/slideins/CandidateSlideIn';
 import {
   encodeFilters,
   decodeFilters,
@@ -43,7 +48,11 @@ import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { fetchAllCandidates } from '@/lib/fetchAllCandidates';
 import { useUrlState } from '@/lib/useUrlState';
-import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import {
+  arraySerializer,
+  numberSerializer,
+  stringSerializer,
+} from '@/lib/url-serializers';
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
@@ -127,6 +136,7 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
 }
 
 function CandidatesTable({
+  columns,
   candidates,
   totalCount,
   hasNextPage,
@@ -169,7 +179,7 @@ function CandidatesTable({
         tableId="who-priority-candidates"
         graphqlTable="PORTFOLIO_CANDIDATES"
         filterContext={filterContext}
-        columns={CANDIDATE_COLUMNS}
+        columns={columns}
         data={candidates}
         rowKey="candidate_key"
         page={page}
@@ -202,6 +212,7 @@ function ActiveBody({
   onExplore,
   analysis,
   table,
+  candidateColumns,
   filterContext,
   filters,
   onFiltersChange,
@@ -267,6 +278,7 @@ function ActiveBody({
 
       {/* Row D — Candidates table */}
       <CandidatesTable
+        columns={candidateColumns}
         candidates={table.candidates}
         totalCount={table.totalCount}
         hasNextPage={table.hasNextPage}
@@ -292,6 +304,44 @@ export default function IndividualPriorityAnalysisSection() {
   const state = useIndividualPriorityState();
   const apolloClient = useApolloClient();
   const [slideInOpen, setSlideInOpen] = useState(false);
+
+  // URL-backed state for the per-row candidate slide-in. Mirrors the
+  // `slide` / `slideKey` shape used on the Aggregated portfolio page so a
+  // shared link deep-links to the same open panel.
+  const [candidateSlideType, setCandidateSlideType] = useUrlState(
+    'slide',
+    null,
+    stringSerializer,
+  );
+  const [candidateSlideKey, setCandidateSlideKey] = useUrlState(
+    'slideKey',
+    null,
+    numberSerializer,
+  );
+  const closeCandidateSlideIn = useCallback(() => {
+    setCandidateSlideType(null);
+    setCandidateSlideKey(null);
+  }, [setCandidateSlideType, setCandidateSlideKey]);
+
+  // The priority-info panel and the candidate slide-in share the same
+  // right-anchored dock, so they're held mutually exclusive: opening one
+  // closes the other.
+  const openPriorityInfo = useCallback(() => {
+    closeCandidateSlideIn();
+    setSlideInOpen(true);
+  }, [closeCandidateSlideIn]);
+
+  const candidateColumns = useMemo(
+    () =>
+      buildCandidateColumns({
+        onExplore: (row) => {
+          setSlideInOpen(false);
+          setCandidateSlideType('candidate');
+          setCandidateSlideKey(row.candidate_key);
+        },
+      }),
+    [setCandidateSlideType, setCandidateSlideKey],
+  );
 
   const { priorities, loading: prioritiesLoading } = usePriorityAlignment(
     page.healthArea.length > 0 ? page.healthArea : null,
@@ -549,9 +599,10 @@ export default function IndividualPriorityAnalysisSection() {
       ) : (
         <ActiveBody
           selectedPriorityName={selectedPriorityName}
-          onExplore={() => setSlideInOpen(true)}
+          onExplore={openPriorityInfo}
           analysis={analysis}
           table={table}
+          candidateColumns={candidateColumns}
           filterContext={candidatesFilterContext}
           filters={candidatesFilters}
           onFiltersChange={(next) => {
@@ -578,6 +629,13 @@ export default function IndividualPriorityAnalysisSection() {
         priority={slideInPriority}
         loading={slideinHook?.loading}
       />
+
+      {candidateSlideType === 'candidate' && candidateSlideKey != null && (
+        <CandidateSlideIn
+          candidateKey={candidateSlideKey}
+          onClose={closeCandidateSlideIn}
+        />
+      )}
     </div>
   );
 }

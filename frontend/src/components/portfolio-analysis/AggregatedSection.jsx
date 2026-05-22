@@ -845,7 +845,7 @@ export default function AggregatedSection() {
             <div className="border border-gray-200">
               <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <h4 className="text-xl font-bold text-black leading-none">Selected products</h4>
+                  <h4 className="text-xl font-bold text-black leading-none">Selected approved products</h4>
                   <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount} products</span>
                 </div>
                 <div className="flex items-center gap-3 h-[36px]">

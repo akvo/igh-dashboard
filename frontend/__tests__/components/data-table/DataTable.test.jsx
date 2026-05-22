@@ -82,6 +82,121 @@ describe('DataTable', () => {
     expect(onVisibleColumnsChange).toHaveBeenCalledWith(['name']);
   });
 
+  it('Select all in the Columns popover adds every missing column', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true, hideable: false },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onVisibleColumnsChange = vi.fn();
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="test"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    // Open the Columns popover via its trigger button.
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+
+    // Click "Select all" inside the popover.
+    fireEvent.click(screen.getByRole('button', { name: 'Select all' }));
+
+    // Current visible order is preserved; missing accessors append in
+    // config order.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'b', 'c']);
+  });
+
+  it('Clear in the Columns popover keeps frozen and non-hideable columns', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true, hideable: false },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onVisibleColumnsChange = vi.fn();
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="test"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+    // Survivors: 'a' (frozen at index 0) + 'b' (hideable: false). 'c'
+    // is togglable and gets dropped.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'b']);
+  });
+
+  it('Select all is disabled when every column is already visible', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="test"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={() => {}}
+        />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+    expect(
+      screen.getByRole('button', { name: 'Select all' }).disabled,
+    ).toBe(true);
+  });
+
+  it('Clear is disabled when only frozen and non-hideable columns are visible', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true, hideable: false },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="test"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b']}
+          onVisibleColumnsChange={() => {}}
+        />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+    expect(screen.getByRole('button', { name: 'Clear' }).disabled).toBe(true);
+  });
+
   it('paginates client-side data when serverSide=false', () => {
     // Seed 25 rows with non-unique-by-name data — this is the case that
     // bit us in the Storybook story (66 unique disease names across 200+

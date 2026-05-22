@@ -64,6 +64,8 @@ export interface DimPriority {
   indication: string | null;
   intended_use: string | null;
   disease_key: number | null;
+  author: string | null;
+  source: string | null;
 }
 
 export interface DimDate {
@@ -123,6 +125,7 @@ export interface DimCandidateRegulatory {
 export interface DimDeveloper {
   developer_key: number;
   developer_name: string | null;
+  org_type: string | null;
 }
 
 export interface DimPublication {
