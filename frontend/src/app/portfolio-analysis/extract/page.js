@@ -31,10 +31,7 @@ import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, DataTable } from '@/components/ui';
 import {
-  SearchIcon,
-  InfoIcon,
   CloudDownloadIcon,
-  ListFilterIcon,
   RefreshIcon,
 } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
@@ -619,153 +616,50 @@ export default function ExtractCustomDetailsPage() {
               </div>
             </div>
 
-            {/* Two-column layout: column picker (left) + table (right) */}
-            <div className="flex">
-              {/* Left: Available columns */}
-              <div className="w-[280px] border-r border-gray-200 p-4">
-                <h4 className="text-base font-bold text-black mb-4">Available columns</h4>
-                <div className="relative mb-4">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search item"
-                    value={columnSearchQuery}
-                    onChange={(e) => setColumnSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm bg-gray-100 border-none focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Select columns</span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSelectAllColumns}
-                      className="text-sm text-orange-500 hover:underline cursor-pointer border-none bg-transparent"
-                    >
-                      Select all
-                    </button>
-                    {/* Reset the active sub-tab's visible-columns list.
-                        Useful when the user wants to start over —
-                        cheaper than unticking columns one by one. */}
-                    <button
-                      onClick={() => {
-                        setActiveCols([]);
-                        setExtractPage(1);
-                      }}
-                      disabled={appliedColumns.length === 0}
-                      className={`text-sm border-none bg-transparent ${
-                        appliedColumns.length === 0
-                          ? 'text-gray-300 cursor-not-allowed'
-                          : 'text-orange-500 hover:underline cursor-pointer'
-                      }`}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                  {filteredColumns.map((col) => {
-                    const isApplied = appliedColumns.includes(col.id);
-                    const isDragging = draggedColumnRef.current === col.id;
-                    const isDragOver = dragOverColumn === col.id;
-                    return (
-                      <div
-                        key={col.id}
-                        draggable={isApplied}
-                        onDragStart={() => handleDragStart(col.id)}
-                        onDragOver={(e) => handleDragOver(e, col.id)}
-                        onDragEnd={handleDragEnd}
-                        className={`flex items-center justify-between py-2 px-2 hover:bg-gray-50 cursor-pointer select-none ${
-                          isDragging ? 'opacity-40' : ''
-                        } ${isDragOver && isApplied ? 'border-t-2 border-orange-400' : ''}`}
-                        onClick={() => handleToggleColumn(col.id)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`w-4 h-4 border rounded flex items-center justify-center shrink-0 ${
-                              isApplied
-                                ? 'border-orange-500 bg-orange-500'
-                                : 'border-gray-300 bg-white'
-                            }`}
-                          >
-                            {isApplied && (
-                              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                                <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </span>
-                          <span className="text-sm text-gray-700">{col.label}</span>
-                        </div>
-                        <ListFilterIcon
-                          className={`w-4 h-4 ${isApplied ? 'text-gray-400 cursor-grab' : 'text-gray-200'}`}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right: data table or empty state */}
-              <div className="flex-1 min-w-0">
-                {appliedColumns.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-32">
-                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                      <InfoIcon className="w-6 h-6 text-orange-500" />
-                    </div>
-                    <h4 className="text-lg font-bold text-black mb-2">No columns selected</h4>
-                    <p className="text-sm text-gray-500 text-center max-w-xs">
-                      Tick a column in the rail to add it to the table — changes apply immediately, no Apply button.
-                    </p>
-                  </div>
-                ) : (
-                  <ExtractDataTable
-                    key={extractTab}
-                    extractTab={extractTab}
-                    activeExtractColumns={activeExtractColumns}
-                    availableColumns={availableColumns}
-                    setActiveCols={setActiveCols}
-                    extractTableData={extractTableData}
-                    extractTotalCount={extractTotalCount}
-                    extractHasNext={extractHasNext}
-                    extractLoading={extractLoading}
-                    extractPage={extractPage}
-                    setExtractPage={setExtractPage}
-                    itemsPerPage={itemsPerPage}
-                    filtersByTab={{
-                      'candidates-approved': ext1Filters,
-                      'rd-priorities': ext2Filters,
-                      'clinical-trials': ext3Filters,
-                      'rd-only': ext4Filters,
-                    }}
-                    setFiltersByTab={{
-                      'candidates-approved': setExt1Filters,
-                      'rd-priorities': setExt2Filters,
-                      'clinical-trials': setExt3Filters,
-                      'rd-only': setExt4Filters,
-                    }}
-                    sortByTab={{
-                      'candidates-approved': ext1Sort,
-                      'rd-priorities': ext2Sort,
-                      'clinical-trials': ext3Sort,
-                      'rd-only': ext4Sort,
-                    }}
-                    setSortByTab={{
-                      'candidates-approved': setExt1Sort,
-                      'rd-priorities': setExt2Sort,
-                      'clinical-trials': setExt3Sort,
-                      'rd-only': setExt4Sort,
-                    }}
-                    filterContextByTab={{
-                      'candidates-approved': ext1FilterContext,
-                      'rd-priorities': ext2FilterContext,
-                      'clinical-trials': ext3FilterContext,
-                      'rd-only': ext4FilterContext,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
+            <ExtractDataTable
+              key={extractTab}
+              extractTab={extractTab}
+              activeExtractColumns={activeExtractColumns}
+              availableColumns={availableColumns}
+              setActiveCols={setActiveCols}
+              extractTableData={extractTableData}
+              extractTotalCount={extractTotalCount}
+              extractHasNext={extractHasNext}
+              extractLoading={extractLoading}
+              extractPage={extractPage}
+              setExtractPage={setExtractPage}
+              itemsPerPage={itemsPerPage}
+              filtersByTab={{
+                'candidates-approved': ext1Filters,
+                'rd-priorities': ext2Filters,
+                'clinical-trials': ext3Filters,
+                'rd-only': ext4Filters,
+              }}
+              setFiltersByTab={{
+                'candidates-approved': setExt1Filters,
+                'rd-priorities': setExt2Filters,
+                'clinical-trials': setExt3Filters,
+                'rd-only': setExt4Filters,
+              }}
+              sortByTab={{
+                'candidates-approved': ext1Sort,
+                'rd-priorities': ext2Sort,
+                'clinical-trials': ext3Sort,
+                'rd-only': ext4Sort,
+              }}
+              setSortByTab={{
+                'candidates-approved': setExt1Sort,
+                'rd-priorities': setExt2Sort,
+                'clinical-trials': setExt3Sort,
+                'rd-only': setExt4Sort,
+              }}
+              filterContextByTab={{
+                'candidates-approved': ext1FilterContext,
+                'rd-priorities': ext2FilterContext,
+                'clinical-trials': ext3FilterContext,
+                'rd-only': ext4FilterContext,
+              }}
+            />
           </div>
         </div>
       </main>
@@ -784,11 +678,12 @@ export default function ExtractCustomDetailsPage() {
 // `key={extractTab}` it so internal state (column widths, popover
 // open state) doesn't leak between sub-tabs.
 //
-// `_fixed` is the synthetic accessor for the always-visible first
-// column (Name / Title / Candidate name depending on sub-tab). It's
-// not in `availableColumns` and never appears in the rail; the
-// orchestrator just keeps it pinned at index 0 of `visibleColumns`.
-// `hideable: false` blocks the kebab's Hide-column option.
+// `hideable: false` on the first column of each tab (Name / Title /
+// Candidate name) marks it as a frozen-and-locked column: DataTable's
+// positional freeze keeps the first entry in `visibleColumns` sticky,
+// and `ColumnsPopover` renders its visibility checkbox disabled so
+// the user can't accidentally hide it. The same `hideable: false`
+// blocks the column-header kebab's Hide-column option.
 const SUB_TAB_GRAPHQL = {
   'candidates-approved': 'PORTFOLIO_CANDIDATES',
   'rd-priorities': 'RD_PRIORITIES_WITH_CANDIDATES',
@@ -827,12 +722,10 @@ function ExtractDataTable({
   const setSort = setSortByTab[extractTab] ?? (() => {});
   const filterContext = filterContextByTab[extractTab] ?? {};
 
-  // The rail already pins the "name" column at the top with
-  // `hideable: false`, so we don't need a synthetic always-on
-  // column here — that would double up the column when the user
-  // also ticks the name in the rail. DataTable's positional freeze
-  // means whichever column ends up first in the rail order is the
-  // sticky one.
+  // The first column of each tab is `hideable: false` (configured in
+  // EXTRACT_TAB_COLUMNS), which DataTable's positional-freeze + the
+  // popover's locked-checkbox combination treats as the sticky
+  // always-on column. No synthetic prefix column needed.
   const columns = activeExtractColumns.map((col) => ({
     header: col.label,
     accessor: col.accessor || col.id,
@@ -882,7 +775,6 @@ function ExtractDataTable({
       }}
       visibleColumns={visibleColumns}
       onVisibleColumnsChange={handleVisibleColumnsChange}
-      hideColumnsButton
       emptyState={
         Object.keys(filters).length > 0
           ? {
