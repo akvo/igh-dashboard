@@ -62,12 +62,6 @@ export default function DataTable({
   emptyState,
   className = '',
   serverSide = true,
-  // Hide the toolbar's Columns selector. The Extract page uses an
-  // external left-rail picker that owns column visibility / order, so
-  // the in-toolbar popover would just duplicate it. The Hide-column
-  // affordance inside the per-column kebab menu still works and stays
-  // useful even when this is true.
-  hideColumnsButton = false,
 }) {
   // -----------------------------------------------------------------
   // Visible columns reconciliation
@@ -345,33 +339,24 @@ export default function DataTable({
   // table never hides it.
   const hasActiveFilter = Object.values(filters).some((v) => v != null);
 
-  // Hide the entire toolbar row when neither the Clear-all link nor the
-  // Columns button has anything to show — otherwise it leaves a thin
-  // empty band above the table on the Extract page.
-  const showToolbar = hasActiveFilter || !hideColumnsButton;
-
   return (
     <div className={`bg-white border border-gray-200 ${className}`}>
-      {showToolbar && (
-        <div className="flex items-center justify-end gap-3 px-4 py-2 border-b border-gray-200">
-          {hasActiveFilter && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="text-xs text-orange-500 hover:underline"
-            >
-              Clear all filters
-            </button>
-          )}
-          {!hideColumnsButton && (
-            <ColumnsPopover
-              columns={columns}
-              visibleColumns={orderedColumns.map((c) => c.accessor)}
-              onChange={onVisibleColumnsChange}
-            />
-          )}
-        </div>
-      )}
+      <div className="flex items-center justify-end gap-3 px-4 py-2 border-b border-gray-200">
+        {hasActiveFilter && (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-xs text-orange-500 hover:underline"
+          >
+            Clear all filters
+          </button>
+        )}
+        <ColumnsPopover
+          columns={columns}
+          visibleColumns={orderedColumns.map((c) => c.accessor)}
+          onChange={onVisibleColumnsChange}
+        />
+      </div>
 
       <div className="relative overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
         {/* Refetch overlay. We keep stale rows visible (better than a
