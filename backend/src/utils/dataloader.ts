@@ -429,36 +429,6 @@ export function createLoaders() {
       return candidateKeys.map((k) => map.get(k) || []);
     }),
 
-    // Batch load org names linked to a candidate (used to enrich developer profiles)
-    organizationsByCandidateLoader: new DataLoader<
-      number,
-      Array<{ org_name: string | null; org_type: string | null }>
-    >(async (candidateKeys) => {
-      const db = getDatabase();
-      const placeholders = candidateKeys.map(() => "?").join(", ");
-      const rows = db
-        .prepare(
-          `
-        SELECT b.candidate_key, o.org_name, o.org_type
-        FROM bridge_candidate_organization b
-        JOIN dim_organization o ON b.organization_key = o.organization_key
-        WHERE b.candidate_key IN (${placeholders})
-      `,
-        )
-        .all(...candidateKeys) as Array<{
-        candidate_key: number;
-        org_name: string | null;
-        org_type: string | null;
-      }>;
-      const map = new Map<number, Array<{ org_name: string | null; org_type: string | null }>>();
-      for (const row of rows) {
-        const existing = map.get(row.candidate_key) || [];
-        existing.push({ org_name: row.org_name, org_type: row.org_type });
-        map.set(row.candidate_key, existing);
-      }
-      return candidateKeys.map((k) => map.get(k) || []);
-    }),
-
     // Batch load pipeline history (distinct year + phase per candidate)
     pipelineHistoryByCandidateLoader: new DataLoader<number, PipelineHistoryEntry[]>(
       async (candidateKeys) => {
