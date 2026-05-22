@@ -16,7 +16,7 @@
 // their filter selections; the sidebar's sibling-aware query
 // forwarding does the carry-over for free.
 
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -82,11 +82,10 @@ export default function ExtractCustomDetailsPage() {
   // Visible-columns URL state, one slot per sub-tab. Default `[]`,
   // not a seeded identifier column: `arraySerializer.serialize([])`
   // returns `null` so the URL key is elided, and useUrlState
-  // re-applies the default on the next read. If we seeded with the
-  // name id, the Clear button on the rail would immediately revert
-  // to that seeded column — the user could never reach a true
-  // "no columns" state. First-time visitors instead land on the
-  // rail's instructive empty state until they tick a column.
+  // re-applies the default on the next read. With `[]` the
+  // DataTable falls back to all non-`defaultHidden` columns
+  // (DataTable.jsx:80-88), which is what the user sees on first
+  // load — no empty state, no manual column-pick required.
   const [colsCandidates, setColsCandidates] = useUrlState('cols1', [], arraySerializer);
   const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
@@ -135,16 +134,18 @@ export default function ExtractCustomDetailsPage() {
   const [ext4Sort, setExt4Sort] = useUrlState('s.ext4', null, sortSerializer);
 
   // =========================================================
-  // Local-only state (column picker search + download flag)
+  // Local-only state (download flag)
   // =========================================================
 
-  const [columnSearchQuery, setColumnSearchQuery] = useState('');
   const [extractDownloading, setExtractDownloading] = useState(false);
 
   // Applied columns come straight from URL state — the single source
-  // of truth driving the visible table. The rail mutates these
-  // directly (tick / drag / "Select all" / kebab "Hide column" all
-  // update URL state immediately, no Apply gate).
+  // of truth driving the visible table. DataTable's column popover
+  // mutates these via `onVisibleColumnsChange`, which the wrapper
+  // round-trips through the accessor↔id translation in
+  // `handleVisibleColumnsChange`. An empty array is treated as
+  // "default view" (all non-`defaultHidden` columns) by both the
+  // on-screen table and the CSV export.
   const appliedColumnsMap = {
     'candidates-approved': colsCandidates,
     'rd-priorities': colsRdPriorities,
@@ -317,23 +318,6 @@ export default function ExtractCustomDetailsPage() {
         .map((id) => availableColumns.find((col) => col.id === id))
         .filter(Boolean);
 
-  // Build the picker column list respecting drag order: applied
-  // columns in their reordered sequence first, then unapplied
-  // columns in original order, filtered by search. The rail binds
-  // directly to the URL state — no buffered "selected" mirror — so
-  // ticking a checkbox or finishing a drag updates the table
-  // immediately.
-  const filteredColumns = useMemo(() => {
-    const search = columnSearchQuery.toLowerCase();
-    const applied = appliedColumns
-      .map((id) => availableColumns.find((col) => col.id === id))
-      .filter(Boolean);
-    const unapplied = availableColumns.filter((col) => !appliedColumns.includes(col.id));
-    return [...applied, ...unapplied].filter((col) =>
-      col.label.toLowerCase().includes(search),
-    );
-  }, [availableColumns, appliedColumns, columnSearchQuery]);
-
   // R&D stage options for the candidates-approved tab. Uses the
   // cross-filtered rdPhaseOptions so that only phases reachable
   // under the current product / disease / GHA selections appear.
@@ -348,60 +332,6 @@ export default function ExtractCustomDetailsPage() {
     const valid = extractRdStage.filter((v) => validValues.has(v));
     if (valid.length !== extractRdStage.length) setExtractRdStage(valid);
   }, [rdStageOptions, extractRdStage, setExtractRdStage]);
-
-  // =========================================================
-  // Drag-and-drop reordering and picker handlers
-  // =========================================================
-  //
-  // The rail mutates `appliedColumns` (the URL state) directly. No
-  // Apply / Clear buttons mediate the change — ticking a checkbox or
-  // finishing a drag updates the URL and the table immediately. Page
-  // resets to 1 on each change so a filter narrowed below the user's
-  // current page doesn't leave them on a non-existent one.
-
-  const draggedColumnRef = useRef(null);
-  const [dragOverColumn, setDragOverColumn] = useState(null);
-
-  const handleDragStart = (colId) => {
-    draggedColumnRef.current = colId;
-  };
-
-  const handleDragOver = (e, colId) => {
-    e.preventDefault();
-    if (!draggedColumnRef.current || draggedColumnRef.current === colId) return;
-    if (!appliedColumns.includes(draggedColumnRef.current) || !appliedColumns.includes(colId)) return;
-    setDragOverColumn(colId);
-    setActiveCols((prev) => {
-      const draggedId = draggedColumnRef.current;
-      const fromIndex = prev.indexOf(draggedId);
-      const toIndex = prev.indexOf(colId);
-      if (fromIndex === -1 || toIndex === -1) return prev;
-      const next = [...prev];
-      next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, draggedId);
-      return next;
-    });
-  };
-
-  const handleDragEnd = () => {
-    draggedColumnRef.current = null;
-    setDragOverColumn(null);
-  };
-
-  const handleSelectAllColumns = () => {
-    setActiveCols((prev) => {
-      const allIds = availableColumns.map((col) => col.id);
-      const remaining = allIds.filter((id) => !prev.includes(id));
-      return [...prev, ...remaining];
-    });
-  };
-
-  const handleToggleColumn = (colId) => {
-    setActiveCols((prev) =>
-      prev.includes(colId) ? prev.filter((id) => id !== colId) : [...prev, colId],
-    );
-    setExtractPage(1);
-  };
 
   // Reset clears the filter values the user can see on the
   // current sub-tab — the global GHA / disease / product
@@ -738,9 +668,11 @@ function ExtractDataTable({
 
   const visibleColumns = activeExtractColumns.map((c) => c.accessor || c.id);
 
-  // DataTable's kebab "Hide column" fires onVisibleColumnsChange with
-  // an accessor list. Translate the surviving accessors back to the
-  // rail's id space and persist via the per-sub-tab cols setter.
+  // DataTable's column popover (and the header kebab's "Hide column")
+  // fire onVisibleColumnsChange with an accessor list. Translate the
+  // surviving accessors back to id-space and persist to URL state via
+  // the per-sub-tab cols setter, so the `cols1`–`cols4` URL contract
+  // stays in id-space.
   const handleVisibleColumnsChange = (nextAccessors) => {
     const accessorToId = new Map(availableColumns.map((c) => [c.accessor, c.id]));
     const nextIds = nextAccessors
