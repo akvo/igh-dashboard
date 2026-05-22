@@ -1,5 +1,7 @@
 'use client';
 
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { DownloadIcon } from '@/components/icons';
 import { NoInfo } from '../NoInfo';
 
 function phaseClass(phase) {
@@ -17,13 +19,33 @@ function statusClass(status) {
   return 'si-status-pill unknown';
 }
 
-export function TrialsSection({ trials }) {
+const CSV_COLUMNS = [
+  { label: 'Title', accessor: (row) => row.trial_title ?? '' },
+  { label: 'Phase', accessor: (row) => row.trial_phase ?? '' },
+  { label: 'Status', accessor: (row) => row.status ?? '' },
+  { label: 'URL', accessor: (row) => row.source_text ?? '' },
+];
+
+export function TrialsSection({ trials, candidateKey }) {
+  const hasTrials = Boolean(trials?.length);
+
+  const handleDownload = () => {
+    const csv = buildCSV(CSV_COLUMNS, trials);
+    downloadCSV(csv, `clinical-trials-${candidateKey}`);
+  };
+
   return (
     <div className="si-section">
       <div className="si-section-head">
         <h2 className="si-section-title">Clinical trials</h2>
+        {hasTrials && (
+          <button type="button" className="si-btn-csv" onClick={handleDownload}>
+            <DownloadIcon size={13} />
+            <span>Download CSV</span>
+          </button>
+        )}
       </div>
-      {!trials?.length ? (
+      {!hasTrials ? (
         <div className="si-empty-table">No clinical trial data available yet.</div>
       ) : (
         <div className="si-table-wrap">
