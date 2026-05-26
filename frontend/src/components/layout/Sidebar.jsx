@@ -80,21 +80,40 @@ export default function Sidebar({
     if (onNavigate) {
       onNavigate(item);
     }
-    // Next.js's <Link> calls history.pushState() to update the URL,
-    // which per spec does NOT fire `hashchange` natively. Without
-    // this synthetic dispatch, useHash() consumers (this Sidebar's
-    // own active-state, the Portfolio Analysis page's scroll effect)
-    // would not react to same-route hash changes — e.g. clicking
-    // "Aggregated portfolio" from "Portfolio analysis" on the same
-    // route would update the URL but no React state. The microtask
-    // defers the dispatch until after Next.js's own onClick handler
-    // runs pushState, so `window.location.hash` is fresh when our
-    // listeners read it.
-    queueMicrotask(() => {
-      if (typeof window !== 'undefined') {
+
+    // Next.js's <Link> updates the URL via history.pushState(), which
+    // per spec does NOT fire `hashchange`. Without a synthetic
+    // dispatch, useHash() consumers (this Sidebar's own active-state,
+    // the Portfolio Analysis page's scroll effect) never react to a
+    // same-route hash change — e.g. clicking "Aggregated portfolio"
+    // from "Portfolio analysis" updates the URL but no React state.
+    //
+    // The catch: Next 16 performs that pushState ASYNCHRONOUSLY, after
+    // our onClick returns (it wraps navigation in a transition). A
+    // microtask — or even setTimeout(0) — therefore fires too early,
+    // while `window.location.hash` still holds the OLD value, so
+    // useHash() reads stale data. That produced a click-twice bug: the
+    // first click's scroll + highlight were lost because the hash the
+    // listeners saw hadn't changed yet; only the second click (URL
+    // already updated) worked.
+    //
+    // So we wait for the URL to actually reflect the clicked target
+    // before dispatching. We poll across animation frames (Next can
+    // take a few hundred ms to settle the navigation) with a timeout
+    // guard so we never loop indefinitely on an unexpected href.
+    if (typeof window === 'undefined') return;
+    const [, targetHash = ''] = item.href.split('#');
+    const wantedHash = targetHash ? `#${targetHash}` : '';
+    const startedAt = performance.now();
+    const dispatchWhenUrlSettles = () => {
+      const settled = window.location.hash === wantedHash;
+      if (settled || performance.now() - startedAt > 1000) {
         window.dispatchEvent(new Event('hashchange'));
+        return;
       }
-    });
+      requestAnimationFrame(dispatchWhenUrlSettles);
+    };
+    requestAnimationFrame(dispatchWhenUrlSettles);
   };
 
   // =========================================================
