@@ -78,10 +78,55 @@ export default function PortfolioAnalysisPage() {
       return;
     }
 
+    const main = mainRef.current;
     const el = document.getElementById(hash);
-    if (!el) return;
-    suppressUntil(800);
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!main || !el) return;
+
+    // Scroll the section to just below the pinned GlobalFilterBar.
+    // `scrollIntoView({ block: 'start' })` would align the section's
+    // top with the scroll-port top, but the bar is `sticky top-0`
+    // inside <main> and stays pinned there — so the header would land
+    // behind it. We offset by the bar's measured height (measured,
+    // not hardcoded, because it tracks the filter controls, which
+    // wrap/grow on narrower viewports).
+    const scrollToSection = (behavior) => {
+      const stickyBar = main.querySelector('[data-portfolio-filter-bar]');
+      const offset = stickyBar ? stickyBar.offsetHeight : 0;
+      const top =
+        main.scrollTop + el.getBoundingClientRect().top - main.getBoundingClientRect().top - offset;
+      main.scrollTo({ top, behavior });
+    };
+
+    // The tricky case is arriving from another route: the Explore
+    // section's charts/tables mount and grow AFTER this first scroll,
+    // pushing the target downward and stranding the section mid-page.
+    // A single scroll therefore lands wrong. Re-pin the section every
+    // time the content settles, for a bounded window, then stop so we
+    // never fight the user's own scrolling. Keep the spy suppressed
+    // for the whole window so it doesn't rewrite the hash mid-settle.
+    const SETTLE_MS = 1500;
+    suppressUntil(SETTLE_MS);
+    scrollToSection('smooth');
+
+    // ResizeObserver delivers an initial callback (current size) just
+    // after observe(); skip that one so the first scroll keeps its
+    // smooth animation, and only re-pin (instantly) on the genuine
+    // later growth when the charts/tables actually mount.
+    const content = main.firstElementChild;
+    let sawInitial = false;
+    const ro = new ResizeObserver(() => {
+      if (!sawInitial) {
+        sawInitial = true;
+        return;
+      }
+      scrollToSection('auto');
+    });
+    if (content) ro.observe(content);
+    const stopTimer = setTimeout(() => ro.disconnect(), SETTLE_MS);
+    return () => {
+      ro.disconnect();
+      clearTimeout(stopTimer);
+    };
   }, [pathname, hash, suppressUntil, consumeSpyWriteFlag]);
 
   return (
