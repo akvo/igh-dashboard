@@ -234,25 +234,37 @@ function applyProductFilters(
   addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
 }
 
-// Count distinct non-stub priorities, mirroring the conditional-join pattern
-// used by `runWomenOrChildrenShare` and `runPriorities`. The dim_disease join
-// is added only when a disease-side or GHA filter is active; without it, the
-// query is a plain COUNT(DISTINCT) on dim_priority, which correctly includes
-// priority key 5 ("Test_TO") whose disease_key is NULL. An unconditional join
-// would silently exclude that row and shift the unfiltered total from 66 → 65.
+// Count distinct non-stub priorities that have at least one active pipeline
+// candidate linked via bridge_candidate_priority. This ensures the total is
+// consistent with the product-type donut (which also counts through the
+// bridge → pipeline path). Priorities without any pipeline candidates are
+// excluded so the headline "4 priorities" matches the donut's total.
 function runTotalPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): { total: number } {
-  const needsDisease = hasAnyDiseaseFilter(filters);
-  const needsProduct = (filters.product_names?.length ?? 0) > 0;
-
-  const joins: string[] = [];
-  const conditions = [NON_EMPTY_PRIORITY];
+  const joins: string[] = [
+    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
+    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
+  ];
+  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
-  if (needsDisease) applyDiseaseFilters(filters, joins, conditions, params);
-  if (needsProduct) applyProductFilters(filters, joins, conditions, params);
+  if (hasAnyDiseaseFilter(filters)) {
+    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
+    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    addArrayCondition(
+      filters.secondary_disease_names,
+      "d.secondary_disease_name",
+      conditions,
+      params,
+    );
+  }
+  if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
+    addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+  }
 
   const sql = `SELECT COUNT(DISTINCT p.priority_key) AS total
                FROM dim_priority p
@@ -326,12 +338,7 @@ function runProductTypeBreakdown(
     "JOIN dim_product pr ON pr.product_key = f.product_key",
     "JOIN dim_disease d ON d.disease_key = f.disease_key",
   ];
-  const conditions = [
-    "f.is_active_flag = 1",
-    PIPELINE_FILTER,
-    NON_EMPTY_PRIORITY,
-    "pr.product_name IS NOT NULL",
-  ];
+  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, NON_EMPTY_PRIORITY];
   const params: (string | number)[] = [];
 
   addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
@@ -346,14 +353,18 @@ function runProductTypeBreakdown(
 
   // Group by GHA + product_name so we can both project the flat donut
   // shape and compute applicableProductNames per GHA in post-processing.
+  // COALESCE handles candidates with a NULL product_name so they appear
+  // as "Other" rather than being silently excluded (the old IS NOT NULL
+  // guard dropped them, causing the donut total to undershoot byArea's
+  // candidatesWithPriority).
   const sql = `SELECT
                  d.global_health_area,
-                 pr.product_name,
+                 COALESCE(pr.product_name, 'Other') AS product_name,
                  COUNT(DISTINCT f.candidate_key) AS candidateCount
                FROM fact_pipeline_snapshot f
                ${joins.join("\n               ")}
                WHERE ${conditions.join("\n                 AND ")}
-               GROUP BY d.global_health_area, pr.product_name`;
+               GROUP BY d.global_health_area, COALESCE(pr.product_name, 'Other')`;
   const rows = db.prepare(sql).all(...params) as Array<{
     global_health_area: string | null;
     product_name: string;
@@ -405,24 +416,35 @@ function runWomenOrChildrenShare(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): PriorityAlignmentWomenChildrenShare {
-  const needsDisease = hasAnyDiseaseFilter(filters);
-  const needsProduct = (filters.product_names?.length ?? 0) > 0;
-
-  const joins: string[] = [];
-  const conditions = [NON_EMPTY_PRIORITY];
+  // Always join through bridge → pipeline so we only count priorities that
+  // have at least one active candidate, keeping the yes+no+unknown total
+  // consistent with totalPriorities and the product-type donut.
+  const joins: string[] = [
+    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
+    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
+  ];
+  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
-  if (needsDisease) applyDiseaseFilters(filters, joins, conditions, params);
-  if (needsProduct) applyProductFilters(filters, joins, conditions, params);
+  if (hasAnyDiseaseFilter(filters)) {
+    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
+    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    addArrayCondition(
+      filters.secondary_disease_names,
+      "d.secondary_disease_name",
+      conditions,
+      params,
+    );
+  }
+  if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
+    addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+  }
 
-  // Use COUNT(DISTINCT) only when the product join is active, because the
-  // bridge_candidate_priority → fact_pipeline_snapshot → dim_product chain
-  // can produce multiple rows per priority (one per matching candidate).
-  // The dim_disease join added by applyDiseaseFilters does NOT fan out —
-  // dim_priority has exactly one disease_key per row (a 1:1 relationship
-  // through to dim_disease), so a plain SUM is safe there and avoids the
-  // overhead of deduplication.
-  const sql = needsProduct ? WC_SQL_FANOUT(joins, conditions) : WC_SQL_SIMPLE(joins, conditions);
+  // The bridge join fans out (one priority → many candidates), so always
+  // use COUNT(DISTINCT) to avoid double-counting priorities.
+  const sql = WC_SQL_FANOUT(joins, conditions);
 
   const row = db.prepare(sql).get(...params) as {
     yes: number | null;
@@ -436,15 +458,31 @@ function runPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): Array<{ priority_key: number; priority_name: string }> {
-  const needsDisease = hasAnyDiseaseFilter(filters);
-  const needsProduct = (filters.product_names?.length ?? 0) > 0;
-
-  const joins: string[] = [];
-  const conditions = [NON_EMPTY_PRIORITY];
+  // Always join through bridge → pipeline so the list only contains
+  // priorities with at least one active candidate, consistent with
+  // totalPriorities and the donuts.
+  const joins: string[] = [
+    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
+    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
+  ];
+  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
-  if (needsDisease) applyDiseaseFilters(filters, joins, conditions, params);
-  if (needsProduct) applyProductFilters(filters, joins, conditions, params);
+  if (hasAnyDiseaseFilter(filters)) {
+    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
+    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    addArrayCondition(
+      filters.secondary_disease_names,
+      "d.secondary_disease_name",
+      conditions,
+      params,
+    );
+  }
+  if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
+    addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+  }
 
   const sql = `SELECT DISTINCT p.priority_key, p.priority_name
                FROM dim_priority p

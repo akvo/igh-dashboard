@@ -90,9 +90,18 @@ export function usePriorityAlignment(
     ].filter((slice) => slice.value > 0);
   }, [payload.womenOrChildrenShare]);
 
+  // Total candidates linked to at least one priority across all GHAs.
+  // Used by consumers to gate donut rendering — when zero, both donuts
+  // should show empty state rather than misleading counts.
+  const candidatesWithPriorityTotal = useMemo(
+    () => payload.byArea.reduce((sum, a) => sum + (a.candidatesWithPriority ?? 0), 0),
+    [payload.byArea],
+  );
+
   return {
     totalPriorities: payload.totalPriorities,
     byArea: payload.byArea,
+    candidatesWithPriorityTotal,
     productTypeChartData,
     diseaseOptions: payload.diseaseOptions,
     womenOrChildrenShare: payload.womenOrChildrenShare,

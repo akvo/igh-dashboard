@@ -319,6 +319,7 @@ export default function Home() {
   const {
     totalPriorities: whoTotalPriorities,
     byArea: whoByArea,
+    candidatesWithPriorityTotal: whoCandidatesWithPriority,
     productTypeChartData: whoProductTypeChartData,
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
@@ -941,7 +942,7 @@ export default function Home() {
                     <div className="h-[280px] flex items-center justify-center">
                       <div className="animate-pulse text-gray-400">Loading chart...</div>
                     </div>
-                  ) : whoProductTypeChartData.length === 0 ? (
+                  ) : whoProductTypeChartData.length === 0 || whoCandidatesWithPriority === 0 ? (
                     <ChartEmptyState variant="donut" height={280} />
                   ) : (
                     <div className="w-full">
@@ -989,7 +990,7 @@ export default function Home() {
                     <div className="h-[280px] flex items-center justify-center">
                       <div className="animate-pulse text-gray-400">Loading chart...</div>
                     </div>
-                  ) : whoWomenChildrenChartData.length === 0 ? (
+                  ) : whoWomenChildrenChartData.length === 0 || whoCandidatesWithPriority === 0 ? (
                     <ChartEmptyState variant="donut" height={280} />
                   ) : (
                     <div className="w-full">

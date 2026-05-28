@@ -109,6 +109,7 @@ export default function PrioritiesOverviewSection() {
   const {
     totalPriorities,
     byArea,
+    candidatesWithPriorityTotal,
     productTypeChartData,
     womenOrChildrenChartData,
     priorities,
@@ -219,7 +220,7 @@ export default function PrioritiesOverviewSection() {
               <div className="h-[280px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>
-            ) : productTypeChartData.length === 0 ? (
+            ) : productTypeChartData.length === 0 || candidatesWithPriorityTotal === 0 ? (
               <ChartEmptyState variant="donut" height={280} />
             ) : (
               <div className="w-full">
@@ -267,7 +268,7 @@ export default function PrioritiesOverviewSection() {
               <div className="h-[280px] flex items-center justify-center">
                 <div className="animate-pulse text-gray-400">Loading chart...</div>
               </div>
-            ) : womenOrChildrenChartData.length === 0 ? (
+            ) : womenOrChildrenChartData.length === 0 || candidatesWithPriorityTotal === 0 ? (
               <ChartEmptyState variant="donut" height={280} />
             ) : (
               <div className="w-full">
