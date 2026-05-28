@@ -164,14 +164,30 @@ interface ResolvedFilters {
 }
 
 // Returns true when at least one disease-side filter axis is active.
-// Extracted to a named helper so it counts as one complexity unit in
-// callers rather than three (one per `||` branch).
 function hasAnyDiseaseFilter(filters: ResolvedFilters): boolean {
   return (
     (filters.global_health_areas?.length ?? 0) > 0 ||
     (filters.primary_disease_names?.length ?? 0) > 0 ||
     (filters.secondary_disease_names?.length ?? 0) > 0
   );
+}
+
+// Priority-side disease rows have `disease_filter = NULL` for 17 of 19
+// priority-bearing diseases (only Mpox is non-null). The OR clause matches
+// on `disease_filter` (candidate-side rows) OR trimmed `disease_name`
+// (priority-side rows), passing the selected names twice for placeholders.
+function applyPrimaryDiseaseCondition(
+  filters: ResolvedFilters,
+  conditions: string[],
+  params: (string | number)[],
+): void {
+  if (filters.primary_disease_names && filters.primary_disease_names.length > 0) {
+    const placeholders = filters.primary_disease_names.map(() => "?").join(", ");
+    conditions.push(
+      `(d.disease_filter IN (${placeholders}) OR TRIM(d.disease_name) IN (${placeholders}))`,
+    );
+    params.push(...filters.primary_disease_names, ...filters.primary_disease_names);
+  }
 }
 
 // Count distinct non-stub priorities that have at least one active pipeline
@@ -183,6 +199,8 @@ function runTotalPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): { total: number } {
+  // Always join through bridge → pipeline so only priorities with at least
+  // one active candidate are counted (keeps total consistent with donuts).
   const joins: string[] = [
     "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
     "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
@@ -190,10 +208,12 @@ function runTotalPriorities(
   const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
 
+  // Disease filter goes through the priority's own disease link (p.disease_key)
+  // not the candidate's, because the user is filtering "priorities about X disease".
   if (hasAnyDiseaseFilter(filters)) {
-    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
     addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    applyPrimaryDiseaseCondition(filters, conditions, params);
     addArrayCondition(
       filters.secondary_disease_names,
       "d.secondary_disease_name",
@@ -357,9 +377,9 @@ function runWomenOrChildrenShare(
   const params: (string | number)[] = [];
 
   if (hasAnyDiseaseFilter(filters)) {
-    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
     addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    applyPrimaryDiseaseCondition(filters, conditions, params);
     addArrayCondition(
       filters.secondary_disease_names,
       "d.secondary_disease_name",
@@ -399,9 +419,9 @@ function runPriorities(
   const params: (string | number)[] = [];
 
   if (hasAnyDiseaseFilter(filters)) {
-    joins.push("JOIN dim_disease d ON d.disease_key = f.disease_key");
+    joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
     addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-    addArrayCondition(filters.primary_disease_names, "d.disease_filter", conditions, params);
+    applyPrimaryDiseaseCondition(filters, conditions, params);
     addArrayCondition(
       filters.secondary_disease_names,
       "d.secondary_disease_name",
@@ -433,12 +453,14 @@ function runPriorities(
 // diseases query. Returns null when no disease filter is active.
 function resolveApplicableDiseaseSelection(
   filters: ResolvedFilters,
-): { column: string; values: string[] } | null {
+): { column: string; values: string[]; useOrClause?: boolean } | null {
   if (filters.secondary_disease_names && filters.secondary_disease_names.length > 0) {
     return { column: "d.secondary_disease_name", values: filters.secondary_disease_names };
   }
   if (filters.primary_disease_names && filters.primary_disease_names.length > 0) {
-    return { column: "d.disease_filter", values: filters.primary_disease_names };
+    // Primary diseases may match via disease_filter OR disease_name (some
+    // priority-side rows have NULL/empty disease_filter).
+    return { column: "d.disease_filter", values: filters.primary_disease_names, useOrClause: true };
   }
   // GHA-only selection intentionally returns null here (→ empty arrays).
   // The title pill on a GHA card only appears when a Disease or Product
@@ -475,11 +497,25 @@ function computeApplicableDiseases(
   const sel = resolveApplicableDiseaseSelection(filters);
   if (!sel) return empty;
 
-  const sql = `SELECT DISTINCT ${sel.column} AS name, d.global_health_area
+  const placeholders = sel.values.map(() => "?").join(", ");
+  let whereClause: string;
+  let params: string[];
+  if (sel.useOrClause) {
+    // Match on disease_filter OR disease_name for primary diseases.
+    whereClause = `(d.disease_filter IN (${placeholders}) OR TRIM(d.disease_name) IN (${placeholders}))`;
+    params = [...sel.values, ...sel.values];
+  } else {
+    whereClause = `${sel.column} IN (${placeholders})`;
+    params = [...sel.values];
+  }
+  // When using the OR clause, return disease_name as the display label
+  // (disease_filter may be NULL/empty for some rows).
+  const nameExpr = sel.useOrClause ? "TRIM(d.disease_name)" : sel.column;
+  const sql = `SELECT DISTINCT ${nameExpr} AS name, d.global_health_area
                FROM dim_disease d
-               WHERE ${sel.column} IN (${sel.values.map(() => "?").join(", ")})
+               WHERE ${whereClause}
                  AND d.global_health_area IS NOT NULL`;
-  const rows = db.prepare(sql).all(...sel.values) as Array<{
+  const rows = db.prepare(sql).all(...params) as Array<{
     name: string;
     global_health_area: string;
   }>;
