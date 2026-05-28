@@ -91,6 +91,12 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     filterKind: "CATEGORY",
     isAggregated: false,
   },
+  sub_product_name: {
+    sqlExpr: "sp.product_name",
+    sortable: true,
+    filterKind: "CATEGORY",
+    isAggregated: false,
+  },
   technology_type: {
     sqlExpr: "t.technology_type",
     sortable: true,
@@ -113,6 +119,72 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sqlExpr: "c.test_format",
     sortable: true,
     filterKind: "CATEGORY",
+    isAggregated: false,
+  },
+  // Additional dimension columns
+  route_of_administration: {
+    sqlExpr: "c.route_of_administration",
+    sortable: true,
+    filterKind: "CATEGORY",
+    isAggregated: false,
+  },
+  technology_principle: {
+    sqlExpr: "c.technology_principle",
+    sortable: true,
+    filterKind: "TEXT",
+    isAggregated: false,
+  },
+  target_population: {
+    sqlExpr: "c.target_population",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: false,
+  },
+  platform: {
+    sqlExpr: "c.platform",
+    sortable: true,
+    filterKind: "CATEGORY",
+    isAggregated: false,
+  },
+  chim_study: {
+    sqlExpr: "c.chim_study",
+    sortable: true,
+    filterKind: "CATEGORY",
+    isAggregated: false,
+  },
+  key_clinical_trial: {
+    sqlExpr: "c.key_clinical_trial",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: false,
+  },
+  known_funders_agg: {
+    sqlExpr: "c.known_funders_agg",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: true,
+  },
+  // Historical R&D stage snapshots (correlated subqueries)
+  rd_stage_2023: {
+    sqlExpr:
+      "(SELECT p23.phase_name FROM fact_pipeline_snapshot f23 " +
+      "JOIN dim_date dt23 ON f23.date_key = dt23.date_key " +
+      "LEFT JOIN dim_phase p23 ON f23.phase_key = p23.phase_key " +
+      "WHERE f23.candidate_key = c.candidate_key AND dt23.year <= 2023 " +
+      "ORDER BY dt23.year DESC LIMIT 1)",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: false,
+  },
+  rd_stage_2019: {
+    sqlExpr:
+      "(SELECT p19.phase_name FROM fact_pipeline_snapshot f19 " +
+      "JOIN dim_date dt19 ON f19.date_key = dt19.date_key " +
+      "LEFT JOIN dim_phase p19 ON f19.phase_key = p19.phase_key " +
+      "WHERE f19.candidate_key = c.candidate_key AND dt19.year <= 2019 " +
+      "ORDER BY dt19.year DESC LIMIT 1)",
+    sortable: false,
+    filterKind: "TEXT",
     isAggregated: false,
   },
   // Free text
@@ -287,6 +359,16 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
     filterKind: "TEXT",
     isAggregated: false,
   },
+  age_groups: { sqlExpr: "t.age_groups", sortable: false, filterKind: "TEXT", isAggregated: false },
+  disease_name: { sqlExpr: "d.disease_filter", sortable: true, filterKind: "CATEGORY", isAggregated: false },
+  funder_type: { sqlExpr: "t.funder_type", sortable: true, filterKind: "CATEGORY", isAggregated: false },
+  interventions: { sqlExpr: "t.interventions", sortable: false, filterKind: "TEXT", isAggregated: false },
+  outcome_measure: { sqlExpr: "t.outcome_measure", sortable: false, filterKind: "TEXT", isAggregated: false },
+  sex: { sqlExpr: "t.sex", sortable: true, filterKind: "CATEGORY", isAggregated: false },
+  study_design: { sqlExpr: "t.study_design", sortable: false, filterKind: "TEXT", isAggregated: false },
+  study_type: { sqlExpr: "t.study_type", sortable: true, filterKind: "CATEGORY", isAggregated: false },
+  ct_results_type: { sqlExpr: "t.ct_results_type", sortable: true, filterKind: "CATEGORY", isAggregated: false },
+  ct_terminated_reason: { sqlExpr: "t.ct_terminated_reason", sortable: false, filterKind: "TEXT", isAggregated: false },
 };
 
 // R&D priorities (no candidate join). The priority table is aliased
@@ -325,6 +407,12 @@ const RD_PRIORITIES: Record<string, ColumnDef> = {
     filterKind: "CATEGORY",
     isAggregated: false,
   },
+  author: { sqlExpr: "p.author", sortable: true, filterKind: "TEXT", isAggregated: false },
+  publication_date: { sqlExpr: "p.publication_date", sortable: true, filterKind: "TEXT", isAggregated: false },
+  target_population: { sqlExpr: "p.target_population", sortable: false, filterKind: "TEXT", isAggregated: false },
+  efficacy: { sqlExpr: "p.efficacy", sortable: false, filterKind: "TEXT", isAggregated: false },
+  safety: { sqlExpr: "p.safety", sortable: false, filterKind: "TEXT", isAggregated: false },
+  source: { sqlExpr: "p.source", sortable: false, filterKind: "TEXT", isAggregated: false },
 };
 
 // R&D priorities WITH candidates (inherits scalar columns + candidate cols).

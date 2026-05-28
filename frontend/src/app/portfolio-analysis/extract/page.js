@@ -656,7 +656,11 @@ function ExtractDataTable({
   // EXTRACT_TAB_COLUMNS), which DataTable's positional-freeze + the
   // popover's locked-checkbox combination treats as the sticky
   // always-on column. No synthetic prefix column needed.
-  const columns = activeExtractColumns.map((col) => ({
+  //
+  // Pass ALL available columns to DataTable so the ColumnsPopover can
+  // always show the full list (even after "Clear"). The `visibleColumns`
+  // prop controls which columns actually render in the table.
+  const columns = availableColumns.map((col) => ({
     header: col.label,
     accessor: col.accessor || col.id,
     ...(col.render && { render: col.render }),

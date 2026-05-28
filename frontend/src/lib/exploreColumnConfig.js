@@ -67,6 +67,7 @@ export function buildCandidateColumns({ onExplore } = {}) {
       filter: { kind: 'category' },
     },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
+    { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     // Aggregated string column — TEXT-only per the backend column registry.
     { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
     // Free-text columns (no deterministic sort).
@@ -132,6 +133,7 @@ export function buildApprovedProductColumns({ onExplore } = {}) {
       filter: { kind: 'category' },
     },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
+    { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
     { header: 'Indication', accessor: 'indication', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
     { header: 'Indication type', accessor: 'indication_type', filter: { kind: 'category' } },
