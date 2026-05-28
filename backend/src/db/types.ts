@@ -470,6 +470,8 @@ export interface RegulatoryDistribution {
 export interface ProductDistributionRow {
   product_name: string;
   candidateCount: number;
+  techTypeCount: number;
+  approvedProductCount: number;
 }
 
 // =============================================================================

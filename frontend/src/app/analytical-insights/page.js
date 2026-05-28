@@ -115,7 +115,7 @@ function MiniDonut({ percentage, color, size = 56 }) {
   );
 }
 
-function BarTooltip({ active, payload, label }) {
+function BarTooltip({ active, payload, label, labelMap }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm">
@@ -123,7 +123,7 @@ function BarTooltip({ active, payload, label }) {
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: p.fill || p.color }} />
-          <span className="text-gray-600">{p.dataKey}:</span>
+          <span className="text-gray-600">{labelMap?.[p.dataKey] || p.name || p.dataKey}:</span>
           <span className="font-medium text-black">{p.value}</span>
         </div>
       ))}
@@ -397,6 +397,18 @@ export default function AnalyticalInsights() {
     { sort: techAccSortVar, skip: (!selectedDisease && !selectedTechType) || !candidatesAccordionOpen },
   );
 
+  // Approved products count for Level 3 (disease-level) — same filters + candidate_type='Product', limit 0 for count only
+  const { totalCount: techAccApprovedCount } = usePortfolioCandidates(
+    {
+      columnFilters: techAccColumnFilters,
+      productNames: techAccProductNames,
+      candidateType: 'Product',
+    },
+    0,
+    0,
+    { skip: (!selectedDisease && !selectedTechType) || !candidatesAccordionOpen },
+  );
+
   // Reset accordion table page when tech type / disease changes
   useEffect(() => {
     setTechAccPage(1);
@@ -417,7 +429,11 @@ export default function AnalyticalInsights() {
 
   const techAccColumns = useMemo(
     () => buildCandidateColumns({
-      onExplore: (row) => { setSlideInOpen('candidate'); setSlideInKey(row.candidate_key); },
+      onExplore: (row) => {
+        const type = row.candidate_type === 'Product' ? 'product' : 'candidate';
+        setSlideInOpen(type);
+        setSlideInKey(row.candidate_key);
+      },
     }),
     [setSlideInOpen, setSlideInKey],
   );
@@ -473,16 +489,20 @@ export default function AnalyticalInsights() {
   const productTypeCards = useMemo(() => {
     if (!productChartData?.length) return [];
     let vcpTotal = 0;
+    let vcpTechTypes = 0;
+    let vcpApproved = 0;
     const rest = [];
     for (const p of productChartData) {
       if (VECTOR_CONTROL_PRODUCT_NAMES.includes(p.name)) {
         vcpTotal += p.value;
+        vcpTechTypes += p.techTypeCount || 0;
+        vcpApproved += p.approvedProductCount || 0;
       } else {
-        rest.push({ name: p.name, candidates: p.value });
+        rest.push({ name: p.name, candidates: p.value, techTypes: p.techTypeCount || 0, approvedProducts: p.approvedProductCount || 0 });
       }
     }
     if (vcpTotal > 0) {
-      rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal });
+      rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal, techTypes: vcpTechTypes, approvedProducts: vcpApproved });
     }
     return rest.sort((a, b) => b.candidates - a.candidates);
   }, [productChartData]);
@@ -522,10 +542,31 @@ export default function AnalyticalInsights() {
     return 0;
   }, [selectedProductType, productTypeCards]);
 
+  // Level 1: approved products for the selected product type
+  const selectedProductApprovedTotal = useMemo(() => {
+    if (selectedProductType) {
+      const card = productTypeCards.find((c) => c.name === selectedProductType);
+      if (card) return card.approvedProducts;
+    }
+    return 0;
+  }, [selectedProductType, productTypeCards]);
+
+  // Level 2: approved products for the selected tech type (from approved phase key in chart data)
+  const selectedTechTypeApproved = useMemo(() => {
+    if (!selectedTechType || !techChartData?.length) return 0;
+    const row = techChartData.find((r) => r.technology_type === selectedTechType);
+    return row?.approved || 0;
+  }, [selectedTechType, techChartData]);
+
   const techPhases = useMemo(() => {
     if (technologyPhases?.length) return technologyPhases;
     return TECH_PHASES;
   }, [technologyPhases]);
+
+  const techPhaseLabelMap = useMemo(() =>
+    Object.fromEntries(techPhases.map((p) => [p.key, p.label])),
+    [techPhases],
+  );
 
   // Disease coverage for selected tech type (filtered by product + tech type)
   const diseaseCoverageData = useMemo(() => {
@@ -967,9 +1008,6 @@ export default function AnalyticalInsights() {
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
                     <h3 className="text-base sm:text-lg font-bold text-black">Product types and their technologies</h3>
-                    <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-                      {selectedProductCandidateTotal} candidates
-                    </span>
                   </div>
                 </div>
                 <p className="text-sm text-gray-500 mb-6">
@@ -1014,10 +1052,10 @@ export default function AnalyticalInsights() {
                           </span>
                         </div>
                         <div className="text-[32px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
-                          {pt.candidates}
+                          {pt.techTypes}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Candidates
+                          Technology types with {pt.candidates} candidates
                         </p>
                       </button>
                     );
@@ -1072,9 +1110,14 @@ export default function AnalyticalInsights() {
                             : selectedProductType || 'All'}
                         </h4>
                         {selectedProductType && (
-                          <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-                            {selectedProductCandidateTotal} candidates
-                          </span>
+                          <>
+                            <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                              {selectedProductCandidateTotal} candidates
+                            </span>
+                            <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                              {selectedProductApprovedTotal} approved products
+                            </span>
+                          </>
                         )}
                         <div className="flex-1" />
                         {isVcpSelected && vcpSubProduct && (
@@ -1115,7 +1158,7 @@ export default function AnalyticalInsights() {
                               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                               <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: 'Number of candidates and approved products', position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
                               <YAxis type="category" dataKey="technology_type" width={200} tick={{ fontSize: 11 }} />
-                              <Tooltip content={<BarTooltip />} />
+                              <Tooltip content={<BarTooltip labelMap={techPhaseLabelMap} />} />
                               {techPhases.map((p) => (
                                 <Bar
                                   key={p.key}
@@ -1169,6 +1212,9 @@ export default function AnalyticalInsights() {
                             </h4>
                             <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
                               {diseaseCoverageData.reduce((s, d) => s + d.value, 0)} candidates
+                            </span>
+                            <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                              {selectedTechTypeApproved} approved products
                             </span>
                           </div>
                           <p className="text-sm text-gray-500 mb-4">
@@ -1231,6 +1277,9 @@ export default function AnalyticalInsights() {
                             </h4>
                             <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
                               {techAccTotalCount} candidates
+                            </span>
+                            <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                              {techAccApprovedCount} approved products
                             </span>
                           </div>
                           <DataTable

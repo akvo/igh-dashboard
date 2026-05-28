@@ -379,16 +379,20 @@ export default function AggregatedSection() {
   const techProductTypeCards = useMemo(() => {
     if (!productDistData?.length) return [];
     let vcpTotal = 0;
+    let vcpTechTypes = 0;
+    let vcpApproved = 0;
     const rest = [];
     for (const p of productDistData) {
       if (VECTOR_CONTROL_PRODUCT_NAMES.includes(p.name)) {
         vcpTotal += p.value;
+        vcpTechTypes += p.techTypeCount || 0;
+        vcpApproved += p.approvedProductCount || 0;
       } else {
-        rest.push({ name: p.name, candidates: p.value });
+        rest.push({ name: p.name, candidates: p.value, techTypes: p.techTypeCount || 0, approvedProducts: p.approvedProductCount || 0 });
       }
     }
     if (vcpTotal > 0) {
-      rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal });
+      rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal, techTypes: vcpTechTypes, approvedProducts: vcpApproved });
     }
     return rest.sort((a, b) => b.candidates - a.candidates);
   }, [productDistData]);
@@ -441,6 +445,14 @@ export default function AggregatedSection() {
     if (selectedProductType) {
       const card = techProductTypeCards.find((c) => c.name === selectedProductType);
       if (card) return card.candidates;
+    }
+    return 0;
+  }, [selectedProductType, techProductTypeCards]);
+
+  const selectedProductApprovedTotal = useMemo(() => {
+    if (selectedProductType) {
+      const card = techProductTypeCards.find((c) => c.name === selectedProductType);
+      if (card) return card.approvedProducts;
     }
     return 0;
   }, [selectedProductType, techProductTypeCards]);
@@ -1103,9 +1115,6 @@ export default function AggregatedSection() {
               <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-3">
                   <h4 className="text-xl font-bold text-black leading-none">Product types and their technologies</h4>
-                  <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-                    {selectedProductCandidateTotal} candidates
-                  </span>
                 </div>
               </div>
               <p className="text-sm text-gray-500 mb-6">
@@ -1146,9 +1155,9 @@ export default function AggregatedSection() {
                         </span>
                       </div>
                       <div className="text-[32px] font-extrabold text-black leading-tight" style={{ fontFamily: 'var(--font-align), system-ui, sans-serif' }}>
-                        {pt.candidates}
+                        {pt.techTypes}
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">Candidates</p>
+                      <p className="text-xs text-gray-500 mt-1">Technology types with {pt.candidates} candidates</p>
                     </button>
                   );
                 })}
@@ -1194,9 +1203,14 @@ export default function AggregatedSection() {
                           : selectedProductType || 'All'}
                       </h4>
                       {selectedProductType && (
-                        <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-                          {selectedProductCandidateTotal} candidates
-                        </span>
+                        <>
+                          <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                            {selectedProductCandidateTotal} candidates
+                          </span>
+                          <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+                            {selectedProductApprovedTotal} approved products
+                          </span>
+                        </>
                       )}
                       <div className="flex-1" />
                       {isVcpSelected && vcpSubProduct && (

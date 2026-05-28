@@ -31,7 +31,12 @@ export function useProductDistribution(globalHealthAreas, primaryDiseaseNames, s
   const rawData = cachedData || data?.productDistribution || [];
 
   const chartData = useMemo(() =>
-    rawData.map(row => ({ name: row.product_name, value: row.candidateCount })),
+    rawData.map(row => ({
+      name: row.product_name,
+      value: row.candidateCount,
+      techTypeCount: row.techTypeCount || 0,
+      approvedProductCount: row.approvedProductCount || 0,
+    })),
     [rawData]
   );
 

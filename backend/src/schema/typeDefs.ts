@@ -230,6 +230,8 @@ export const typeDefs = `#graphql
   type ProductDistributionRow {
     product_name: String!
     candidateCount: Int!
+    techTypeCount: Int!
+    approvedProductCount: Int!
   }
 
   type ClinicalTrialStatusRow {

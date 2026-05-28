@@ -278,6 +278,8 @@ export const GET_PRODUCT_DISTRIBUTION = gql`
     productDistribution(global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, product_names: $productNames, phase_names: $phaseNames, candidate_type: $candidateType) {
       product_name
       candidateCount
+      techTypeCount
+      approvedProductCount
     }
   }
 `;

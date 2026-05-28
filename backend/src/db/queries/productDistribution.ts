@@ -51,16 +51,46 @@ export function getProductDistribution(
   const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
   addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 
+  // Snapshot the joins/conditions BEFORE the candidate_type filter so we
+  // can build an approved-products subquery that is not restricted to a
+  // single candidate_type.
+  const preTypeJoins = [...joins];
+  const preTypeConditions = [...conditions];
+  const preTypeParams = [...params];
+
   if (filters?.candidate_type) {
     joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");
     conditions.push("c.candidate_type = ?");
     params.push(filters.candidate_type);
   }
 
+  joins.push("LEFT JOIN dim_candidate_tech ct ON f.technology_key = ct.technology_key");
+
+  // Approved-products subquery: counts Products per product_name using
+  // the same base filters (GHA, disease, phase) but without the
+  // candidate_type restriction.
+  const apJoins = [
+    ...preTypeJoins,
+    "JOIN dim_candidate_core ap_c ON ap.candidate_key = ap_c.candidate_key",
+  ].map((j) => j.replace(/\bf\./g, "ap."));
+
+  const apConditions = [
+    ...preTypeConditions.map((c) => c.replace(/\bf\./g, "ap.")),
+    "ap_c.candidate_type = 'Product'",
+    "ap.product_key = f.product_key",
+  ];
+
   const sql = `
     SELECT
       pr.product_name,
-      COUNT(DISTINCT f.candidate_key) as candidateCount
+      COUNT(DISTINCT f.candidate_key) as candidateCount,
+      COUNT(DISTINCT ct.technology_type) as techTypeCount,
+      (
+        SELECT COUNT(DISTINCT ap.candidate_key)
+        FROM fact_pipeline_snapshot ap
+        ${apJoins.join("\n        ")}
+        WHERE ${apConditions.join("\n          AND ")}
+      ) as approvedProductCount
     FROM fact_pipeline_snapshot f
     ${joins.join("\n    ")}
     WHERE ${conditions.join("\n      AND ")}
@@ -68,5 +98,8 @@ export function getProductDistribution(
     ORDER BY candidateCount DESC
   `;
 
-  return db.prepare(sql).all(...params) as ProductDistributionRow[];
+  // The subquery's ? placeholders come first in the SQL, then the main
+  // query's. preTypeParams covers the subquery; params covers the main.
+  const allParams = [...preTypeParams, ...params];
+  return db.prepare(sql).all(...allParams) as ProductDistributionRow[];
 }
