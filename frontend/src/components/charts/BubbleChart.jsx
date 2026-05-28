@@ -123,22 +123,24 @@ export default function BubbleChart({
     // rank: largest → total-1, smallest → 0. Leaves are already sorted
     // descending by .sort() above, so rank = (total - 1 - index).
     const total = leaves.length;
-    return leaves.map((leaf, i) => {
-      const rank = total - 1 - i;
-      const datum = leaf.data;
-      const fill =
+    // First pass: build bubble objects without fill so we can pass the
+    // full list to group-aware color scales.
+    const rawBubbles = leaves.map((leaf, i) => ({
+      datum: leaf.data,
+      x: leaf.x,
+      y: leaf.y,
+      r: leaf.r,
+      rank: total - 1 - i,
+    }));
+    // Second pass: resolve fill. The 4th arg (`allBubbles`) lets
+    // group-aware scales rank within a GHA group.
+    return rawBubbles.map((b, i) => ({
+      ...b,
+      fill:
         typeof colorScale === 'function'
-          ? colorScale(datum, rank, total)
-          : colors[i % colors.length];
-      return {
-        datum,
-        x: leaf.x,
-        y: leaf.y,
-        r: leaf.r,
-        fill,
-        rank,
-      };
-    });
+          ? colorScale(b.datum, b.rank, total, rawBubbles)
+          : colors[i % colors.length],
+    }));
   }, [data, colors, colorScale, gap, valueKey]);
 
   // Stable per-bubble key — prefer an explicit `key`/`id` field, else fall

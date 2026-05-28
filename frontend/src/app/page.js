@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
-import { createBubbleColorScale } from '@/lib/bubbleColorScale';
+import { createBubbleColorScale, createGhaGroupColorScale } from '@/lib/bubbleColorScale';
 import { buildCSV, downloadCSV as downloadCSVFile } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
@@ -190,12 +190,17 @@ export default function Home() {
     : bubbleView === 'disease' ? diseaseBubbleLoading
     : diseaseTypeLoading;
 
-  // Per-view bubble color scale. The palette is ordered light → dark;
-  // smallest bubble (rank 0) lands on the lightest stop, largest on the
-  // darkest. See `createBubbleColorScale` for the proportional indexing.
+  // Per-view bubble color scale. GHA tab uses a single ramp (rank-based);
+  // sub-tabs colour each bubble by its parent GHA's gradient.
   const bubbleColorScale = useMemo(() => {
-    const palette = chartColors.bubbleRamps[bubbleView] || chartColors.bubbleRamps.gha;
-    return createBubbleColorScale(palette);
+    if (bubbleView === 'gha') {
+      const palette = chartColors.bubbleRamps.gha;
+      return createBubbleColorScale(palette);
+    }
+    return createGhaGroupColorScale(
+      chartColors.ghaGradients,
+      chartColors.bubbleRamps.gha,
+    );
   }, [bubbleView]);
 
   const renderBubbleTooltip = useCallback((d) => {

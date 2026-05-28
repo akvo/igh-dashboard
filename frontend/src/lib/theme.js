@@ -169,17 +169,24 @@ export const chartColors = {
       '#ffbfab', '#fea285', '#fe906d', '#fe7449',
       '#e76a42', '#b45234', '#8c4028',
     ],
-    ghaType: [
-      '#deeef4', '#cee6ef', '#b7dbe8', '#a9d4e4', '#94c9dd',
-      '#87b7c9', '#698f9d', '#516f7a', '#3e545d',
+  },
+  // Per-GHA gradient ramps (light → dark) keyed by display name.
+  // Sub-tab views colour each bubble by its parent GHA using these.
+  ghaGradients: {
+    // Dark brown family (matches Neglected diseases in GHA tab)
+    'Neglected diseases': [
+      '#dbb5a6', '#c99a87', '#b8806a', '#a7684f',
+      '#955339', '#7d4028', '#65301e',
     ],
-    disease: [
-      '#dcf2e4', '#cbecd7', '#b3e4c5', '#a4deba', '#8dd6a9',
-      '#80c39a', '#649878', '#4e765d', '#3b5a47',
+    // Mid orange family (matches Emerging infectious diseases in GHA tab)
+    'Emerging infectious diseases': [
+      '#ffd4be', '#feb99a', '#fe9e76', '#fe8455',
+      '#e76a42', '#c45636', '#9e442b',
     ],
-    diseaseType: [
-      '#fae8cb', '#f8ddb1', '#f5cd8e', '#f3c378', '#f0b456',
-      '#daa44e', '#aa803d', '#84632f', '#654c24',
+    // Peach family (matches Women's health in GHA tab)
+    "Women's health": [
+      '#ffe5d8', '#ffd5c4', '#ffc5b0', '#ffb59c',
+      '#fea285', '#e08d72', '#bf7760',
     ],
   },
 };

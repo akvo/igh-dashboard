@@ -24,3 +24,37 @@ export function createBubbleColorScale(palette) {
     return palette[idx];
   };
 }
+
+/**
+ * GHA-aware color scale for sub-tab views (disease, product type, etc.).
+ *
+ * Each bubble is coloured according to its parent GHA's gradient ramp.
+ * Within each GHA group the shade is proportional to the bubble's value
+ * rank within that group — biggest bubble gets the darkest stop, smallest
+ * gets the lightest.
+ *
+ * @param {Record<string, string[]>} ghaGradients  GHA display name → palette
+ * @param {string[]} fallbackPalette                Used when a GHA has no entry
+ * @param {string}   [groupKey='group']             Datum field holding the GHA name
+ */
+export function createGhaGroupColorScale(ghaGradients, fallbackPalette, groupKey = 'group') {
+  return (datum, _rank, _total, allBubbles) => {
+    const gha = datum?.[groupKey];
+    const palette = (gha && ghaGradients[gha]) || fallbackPalette;
+    const last = palette.length - 1;
+
+    // If no allBubbles context, use middle stop.
+    if (!allBubbles) return palette[Math.floor(last / 2)];
+
+    // Rank within the GHA group by value (descending).
+    const siblings = allBubbles
+      .filter((b) => b.datum?.[groupKey] === gha)
+      .sort((a, b) => b.datum.value - a.datum.value);
+    const groupTotal = siblings.length;
+    if (groupTotal <= 1) return palette[last];
+
+    const idx = siblings.findIndex((b) => b.datum === datum);
+    const rank = groupTotal - 1 - idx; // 0 = smallest, groupTotal-1 = largest
+    return palette[Math.round((rank / (groupTotal - 1)) * last)];
+  };
+}
