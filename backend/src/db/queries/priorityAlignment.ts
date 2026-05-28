@@ -174,66 +174,6 @@ function hasAnyDiseaseFilter(filters: ResolvedFilters): boolean {
   );
 }
 
-// Append disease-side conditions (GHA + primary + secondary) to the
-// provided mutable joins/conditions/params arrays.
-function applyDiseaseFilters(
-  filters: ResolvedFilters,
-  joins: string[],
-  conditions: string[],
-  params: (string | number)[],
-): void {
-  joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
-  addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
-
-  // The gold DB contains two kinds of dim_disease rows that reference the
-  // same conceptual disease:
-  //
-  //   - Candidate-side rows (joined via fact_pipeline_snapshot) have
-  //     `disease_filter` populated for almost every disease in the
-  //     hierarchical filter (e.g. `disease_filter = 'Malaria'`).
-  //   - Priority-side rows (joined from dim_priority.disease_key) have
-  //     `disease_filter = NULL` for 17 of the 19 priority-bearing diseases —
-  //     only Mpox carries a non-null `disease_filter`. These rows DO carry
-  //     the clean disease name in `disease_name`, but with a trailing space
-  //     (e.g. `'Malaria '`).
-  //
-  // Matching on `disease_filter` alone therefore returns zero priorities for
-  // all diseases except Mpox. The OR clause below makes both sides work: we
-  // accept a match on `disease_filter` (candidate-side) OR on the trimmed
-  // `disease_name` (priority-side), passing the selected names twice so each
-  // placeholder gets a value.
-  if (filters.primary_disease_names && filters.primary_disease_names.length > 0) {
-    const placeholders = filters.primary_disease_names.map(() => "?").join(", ");
-    conditions.push(
-      `(d.disease_filter IN (${placeholders}) OR TRIM(d.disease_name) IN (${placeholders}))`,
-    );
-    params.push(...filters.primary_disease_names, ...filters.primary_disease_names);
-  }
-
-  addArrayCondition(
-    filters.secondary_disease_names,
-    "d.secondary_disease_name",
-    conditions,
-    params,
-  );
-}
-
-// Append product-side conditions via the candidate bridge to the
-// provided mutable joins/conditions/params arrays.
-function applyProductFilters(
-  filters: ResolvedFilters,
-  joins: string[],
-  conditions: string[],
-  params: (string | number)[],
-): void {
-  joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
-  joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
-  joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
-  conditions.push("f.is_active_flag = 1");
-  conditions.push(PIPELINE_FILTER);
-  addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
-}
-
 // Count distinct non-stub priorities that have at least one active pipeline
 // candidate linked via bridge_candidate_priority. This ensures the total is
 // consistent with the product-type donut (which also counts through the
@@ -398,16 +338,6 @@ const WC_SQL_FANOUT = (joins: string[], conditions: string[]) =>
      COUNT(DISTINCT CASE WHEN p.dedicated_to_women_or_children IS NULL
                           OR p.dedicated_to_women_or_children NOT IN ('Yes','No')
                           THEN p.priority_key END) AS unknown
-   FROM dim_priority p
-   ${joins.join("\n   ")}
-   WHERE ${conditions.join("\n     AND ")}`;
-
-const WC_SQL_SIMPLE = (joins: string[], conditions: string[]) =>
-  `SELECT
-     SUM(CASE WHEN p.dedicated_to_women_or_children = 'Yes' THEN 1 ELSE 0 END) AS yes,
-     SUM(CASE WHEN p.dedicated_to_women_or_children = 'No' THEN 1 ELSE 0 END) AS no,
-     SUM(CASE WHEN p.dedicated_to_women_or_children IS NULL
-                OR p.dedicated_to_women_or_children NOT IN ('Yes','No') THEN 1 ELSE 0 END) AS unknown
    FROM dim_priority p
    ${joins.join("\n   ")}
    WHERE ${conditions.join("\n     AND ")}`;
