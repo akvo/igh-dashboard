@@ -9,8 +9,10 @@ interface DiseaseFilters {
 }
 
 /**
- * Bubble-chart view: scale of R&D by disease (disease_group_name).
- * One row per disease, counting distinct candidates and products.
+ * Bubble-chart view: scale of R&D by primary disease (disease_filter).
+ * One row per primary disease, counting distinct candidates and products.
+ * Aggregates sub-types (e.g. P. falciparum, P. vivax) under their parent
+ * primary disease (e.g. Malaria) so each primary appears as a single bubble.
  * global_health_area is preserved so the frontend can group or style
  * by GHA if ever needed.
  */
@@ -24,7 +26,8 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
   const conditions = [
     "f.is_active_flag = 1",
     PIPELINE_FILTER,
-    "d.disease_group_name IS NOT NULL",
+    "d.disease_filter IS NOT NULL",
+    "d.disease_filter <> ''",
     "d.global_health_area IS NOT NULL",
   ];
   const params: (string | number)[] = [];
@@ -46,14 +49,14 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
 
   const sql = `
     SELECT
-      d.disease_group_name,
+      d.disease_filter AS disease_group_name,
       d.global_health_area,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Candidate' THEN f.candidate_key END) as candidateCount,
       COUNT(DISTINCT CASE WHEN c.candidate_type = 'Product' THEN f.candidate_key END) as productCount
     FROM fact_pipeline_snapshot f
     ${joins.join("\n    ")}
     WHERE ${conditions.join("\n      AND ")}
-    GROUP BY d.disease_group_name, d.global_health_area
+    GROUP BY d.disease_filter, d.global_health_area
     ORDER BY candidateCount DESC, productCount DESC
   `;
 
