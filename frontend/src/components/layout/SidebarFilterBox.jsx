@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Dropdown } from '@/components/ui';
-import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import {
   FilterIcon,
   PlusIcon,
   CloseIcon,
 } from '@/components/icons';
 import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 
 export default function SidebarFilterBox({ isExpanded }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,24 +30,68 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setSecondary,
     setProduct,
     setRdPhase,
-    healthAreaOptions,
-    narrowedHierarchy,
-    productOptions,
-    rdPhaseOptions,
     hasFilters,
-    clearAll,
+    clearAll: clearGlobal,
   } = useGlobalFilters();
 
-  // Count of filter categories that have an active selection.
-  const filterCount = [
-    healthArea.length > 0,
-    primary.length > 0 || secondary.length > 0,
-    product.length > 0,
-    rdPhase.length > 0,
-  ].filter(Boolean).length;
+  // Section-local URL-state filters (home page + cross-pipeline analytics).
+  // Reading them here lets the sidebar reflect all active filters regardless
+  // of which page/section set them.
+  const [hProduct, setHProduct] = useUrlState('hProduct', [], arraySerializer);
+  const [hRdStage, setHRdStage] = useUrlState('hRdStage', [], arraySerializer);
+  const [crossGha, setCrossGha] = useUrlState('crossGha', [], arraySerializer);
+  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
+  const [ttYear, setTtYear] = useUrlState('ttYear', [], arraySerializer);
+  const [cpYear, setCpYear] = useUrlState('cpYear', '', stringSerializer);
 
-  // Total filter categories available.
-  const totalCategories = 4;
+  // Aggregate counts across global + section-local filters per category.
+  const ghaCount = healthArea.length + crossGha.length;
+  const diseaseCount = primary.length + secondary.length;
+  const productCount = product.length + hProduct.length + crossProduct.length;
+  const rdStageCount = rdPhase.length + hRdStage.length;
+  const yearCount = ttYear.length + (cpYear ? 1 : 0);
+
+  const activeCount = ghaCount + diseaseCount + productCount + rdStageCount + yearCount;
+  const hasAnyFilters = activeCount > 0;
+
+  const clearAll = () => {
+    clearGlobal();
+    setHProduct([]);
+    setHRdStage([]);
+    setCrossGha([]);
+    setCrossProduct([]);
+    setTtYear([]);
+    setCpYear('');
+  };
+
+  // Filter category definitions for the list view.
+  const categories = [
+    {
+      label: 'Global health area',
+      count: ghaCount,
+      clear: () => { setHealthArea([]); setCrossGha([]); },
+    },
+    {
+      label: 'Disease',
+      count: diseaseCount,
+      clear: () => { setPrimary([]); setSecondary([]); },
+    },
+    {
+      label: 'Product',
+      count: productCount,
+      clear: () => { setProduct([]); setHProduct([]); setCrossProduct([]); },
+    },
+    {
+      label: 'R&D stage',
+      count: rdStageCount,
+      clear: () => { setRdPhase([]); setHRdStage([]); },
+    },
+    {
+      label: 'Year',
+      count: yearCount,
+      clear: () => { setTtYear([]); setCpYear(''); },
+    },
+  ];
 
   // Collapsed sidebar: just show filter icon.
   if (!isExpanded) {
@@ -59,9 +103,9 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
           title="Filters"
         >
           <FilterIcon className="w-5 h-5 text-sidebar-icon" strokeWidth={2.5} />
-          {filterCount > 0 && (
+          {activeCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-              {filterCount}
+              {activeCount}
             </span>
           )}
         </button>
@@ -75,11 +119,13 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
       <div className="px-3 py-2">
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-black/[0.03] rounded-lg hover:bg-sidebar-hover transition-colors border-0 cursor-pointer"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white hover:bg-sidebar-hover transition-colors border-0 cursor-pointer"
         >
           <span className="flex items-center gap-2">
             <span className="text-sm font-semibold text-black">Filters</span>
-            <span className="text-sm font-semibold text-orange-500">{totalCategories}</span>
+            {activeCount > 0 && (
+              <span className="text-sm font-semibold text-orange-500">{activeCount} Active</span>
+            )}
           </span>
           <PlusIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
         </button>
@@ -90,19 +136,21 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
   // Expanded sidebar, open filter box.
   return (
     <div className="px-3 py-2">
-      <div className="bg-black/[0.03] rounded-lg p-3">
+      <div className="rounded-lg bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between px-3 pt-3 pb-2 rounded-t-lg bg-white">
           <span className="flex items-center gap-2">
             <span className="text-sm font-semibold text-black">Filters</span>
-            <span className="text-sm font-semibold text-orange-500">{totalCategories}</span>
+            {activeCount > 0 && (
+              <span className="text-sm font-semibold text-orange-500">{activeCount} Active</span>
+            )}
           </span>
           <div className="flex items-center gap-2">
             <button
               onClick={clearAll}
-              disabled={!hasFilters}
+              disabled={!hasAnyFilters}
               className={`text-xs border-0 bg-transparent cursor-pointer ${
-                hasFilters
+                hasAnyFilters
                   ? 'text-gray-600 hover:text-black'
                   : 'text-gray-300 cursor-not-allowed'
               }`}
@@ -118,55 +166,32 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
           </div>
         </div>
 
-        {/* Filter dropdowns */}
-        <div className="space-y-3">
-          <div>
-            <Dropdown
-              label="Global health area"
-              value={healthArea}
-              onChange={setHealthArea}
-              placeholder="All"
-              options={healthAreaOptions}
-              multiSelect={true}
-              variant="outlined"
-            />
-          </div>
-          <div>
-            <HierarchicalDiseaseFilter
-              label="Disease"
-              hierarchy={narrowedHierarchy}
-              primarySelected={primary}
-              secondarySelected={secondary}
-              onChange={({ primarySelected, secondarySelected }) => {
-                setPrimary(primarySelected);
-                setSecondary(secondarySelected);
-              }}
-              placeholder="All"
-              variant="outlined"
-            />
-          </div>
-          <div>
-            <Dropdown
-              label="Product"
-              value={product}
-              onChange={setProduct}
-              placeholder="All"
-              options={productOptions}
-              multiSelect={true}
-              variant="outlined"
-            />
-          </div>
-          <div>
-            <Dropdown
-              label="Select R&D stage"
-              value={rdPhase}
-              onChange={setRdPhase}
-              placeholder="Select option"
-              options={rdPhaseOptions}
-              multiSelect={true}
-              variant="outlined"
-            />
-          </div>
+        <div className="mx-3 border-t border-orange-500" />
+
+        {/* Filter category rows */}
+        <div className="divide-y divide-gray-200">
+          {categories.map((cat) => (
+            <div key={cat.label} className="flex items-center justify-between px-3 py-2.5">
+              <span className="flex items-center gap-2">
+                <span className="text-sm text-black">{cat.label}</span>
+                {cat.count > 0 && (
+                  <span className="text-sm text-orange-500">(Active - {cat.count})</span>
+                )}
+              </span>
+              <button
+                onClick={cat.clear}
+                disabled={cat.count === 0}
+                className={`p-0.5 bg-transparent border-0 transition-colors ${
+                  cat.count > 0
+                    ? 'cursor-pointer text-gray-400 hover:text-black'
+                    : 'cursor-not-allowed text-gray-200'
+                }`}
+                title={`Clear ${cat.label}`}
+              >
+                <CloseIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     </div>
