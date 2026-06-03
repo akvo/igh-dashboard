@@ -23,28 +23,6 @@ export function vcpMemberKeys(products) {
 }
 
 /**
- * Consolidate vector control product options (array of {label, value} objects
- * where value is a string product_key). Returns a new array with one
- * "Vector control products" entry whose value is a comma-separated list of keys.
- */
-export function consolidateProductOptionsByKey(options) {
-  const vcKeys = [];
-  const rest = [];
-  for (const opt of options) {
-    if (VECTOR_CONTROL_PRODUCT_NAMES.includes(opt.label)) {
-      vcKeys.push(opt.value);
-    } else {
-      rest.push(opt);
-    }
-  }
-  if (vcKeys.length === 0) return options;
-  return [
-    ...rest,
-    { label: VECTOR_CONTROL_CONSOLIDATED_NAME, value: vcKeys.join(VC_KEY_SEP) },
-  ];
-}
-
-/**
  * Expand selected product keys: if a consolidated VC key (pipe-separated)
  * is selected, split it into individual keys.
  */

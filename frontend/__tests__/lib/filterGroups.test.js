@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
-  consolidateProductOptionsByKey,
   expandProductKeySelection,
   normalizeProductName,
   mergeVectorControlChartData,
@@ -11,28 +10,6 @@ import {
 } from '../../src/lib/filterGroups';
 
 // ── Product helpers ─────────────────────────────────────────────
-
-describe('consolidateProductOptionsByKey', () => {
-  it('merges VC subtypes into one option', () => {
-    const input = [
-      { label: 'Vaccines', value: '1' },
-      { label: 'Biological vector control products', value: '2' },
-      { label: 'Chemical vector control products', value: '3' },
-      { label: 'Vector control products', value: '4' },
-      { label: 'Vector control products Reservoir targeted vaccines', value: '5' },
-    ];
-    const result = consolidateProductOptionsByKey(input);
-    expect(result).toHaveLength(2);
-    const vc = result.find(o => o.label === VECTOR_CONTROL_CONSOLIDATED_NAME);
-    expect(vc).toBeDefined();
-    expect(vc.value).toBe('2|3|4|5');
-  });
-
-  it('returns input unchanged when no VC subtypes', () => {
-    const input = [{ label: 'Vaccines', value: '1' }];
-    expect(consolidateProductOptionsByKey(input)).toEqual(input);
-  });
-});
 
 describe('expandProductKeySelection', () => {
   it('splits pipe-separated keys', () => {

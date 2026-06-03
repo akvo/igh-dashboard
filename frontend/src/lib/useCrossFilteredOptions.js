@@ -69,9 +69,10 @@ export function useCrossFilteredOptions({
     setRdPhase,
   } = setters;
 
-  // By-name selections are concrete product names (no consolidated VCP
-  // sentinel), so no expansion is needed. By-key still splits the
-  // pipe-joined consolidated value until Phase 2 removes it.
+  // Product selections are concrete values in both modes now (no
+  // consolidated VCP sentinel). expandProductKeySelection is kept on the
+  // by-key path as a harmless defensive split: pipe-joined values are no
+  // longer produced, so it returns the keys unchanged.
   const expandProduct =
     mode === 'by-key' ? expandProductKeySelection : (sel) => sel;
 

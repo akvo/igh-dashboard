@@ -2,7 +2,6 @@
 
 import { useQuery } from '@apollo/client/react';
 import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
-import { expandProductKeySelection } from '@/lib/filterGroups';
 
 // Coerce a portfolio field (which the URL encoder may have stored
 // as a string or an array) into a normalized array.
@@ -26,9 +25,7 @@ function buildQuery(portfolio) {
   if (primaries.length > 0) variables.primaryDiseaseNames = primaries;
   if (secondaries.length > 0) variables.secondaryDiseaseNames = secondaries;
   if (products.length > 0) {
-    variables.productKeys = expandProductKeySelection(products).map((v) =>
-      parseInt(v),
-    );
+    variables.productKeys = products.map((v) => parseInt(v, 10));
   }
 
   const skip =
