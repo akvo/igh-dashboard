@@ -3,9 +3,7 @@ import {
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
   consolidateProductOptionsByKey,
-  consolidateProductOptionsByName,
   expandProductKeySelection,
-  expandProductNameSelection,
   normalizeProductName,
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
@@ -36,17 +34,6 @@ describe('consolidateProductOptionsByKey', () => {
   });
 });
 
-describe('consolidateProductOptionsByName', () => {
-  it('merges VC subtypes into one name', () => {
-    const input = ['Vaccines', 'Biological vector control products', 'Chemical vector control products'];
-    const result = consolidateProductOptionsByName(input);
-    expect(result).toContain('Vaccines');
-    expect(result).toContain(VECTOR_CONTROL_CONSOLIDATED_NAME);
-    expect(result).not.toContain('Biological vector control products');
-    expect(result).not.toContain('Chemical vector control products');
-  });
-});
-
 describe('expandProductKeySelection', () => {
   it('splits pipe-separated keys', () => {
     const result = expandProductKeySelection(['1', '2|3|4']);
@@ -60,22 +47,6 @@ describe('expandProductKeySelection', () => {
   it('handles empty/null', () => {
     expect(expandProductKeySelection([])).toEqual([]);
     expect(expandProductKeySelection(null)).toBeNull();
-  });
-});
-
-describe('expandProductNameSelection', () => {
-  it('expands consolidated name to all VC subtypes', () => {
-    const result = expandProductNameSelection([VECTOR_CONTROL_CONSOLIDATED_NAME, 'Vaccines']);
-    expect(result).toContain('Vaccines');
-    for (const name of VECTOR_CONTROL_PRODUCT_NAMES) {
-      expect(result).toContain(name);
-    }
-    // "Vector control products" is both the consolidated name and a member, so it stays
-    expect(result).toContain('Vector control products');
-  });
-
-  it('returns unchanged when consolidated name not present', () => {
-    expect(expandProductNameSelection(['Vaccines'])).toEqual(['Vaccines']);
   });
 });
 

@@ -45,41 +45,12 @@ export function consolidateProductOptionsByKey(options) {
 }
 
 /**
- * Consolidate vector control product options (array of plain name strings).
- * Returns a deduplicated array with one "Vector control products" entry.
- */
-export function consolidateProductOptionsByName(options) {
-  const hasVc = options.some((n) => VECTOR_CONTROL_PRODUCT_NAMES.includes(n));
-  if (!hasVc) return options;
-  const rest = options.filter((n) => !VECTOR_CONTROL_PRODUCT_NAMES.includes(n));
-  if (!rest.includes(VECTOR_CONTROL_CONSOLIDATED_NAME)) {
-    rest.push(VECTOR_CONTROL_CONSOLIDATED_NAME);
-  }
-  return rest;
-}
-
-/**
  * Expand selected product keys: if a consolidated VC key (pipe-separated)
  * is selected, split it into individual keys.
  */
 export function expandProductKeySelection(selected) {
   if (!selected || selected.length === 0) return selected;
   return selected.flatMap((v) => (v.includes(VC_KEY_SEP) ? v.split(VC_KEY_SEP) : [v]));
-}
-
-/**
- * Expand selected product names: if "Vector control products" is selected,
- * expand to all VC subtype names.
- */
-export function expandProductNameSelection(selected) {
-  if (!selected || selected.length === 0) return selected;
-  if (!selected.includes(VECTOR_CONTROL_CONSOLIDATED_NAME)) return selected;
-  const expanded = new Set(selected);
-  expanded.delete(VECTOR_CONTROL_CONSOLIDATED_NAME);
-  for (const n of VECTOR_CONTROL_PRODUCT_NAMES) {
-    expanded.add(n);
-  }
-  return [...expanded];
 }
 
 /**
