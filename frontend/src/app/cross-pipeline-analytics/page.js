@@ -18,12 +18,12 @@ import {
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
 import {
-  consolidateProductOptionsByName,
   consolidateProductOptionsByKey,
-  expandProductNameSelection,
+  VECTOR_CONTROL_PRODUCT_NAMES,
 } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import { useGlobalFilters } from '@/components/portfolio-analysis';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
@@ -54,7 +54,7 @@ export default function CrossPipelineAnalytics() {
     return map;
   }, [productsList]);
 
-  const expandedProductNames = expandProductNameSelection(selectedProduct);
+  const expandedProductNames = selectedProduct;
 
   // Build filter arrays for API.
   const selectedHealthAreas = selectedHealthArea.length > 0 ? selectedHealthArea : null;
@@ -80,11 +80,12 @@ export default function CrossPipelineAnalytics() {
   const crossPipelineChartRef = useRef(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // All product options (before cross-filtering), by-name with VC consolidation
-  const allProductOptions = useMemo(() => {
-    const names = (productsList || []).map((p) => p.product_name);
-    return consolidateProductOptionsByName(names);
-  }, [productsList]);
+  // All product options (before cross-filtering), plain name strings that
+  // HierarchicalProductFilter normalizes itself via groupMembers.
+  const allProductOptions = useMemo(
+    () => (productsList || []).map((p) => p.product_name),
+    [productsList],
+  );
 
   // By-key product options for TemporalTrendsSection (uses key-based
   // cross-filtering internally).
@@ -227,15 +228,13 @@ export default function CrossPipelineAnalytics() {
                   />
                 </div>
                 <div className="min-w-[220px]">
-                  <Dropdown
+                  <HierarchicalProductFilter
                     label="Product type"
-                    value={selectedProduct}
+                    selected={selectedProduct}
                     onChange={setSelectedProduct}
                     placeholder="All"
                     options={productOptions}
-                    multiSelect={true}
-
-                    loading={productsLoading}
+                    groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
                   />
                 </div>
                 <div className="flex-1" />
