@@ -17,10 +17,7 @@ import {
   useDiseaseHierarchy,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
-import {
-  consolidateProductOptionsByKey,
-  VECTOR_CONTROL_PRODUCT_NAMES,
-} from '@/lib/filterGroups';
+import { VECTOR_CONTROL_PRODUCT_NAMES, vcpMemberKeys } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
@@ -88,11 +85,14 @@ export default function CrossPipelineAnalytics() {
   );
 
   // By-key product options for TemporalTrendsSection (uses key-based
-  // cross-filtering internally).
-  const productOptionsByKey = useMemo(() => {
-    const raw = (productsList || []).map((p) => ({ value: String(p.product_key), label: p.product_name }));
-    return consolidateProductOptionsByKey(raw);
-  }, [productsList]);
+  // cross-filtering internally). No consolidation — the VC products are
+  // kept as separate flat options so HierarchicalProductFilter can group
+  // them visually via groupMembers.
+  const productOptionsByKey = useMemo(
+    () => (productsList || []).map((p) => ({ value: String(p.product_key), label: p.product_name })),
+    [productsList],
+  );
+  const productGroupMembers = useMemo(() => vcpMemberKeys(productsList), [productsList]);
 
   // Cross-filtering uses by-name mode (same as portfolio pages) with
   // the all-pipeline pairs so the dropdowns only offer options that
@@ -290,6 +290,7 @@ export default function CrossPipelineAnalytics() {
           <TemporalTrendsSection
             narrowedHierarchy={narrowedHierarchy}
             productOptions={productOptionsByKey}
+            productGroupMembers={productGroupMembers}
             availableYears={availableYears}
           />
 
