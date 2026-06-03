@@ -10,6 +10,7 @@ import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -45,10 +46,7 @@ import {
   useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
 import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
-import {
-  consolidateProductOptionsByKey,
-  expandProductKeySelection,
-} from '@/lib/filterGroups';
+import { vcpMemberKeys } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import { useGlobalFilters } from '@/components/portfolio-analysis';
 
@@ -304,7 +302,7 @@ export default function Home() {
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
-  const expandedCrossProduct = expandProductKeySelection(crossProduct);
+  const expandedCrossProduct = crossProduct;
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
     crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
@@ -355,7 +353,7 @@ export default function Home() {
 
   // Candidate type distribution with filters
   // Product keys are strings in state (URL-safe), convert to integers for the API.
-  const expandedProduct = expandProductKeySelection(product);
+  const expandedProduct = product;
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
     rdStage.length > 0 ? rdStage : null,
@@ -363,10 +361,13 @@ export default function Home() {
 
   // Product options for dropdown (from API).
   // Values are strings to stay consistent with URL serialization.
-  const allProductOptions = useMemo(() => {
-    const raw = products.map(p => ({ label: p.product_name, value: String(p.product_key) }));
-    return consolidateProductOptionsByKey(raw);
-  }, [products]);
+  const allProductOptions = useMemo(
+    () => products.map((p) => ({ label: p.product_name, value: String(p.product_key) })),
+    [products],
+  );
+
+  // VCP child option values (product keys) for the hierarchical filter.
+  const productGroupMembers = useMemo(() => vcpMemberKeys(products), [products]);
 
   // Phase options shaped to feed `useCrossFilteredOptions`.
   // Values are the canonical phase names (matching what the URL stores in
@@ -694,14 +695,13 @@ export default function Home() {
             {/* Filters */}
             <div className="flex flex-wrap items-end gap-4 mb-4">
               <div className="w-[280px]">
-                <Dropdown
+                <HierarchicalProductFilter
                   label="Product type"
-                  value={product}
+                  selected={product}
                   onChange={setProduct}
                   placeholder="All"
                   options={productOptions}
-                  multiSelect={true}
-                  showClearText={true}
+                  groupMembers={productGroupMembers}
                 />
               </div>
               <div className="w-[280px]">
@@ -789,15 +789,13 @@ export default function Home() {
                 />
               </div>
               <div className="w-[280px]">
-                <Dropdown
+                <HierarchicalProductFilter
                   label="Product type"
-                  value={crossProduct}
+                  selected={crossProduct}
                   onChange={setCrossProduct}
                   placeholder="All"
                   options={crossProductFilteredOptions}
-                  multiSelect={true}
-                  showClearText={true}
-                  loading={productsLoading}
+                  groupMembers={productGroupMembers}
                 />
               </div>
               <div className="flex-1" />
