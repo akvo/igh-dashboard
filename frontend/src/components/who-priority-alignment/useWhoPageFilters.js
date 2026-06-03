@@ -12,10 +12,6 @@
 import { useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
-import {
-  consolidateProductOptionsByName,
-  expandProductNameSelection,
-} from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import {
   useGlobalHealthAreaSummaries,
@@ -31,9 +27,8 @@ export function useWhoPageFilters() {
   const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
 
-  // Vector control products: composite primary option whose value
-  // expands into its subtype names before being sent to the backend.
-  const expandedProduct = expandProductNameSelection(product);
+  // Selections are concrete product names; no expansion needed.
+  const expandedProduct = product;
 
   const { bubbleData: healthAreas, loading: healthAreasLoading } =
     useGlobalHealthAreaSummaries();
@@ -43,10 +38,10 @@ export function useWhoPageFilters() {
     useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = useActivePipelineFilterPairs();
 
-  const allProductOptions = useMemo(() => {
-    const names = (productsList || []).map((p) => p.product_name);
-    return consolidateProductOptionsByName(names);
-  }, [productsList]);
+  const allProductOptions = useMemo(
+    () => (productsList || []).map((p) => p.product_name),
+    [productsList],
+  );
 
   // Cross-filtering needs an R&D-phase axis on the helper's contract;
   // we pass empty arrays/stubs since the WHO page doesn't expose that
