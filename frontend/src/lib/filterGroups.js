@@ -12,6 +12,17 @@ export const VECTOR_CONTROL_PRODUCT_NAMES = [
 export const VECTOR_CONTROL_CONSOLIDATED_NAME = 'Vector control products';
 
 /**
+ * Given the product list, return the string product_keys whose name is
+ * one of the vector-control subtypes. Used by by-key dropdowns to tell
+ * HierarchicalProductFilter which option values belong to the VCP group.
+ */
+export function vcpMemberKeys(products) {
+  return (products || [])
+    .filter((p) => VECTOR_CONTROL_PRODUCT_NAMES.includes(p.product_name))
+    .map((p) => String(p.product_key));
+}
+
+/**
  * Consolidate vector control product options (array of {label, value} objects
  * where value is a string product_key). Returns a new array with one
  * "Vector control products" entry whose value is a comma-separated list of keys.

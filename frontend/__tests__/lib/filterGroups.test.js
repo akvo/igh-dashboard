@@ -9,6 +9,7 @@ import {
   normalizeProductName,
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
+  vcpMemberKeys,
 } from '../../src/lib/filterGroups';
 
 // ── Product helpers ─────────────────────────────────────────────
@@ -137,6 +138,22 @@ describe('mergeVectorControlStackedData', () => {
     const vc = result.find(r => r.category === VECTOR_CONTROL_CONSOLIDATED_NAME);
     expect(vc.phase1).toBe(2);
     expect(vc.phase2).toBe(3);
+  });
+});
+
+describe('vcpMemberKeys', () => {
+  it('returns string keys for products whose name is a VC subtype', () => {
+    const products = [
+      { product_key: 30, product_name: 'Drugs' },
+      { product_key: 35, product_name: 'Chemical vector control products' },
+      { product_key: 58, product_name: 'Vector control products' },
+    ];
+    expect(vcpMemberKeys(products)).toEqual(['35', '58']);
+  });
+
+  it('handles empty/null', () => {
+    expect(vcpMemberKeys(null)).toEqual([]);
+    expect(vcpMemberKeys([])).toEqual([]);
   });
 });
 
