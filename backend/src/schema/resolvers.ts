@@ -511,7 +511,7 @@ export const resolvers = {
       if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
-        primary: d?.disease_name || "Unknown",
+        primary: d?.disease_filter || d?.disease_name || "Unknown",
         secondary: d?.secondary_disease_name || null,
       };
     },
@@ -558,7 +558,7 @@ export const resolvers = {
       if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
-        primary: d?.disease_name || "Unknown",
+        primary: d?.disease_filter || d?.disease_name || "Unknown",
         secondary: d?.secondary_disease_name || null,
       };
     },

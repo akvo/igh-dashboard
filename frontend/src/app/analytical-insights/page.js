@@ -14,7 +14,7 @@ import {
   Cell,
 } from 'recharts';
 import Sidebar from '@/components/layout/Sidebar';
-import { WorldMap } from '@/components/charts';
+import { WorldMap, BarChart as ChartBarChart, StackedBarChart, ChartEmptyState } from '@/components/charts';
 import { TabNav, ChartMenu, DataTable, Dropdown } from '@/components/ui';
 import { UploadIcon } from '@/components/icons';
 import { buildCSV, downloadCSV } from '@/lib/csv';
@@ -32,7 +32,6 @@ import {
   useClinicalTrials,
   useGeographicDistribution,
   useTechnologyTypeDistribution,
-  usePhases,
 } from '@/graphql/hooks';
 import {
   buildCandidateColumns,
@@ -69,10 +68,10 @@ const TAB_LABELS = {
   technology: { disease: 'Top 5 diseases by technology type count', product: 'Top 5 product types by technology type count' },
 };
 
-const APPROVING_AUTH_COLORS = {
-  'No formal WHO listing': '#f9a78d',
-  'WHO prequalified': '#fe7449',
-};
+const APPROVING_AUTH_PHASES = [
+  { key: 'who_prequalified', label: 'WHO prequalified', color: '#fe7449' },
+  { key: 'no_who_listing', label: 'No formal WHO listing', color: '#f9a78d' },
+];
 
 const TECH_PHASES = [
   { key: 'discovery', label: 'Discovery', color: '#AD5133' },
@@ -117,6 +116,9 @@ function MiniDonut({ percentage, color, size = 56 }) {
 
 function BarTooltip({ active, payload, label, labelMap }) {
   if (!active || !payload?.length) return null;
+  const total = payload.length > 1
+    ? payload.reduce((sum, p) => sum + (p.value || 0), 0)
+    : null;
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm">
       <div className="font-semibold text-black mb-1">{label}</div>
@@ -127,6 +129,12 @@ function BarTooltip({ active, payload, label, labelMap }) {
           <span className="font-medium text-black">{p.value}</span>
         </div>
       ))}
+      {total != null && (
+        <div className="flex items-center gap-2 mt-1 pt-1 border-t border-gray-200">
+          <span className="text-gray-600">Total:</span>
+          <span className="font-medium text-black">{total}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -188,11 +196,7 @@ export default function AnalyticalInsights() {
   const [techAccSort, setTechAccSort] = useState(null);
   const [techAccVisibleCols, setTechAccVisibleCols] = useState([]);
 
-  // Toolbar search + R&D stage filter per table
-  const [candidatesSearch, setCandidatesSearch] = useState('');
-  const [candidatesStage, setCandidatesStage] = useState('');
-  const [approvedSearch, setApprovedSearch] = useState('');
-  const [approvedStage, setApprovedStage] = useState('');
+  // Toolbar search filter per table
   const [trialsSearch, setTrialsSearch] = useState('');
   const [mapTrialStatus, setMapTrialStatus] = useState([]);
 
@@ -215,9 +219,6 @@ export default function AnalyticalInsights() {
   // =========================================================
   // API hooks
   // =========================================================
-
-  // Phases (for R&D stage dropdown)
-  const { phases: rdStages } = usePhases();
 
   // KPIs
   const { kpis, loading: kpisLoading, raw: kpisRaw } = usePortfolioKPIs();
@@ -318,12 +319,8 @@ export default function AnalyticalInsights() {
 
   const candidatesColumnFilters = useMemo(() => {
     const base = toColumnFilters(candidatesFilters) || [];
-    const extra = [];
-    if (candidatesSearch.trim()) extra.push({ column: 'candidate_name', kind: 'TEXT', text: candidatesSearch.trim() });
-    if (candidatesStage) extra.push({ column: 'current_rd_stage', kind: 'CATEGORY', values: [candidatesStage] });
-    const merged = [...base, ...extra];
-    return merged.length > 0 ? merged : undefined;
-  }, [candidatesFilters, candidatesSearch, candidatesStage]);
+    return base.length > 0 ? base : undefined;
+  }, [candidatesFilters]);
   const candidatesSortVar = useMemo(() => toColumnSort(candidatesSort), [candidatesSort]);
 
   const { candidates: candidatesData, totalCount: candidatesTotalCount, hasNextPage: candidatesHasNext, loading: candidatesDataLoading } = usePortfolioCandidates(
@@ -335,12 +332,8 @@ export default function AnalyticalInsights() {
 
   const approvedColumnFilters = useMemo(() => {
     const base = toColumnFilters(approvedFilters) || [];
-    const extra = [];
-    if (approvedSearch.trim()) extra.push({ column: 'candidate_name', kind: 'TEXT', text: approvedSearch.trim() });
-    if (approvedStage) extra.push({ column: 'current_rd_stage', kind: 'CATEGORY', values: [approvedStage] });
-    const merged = [...base, ...extra];
-    return merged.length > 0 ? merged : undefined;
-  }, [approvedFilters, approvedSearch, approvedStage]);
+    return base.length > 0 ? base : undefined;
+  }, [approvedFilters]);
   const approvedSortVar = useMemo(() => toColumnSort(approvedSort), [approvedSort]);
 
   const { candidates: approvedData, totalCount: approvedTotalCount, hasNextPage: approvedHasNext, loading: approvedDataLoading } = usePortfolioCandidates(
@@ -366,17 +359,16 @@ export default function AnalyticalInsights() {
     { sort: trialsSortVar },
   );
 
-  // Tech accordion table: candidates filtered by tech type + disease + product
-  // Column filters for the tech accordion table.
-  // disease_name column maps to disease_group_name in the backend (matching the coverage chart).
-  // primaryDiseaseNames would filter on disease_filter instead, which can differ.
+  // Tech accordion table: candidates filtered by tech type + disease + product.
+  // Disease filtering uses primaryDiseaseNames (which targets disease_filter)
+  // rather than a column filter on disease_name (which targets disease_group_name),
+  // because the coverage chart names come from disease_filter.
   const techAccColumnFilters = useMemo(() => {
     const base = toColumnFilters(techAccFilters) || [];
     const extra = [];
     if (selectedTechType) extra.push({ column: 'technology_type', kind: 'CATEGORY', values: [selectedTechType] });
-    if (selectedDisease) extra.push({ column: 'disease_name', kind: 'CATEGORY', values: [selectedDisease] });
     return [...base, ...extra].length > 0 ? [...base, ...extra] : undefined;
-  }, [techAccFilters, selectedTechType, selectedDisease]);
+  }, [techAccFilters, selectedTechType]);
   const techAccSortVar = useMemo(() => toColumnSort(techAccSort), [techAccSort]);
 
   // Product names for the filter param
@@ -391,6 +383,7 @@ export default function AnalyticalInsights() {
     {
       columnFilters: techAccColumnFilters,
       productNames: techAccProductNames,
+      primaryDiseaseNames: selectedDisease ? [selectedDisease] : undefined,
     },
     ITEMS_PER_PAGE,
     (techAccPage - 1) * ITEMS_PER_PAGE,
@@ -402,6 +395,7 @@ export default function AnalyticalInsights() {
     {
       columnFilters: techAccColumnFilters,
       productNames: techAccProductNames,
+      primaryDiseaseNames: selectedDisease ? [selectedDisease] : undefined,
       candidateType: 'Product',
     },
     0,
@@ -577,16 +571,6 @@ export default function AnalyticalInsights() {
       .map((d) => ({ name: d.name, value: d.value, gha: d.group }));
   }, [selectedTechType, techDiseaseBubble]);
 
-  // Approving authorities chart data
-  const authChartData = useMemo(() => {
-    if (!approvingAuthoritiesData?.length) return [];
-    return approvingAuthoritiesData.map((a) => ({
-      name: a.category,
-      'No formal WHO listing': a.no_who_listing,
-      'WHO prequalified': a.who_prequalified,
-    }));
-  }, [approvingAuthoritiesData]);
-
   // Add colors to status/age data for charts
   const STATUS_COLORS = ['#54A5C4', '#F0B456', '#fe7449', '#6AB085', '#AD5133', '#B28FC9'];
   const AGE_COLORS = ['#f9a78d', '#54a5c4', '#fe7449', '#CBAFDE', '#f0b456', '#B28FC9'];
@@ -599,11 +583,6 @@ export default function AnalyticalInsights() {
   const coloredAgeGroups = useMemo(() =>
     (ageGroupsData || []).map((d, i) => ({ ...d, color: AGE_COLORS[i % AGE_COLORS.length] })),
     [ageGroupsData],
-  );
-
-  const coloredApprovalStatus = useMemo(() =>
-    (approvalStatusData || []).map((d, i) => ({ ...d, color: STATUS_COLORS[i % STATUS_COLORS.length] })),
-    [approvalStatusData],
   );
 
   const WHO_PREQUAL_COLORS = { Yes: '#fe7449', No: '#e3d6c1', Unknown: '#B28FC9', Pending: '#54A5C4', 'N/A': '#8DD6A9' };
@@ -633,7 +612,8 @@ export default function AnalyticalInsights() {
   const techAccFilterContext = useMemo(() => ({
     column_filters: techAccColumnFilters,
     product_names: techAccProductNames,
-  }), [techAccColumnFilters, techAccProductNames]);
+    primary_disease_names: selectedDisease ? [selectedDisease] : undefined,
+  }), [techAccColumnFilters, techAccProductNames, selectedDisease]);
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -792,31 +772,17 @@ export default function AnalyticalInsights() {
                 </div>
                 <div ref={approvalStatusRef}>
                   {regulatoryLoading ? (
-                    <div className="h-[220px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
+                    <div className="h-[280px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
+                  ) : !approvalStatusData || approvalStatusData.length === 0 ? (
+                    <ChartEmptyState variant="bar" height={280} />
                   ) : (
-                    <>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={coloredApprovalStatus} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                          <XAxis type="number" tick={{ fontSize: 12 }} />
-                          <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                          <Tooltip content={<BarTooltip />} />
-                          <Bar dataKey="value" barSize={20} radius={[0, 4, 4, 0]}>
-                            {coloredApprovalStatus.map((entry) => (
-                              <Cell key={entry.name} fill={entry.color} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                      <div className="flex flex-wrap items-center gap-3 mt-3">
-                        {coloredApprovalStatus.map((d) => (
-                          <div key={d.name} className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: d.color }} />
-                            {d.name}
-                          </div>
-                        ))}
-                      </div>
-                    </>
+                    <ChartBarChart
+                      data={approvalStatusData}
+                      height={280}
+                      maxTickChars={999}
+                      xAxisLabel="Approval status"
+                      yAxisLabel="Number of products"
+                    />
                   )}
                 </div>
               </div>
@@ -829,29 +795,22 @@ export default function AnalyticalInsights() {
                 </div>
                 <div ref={authoritiesRef}>
                   {regulatoryLoading ? (
-                    <div className="h-[220px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
+                    <div className="h-[280px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
+                  ) : !approvingAuthoritiesData || approvingAuthoritiesData.length === 0 ? (
+                    <ChartEmptyState variant="stackedBar" height={280} />
                   ) : (
-                    <>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={authChartData} margin={{ top: 0, right: 10, left: -10, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="name" tick={{ fontSize: 9 }} interval={0} />
-                          <YAxis tick={{ fontSize: 12 }} />
-                          <Tooltip content={<BarTooltip />} />
-                          {Object.entries(APPROVING_AUTH_COLORS).map(([key, color]) => (
-                            <Bar key={key} dataKey={key} fill={color} barSize={28} />
-                          ))}
-                        </BarChart>
-                      </ResponsiveContainer>
-                      <div className="flex flex-wrap items-center gap-3 mt-3">
-                        {Object.entries(APPROVING_AUTH_COLORS).map(([label, color]) => (
-                          <div key={label} className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
-                            {label}
-                          </div>
-                        ))}
-                      </div>
-                    </>
+                    <StackedBarChart
+                      data={approvingAuthoritiesData}
+                      phases={APPROVING_AUTH_PHASES}
+                      categoryKey="category"
+                      layout="horizontal"
+                      height={280}
+                      maxTickChars={999}
+                      xAxisLabel="Authority type"
+                      yAxisLabel="Number of products"
+                      showFilters={true}
+                      barRadius={0}
+                    />
                   )}
                 </div>
               </div>
@@ -1227,7 +1186,15 @@ export default function AnalyticalInsights() {
                               <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={120} />
                               <Tooltip />
                               <Bar dataKey="value" barSize={16} radius={[0, 4, 4, 0]} cursor="pointer"
-                                onClick={(data) => { const row = data?.payload || data; setSelectedDisease(row?.name || null); setCandidatesAccordionOpen(true); }}
+                                onClick={(data) => {
+                                  const row = data?.payload || data;
+                                  setSelectedDisease(row?.name || null);
+                                  setCandidatesAccordionOpen(true);
+                                  setTimeout(() => {
+                                    const el = document.getElementById('ai-candidates-accordion');
+                                    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                  }, 100);
+                                }}
                               >
                                 {diseaseCoverageData.map((entry) => (
                                   <Cell key={entry.name} fill={GHA_COLORS[entry.gha] || '#B28FC9'} />
@@ -1254,7 +1221,7 @@ export default function AnalyticalInsights() {
                 </div>
 
                 {/* Candidates and approved products */}
-                <div>
+                <div id="ai-candidates-accordion">
                   <button
                     onClick={() => setCandidatesAccordionOpen(!candidatesAccordionOpen)}
                     className="w-full flex items-center justify-between px-6 py-5 transition-colors" style={{ backgroundColor: '#F9F9FA' }}
@@ -1322,27 +1289,6 @@ export default function AnalyticalInsights() {
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <h3 className="text-base sm:text-lg font-bold text-black">Candidates</h3>
                 <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount.toLocaleString()}</span>
-                <div className="flex-1" />
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                  <input
-                    type="text"
-                    placeholder="Search item"
-                    value={candidatesSearch}
-                    onChange={(e) => { setCandidatesSearch(e.target.value); setCandidatesPage(1); }}
-                    className="pl-9 pr-3 py-2 border border-gray-300 text-sm w-[200px] focus:outline-none focus:border-gray-400"
-                  />
-                </div>
-                <div className="min-w-[160px]">
-                  <Dropdown
-                    value={candidatesStage}
-                    onChange={(val) => { setCandidatesStage(val); setCandidatesPage(1); }}
-                    options={rdStages.map((s) => ({ value: s.name, label: s.name }))}
-                    placeholder="R&D stage"
-                    showSearch={false}
-                    compact
-                  />
-                </div>
               </div>
               <DataTable
                 tableId="ai-candidates"
@@ -1374,17 +1320,6 @@ export default function AnalyticalInsights() {
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <h3 className="text-base sm:text-lg font-bold text-black">Approved products</h3>
                 <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount.toLocaleString()}</span>
-                <div className="flex-1" />
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                  <input
-                    type="text"
-                    placeholder="Search item"
-                    value={approvedSearch}
-                    onChange={(e) => { setApprovedSearch(e.target.value); setApprovedPage(1); }}
-                    className="pl-9 pr-3 py-2 border border-gray-300 text-sm w-[200px] focus:outline-none focus:border-gray-400"
-                  />
-                </div>
               </div>
               <DataTable
                 tableId="ai-approved"

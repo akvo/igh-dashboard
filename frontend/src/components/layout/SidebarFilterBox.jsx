@@ -43,12 +43,13 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
   const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
   const [ttYear, setTtYear] = useUrlState('ttYear', [], arraySerializer);
   const [cpYear, setCpYear] = useUrlState('cpYear', '', stringSerializer);
+  const [extRdStage, setExtRdStage] = useUrlState('extRdStage', [], arraySerializer);
 
   // Aggregate counts across global + section-local filters per category.
   const ghaCount = healthArea.length + crossGha.length;
   const diseaseCount = primary.length + secondary.length;
   const productCount = product.length + hProduct.length + crossProduct.length;
-  const rdStageCount = rdPhase.length + hRdStage.length;
+  const rdStageCount = rdPhase.length + hRdStage.length + extRdStage.length;
   const yearCount = ttYear.length + (cpYear ? 1 : 0);
 
   const activeCount = ghaCount + diseaseCount + productCount + rdStageCount + yearCount;
@@ -62,6 +63,7 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setCrossProduct([]);
     setTtYear([]);
     setCpYear('');
+    setExtRdStage([]);
   };
 
   // Filter category definitions for the list view.
@@ -84,7 +86,7 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     {
       label: 'R&D stage',
       count: rdStageCount,
-      clear: () => { setRdPhase([]); setHRdStage([]); },
+      clear: () => { setRdPhase([]); setHRdStage([]); setExtRdStage([]); },
     },
     {
       label: 'Year',
