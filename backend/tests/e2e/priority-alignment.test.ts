@@ -156,10 +156,9 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (43)", () => {
-    // Pipeline-gated: only priorities that have at least one candidate in
-    // bridge_candidate_priority → fact_pipeline_snapshot are counted.
-    expect(baseline.totalPriorities).toBe(43);
+  it("totalPriorities matches snapshot (66)", () => {
+    // All non-stub priorities from dim_priority are counted (no pipeline gate).
+    expect(baseline.totalPriorities).toBe(66);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -235,12 +234,11 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("womenOrChildrenShare snapshot matches tracked DB (25 Yes / 18 No / 0 unknown)", () => {
-    // Pipeline-gated: only priorities with active pipeline candidates are
-    // bucketed. The sum equals totalPriorities (both use the same pipeline
-    // join).
-    expect(baseline.womenOrChildrenShare.yes).toBe(25);
-    expect(baseline.womenOrChildrenShare.no).toBe(18);
+  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 32 No / 0 unknown)", () => {
+    // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
+    // The sum equals totalPriorities.
+    expect(baseline.womenOrChildrenShare.yes).toBe(34);
+    expect(baseline.womenOrChildrenShare.no).toBe(32);
     expect(baseline.womenOrChildrenShare.unknown).toBe(0);
     const sum =
       baseline.womenOrChildrenShare.yes +
