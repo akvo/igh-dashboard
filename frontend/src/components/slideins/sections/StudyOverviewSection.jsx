@@ -26,11 +26,16 @@ export function StudyOverviewSection({ phase, status, studyType, enrollment }) {
       <div className="si-glance-card">
         <div>
           <p className="si-glance-label">Phase</p>
-          <p className="si-glance-value">{phase ? phase : <NoInfo />}</p>
+          <span className={phaseClass(phase)} style={{ maxWidth: '100px' }}>
+            {phase ? phase : <NoInfo />}
+          </span>
         </div>
         <div>
           <p className="si-glance-label">Status</p>
-          <p className="si-glance-value">{status ? status : <NoInfo />}</p>
+          <span className={statusClass(status)}>
+            <span className="sdot" />
+            {status ? status : <NoInfo />}
+          </span>
         </div>
         <div>
           <p className="si-glance-label">Study type</p>
