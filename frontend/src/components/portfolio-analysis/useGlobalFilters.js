@@ -17,10 +17,6 @@
 import { createContext, useContext, useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
-import {
-  consolidateProductOptionsByName,
-  expandProductNameSelection,
-} from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import {
@@ -68,7 +64,8 @@ function useGlobalFiltersCore() {
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
   const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
 
-  const expandedProduct = expandProductNameSelection(product);
+  // Selections are concrete product names; no expansion needed.
+  const expandedProduct = product;
 
   const { bubbleData: healthAreas, loading: healthAreasLoading } =
     useGlobalHealthAreaSummaries();
@@ -79,10 +76,10 @@ function useGlobalFiltersCore() {
   const { phases, loading: phasesLoading } = usePhases();
   const { pairs, loading: pairsLoading } = useActivePipelineFilterPairs();
 
-  const allProductOptions = useMemo(() => {
-    const names = (productsList || []).map((p) => p.product_name);
-    return consolidateProductOptionsByName(names);
-  }, [productsList]);
+  const allProductOptions = useMemo(
+    () => (productsList || []).map((p) => p.product_name),
+    [productsList],
+  );
 
   const allPhaseOptions = useMemo(
     () =>

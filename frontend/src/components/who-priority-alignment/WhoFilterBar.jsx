@@ -11,6 +11,8 @@
 import { Dropdown } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 import { useWhoPageFilters } from './useWhoPageFilters';
 
 export default function WhoFilterBar() {
@@ -46,14 +48,13 @@ export default function WhoFilterBar() {
           />
         </div>
         <div className="min-w-[220px]">
-          <Dropdown
+          <HierarchicalProductFilter
             label="Product type"
-            value={filters.product}
+            selected={filters.product}
             onChange={filters.setProduct}
             placeholder="All"
             options={filters.productOptions}
-            multiSelect={true}
-            loading={filters.loading.products}
+            groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
             variant="outlined"
           />
         </div>

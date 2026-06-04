@@ -1,10 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import {
-  expandProductNameSelection,
-  expandProductKeySelection,
-  VECTOR_CONTROL_PRODUCT_NAMES,
-  VECTOR_CONTROL_CONSOLIDATED_NAME,
-} from '@/lib/filterGroups';
+import { expandProductKeySelection } from '@/lib/filterGroups';
 
 /**
  * Bidirectional cross-filtering for GHA <-> primary disease <->
@@ -74,8 +69,12 @@ export function useCrossFilteredOptions({
     setRdPhase,
   } = setters;
 
+  // Product selections are concrete values in both modes now (no
+  // consolidated VCP sentinel). expandProductKeySelection is kept on the
+  // by-key path as a harmless defensive split: pipe-joined values are no
+  // longer produced, so it returns the keys unchanged.
   const expandProduct =
-    mode === 'by-key' ? expandProductKeySelection : expandProductNameSelection;
+    mode === 'by-key' ? expandProductKeySelection : (sel) => sel;
 
   // ---------------------------------------------------------
   // Pair-side helpers
@@ -104,11 +103,7 @@ export function useCrossFilteredOptions({
     if (mode === 'by-key') {
       return option.value.split('|').some((k) => validSet.has(k));
     }
-    if (validSet.has(option)) return true;
-    if (option === VECTOR_CONTROL_CONSOLIDATED_NAME) {
-      return VECTOR_CONTROL_PRODUCT_NAMES.some((n) => validSet.has(n));
-    }
-    return false;
+    return validSet.has(option);
   }
 
   function isProductValueValid(val, options) {

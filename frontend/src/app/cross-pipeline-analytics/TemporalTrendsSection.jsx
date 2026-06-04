@@ -5,6 +5,7 @@ import { Dropdown, ChartMenu, TabNav, DataTable } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import { useTemporalSnapshots, usePortfolioComparison, usePipelineFilterPairs } from '@/graphql/hooks';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -759,6 +760,7 @@ function ComparePortfoliosTab({
 export default function TemporalTrendsSection({
   narrowedHierarchy = [],
   productOptions = [],
+  productGroupMembers = [],
   availableYears = [],
 }) {
   // Refs for PNG download capture targets
@@ -1075,13 +1077,13 @@ export default function TemporalTrendsSection({
                 />
               </div>
               <div className="min-w-[200px]">
-                <Dropdown
+                <HierarchicalProductFilter
                   label="Product type"
-                  value={filterProduct}
+                  selected={filterProduct}
                   onChange={setFilterProduct}
                   placeholder="All"
                   options={effectiveProductOptions}
-                  multiSelect={true}
+                  groupMembers={productGroupMembers}
                 />
               </div>
               <div className="min-w-[160px]">

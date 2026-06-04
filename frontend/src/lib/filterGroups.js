@@ -12,39 +12,14 @@ export const VECTOR_CONTROL_PRODUCT_NAMES = [
 export const VECTOR_CONTROL_CONSOLIDATED_NAME = 'Vector control products';
 
 /**
- * Consolidate vector control product options (array of {label, value} objects
- * where value is a string product_key). Returns a new array with one
- * "Vector control products" entry whose value is a comma-separated list of keys.
+ * Given the product list, return the string product_keys whose name is
+ * one of the vector-control subtypes. Used by by-key dropdowns to tell
+ * HierarchicalProductFilter which option values belong to the VCP group.
  */
-export function consolidateProductOptionsByKey(options) {
-  const vcKeys = [];
-  const rest = [];
-  for (const opt of options) {
-    if (VECTOR_CONTROL_PRODUCT_NAMES.includes(opt.label)) {
-      vcKeys.push(opt.value);
-    } else {
-      rest.push(opt);
-    }
-  }
-  if (vcKeys.length === 0) return options;
-  return [
-    ...rest,
-    { label: VECTOR_CONTROL_CONSOLIDATED_NAME, value: vcKeys.join(VC_KEY_SEP) },
-  ];
-}
-
-/**
- * Consolidate vector control product options (array of plain name strings).
- * Returns a deduplicated array with one "Vector control products" entry.
- */
-export function consolidateProductOptionsByName(options) {
-  const hasVc = options.some((n) => VECTOR_CONTROL_PRODUCT_NAMES.includes(n));
-  if (!hasVc) return options;
-  const rest = options.filter((n) => !VECTOR_CONTROL_PRODUCT_NAMES.includes(n));
-  if (!rest.includes(VECTOR_CONTROL_CONSOLIDATED_NAME)) {
-    rest.push(VECTOR_CONTROL_CONSOLIDATED_NAME);
-  }
-  return rest;
+export function vcpMemberKeys(products) {
+  return (products || [])
+    .filter((p) => VECTOR_CONTROL_PRODUCT_NAMES.includes(p.product_name))
+    .map((p) => String(p.product_key));
 }
 
 /**
@@ -54,21 +29,6 @@ export function consolidateProductOptionsByName(options) {
 export function expandProductKeySelection(selected) {
   if (!selected || selected.length === 0) return selected;
   return selected.flatMap((v) => (v.includes(VC_KEY_SEP) ? v.split(VC_KEY_SEP) : [v]));
-}
-
-/**
- * Expand selected product names: if "Vector control products" is selected,
- * expand to all VC subtype names.
- */
-export function expandProductNameSelection(selected) {
-  if (!selected || selected.length === 0) return selected;
-  if (!selected.includes(VECTOR_CONTROL_CONSOLIDATED_NAME)) return selected;
-  const expanded = new Set(selected);
-  expanded.delete(VECTOR_CONTROL_CONSOLIDATED_NAME);
-  for (const n of VECTOR_CONTROL_PRODUCT_NAMES) {
-    expanded.add(n);
-  }
-  return [...expanded];
 }
 
 /**
