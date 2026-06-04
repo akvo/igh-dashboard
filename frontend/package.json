@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "predev": "node scripts/content/generate.mjs",
     "build": "next build",
+    "prebuild": "node scripts/content/generate.mjs",
     "start": "next start",
     "test": "vitest run",
+    "pretest": "node scripts/content/generate.mjs",
     "test:watch": "vitest",
+    "content:generate": "node scripts/content/generate.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -26,6 +30,7 @@
     "react-is": "^19.2.3",
     "recharts": "^3.6.0",
     "topojson-client": "^3.1.0",
+    "yaml": "^2.9.0",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
