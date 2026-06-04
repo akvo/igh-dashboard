@@ -190,26 +190,19 @@ function applyPrimaryDiseaseCondition(
   }
 }
 
-// Count distinct non-stub priorities that have at least one active pipeline
-// candidate linked via bridge_candidate_priority. This ensures the total is
-// consistent with the product-type donut (which also counts through the
-// bridge → pipeline path). Priorities without any pipeline candidates are
-// excluded so the headline "4 priorities" matches the donut's total.
+// Count distinct non-stub priorities. When no product filter is active the
+// count comes straight from dim_priority (no pipeline join) so that
+// priorities without any pipeline candidate are included, keeping the
+// unfiltered total at 66. When a product filter is active the bridge →
+// pipeline path is used to narrow to matching candidates.
 function runTotalPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): { total: number } {
-  // Always join through bridge → pipeline so only priorities with at least
-  // one active candidate are counted (keeps total consistent with donuts).
-  const joins: string[] = [
-    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
-    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
-  ];
-  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
+  const joins: string[] = [];
+  const conditions = [NON_EMPTY_PRIORITY];
   const params: (string | number)[] = [];
 
-  // Disease filter goes through the priority's own disease link (p.disease_key)
-  // not the candidate's, because the user is filtering "priorities about X disease".
   if (hasAnyDiseaseFilter(filters)) {
     joins.push("JOIN dim_disease d ON d.disease_key = p.disease_key");
     addArrayCondition(filters.global_health_areas, "d.global_health_area", conditions, params);
@@ -222,6 +215,9 @@ function runTotalPriorities(
     );
   }
   if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
+    joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
+    conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
   }
@@ -366,14 +362,8 @@ function runWomenOrChildrenShare(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): PriorityAlignmentWomenChildrenShare {
-  // Always join through bridge → pipeline so we only count priorities that
-  // have at least one active candidate, keeping the yes+no+unknown total
-  // consistent with totalPriorities and the product-type donut.
-  const joins: string[] = [
-    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
-    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
-  ];
-  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
+  const joins: string[] = [];
+  const conditions = [NON_EMPTY_PRIORITY];
   const params: (string | number)[] = [];
 
   if (hasAnyDiseaseFilter(filters)) {
@@ -388,12 +378,15 @@ function runWomenOrChildrenShare(
     );
   }
   if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
+    joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
+    conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
   }
 
-  // The bridge join fans out (one priority → many candidates), so always
-  // use COUNT(DISTINCT) to avoid double-counting priorities.
+  // When product filter is active the bridge join fans out (one priority →
+  // many candidates), so always use COUNT(DISTINCT) to avoid double-counting.
   const sql = WC_SQL_FANOUT(joins, conditions);
 
   const row = db.prepare(sql).get(...params) as {
@@ -408,14 +401,8 @@ function runPriorities(
   db: ReturnType<typeof getDatabase>,
   filters: ResolvedFilters,
 ): Array<{ priority_key: number; priority_name: string }> {
-  // Always join through bridge → pipeline so the list only contains
-  // priorities with at least one active candidate, consistent with
-  // totalPriorities and the donuts.
-  const joins: string[] = [
-    "JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key",
-    "JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key",
-  ];
-  const conditions = [NON_EMPTY_PRIORITY, "f.is_active_flag = 1", PIPELINE_FILTER];
+  const joins: string[] = [];
+  const conditions = [NON_EMPTY_PRIORITY];
   const params: (string | number)[] = [];
 
   if (hasAnyDiseaseFilter(filters)) {
@@ -430,6 +417,9 @@ function runPriorities(
     );
   }
   if ((filters.product_names?.length ?? 0) > 0) {
+    joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
+    joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
+    conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
   }
