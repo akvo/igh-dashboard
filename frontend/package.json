@@ -13,6 +13,10 @@
     "test:watch": "vitest",
     "content:generate": "node scripts/content/generate.mjs",
     "content:check": "node scripts/content/check.mjs",
+    "content:sync": "node scripts/content-sync/sync.mjs",
+    "content:resolve": "node scripts/content-sync/resolve-conflicts.mjs",
+    "content:bootstrap": "node scripts/content-sync/bootstrap-content-repo.mjs",
+    "content:export-schema": "node scripts/content-sync/export-schema.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
