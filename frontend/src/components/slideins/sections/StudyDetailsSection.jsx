@@ -60,7 +60,13 @@ export function StudyDetailsSection({ details }) {
           </div>
           <div>
             <p className="si-def-label">Age</p>
-            <p className="si-def-value">{ages.length ? ages.join(', ') : <NoInfo />}</p>
+            <div className="si-tag-row">
+              {ages.length ? (
+                ages.map((a, i) => <span key={i} className="si-receptor-tag">{a}</span>)
+              ) : (
+                <NoInfo />
+              )}
+            </div>
           </div>
           <div>
             <p className="si-def-label">Allocation</p>
@@ -84,11 +90,23 @@ export function StudyDetailsSection({ details }) {
       <div className="si-def-list" style={{ marginTop: 16 }}>
         <div>
           <p className="si-def-label">Interventions</p>
-          <p className="si-def-value">{interventions.length ? interventions.join(', ') : <NoInfo />}</p>
+          <div className="si-tag-row">
+            {interventions.length ? (
+              interventions.map((t, i) => <span key={i} className="si-receptor-tag">{t}</span>)
+            ) : (
+              <NoInfo />
+            )}
+          </div>
         </div>
         <div>
           <p className="si-def-label">Conditions</p>
-          <p className="si-def-value">{conditions.length ? conditions.join(', ') : <NoInfo />}</p>
+          <div className="si-tag-row">
+            {conditions.length ? (
+              conditions.map((t, i) => <span key={i} className="si-receptor-tag">{t}</span>)
+            ) : (
+              <NoInfo />
+            )}
+          </div>
         </div>
       </div>
     </div>
