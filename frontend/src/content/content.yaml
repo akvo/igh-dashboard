@@ -1,0 +1,4 @@
+# Canonical static content. Editable by devs; also written by the
+# content-sync bot from akvo/igh-dashboard-content. Compiled into
+# content.generated.js at build time.
+{}
