@@ -12,6 +12,7 @@
     "pretest": "node scripts/content/generate.mjs",
     "test:watch": "vitest",
     "content:generate": "node scripts/content/generate.mjs",
+    "content:check": "node scripts/content/check.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
