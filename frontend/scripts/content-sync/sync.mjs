@@ -61,12 +61,15 @@ export async function runSync({ siteRoot, contentRepoPath }) {
     writeYamlFile(YAML_PATH, unflatten(yamlFlat));
     writeConflicts(CONFLICTS_PATH, result.conflicts);
     writeSnapshot(SNAPSHOT_PATH, result.newSnapshot);
+    // Open the issue before pushing: the conflict notification is useful
+    // even if the push fails, and openConflictIssue is already best-effort
+    // (try/caught), so it never blocks the commit/push.
+    await openConflictIssue(result.conflicts);
     if (git.hasChanges(siteRoot)) {
       git.add(siteRoot, [YAML_PATH, SNAPSHOT_PATH, CONFLICTS_PATH]);
       git.commit(siteRoot, "Record content conflicts and hold yaml at last agreed value");
       git.push(siteRoot);
     }
-    await openConflictIssue(result.conflicts);
     return;
   }
 
@@ -98,6 +101,9 @@ export async function runSync({ siteRoot, contentRepoPath }) {
   }
 
   if (contentChanged) {
+    // `git add .` here relies on the content repo having a .gitignore
+    // (written by bootstrap-content-repo) so stray files like node_modules
+    // are never staged.
     git.add(contentRepoPath, ["."]);
     git.commit(contentRepoPath, "Sync content from dashboard yaml");
     git.push(contentRepoPath);
