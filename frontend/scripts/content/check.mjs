@@ -26,16 +26,22 @@ export function flattenYaml(tree, prefix = '') {
     const path = prefix ? `${prefix}.${k}` : k;
     if (v && typeof v === 'object' && !Array.isArray(v)) {
       Object.assign(out, flattenYaml(v, path));
-    } else if (v != null) {
+    } else if (v != null && !Array.isArray(v)) {
+      // Arrays are not a valid content value; skipping them lets
+      // crossCheck surface the key as "no value" rather than coercing
+      // a misleading comma-joined string.
       out[path] = String(v);
     }
   }
   return out;
 }
 
-// t('key') / t("key") / t(`key`) where the argument is a bare string
-// literal. Dynamic arguments are intentionally unsupported.
-const T_RE = /(^|[^A-Za-z0-9_$])t\(\s*['"`]([A-Za-z0-9_.]+)['"`]\s*\)/g;
+// Match a bare t('key') call. The negative lookbehind rejects method
+// calls (obj.t('x'), i18n.t('x')) and identifiers ending in t, so only
+// the standalone content accessor matches. Keys use [A-Za-z0-9_.] by
+// convention (page.section.purpose with underscores) — dynamic/computed
+// keys are intentionally unsupported.
+const T_RE = /(?<![A-Za-z0-9_$.])t\(\s*['"`]([A-Za-z0-9_.]+)['"`]\s*\)/g;
 // <Markdown ... path="key" ...> and path={'key'} / path={"key"}.
 const MD_RE = /<Markdown\b[^>]*?\bpath\s*=\s*(?:["']([A-Za-z0-9_.]+)["']|\{\s*['"`]([A-Za-z0-9_.]+)['"`]\s*\})/g;
 
@@ -46,7 +52,7 @@ function stripLineComments(src) {
 export function findTextCallsiteKeys(src) {
   const stripped = stripLineComments(src);
   const keys = new Set();
-  for (const m of stripped.matchAll(T_RE)) keys.add(m[2]);
+  for (const m of stripped.matchAll(T_RE)) keys.add(m[1]);
   return Array.from(keys);
 }
 
@@ -79,7 +85,7 @@ export function crossCheck({ schema, values, textKeys, markdownKeys }) {
     }
     if (entry.type === 'markdown') {
       if (/<script\b/i.test(value)) errors.push(`${key}: contains <script>`);
-      if (/\son[a-z]+\s*=/i.test(value)) {
+      if (/(?:^|\s)on[a-z]+\s*=/i.test(value)) {
         errors.push(`${key}: contains inline event handler`);
       }
     }
@@ -159,7 +165,7 @@ async function main() {
   );
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);

@@ -39,6 +39,11 @@ describe('findTextCallsiteKeys', () => {
   it('returns [] when no t() calls present', () => {
     expect(findTextCallsiteKeys('const x = 1;')).toEqual([]);
   });
+
+  it('ignores method calls like obj.t(...)', () => {
+    const src = `const a = obj.t('home.hero.title'); const b = i18n.t('x.y');`;
+    expect(findTextCallsiteKeys(src)).toEqual([]);
+  });
 });
 
 describe('findMarkdownCallsiteKeys', () => {
@@ -78,6 +83,7 @@ describe('crossCheck', () => {
       markdownKeys: ['home.bubble_chart.footer'],
     });
     expect(r.errors).toEqual([]);
+    expect(r.warnings).toEqual([]);
   });
 
   it('errors on a callsite key absent from the schema', () => {
