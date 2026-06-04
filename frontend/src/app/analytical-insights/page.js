@@ -196,8 +196,6 @@ export default function AnalyticalInsights() {
   const [techAccSort, setTechAccSort] = useState(null);
   const [techAccVisibleCols, setTechAccVisibleCols] = useState([]);
 
-  // Toolbar search filter per table
-  const [trialsSearch, setTrialsSearch] = useState('');
   const [mapTrialStatus, setMapTrialStatus] = useState([]);
 
   const accordionRef = useRef(null);
@@ -345,11 +343,8 @@ export default function AnalyticalInsights() {
 
   const trialsColumnFilters = useMemo(() => {
     const base = toColumnFilters(trialsFilters) || [];
-    const extra = [];
-    if (trialsSearch.trim()) extra.push({ column: 'trial_name', kind: 'TEXT', text: trialsSearch.trim() });
-    const merged = [...base, ...extra];
-    return merged.length > 0 ? merged : undefined;
-  }, [trialsFilters, trialsSearch]);
+    return base.length > 0 ? base : undefined;
+  }, [trialsFilters]);
   const trialsSortVar = useMemo(() => toColumnSort(trialsSort), [trialsSort]);
 
   const { trials: trialsData, totalCount: trialsTotalCount, hasNextPage: trialsHasNext, loading: trialsDataLoading } = useClinicalTrials(
@@ -1351,17 +1346,6 @@ export default function AnalyticalInsights() {
               <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <h3 className="text-base sm:text-lg font-bold text-black">Clinical trials</h3>
                 <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount.toLocaleString()}</span>
-                <div className="flex-1" />
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                  <input
-                    type="text"
-                    placeholder="Search item"
-                    value={trialsSearch}
-                    onChange={(e) => { setTrialsSearch(e.target.value); setTrialsPage(1); }}
-                    className="pl-9 pr-3 py-2 border border-gray-300 text-sm w-[200px] focus:outline-none focus:border-gray-400"
-                  />
-                </div>
               </div>
               <DataTable
                 tableId="ai-trials"
