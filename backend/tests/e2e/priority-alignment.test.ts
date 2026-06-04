@@ -234,12 +234,12 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 32 No / 0 unknown)", () => {
+  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 1 unknown)", () => {
     // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
     // The sum equals totalPriorities.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
-    expect(baseline.womenOrChildrenShare.no).toBe(32);
-    expect(baseline.womenOrChildrenShare.unknown).toBe(0);
+    expect(baseline.womenOrChildrenShare.no).toBe(31);
+    expect(baseline.womenOrChildrenShare.unknown).toBe(1);
     const sum =
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +
