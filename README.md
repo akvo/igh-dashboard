@@ -54,6 +54,13 @@ To also update CSV fixture files (after verifying the diffs are correct):
 UPDATE_FIXTURES=1 npm run check:all
 ```
 
+## Editing site copy
+
+User-facing text lives in `frontend/src/content/content.yaml`, not in
+JSX, and is read through a `t()` accessor. See
+[frontend/docs/content-editing.md](frontend/docs/content-editing.md) for
+how to read copy with `t()` / `<Markdown>` and how to add or change keys.
+
 ## Services
 
 | Service  | URL                    | Description             |
