@@ -1,5 +1,10 @@
 import type { Loaders } from "../utils/dataloader.js";
-import type { DimCandidateCore, DimDisease, CandidateFilter, FactClinicalTrialEvent } from "../db/types.js";
+import type {
+  DimCandidateCore,
+  DimDisease,
+  CandidateFilter,
+  FactClinicalTrialEvent,
+} from "../db/types.js";
 
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
