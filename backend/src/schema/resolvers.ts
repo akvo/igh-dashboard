@@ -1,5 +1,5 @@
 import type { Loaders } from "../utils/dataloader.js";
-import type { DimCandidateCore, CandidateFilter, FactClinicalTrialEvent } from "../db/types.js";
+import type { DimCandidateCore, DimDisease, CandidateFilter, FactClinicalTrialEvent } from "../db/types.js";
 
 import { getPortfolioKPIs } from "../db/queries/kpis.js";
 import { getGlobalHealthAreaSummaries } from "../db/queries/globalHealthArea.js";
@@ -61,6 +61,20 @@ function parseStudyDesignField(studyDesign: string | null, label: string): strin
     }
   }
   return null;
+}
+
+// Return the short disease name used in filter dropdowns. Prefers
+// disease_filter; when that is null (many rows) falls back to the
+// first segment of disease_name (before the first " - " delimiter)
+// so the slide-in shows e.g. "Coronaviral diseases (including MERS,
+// SARS, COVID-19)" instead of the full Dataverse cascade.
+function shortDiseaseName(d: DimDisease | null | undefined): string {
+  if (d?.disease_filter) return d.disease_filter;
+  if (d?.disease_name) {
+    const dash = d.disease_name.indexOf(" - ");
+    return dash > -1 ? d.disease_name.slice(0, dash) : d.disease_name;
+  }
+  return "Unknown";
 }
 
 // Context type for resolvers
@@ -511,7 +525,7 @@ export const resolvers = {
       if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
-        primary: d?.disease_filter || d?.disease_name || "Unknown",
+        primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
       };
     },
@@ -558,7 +572,7 @@ export const resolvers = {
       if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
-        primary: d?.disease_filter || d?.disease_name || "Unknown",
+        primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
       };
     },
