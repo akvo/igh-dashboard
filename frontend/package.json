@@ -12,6 +12,7 @@
     "pretest": "node scripts/content/generate.mjs",
     "test:watch": "vitest",
     "content:generate": "node scripts/content/generate.mjs",
+    "content:watch": "node scripts/content/generate.mjs --watch",
     "content:check": "node scripts/content/check.mjs",
     "content:sync": "node scripts/content-sync/sync.mjs",
     "content:resolve": "node scripts/content-sync/resolve-conflicts.mjs",
