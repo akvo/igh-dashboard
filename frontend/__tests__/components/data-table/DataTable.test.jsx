@@ -712,4 +712,65 @@ describe('DataTable', () => {
     // Charlie becomes the new frozen column at index 0.
     expect(onVisibleColumnsChange).toHaveBeenCalledWith(['c', 'a', 'b']);
   });
+
+  it('keeps the dragged header following the cursor across multiple dragOver hops', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onChangeSpy = vi.fn();
+
+    // A stateful wrapper is required here rather than a plain vi.fn() spy.
+    // handleDragOver reads the live `columns` prop on every event, so if
+    // onVisibleColumnsChange does not feed back into state, the second
+    // dragOver would see the original order and compute the wrong result.
+    // The Page wrapper closes the loop: each emission updates visibleColumns,
+    // which re-renders DataTable with the new order before the next event.
+    const Page = () => {
+      const [visibleColumns, setVisibleColumns] = useState(['a', 'b', 'c']);
+      return (
+        <MockedProvider mocks={[]} addTypename={false}>
+          <DataTable
+            tableId="multihop"
+            graphqlTable="PORTFOLIO_CANDIDATES"
+            columns={COLUMNS_3}
+            data={[{ a: '1', b: '2', c: '3' }]}
+            totalCount={1}
+            rowKey="a"
+            visibleColumns={visibleColumns}
+            onVisibleColumnsChange={(next) => {
+              onChangeSpy(next);
+              setVisibleColumns(next);
+            }}
+          />
+        </MockedProvider>
+      );
+    };
+
+    render(<Page />);
+
+    // Scope to the real table: the sticky clone renders a duplicate header.
+    const th = (label) => realTable().getByText(label).closest('th');
+
+    // Drag "Alpha" rightward: first onto Bravo, then onto Charlie.
+    // Hop 1: order [a,b,c] → remove a → [b,c] → insert at index of b (0) → [b,a,c]
+    // Hop 2: order [b,a,c] → remove a → [b,c] → insert at index of c (2) → [b,c,a]
+    fireEvent.dragStart(th('Alpha'));
+    fireEvent.dragOver(th('Bravo'));
+    fireEvent.dragOver(th('Charlie'));
+
+    expect(onChangeSpy).toHaveBeenNthCalledWith(1, ['b', 'a', 'c']);
+    expect(onChangeSpy).toHaveBeenLastCalledWith(['b', 'c', 'a']);
+
+    // The rendered header order reflects the final live-preview state.
+    // Each th may contain extra text from the kebab button's accessible
+    // label, so we pull out only the leading word from each cell's text.
+    const headerOrder = Array.from(
+      document.querySelectorAll('.overflow-x-auto thead tr:first-child th'),
+    ).map((cell) => cell.textContent.trim().split(/\s+/)[0]);
+    expect(headerOrder[0]).toBe('Bravo');
+    expect(headerOrder[1]).toBe('Charlie');
+    expect(headerOrder[2]).toBe('Alpha');
+  });
 });
