@@ -27,6 +27,10 @@ export default defineConfig({
     environment: 'node',
     include: ['__tests__/**/*.test.{js,jsx}'],
     globals: true,
+    // Shim Web Storage for jsdom tests. Node >= 22 defines an inert global
+    // `localStorage` that shadows jsdom's, so storage-backed tests need a
+    // working implementation installed before they run. See vitest.setup.js.
+    setupFiles: ['./vitest.setup.js'],
   },
   resolve: {
     alias: {
