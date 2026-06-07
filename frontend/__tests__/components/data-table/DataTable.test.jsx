@@ -657,4 +657,37 @@ describe('DataTable', () => {
 
     await waitFor(() => expect(countBodyRows()).toBe(1), { timeout: 1000 });
   });
+
+  it('re-freezes a column dragged into first place', () => {
+    const onVisibleColumnsChange = vi.fn();
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="freeze"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    // Drag "Charlie" (index 2) onto "Alpha" (index 0). Scope to the real
+    // table so the aria-hidden sticky clone's copies aren't matched.
+    const alphaTh = realTable().getByText('Alpha').closest('th');
+    const charlieTh = realTable().getByText('Charlie').closest('th');
+    fireEvent.dragStart(charlieTh);
+    fireEvent.dragOver(alphaTh);
+
+    // Charlie becomes the new frozen column at index 0.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['c', 'a', 'b']);
+  });
 });
