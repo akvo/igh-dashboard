@@ -460,6 +460,7 @@ export const typeDefs = `#graphql
     CATEGORY
     NUMBER
     DATE
+    HIERARCHICAL
   }
 
   enum ColumnFilterOperator {
@@ -482,6 +483,9 @@ export const typeDefs = `#graphql
     text: String
     # CATEGORY
     values: [String!]
+    # HIERARCHICAL (two-level category: parent + child)
+    primary_values: [String!]
+    secondary_values: [String!]
     # NUMBER + DATE
     operator: ColumnFilterOperator
     # NUMBER
