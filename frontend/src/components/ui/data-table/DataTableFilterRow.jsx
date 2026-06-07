@@ -4,6 +4,7 @@ import TextFilter from './TextFilter';
 import CategoryFilter from './CategoryFilter';
 import NumberFilter from './NumberFilter';
 import DateFilter from './DateFilter';
+import HierarchicalCategoryFilter from './HierarchicalCategoryFilter';
 
 // Sorted, deduplicated, non-null/non-empty values for one accessor,
 // computed against `rows` after filtering by every active filter
@@ -136,6 +137,11 @@ export default function DataTableFilterRow({
                     onChange={fire}
                     operators={column.filter.operators}
                   />
+                );
+              }
+              if (kind === 'hierarchical') {
+                return (
+                  <HierarchicalCategoryFilter value={entry ?? null} onChange={fire} />
                 );
               }
               // CATEGORY (default).
