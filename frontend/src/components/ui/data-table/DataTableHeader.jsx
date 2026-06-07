@@ -144,13 +144,26 @@ export default function DataTableHeader({
                   aria-label="Sorted descending"
                 />
               )}
-              <ColumnMenuPopover
-                column={column}
-                activeSort={activeSort}
-                onSort={(direction) => onSort(column.accessor, direction)}
-                onHide={() => onHideColumn(column)}
-                isFrozen={isFrozen}
-              />
+              {/* Drag shield: the whole header is draggable, but a drag begun
+                  on the kebab must not reorder the column. This span is the
+                  nearest draggable ancestor when the gesture starts here, so
+                  cancelling its dragstart (and stopping propagation to the
+                  <th>) keeps the menu fully clickable while blocking drags. */}
+              <span
+                draggable
+                onDragStart={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              >
+                <ColumnMenuPopover
+                  column={column}
+                  activeSort={activeSort}
+                  onSort={(direction) => onSort(column.accessor, direction)}
+                  onHide={() => onHideColumn(column)}
+                  isFrozen={isFrozen}
+                />
+              </span>
             </div>
           </th>
         );

@@ -658,6 +658,28 @@ describe('DataTable', () => {
     await waitFor(() => expect(countBodyRows()).toBe(1), { timeout: 1000 });
   });
 
+  it('does not reorder when a drag starts on the column kebab', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // The wrapper span around the kebab is the button's parent element.
+    // Scope to the real table so the sticky clone's duplicate kebabs and
+    // header cells don't get picked up.
+    const kebabButton = realTable().getAllByLabelText('Column actions')[1];
+    const kebabWrapper = kebabButton.parentElement;
+    const nameTh = realTable().getByText('Name').closest('th');
+
+    // Start the drag on the kebab wrapper, then drag over another header.
+    fireEvent.dragStart(kebabWrapper);
+    fireEvent.dragOver(nameTh);
+
+    // The wrapper cancels the drag, so no reorder is emitted.
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+  });
+
   it('re-freezes a column dragged into first place', () => {
     const onVisibleColumnsChange = vi.fn();
     const COLUMNS_3 = [
