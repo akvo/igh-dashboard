@@ -195,6 +195,66 @@ describe("buildColumnFilterClauses", () => {
   });
 });
 
+describe("HIERARCHICAL disease filter", () => {
+  it("emits an IN clause on the parent column for primary-only selections", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      {
+        column: "disease_name",
+        kind: "HIERARCHICAL",
+        primary_values: ["Dengue"],
+        secondary_values: [],
+      },
+    ]);
+    expect(result.conditions).toEqual(["(d.disease_filter IN (?))"]);
+    expect(result.params).toEqual(["Dengue"]);
+  });
+
+  it("emits an IN clause on the child column for secondary-only selections", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      {
+        column: "disease_name",
+        kind: "HIERARCHICAL",
+        primary_values: [],
+        secondary_values: ["Cholera", "Shigella"],
+      },
+    ]);
+    expect(result.conditions).toEqual(["(d.secondary_disease_name IN (?, ?))"]);
+    expect(result.params).toEqual(["Cholera", "Shigella"]);
+  });
+
+  it("ORs the two levels so mixed selections return the union", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      {
+        column: "disease_name",
+        kind: "HIERARCHICAL",
+        primary_values: ["Dengue"],
+        secondary_values: ["Cholera"],
+      },
+    ]);
+    expect(result.conditions).toEqual([
+      "(d.disease_filter IN (?) OR d.secondary_disease_name IN (?))",
+    ]);
+    expect(result.params).toEqual(["Dengue", "Cholera"]);
+  });
+
+  it("is a no-op when both levels are empty", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "disease_name", kind: "HIERARCHICAL", primary_values: [], secondary_values: [] },
+    ]);
+    expect(result).toEqual({ conditions: [], params: [] });
+  });
+
+  it("sorts the disease column by the coalesced (displayed) value", () => {
+    const orderBy = buildOrderBy("PORTFOLIO_CANDIDATES", {
+      column: "disease_name",
+      direction: "ASC",
+    });
+    expect(orderBy).toBe(
+      "ORDER BY COALESCE(d.secondary_disease_name, d.disease_filter) ASC NULLS LAST",
+    );
+  });
+});
+
 describe("buildOrderBy", () => {
   it("returns null for no sort", () => {
     expect(buildOrderBy("PORTFOLIO_CANDIDATES", null)).toBeNull();

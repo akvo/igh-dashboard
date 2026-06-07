@@ -25,17 +25,20 @@
 // DATE EQ and BETWEEN wrap both sides in `DATE()` so a column carrying a
 // timestamp still matches by calendar day.
 
-import { resolveColumn, type DataTableId } from "./columnRegistry.js";
+import { resolveColumn, type ColumnDef, type DataTableId } from "./columnRegistry.js";
 
 export type ColumnFilterOperator = "EQ" | "LT" | "GT" | "BEFORE" | "AFTER" | "BETWEEN";
 
 export interface ColumnFilterInput {
   column: string;
-  kind: "TEXT" | "CATEGORY" | "NUMBER" | "DATE";
+  kind: "TEXT" | "CATEGORY" | "NUMBER" | "DATE" | "HIERARCHICAL";
   // TEXT
   text?: string | null;
   // CATEGORY
   values?: string[] | null;
+  // HIERARCHICAL (two-level category, e.g. disease parent/child)
+  primary_values?: string[] | null;
+  secondary_values?: string[] | null;
   // NUMBER + DATE
   operator?: ColumnFilterOperator | null;
   // NUMBER
@@ -98,6 +101,30 @@ function emitCategory(
     conditions: [`${sqlExpr} IN (${placeholders})`],
     params: values,
   };
+}
+
+// HIERARCHICAL: a two-level category filter. The selected parents and
+// children are ORed so a mixed selection (a whole parent PLUS a child
+// of a different parent) returns the union, which is what the picker
+// implies. Each side is included only when non-empty; all-empty is a
+// no-op. The whole thing is wrapped in one parenthesised group so it
+// AND-combines safely with the rest of the WHERE clause.
+function emitHierarchical(def: ColumnDef, f: ColumnFilterInput): FilterFragment | null {
+  if (!def.hierarchy) return null;
+  const primaries = (f.primary_values ?? []).filter((v) => v != null && v !== "");
+  const secondaries = (f.secondary_values ?? []).filter((v) => v != null && v !== "");
+  const ors: string[] = [];
+  const params: (string | number)[] = [];
+  if (primaries.length > 0) {
+    ors.push(`${def.hierarchy.primaryExpr} IN (${primaries.map(() => "?").join(", ")})`);
+    params.push(...primaries);
+  }
+  if (secondaries.length > 0) {
+    ors.push(`${def.hierarchy.secondaryExpr} IN (${secondaries.map(() => "?").join(", ")})`);
+    params.push(...secondaries);
+  }
+  if (ors.length === 0) return null;
+  return { conditions: [`(${ors.join(" OR ")})`], params };
 }
 
 // eslint-disable-next-line complexity -- four operators × NULL-bound branches
@@ -184,6 +211,8 @@ export function buildColumnFilterClauses(
       frag = emitText(def.sqlExpr, f);
     } else if (f.kind === "CATEGORY") {
       frag = emitCategory(def.sqlExpr, def.isAggregated, f);
+    } else if (f.kind === "HIERARCHICAL" && def.filterKind === "HIERARCHICAL") {
+      frag = emitHierarchical(def, f);
     } else if (f.kind === "NUMBER" && def.filterKind === "NUMBER") {
       frag = emitNumber(def.sqlExpr, f);
     } else if (f.kind === "DATE" && def.filterKind === "DATE") {
