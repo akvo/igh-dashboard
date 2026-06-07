@@ -56,3 +56,18 @@ describe("columnRegistry", () => {
     expect(resolveColumn("CLINICAL_TRIALS", "last_updated")?.filterKind).toBe("DATE");
   });
 });
+
+describe("disease_name hierarchical column", () => {
+  it("filters/sorts on the coalesced value and exposes both level expressions", () => {
+    expect(resolveColumn("PORTFOLIO_CANDIDATES", "disease_name")).toEqual({
+      sqlExpr: "COALESCE(d.secondary_disease_name, d.disease_filter)",
+      sortable: true,
+      filterKind: "HIERARCHICAL",
+      isAggregated: false,
+      hierarchy: {
+        primaryExpr: "d.disease_filter",
+        secondaryExpr: "d.secondary_disease_name",
+      },
+    });
+  });
+});

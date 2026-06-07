@@ -16,6 +16,9 @@
 //   - CATEGORY  => filter by IN (...values)
 //   - NUMBER    => operator-driven scalar comparison (= / < / > / between)
 //   - DATE      => operator-driven date comparison; EQ/BETWEEN wrap in DATE()
+//   - HIERARCHICAL => two-tier IN filter; `hierarchy.primaryExpr` /
+//                     `hierarchy.secondaryExpr` drive the WHERE clause,
+//                     while `sqlExpr` is used only for display and ORDER BY.
 //
 // `sortable: false` disables ORDER BY for columns where the SQL expression
 // doesn't yield a deterministic sort (mostly aggregated columns).
@@ -29,13 +32,17 @@ export type DataTableId =
   | "RD_PRIORITIES"
   | "RD_PRIORITIES_WITH_CANDIDATES";
 
-export type FilterKind = "TEXT" | "CATEGORY" | "NUMBER" | "DATE";
+export type FilterKind = "TEXT" | "CATEGORY" | "NUMBER" | "DATE" | "HIERARCHICAL";
 
 export interface ColumnDef {
   sqlExpr: string;
   sortable: boolean;
   filterKind: FilterKind;
   isAggregated: boolean;
+  // For HIERARCHICAL columns only: the two SQL expressions the
+  // primary/secondary IN-clauses filter against. Display + sort use
+  // `sqlExpr` (the coalesced value); filtering uses these two.
+  hierarchy?: { primaryExpr: string; secondaryExpr: string };
 }
 
 // Portfolio candidates columns (Candidates, Approved, Extract — same shape).
@@ -79,11 +86,17 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     filterKind: "CATEGORY",
     isAggregated: false,
   },
+  // Displayed/sorted by the specific disease (child, falling back to
+  // parent); filtered hierarchically on the parent + child columns.
   disease_name: {
-    sqlExpr: "d.disease_group_name",
+    sqlExpr: "COALESCE(d.secondary_disease_name, d.disease_filter)",
     sortable: true,
-    filterKind: "CATEGORY",
+    filterKind: "HIERARCHICAL",
     isAggregated: false,
+    hierarchy: {
+      primaryExpr: "d.disease_filter",
+      secondaryExpr: "d.secondary_disease_name",
+    },
   },
   product_name: {
     sqlExpr: "pr.product_name",
