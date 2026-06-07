@@ -1,4 +1,20 @@
 #!/usr/bin/env node
+//
+// ONE-TIME SETUP — not part of the live sync.
+//
+// This script generates the separate content repo from scratch
+// (content.yaml + content.schema.json → per-key files, seed schema.json,
+// validate.mjs, on-push.yml, README, package.json, .gitignore, then
+// git init + first commit). It is invoked manually via
+// `npm run content:bootstrap` and is NOT imported or called by the
+// running sync (sync.mjs / on-push.yml / content-sync.yml). Once the
+// content repo exists, its dev-owned files are maintained in that repo
+// directly; only schema.json is re-projected on each sync (export-schema.mjs).
+//
+// Keep it for repo re-creation: disaster recovery, a rename, a second
+// environment, or the pre-go-live "re-bootstrap if content.yaml changed"
+// step. It is otherwise inert.
+//
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
