@@ -30,6 +30,16 @@ export function toColumnFilters(filters) {
       const values = (entry.values ?? []).filter((v) => v != null && v !== '');
       if (values.length === 0) continue;
       out.push({ column, kind: 'CATEGORY', values });
+    } else if (entry.kind === 'hierarchical') {
+      const primary = (entry.primary ?? []).filter((v) => v != null && v !== '');
+      const secondary = (entry.secondary ?? []).filter((v) => v != null && v !== '');
+      if (primary.length === 0 && secondary.length === 0) continue;
+      out.push({
+        column,
+        kind: 'HIERARCHICAL',
+        primary_values: primary,
+        secondary_values: secondary,
+      });
     } else if (entry.kind === 'number') {
       const op = entry.operator?.toUpperCase();
       if (!op) continue;
