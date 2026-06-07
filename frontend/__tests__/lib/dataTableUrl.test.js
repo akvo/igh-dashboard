@@ -4,6 +4,7 @@ import {
   decodeFilters,
   encodeSort,
   decodeSort,
+  hydrateFiltersFromUrl,
 } from '@/lib/dataTableUrl';
 
 describe('encodeFilters / decodeFilters', () => {
@@ -187,5 +188,51 @@ describe('encodeSort / decodeSort', () => {
   it('returns null on malformed sort string', () => {
     expect(decodeSort('candidate_name')).toBeNull();
     expect(decodeSort('candidate_name:bogus')).toBeNull();
+  });
+});
+
+describe('hierarchical disease filter URL round-trip', () => {
+  // Minimal column config: disease_name is hierarchical.
+  const COLUMNS = [{ accessor: 'disease_name', filter: { kind: 'hierarchical', source: 'disease' } }];
+
+  it('round-trips primary + secondary selections', () => {
+    const state = {
+      disease_name: { kind: 'hierarchical', primary: ['Dengue'], secondary: ['Cholera', 'Shigella'] },
+    };
+    const encoded = encodeFilters(state);
+    const decoded = decodeFilters(encoded);
+    expect(hydrateFiltersFromUrl(decoded, COLUMNS)).toEqual(state);
+  });
+
+  it('round-trips a secondary-only selection', () => {
+    const state = {
+      disease_name: { kind: 'hierarchical', primary: [], secondary: ['Cholera'] },
+    };
+    expect(hydrateFiltersFromUrl(decodeFilters(encodeFilters(state)), COLUMNS)).toEqual(state);
+  });
+
+  it('round-trips a primary-only selection (trailing-semicolon form)', () => {
+    const state = {
+      disease_name: { kind: 'hierarchical', primary: ['Dengue'], secondary: [] },
+    };
+    expect(hydrateFiltersFromUrl(decodeFilters(encodeFilters(state)), COLUMNS)).toEqual(state);
+  });
+
+  it('omits an all-empty hierarchical entry from the URL', () => {
+    const encoded = encodeFilters({
+      disease_name: { kind: 'hierarchical', primary: [], secondary: [] },
+    });
+    expect(encoded).toBeNull();
+  });
+
+  it('encodes special characters in disease names losslessly', () => {
+    const state = {
+      disease_name: {
+        kind: 'hierarchical',
+        primary: [],
+        secondary: ['EAEC (Enteroaggregative E.coli)', 'a|b;c'],
+      },
+    };
+    expect(hydrateFiltersFromUrl(decodeFilters(encodeFilters(state)), COLUMNS)).toEqual(state);
   });
 });

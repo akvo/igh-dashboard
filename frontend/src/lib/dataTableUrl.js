@@ -37,6 +37,15 @@
 //            column:d.before:2024-12-31
 //            column:d.after:2024-01-01
 //            column:d.bt:2024-01-01|2024-12-31
+//
+// HIERARCHICAL entries carry an `h` prefix and two `|`-joined lists
+// (parent diseases, then child diseases) separated by `;`. Every value
+// is URL-encoded, so a literal `|` or `;` in a name survives as
+// %7C / %3B:
+//
+//   hierarchical → column:h:<primaries>;<secondaries>
+//                  column:h:Dengue;                  (primary-only)
+//                  column:h:;Cholera|Shigella        (secondary-only)
 
 const NUMBER_OP_TAG = { eq: 'n.eq', lt: 'n.lt', gt: 'n.gt', between: 'n.bt' };
 const NUMBER_OP_FROM = {
@@ -49,6 +58,11 @@ const DATE_OP_FROM = {
   'd.eq': 'eq', 'd.before': 'before', 'd.after': 'after', 'd.bt': 'between',
 };
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// Hierarchical (two-level) filter: `column:h:<primaries>;<secondaries>`
+// where each list is `|`-joined and every value is URL-encoded (so a
+// literal `|` or `;` in a name survives as %7C / %3B).
+const HIER_TAG = 'h';
 
 function encVal(s) {
   return encodeURIComponent(s);
@@ -75,6 +89,13 @@ export function encodeFilters(filters) {
       const values = (entry.values ?? []).filter((v) => v != null && v !== '');
       if (values.length === 0) continue;
       parts.push(`${encVal(column)}:${values.map(encVal).join('|')}`);
+    } else if (entry.kind === 'hierarchical') {
+      const primary = (entry.primary ?? []).filter((v) => v != null && v !== '');
+      const secondary = (entry.secondary ?? []).filter((v) => v != null && v !== '');
+      if (primary.length === 0 && secondary.length === 0) continue;
+      const p = primary.map(encVal).join('|');
+      const s = secondary.map(encVal).join('|');
+      parts.push(`${encVal(column)}:${HIER_TAG}:${p};${s}`);
     } else if (entry.kind === 'number') {
       const tag = NUMBER_OP_TAG[entry.operator];
       if (!tag) continue;
@@ -155,6 +176,19 @@ export function decodeFilters(encoded) {
         }
         continue;
       }
+
+      if (tag === HIER_TAG) {
+        // Our encoder always emits the `;` (even for one-sided
+        // selections), so `semi === -1` only happens for a hand-crafted
+        // URL; treat the whole payload as the primaries list then.
+        const semi = valuesStr.indexOf(';');
+        const pStr = semi === -1 ? valuesStr : valuesStr.slice(0, semi);
+        const sStr = semi === -1 ? '' : valuesStr.slice(semi + 1);
+        const primary = pStr === '' ? [] : pStr.split('|').map(decVal);
+        const secondary = sStr === '' ? [] : sStr.split('|').map(decVal);
+        out[column] = { kind: 'hierarchical', primary, secondary };
+        continue;
+      }
     }
 
     // Legacy form: TEXT or CATEGORY (decoder-side, both encode as a
@@ -198,6 +232,15 @@ export function hydrateFiltersFromUrl(decoded, columns) {
     if (entry.kind === 'number' || entry.kind === 'date') {
       if (entry.kind !== targetKind) continue;
       out[column] = entry;
+      continue;
+    }
+    if (entry.kind === 'hierarchical') {
+      if (targetKind !== 'hierarchical') continue;
+      out[column] = {
+        kind: 'hierarchical',
+        primary: entry.primary ?? [],
+        secondary: entry.secondary ?? [],
+      };
       continue;
     }
     if (targetKind === 'text') {
