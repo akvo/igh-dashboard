@@ -21,6 +21,15 @@
 import { normalizeProductName } from './filterGroups';
 import { displayHealthArea } from './transformations/constants';
 
+// The Disease column shows the *specific* disease (the secondary /
+// child, e.g. "Cholera"), falling back to the parent disease when the
+// secondary value is null or empty (childless diseases like "Dengue").
+// Each row already carries both fields from the portfolio-candidates
+// query, so this is display-only.
+export function specificDiseaseLabel(row) {
+  return row?.secondary_disease_name || row?.disease_name || '';
+}
+
 // =========================================================
 // Candidates (Explore → Aggregated portfolio → Candidates)
 // =========================================================
@@ -58,7 +67,13 @@ export function buildCandidateColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
+    {
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
+      filter: { kind: 'hierarchical', source: 'disease' },
+    },
     {
       header: 'Product',
       accessor: 'product_name',
@@ -124,7 +139,13 @@ export function buildApprovedProductColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
+    {
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
+      filter: { kind: 'hierarchical', source: 'disease' },
+    },
     {
       header: 'Product',
       accessor: 'product_name',
