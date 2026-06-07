@@ -28,6 +28,7 @@ import ColumnMenuPopover from './ColumnMenuPopover';
 //   filters       — controlled filter state, keyed by accessor
 //   onSort        — (column, direction|null) => void
 //   onHideColumn  — (column) => void
+//   onReorder     — (newColumns) => void; called after a drag-to-reorder
 //   scrollableRef — ref to the overflow container (for shadow detection)
 export default function DataTableHeader({
   columns,
@@ -35,6 +36,7 @@ export default function DataTableHeader({
   filters,
   onSort,
   onHideColumn,
+  onReorder = () => {},
   scrollableRef,
   headerRowRef,
 }) {

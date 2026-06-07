@@ -316,6 +316,7 @@ export default function DataTable({
                 activeSort={sort}
                 onSort={onSort}
                 onHideColumn={onHideColumn}
+                onReorder={onVisibleColumnsChange}
                 scrollableRef={scrollableRef}
                 headerRowRef={headerRowRef}
               />
@@ -403,6 +404,7 @@ export default function DataTable({
               filters={filters}
               onSort={onSort}
               onHideColumn={onHideColumn}
+              onReorder={onVisibleColumnsChange}
               scrollableRef={scrollableRef}
               headerRowRef={headerRowRef}
             />
