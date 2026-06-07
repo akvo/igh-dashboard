@@ -589,6 +589,26 @@ describe('DataTable', () => {
     await waitFor(() => expect(countBodyRows()).toBe(3), { timeout: 1000 });
   });
 
+  it('reorders columns when a header cell is dragged onto another', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // Grab the two header cells via their text, then walk up to the <th>.
+    // Scope to the real table: the aria-hidden sticky clone renders a second
+    // copy of every header, so an unscoped getByText would match two nodes.
+    const nameTh = realTable().getByText('Name').closest('th');
+    const typeTh = realTable().getByText('Type').closest('th');
+
+    // Drag "Type" onto "Name": Type should move to index 0.
+    fireEvent.dragStart(typeTh);
+    fireEvent.dragOver(nameTh);
+
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+  });
+
   it('client-side DATE filter narrows the visible rows and total count (after debounce)', async () => {
     const COLS = [
       { header: 'Name', accessor: 'name' },

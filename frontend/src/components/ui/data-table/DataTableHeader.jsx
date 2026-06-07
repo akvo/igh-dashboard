@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from '../../icons';
 import ColumnMenuPopover from './ColumnMenuPopover';
 
@@ -42,6 +42,45 @@ export default function DataTableHeader({
 }) {
   const [hasOverflow, setHasOverflow] = useState(false);
 
+  // -----------------------------------------------------------------
+  // Header drag-to-reorder (native HTML5 DnD)
+  // -----------------------------------------------------------------
+  // Mirrors the ColumnsPopover pattern: on dragOver we splice the dragged
+  // accessor into the target's slot and emit the new *visible* order via
+  // onReorder (wired to onVisibleColumnsChange upstream). The order updates
+  // live during the drag, so columns shift under the cursor. Index 0 is the
+  // frozen column and participates fully — dropping a column first re-freezes
+  // it, matching the popover exactly.
+  const draggedRef = useRef(null);
+  const [draggingId, setDraggingId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+
+  const handleDragStart = (accessor) => {
+    draggedRef.current = accessor;
+    setDraggingId(accessor);
+  };
+
+  const handleDragOver = (e, targetAccessor) => {
+    e.preventDefault(); // required to allow a drop
+    const draggedId = draggedRef.current;
+    if (!draggedId || draggedId === targetAccessor) return;
+    setDragOverId(targetAccessor);
+    const order = columns.map((c) => c.accessor);
+    const fromIndex = order.indexOf(draggedId);
+    const toIndex = order.indexOf(targetAccessor);
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+    const next = [...order];
+    next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, draggedId);
+    onReorder(next);
+  };
+
+  const handleDragEnd = () => {
+    draggedRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
   useEffect(() => {
     const el = scrollableRef?.current;
     if (!el) return;
@@ -74,7 +113,16 @@ export default function DataTableHeader({
         return (
           <th
             key={column.accessor}
-            className="px-4 py-3 text-left text-sm font-medium text-gray-700 bg-[#FEF8EE] border-b border-gray-200 whitespace-nowrap sticky top-0 z-10"
+            draggable
+            onDragStart={() => handleDragStart(column.accessor)}
+            onDragOver={(e) => handleDragOver(e, column.accessor)}
+            onDragEnd={handleDragEnd}
+            aria-grabbed={draggingId === column.accessor || undefined}
+            className={`px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap sticky top-0 z-10 cursor-grab select-none ${
+              dragOverId === column.accessor
+                ? 'bg-orange-50 outline outline-1 outline-orange-300'
+                : 'bg-[#FEF8EE]'
+            } ${draggingId === column.accessor ? 'opacity-50' : ''}`}
             style={{ width: column.width, minWidth: column.minWidth, ...stickyStyle }}
           >
             <div className="flex items-center gap-1">
