@@ -18,8 +18,17 @@
  *   defaultHidden — start hidden in the visible-columns popover (default false)
  */
 
-import { normalizeProductName } from './filterGroups';
 import { displayHealthArea } from './transformations/constants';
+
+// The Disease column shows the *specific* disease (the secondary /
+// child, e.g. "Cholera"), falling back to the parent disease when the
+// secondary value is null or empty (childless diseases like "Dengue").
+// Each row already carries both fields from the portfolio-candidates
+// query, so this is display-only. The column's flat category filter is
+// aligned to this same value via the backend registry (COALESCE).
+export function specificDiseaseLabel(row) {
+  return row?.secondary_disease_name || row?.disease_name || '';
+}
 
 // =========================================================
 // Candidates (Explore → Aggregated portfolio → Candidates)
@@ -58,14 +67,14 @@ export function buildCandidateColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
     {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     // Aggregated string column — TEXT-only per the backend column registry.
@@ -124,14 +133,14 @@ export function buildApprovedProductColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
     {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
