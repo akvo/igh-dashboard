@@ -79,8 +79,13 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     filterKind: "CATEGORY",
     isAggregated: false,
   },
+  // The Disease column displays the specific disease (child, else parent).
+  // Filter/sort/distinct-values run on the same coalesced value so the
+  // flat dropdown's options and the sort order match the cells. Kept a
+  // plain CATEGORY column, so distinctValues still applies the global +
+  // other-column filters (contextual narrowing) and the dropdown stays compact.
   disease_name: {
-    sqlExpr: "d.disease_group_name",
+    sqlExpr: "COALESCE(d.secondary_disease_name, d.disease_filter)",
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
