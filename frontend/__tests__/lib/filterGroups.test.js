@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  isVcpOnlySelection,
   VECTOR_CONTROL_PRODUCT_NAMES,
   VECTOR_CONTROL_CONSOLIDATED_NAME,
   expandProductKeySelection,
@@ -128,5 +129,43 @@ describe('mergeVectorControlChartData', () => {
   it('handles empty/null', () => {
     expect(mergeVectorControlChartData([])).toEqual([]);
     expect(mergeVectorControlChartData(null)).toBeNull();
+  });
+});
+
+describe('isVcpOnlySelection', () => {
+  it('returns false for an empty selection (the "All" case)', () => {
+    expect(isVcpOnlySelection([])).toBe(false);
+  });
+
+  it('returns false for null/undefined', () => {
+    expect(isVcpOnlySelection(null)).toBe(false);
+    expect(isVcpOnlySelection(undefined)).toBe(false);
+  });
+
+  it('returns true when every selected product is a VCP subtype', () => {
+    expect(
+      isVcpOnlySelection([
+        'Biological vector control products',
+        'Chemical vector control products',
+      ]),
+    ).toBe(true);
+  });
+
+  it('returns true when all four VCP subtypes are selected (whole group)', () => {
+    expect(isVcpOnlySelection([...VECTOR_CONTROL_PRODUCT_NAMES])).toBe(true);
+  });
+
+  it('returns true for the consolidated VCP name alone', () => {
+    expect(isVcpOnlySelection(['Vector control products'])).toBe(true);
+  });
+
+  it('returns false for a mixed VCP + non-VCP selection', () => {
+    expect(
+      isVcpOnlySelection(['Vaccine', 'Biological vector control products']),
+    ).toBe(false);
+  });
+
+  it('returns false when no VCP subtype is present', () => {
+    expect(isVcpOnlySelection(['Vaccine', 'Diagnostic'])).toBe(false);
   });
 });
