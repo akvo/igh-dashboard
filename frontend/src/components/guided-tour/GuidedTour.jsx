@@ -85,7 +85,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
               padding: '12px 0',
               border: 'none',
               borderRadius: 8,
-              background: '#f5a623',
+              background: '#fe7449',
               fontSize: 15,
               fontWeight: 500,
               cursor: 'pointer',
@@ -214,7 +214,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           marginBottom: 6,
         }}
       >
-        <span style={{ fontSize: 12, color: '#f5a623', fontWeight: 600 }}>
+        <span style={{ fontSize: 12, color: '#fe7449', fontWeight: 600 }}>
           Step {stepIndex + 1} of {totalSteps}
         </span>
         <button
@@ -257,7 +257,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
         <button
           onClick={onNext}
           style={{
-            background: '#f5a623',
+            background: '#fe7449',
             border: 'none',
             borderRadius: 6,
             padding: '8px 20px',
@@ -361,7 +361,6 @@ export default function GuidedTour({ active, onClose }) {
       {phase === 'touring' && (
         <>
           <div
-            onClick={handleClose}
             style={{ position: 'fixed', inset: 0, zIndex: 9997 }}
           />
           <Spotlight rect={targetRect} />

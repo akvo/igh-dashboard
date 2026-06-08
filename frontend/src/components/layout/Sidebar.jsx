@@ -502,7 +502,7 @@ export default function Sidebar({
                             setShowTour(true);
                           }}
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
-                          style={{ flex: 1, border: 'none', background: '#f5a623', cursor: 'pointer' }}
+                          style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
                           Start guided tour
                         </button>
@@ -597,7 +597,7 @@ export default function Sidebar({
                             setShowTour(true);
                           }}
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
-                          style={{ flex: 1, border: 'none', background: '#f5a623', cursor: 'pointer' }}
+                          style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
                           Start guided tour
                         </button>
