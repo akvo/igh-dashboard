@@ -18,7 +18,6 @@
  *   defaultHidden — start hidden in the visible-columns popover (default false)
  */
 
-import { normalizeProductName } from './filterGroups';
 import { displayHealthArea } from './transformations/constants';
 
 // The Disease column shows the *specific* disease (the secondary /
@@ -75,13 +74,7 @@ export function buildCandidateColumns({ onExplore } = {}) {
       csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
-    {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
-      filter: { kind: 'category' },
-    },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     // Aggregated string column — TEXT-only per the backend column registry.
@@ -147,13 +140,7 @@ export function buildApprovedProductColumns({ onExplore } = {}) {
       csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
-    {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
-      filter: { kind: 'category' },
-    },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
