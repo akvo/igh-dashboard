@@ -43,6 +43,21 @@ export function normalizeProductName(name) {
 }
 
 /**
+ * The charts collapse the four VCP subtypes into one umbrella row by default.
+ * We break them out only when the user has drilled the product filter down to
+ * VCP subtypes *exclusively* — every selected product is a VCP subtype and at
+ * least one is selected. Any non-VCP product in the mix (or an empty "All"
+ * selection) keeps the umbrella.
+ */
+export function isVcpOnlySelection(products) {
+  return (
+    Array.isArray(products) &&
+    products.length > 0 &&
+    products.every((name) => VECTOR_CONTROL_PRODUCT_NAMES.includes(name))
+  );
+}
+
+/**
  * Merge vector control product rows in stacked bar chart data
  * (array of { category, ...phaseKeys }). Sums each phase key across
  * matching VC rows into one consolidated row.
