@@ -29,6 +29,7 @@ import {
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import {
+  isVcpOnlySelection,
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
 } from '@/lib/filterGroups';
@@ -63,9 +64,13 @@ export default function ExploreSection() {
   );
   const { chartData: rawPipelineData, phases: pipelinePhases, loading: pipelineLoading } =
     useProductPhaseDistribution(healthArea, primary, secondary, expandedProduct, rdPhase);
+  // Break the VCP umbrella into its subtypes only when the product filter is
+  // drilled down to VCP subtypes exclusively; otherwise keep the merged umbrella.
+  const expandVcp = isVcpOnlySelection(expandedProduct);
+
   const pipelineData = useMemo(
-    () => mergeVectorControlStackedData(rawPipelineData),
-    [rawPipelineData],
+    () => (expandVcp ? rawPipelineData : mergeVectorControlStackedData(rawPipelineData)),
+    [expandVcp, rawPipelineData],
   );
 
   // The Product types donut accepts a single optional candidateType
@@ -76,8 +81,8 @@ export default function ExploreSection() {
     healthArea, primary, secondary, expandedProduct, rdPhase, candidateTypeForApi,
   );
   const productTypesData = useMemo(
-    () => mergeVectorControlChartData(rawProductTypesData),
-    [rawProductTypesData],
+    () => (expandVcp ? rawProductTypesData : mergeVectorControlChartData(rawProductTypesData)),
+    [expandVcp, rawProductTypesData],
   );
 
   // Convert hidden-phase array (URL-friendly) into the
