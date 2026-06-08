@@ -60,13 +60,7 @@ export function StudyDetailsSection({ details }) {
           </div>
           <div>
             <p className="si-def-label">Age</p>
-            <div className="si-tag-row">
-              {ages.length ? (
-                ages.map((a, i) => <span key={i} className="si-receptor-tag">{a}</span>)
-              ) : (
-                <NoInfo />
-              )}
-            </div>
+            <p className="si-def-value">{ages.length ? ages.join(', ') : <NoInfo />}</p>
           </div>
           <div>
             <p className="si-def-label">Allocation</p>
