@@ -38,7 +38,7 @@ const Header = ({
         <div className="flex items-center" style={{ gap: 5 }}>
           {logo || <DefaultLogo />}
         </div>
-        <nav className="hidden lg:flex items-center" style={{ height: 90 }}>
+        <nav data-tour="header-nav" className="hidden lg:flex items-center" style={{ height: 90 }}>
           {navItems.map((item) => (
             <NavItem
               key={item.label}

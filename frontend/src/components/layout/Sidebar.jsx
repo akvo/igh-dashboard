@@ -24,6 +24,7 @@ import {
   ChevronDownIcon,
 } from '../icons';
 import SidebarFilterBox from './SidebarFilterBox';
+import GuidedTour from '../guided-tour/GuidedTour';
 
 const defaultMenuItems = [
   {
@@ -63,6 +64,7 @@ export default function Sidebar({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpPopup, setShowHelpPopup] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const helpRef = useRef(null);
 
   useEffect(() => {
@@ -232,7 +234,7 @@ export default function Sidebar({
 
   return (
     <aside
-      style={{ height: 'calc(100vh - 74px)', position: 'sticky', top: '74px' }}
+      style={{ height: 'calc(100vh - 74px)', position: 'sticky', top: '74px', zIndex: 100 }}
       className={`hidden lg:flex flex-col transition-all duration-300 bg-sidebar-bg ${
         isExpanded ? 'w-64' : 'w-16'
       }`}
@@ -261,7 +263,7 @@ export default function Sidebar({
  */}
 
       {/* Menu */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
+      <nav data-tour="sidebar-nav" className="flex-1 overflow-y-auto px-3 py-2">
         {menuItems.map((section, sectionIndex) => (
           <div key={section.section} className={sectionIndex > 0 ? 'mt-6' : ''}>
             {isExpanded && (
@@ -415,7 +417,9 @@ export default function Sidebar({
       </nav>
 
       {/* Global filter box */}
-      <SidebarFilterBox isExpanded={isExpanded} />
+      <div data-tour="filter-box">
+        <SidebarFilterBox isExpanded={isExpanded} />
+      </div>
 
       {/* Footer */}
       <div className="p-3 border-t border-black-12">
@@ -436,12 +440,12 @@ export default function Sidebar({
                   </button>
                   {showHelpPopup && (
                     <div
-                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      className="absolute bg-white rounded-lg shadow-lg z-[1100]"
                       style={{
                         bottom: '100%',
                         left: 0,
                         marginBottom: 12,
-                        width: 280,
+                        width: 320,
                         padding: '20px',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
                       }}
@@ -459,26 +463,56 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
-                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
-                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      <h4 className="text-base font-bold text-black m-0 mb-1">Need help?</h4>
+                      <p className="text-sm text-gray-500 m-0 mb-4">
+                        Choose how you&apos;d like to get started or get support.
                       </p>
-                      <a
-                        href="mailto:info@impactgh.org"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="4" width="20" height="16" rx="2" />
-                          <path d="M22 4L12 13L2 4" />
-                        </svg>
-                        Send email
-                      </a>
+
+                      <div className="mb-3">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
+                          <strong>Take the guided tour</strong>{' '}
+                          <span className="text-gray-500">
+                            New to the platform? Let us walk you through the key features step by step.
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x2709;</span>
+                          <strong>Contact IGH</strong>{' '}
+                          <span className="text-gray-500">
+                            Have a question or need further support? Reach out to the Impact Global Health team directly.
+                          </span>
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <a
+                          href="mailto:info@impactgh.org"
+                          className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                          style={{ flex: 1 }}
+                        >
+                          Send e-mail
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowHelpPopup(false);
+                            setShowTour(true);
+                          }}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
+                          style={{ flex: 1, border: 'none', background: '#f5a623', cursor: 'pointer' }}
+                        >
+                          Start guided tour
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
               <button
+                data-tour="sidebar-collapse"
                 onClick={() => setIsExpanded(false)}
                 className="p-2 rounded-lg text-sidebar-icon hover:bg-sidebar-hover hover:text-black transition-colors"
                 title="Collapse sidebar"
@@ -502,12 +536,12 @@ export default function Sidebar({
                   </button>
                   {showHelpPopup && (
                     <div
-                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      className="absolute bg-white rounded-lg shadow-lg z-[1100]"
                       style={{
                         bottom: '100%',
                         left: 0,
                         marginBottom: 12,
-                        width: 280,
+                        width: 320,
                         padding: '20px',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
                       }}
@@ -524,21 +558,50 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
-                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
-                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      <h4 className="text-base font-bold text-black m-0 mb-1">Need help?</h4>
+                      <p className="text-sm text-gray-500 m-0 mb-4">
+                        Choose how you&apos;d like to get started or get support.
                       </p>
-                      <a
-                        href="mailto:info@impactgh.org"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="4" width="20" height="16" rx="2" />
-                          <path d="M22 4L12 13L2 4" />
-                        </svg>
-                        Send email
-                      </a>
+
+                      <div className="mb-3">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
+                          <strong>Take the guided tour</strong>{' '}
+                          <span className="text-gray-500">
+                            New to the platform? Let us walk you through the key features step by step.
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x2709;</span>
+                          <strong>Contact IGH</strong>{' '}
+                          <span className="text-gray-500">
+                            Have a question or need further support? Reach out to the Impact Global Health team directly.
+                          </span>
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <a
+                          href="mailto:info@impactgh.org"
+                          className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                          style={{ flex: 1 }}
+                        >
+                          Send e-mail
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowHelpPopup(false);
+                            setShowTour(true);
+                          }}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
+                          style={{ flex: 1, border: 'none', background: '#f5a623', cursor: 'pointer' }}
+                        >
+                          Start guided tour
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -554,6 +617,7 @@ export default function Sidebar({
           )}
         </div>
       </div>
+      <GuidedTour active={showTour} onClose={() => setShowTour(false)} />
     </aside>
   );
 }
