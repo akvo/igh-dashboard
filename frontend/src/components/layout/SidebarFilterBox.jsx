@@ -121,15 +121,17 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
       <div className="px-3 py-2">
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white hover:bg-sidebar-hover transition-colors border-0 cursor-pointer"
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors border-0 cursor-pointer"
+          style={{ backgroundColor: '#262626' }}
         >
           <span className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-black">Filters</span>
+            <span className="text-sm font-semibold text-white">Filters</span>
+
             {activeCount > 0 && (
               <span className="text-sm font-semibold text-orange-500">{activeCount} Active</span>
             )}
           </span>
-          <PlusIcon className="w-4 h-4 text-sidebar-icon" strokeWidth={2.5} />
+          <PlusIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
         </button>
       </div>
     );
@@ -140,9 +142,9 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     <div className="px-3 py-2">
       <div className="rounded-lg bg-white">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 pt-3 pb-2 rounded-t-lg bg-white">
+        <div className="flex items-center justify-between px-3 pt-3 pb-2 rounded-t-lg" style={{ backgroundColor: '#262626' }}>
           <span className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-black">Filters</span>
+            <span className="text-sm font-semibold text-white">Filters</span>
             {activeCount > 0 && (
               <span className="text-sm font-semibold text-orange-500">{activeCount} Active</span>
             )}
@@ -153,15 +155,15 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
               disabled={!hasAnyFilters}
               className={`text-xs border-0 bg-transparent cursor-pointer ${
                 hasAnyFilters
-                  ? 'text-gray-600 hover:text-black'
-                  : 'text-gray-300 cursor-not-allowed'
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-500 cursor-not-allowed'
               }`}
             >
               Clear all
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-0.5 bg-transparent border-0 cursor-pointer text-sidebar-icon hover:text-black transition-colors"
+              className="p-0.5 bg-transparent border-0 cursor-pointer text-gray-300 hover:text-white transition-colors"
             >
               <CloseIcon className="w-4 h-4" strokeWidth={2.5} />
             </button>
@@ -171,7 +173,7 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
         <div className="mx-3 border-t border-orange-500" />
 
         {/* Filter category rows */}
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-white">
           {categories.map((cat) => (
             <div key={cat.label} className="flex items-center justify-between px-3 py-2.5">
               <span className="flex items-center gap-2">
