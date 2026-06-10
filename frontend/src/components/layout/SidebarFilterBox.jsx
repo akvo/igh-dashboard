@@ -30,8 +30,6 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setSecondary,
     setProduct,
     setRdPhase,
-    hasFilters,
-    clearAll: clearGlobal,
   } = useGlobalFilters();
 
   // Section-local URL-state filters (home page + cross-pipeline analytics).
@@ -44,54 +42,41 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
   const [ttYear, setTtYear] = useUrlState('ttYear', [], arraySerializer);
   const [cpYear, setCpYear] = useUrlState('cpYear', '', stringSerializer);
 
-  // Aggregate counts across global + section-local filters per category.
-  const ghaCount = healthArea.length + crossGha.length;
-  const diseaseCount = primary.length + secondary.length;
-  const productCount = product.length + hProduct.length + crossProduct.length;
-  const rdStageCount = rdPhase.length + hRdStage.length;
-  const yearCount = ttYear.length + (cpYear ? 1 : 0);
-
-  const activeCount = ghaCount + diseaseCount + productCount + rdStageCount + yearCount;
-  const hasAnyFilters = activeCount > 0;
-
-  const clearAll = () => {
-    clearGlobal();
-    setHProduct([]);
-    setHRdStage([]);
-    setCrossGha([]);
-    setCrossProduct([]);
-    setTtYear([]);
-    setCpYear('');
-  };
-
-  // Filter category definitions for the list view.
+  // One declarative source of truth for the sidebar's filter inventory.
+  // Each category aggregates its global selection with any section-local
+  // URL-state mirrors (home page + cross-pipeline + temporal) so the
+  // sidebar reflects every active filter regardless of which page set it.
   const categories = [
     {
       label: 'Global health area',
-      count: ghaCount,
+      count: healthArea.length + crossGha.length,
       clear: () => { setHealthArea([]); setCrossGha([]); },
     },
     {
       label: 'Disease',
-      count: diseaseCount,
+      count: primary.length + secondary.length,
       clear: () => { setPrimary([]); setSecondary([]); },
     },
     {
       label: 'Product',
-      count: productCount,
+      count: product.length + hProduct.length + crossProduct.length,
       clear: () => { setProduct([]); setHProduct([]); setCrossProduct([]); },
     },
     {
       label: 'R&D stage',
-      count: rdStageCount,
+      count: rdPhase.length + hRdStage.length,
       clear: () => { setRdPhase([]); setHRdStage([]); },
     },
     {
       label: 'Year',
-      count: yearCount,
+      count: ttYear.length + (cpYear ? 1 : 0),
       clear: () => { setTtYear([]); setCpYear(''); },
     },
   ];
+
+  const activeCount = categories.reduce((sum, c) => sum + c.count, 0);
+  const hasAnyFilters = activeCount > 0;
+  const clearAll = () => categories.forEach((c) => c.clear());
 
   // Collapsed sidebar: just show filter icon.
   if (!isExpanded) {
