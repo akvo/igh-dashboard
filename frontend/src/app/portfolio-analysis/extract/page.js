@@ -16,7 +16,7 @@
 // their filter selections; the sidebar's sibling-aware query
 // forwarding does the carry-over for free.
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -66,6 +66,7 @@ export default function ExtractCustomDetailsPage() {
     setPrimary,
     setSecondary,
     setProduct,
+    setRdPhase,
     healthAreaOptions,
     narrowedHierarchy,
     productOptions,
@@ -92,7 +93,6 @@ export default function ExtractCustomDetailsPage() {
   const [colsRdPriorities, setColsRdPriorities] = useUrlState('cols2', [], arraySerializer);
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
   const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
-  const [extractRdStage, setExtractRdStage] = useUrlState('extRdStage', [], arraySerializer);
 
   // Per-sub-tab DataTable filter / sort URL state. Each filter
   // serializer hydrates against its own EXTRACT_TAB_COLUMNS slice so
@@ -183,17 +183,11 @@ export default function ExtractCustomDetailsPage() {
   // =========================================================
   // Per-tab filtering and data fetching
   // =========================================================
-  //
-  // The extract-specific R&D Stage dropdown narrows further within
-  // the global phase selection: if the user picked a stage here,
-  // it overrides; otherwise the global rdPhase wins.
 
   const itemsPerPage = 10;
   const apolloClient = useApolloClient();
 
-  const effectiveExtractPhases = extractRdStage.length > 0
-    ? extractRdStage
-    : rdPhase.length > 0 ? rdPhase : undefined;
+  const effectiveExtractPhases = rdPhase.length > 0 ? rdPhase : undefined;
 
   // Per-sub-tab column-filters (UI → GraphQL) + sort.
   const ext1ColumnFilters = useMemo(() => toColumnFilters(ext1Filters), [ext1Filters]);
@@ -325,38 +319,26 @@ export default function ExtractCustomDetailsPage() {
   // under the current product / disease / GHA selections appear.
   const rdStageOptions = rdPhaseOptions;
 
-  // Prune stale extractRdStage selections when cross-filtering
-  // removes a previously valid phase (mirrors the global rdPhase
-  // pruning in useCrossFilteredOptions).
-  useEffect(() => {
-    if (extractRdStage.length === 0 || rdStageOptions.length === 0) return;
-    const validValues = new Set(rdStageOptions.map((o) => o.value));
-    const valid = extractRdStage.filter((v) => validValues.has(v));
-    if (valid.length !== extractRdStage.length) setExtractRdStage(valid);
-  }, [rdStageOptions, extractRdStage, setExtractRdStage]);
-
-  // Reset clears the filter values the user can see on the
-  // current sub-tab — the global GHA / disease / product
-  // dropdowns plus the in-page R&D-stage dropdown — and resets the
-  // active sub-tab's page to 1. We deliberately leave `rdPhase`
-  // alone: it's the global R&D phase URL key (only directly
-  // editable from the Explore page), and clearing it here would
-  // wipe a filter the user did not set from this page. Per-column
-  // filters live in `f.ext1`-`f.ext4` and are cleared via the
-  // table's own "Clear all filters" link, not this button.
+  // Reset clears the filter values the user can see on the current
+  // sub-tab — the global GHA / disease / product dropdowns plus the
+  // in-page R&D-stage dropdown — and resets the active sub-tab's
+  // page to 1. The R&D-stage control now binds the global `rdPhase`
+  // key directly, so Reset clears it like the other globals.
+  // Per-column filters live in `f.ext1`-`f.ext4` and are cleared via
+  // the table's own "Clear all filters" link, not this button.
   const hasExtractFilters =
     healthArea.length > 0 ||
     primary.length > 0 ||
     secondary.length > 0 ||
     product.length > 0 ||
-    extractRdStage.length > 0;
+    rdPhase.length > 0;
 
   const handleResetExtractFilters = () => {
     setHealthArea([]);
     setPrimary([]);
     setSecondary([]);
     setProduct([]);
-    setExtractRdStage([]);
+    setRdPhase([]);
     setExtractPage(1);
   };
 
@@ -396,7 +378,7 @@ export default function ExtractCustomDetailsPage() {
       setExtractDownloading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, extractRdStage, ext1ColumnFilters, ext2ColumnFilters, ext3ColumnFilters, ext4ColumnFilters]);
+  }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, rdPhase, ext1ColumnFilters, ext2ColumnFilters, ext3ColumnFilters, ext4ColumnFilters]);
 
   return (
     <div className="flex h-[calc(100vh-74px)] bg-cream-200">
@@ -520,8 +502,8 @@ export default function ExtractCustomDetailsPage() {
                   <div className="min-w-[180px]">
                     <Dropdown
                       label="R&D stage"
-                      value={extractRdStage}
-                      onChange={(v) => { setExtractRdStage(v); setExtractPage(1); }}
+                      value={rdPhase}
+                      onChange={(v) => { setRdPhase(v); setExtractPage(1); }}
                       placeholder="All"
                       options={rdStageOptions}
                       multiSelect={true}
