@@ -20,12 +20,14 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
+// encodeFilters / decodeFilters are imported directly only for
+// technologyFilterSerializer below (bespoke TEXT coercion that
+// makeFilterSerializer can't express); the rest use the shared helpers.
 import {
   encodeFilters,
   decodeFilters,
-  encodeSort,
-  decodeSort,
-  hydrateFiltersFromUrl,
+  sortSerializer,
+  makeFilterSerializer,
 } from '@/lib/dataTableUrl';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { Dropdown, ChartMenu, DataTable } from '@/components/ui';
@@ -68,6 +70,10 @@ import {
 } from '@/components/slideins';
 import { useGlobalFilters } from './useGlobalFilters';
 
+const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
+const approvedFilterSerializer = makeFilterSerializer(APPROVED_PRODUCT_COLUMNS);
+const trialsFilterSerializer = makeFilterSerializer(CLINICAL_TRIAL_COLUMNS);
+
 const ageGroupColors = ['#f9a78d', '#54a5c4', '#fe7449', '#ddd6fe', '#f0b456', '#a78bfa'];
 
 const approvingAuthoritiesPhases = [
@@ -93,37 +99,6 @@ export default function AggregatedSection() {
   // Per-column DataTable filter / sort / visible-columns state for the
   // Candidates tab. Encoded compactly so the URL reads
   // `?f.candidates=indication:tb&s.candidates=current_rd_stage:asc&cols.candidates=...`
-  const candidatesFilterSerializer = useMemo(
-    () => ({
-      serialize: encodeFilters,
-      // Hydrate against the static column config so TEXT vs CATEGORY
-      // is recovered on URL load (decoder alone returns
-      // category-shape).
-      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CANDIDATE_COLUMNS),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const approvedFilterSerializer = useMemo(
-    () => ({
-      serialize: encodeFilters,
-      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), APPROVED_PRODUCT_COLUMNS),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const trialsFilterSerializer = useMemo(
-    () => ({
-      serialize: encodeFilters,
-      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CLINICAL_TRIAL_COLUMNS),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const sortSerializer = useMemo(
-    () => ({ serialize: encodeSort, deserialize: decodeSort }),
-    [],
-  );
   const [candidatesFilters, setCandidatesFilters] = useUrlState('f.candidates', {}, candidatesFilterSerializer);
   const [candidatesSort, setCandidatesSort] = useUrlState('s.candidates', null, sortSerializer);
   const [candidatesVisibleCols, setCandidatesVisibleCols] = useUrlState('cols.candidates', [], arraySerializer);

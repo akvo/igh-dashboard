@@ -20,13 +20,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
-import {
-  encodeFilters,
-  decodeFilters,
-  encodeSort,
-  decodeSort,
-  hydrateFiltersFromUrl,
-} from '@/lib/dataTableUrl';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, DataTable } from '@/components/ui';
@@ -53,6 +47,11 @@ import {
 } from '@/lib/extractColumnConfig';
 import { useGlobalFilters } from '@/components/portfolio-analysis';
 import PageHeader from '@/components/layout/PageHeader';
+
+const ext1FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['candidates-approved'] || []);
+const ext2FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['rd-priorities'] || []);
+const ext3FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['clinical-trials'] || []);
+const ext4FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['rd-only'] || []);
 
 export default function ExtractCustomDetailsPage() {
   const {
@@ -94,38 +93,6 @@ export default function ExtractCustomDetailsPage() {
   const [colsClinicalTrials, setColsClinicalTrials] = useUrlState('cols3', [], arraySerializer);
   const [colsRdOnly, setColsRdOnly] = useUrlState('cols4', [], arraySerializer);
 
-  // Per-sub-tab DataTable filter / sort URL state. Each filter
-  // serializer hydrates against its own EXTRACT_TAB_COLUMNS slice so
-  // TEXT vs CATEGORY is recovered correctly on URL load.
-  const sortSerializer = useMemo(
-    () => ({ serialize: encodeSort, deserialize: decodeSort }),
-    [],
-  );
-  const makeFilterSerializer = useCallback(
-    (tabKey) => ({
-      serialize: encodeFilters,
-      deserialize: (s) =>
-        hydrateFiltersFromUrl(decodeFilters(s), EXTRACT_TAB_COLUMNS[tabKey] || []),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const ext1FilterSerializer = useMemo(
-    () => makeFilterSerializer('candidates-approved'),
-    [makeFilterSerializer],
-  );
-  const ext2FilterSerializer = useMemo(
-    () => makeFilterSerializer('rd-priorities'),
-    [makeFilterSerializer],
-  );
-  const ext3FilterSerializer = useMemo(
-    () => makeFilterSerializer('clinical-trials'),
-    [makeFilterSerializer],
-  );
-  const ext4FilterSerializer = useMemo(
-    () => makeFilterSerializer('rd-only'),
-    [makeFilterSerializer],
-  );
   const [ext1Filters, setExt1Filters] = useUrlState('f.ext1', {}, ext1FilterSerializer);
   const [ext2Filters, setExt2Filters] = useUrlState('f.ext2', {}, ext2FilterSerializer);
   const [ext3Filters, setExt3Filters] = useUrlState('f.ext3', {}, ext3FilterSerializer);
