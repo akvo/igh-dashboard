@@ -168,11 +168,9 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 
   it("byArea snapshot values match tracked DB", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
-    // ND total drifted 1778 → 1777 after the gold DB was regenerated
-    // 2026-05-14; the analyst's original reading reported 1778. Verified
-    // by independent SQL probe before re-pinning.
-    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(183);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1777);
+    // ND total updated 1777 → 1882 after DB update (2026-06-10).
+    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(164);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1882);
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
     expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
@@ -203,14 +201,14 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const byKey = Object.fromEntries(
       baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
     );
-    expect(byKey["Vaccines"]).toBe(75);
-    expect(byKey["Drugs"]).toBe(68);
-    expect(byKey["Diagnostics"]).toBe(41);
-    expect(byKey["Biologics"]).toBe(19);
+    expect(byKey["Vaccines"]).toBe(68);
+    expect(byKey["Drugs"]).toBe(58);
+    expect(byKey["Diagnostics"]).toBe(40);
+    expect(byKey["Biologics"]).toBe(18);
   });
 
-  it("diseaseOptions returns priority-bearing diseases (count = 19), sorted by name", () => {
-    expect(baseline.diseaseOptions).toHaveLength(19);
+  it("diseaseOptions returns priority-bearing diseases (count = 35), sorted by name", () => {
+    expect(baseline.diseaseOptions).toHaveLength(35);
     const names = baseline.diseaseOptions.map((o) => o.disease_name);
     // Plain `.sort()` uses UTF-16 code-unit order — same collation SQLite's
     // default ORDER BY uses. `localeCompare` would put `Helminth` before
@@ -221,9 +219,8 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     for (const opt of baseline.diseaseOptions) {
       expect(opt.disease_key).toBeGreaterThan(0);
       expect(opt.disease_name.length).toBeGreaterThan(0);
-      // global_health_area is intentionally nullable: 7 of the 19
-      // priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis, Scabies)
-      // are not categorised into the three WHO areas in dim_disease.
+      // global_health_area is intentionally nullable — some priority-bearing
+      // diseases are not categorised into the three WHO areas in dim_disease.
       // They still appear in the dropdown; the section's per-GHA share cards
       // simply won't reflect them.
     }
@@ -277,7 +274,7 @@ describe("priorityAlignmentOverview — filtered by primary_disease_names", () =
     }
   });
 
-  it("diseaseOptions does NOT narrow under the filter (still 19)", async () => {
+  it("diseaseOptions does NOT narrow under the filter (still 35)", async () => {
     const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_name] });
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
   });
