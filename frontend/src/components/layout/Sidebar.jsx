@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQueryParams } from '@/lib/useQueryParams';
 import { useHash } from '@/lib/useHash';
+import { GLOBAL_FILTER_KEYS } from '@/lib/filterGroups';
 import {
   HomeIcon,
   ChartIcon,
@@ -206,7 +207,7 @@ export default function Sidebar({
   // the fragment is appended after the query string so the
   // resulting Next.js navigation drives both the route and the
   // scroll-target hash in one go.
-  const GLOBAL_FILTER_KEYS = new Set(['gha', 'primary', 'secondary', 'product', 'rdPhase']);
+  const globalFilterKeys = new Set(GLOBAL_FILTER_KEYS);
 
   const buildHref = (targetHref) => {
     const [targetPath, targetHash = ''] = targetHref.split('#');
@@ -220,7 +221,7 @@ export default function Sidebar({
       if (k === 'tab') return;
       // Always carry global filter keys; carry other keys only
       // between portfolio-analysis siblings.
-      if (GLOBAL_FILTER_KEYS.has(k) || bothInGroup) {
+      if (globalFilterKeys.has(k) || bothInGroup) {
         out.set(k, v);
       }
     });

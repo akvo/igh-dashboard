@@ -2,6 +2,12 @@
 // value.  Must NOT be a comma — the URL array serializer splits on commas.
 const VC_KEY_SEP = '|';
 
+// The five URL query-param keys that hold the app-wide ("global") filter
+// selections. Navigation preserves these across every route so the sidebar
+// filter box stays in sync. Single source of truth — imported by the
+// filter-preserving navigation helper.
+export const GLOBAL_FILTER_KEYS = ['gha', 'primary', 'secondary', 'product', 'rdPhase'];
+
 // Vector control product name consolidation
 export const VECTOR_CONTROL_PRODUCT_NAMES = [
   'Biological vector control products',
