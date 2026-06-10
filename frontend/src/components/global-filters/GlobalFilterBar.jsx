@@ -1,25 +1,23 @@
 'use client';
 
 // =========================================================
-// <GlobalFilterBar/> — sticky row of the four global filters
+// <GlobalFilterBar/> — sticky row of the global filters (presentational)
 // =========================================================
 //
-// Same layout and styling as the existing top-of-page filter bar
-// on the Portfolio Analysis page: Global health area, hierarchical
-// Disease (primary + secondary), Product type, R&D phase, and a
-// trailing Clear button. Calls `useGlobalFilters()` internally so
-// pages render `<GlobalFilterBar />` with no props.
+// Presentational component. Takes a `filters` object (as returned by
+// useGlobalFilters or useWhoPageFilters) and a `showRdPhase` flag.
+// Renders: Global health area, hierarchical Disease (primary + secondary),
+// Product type, and — when showRdPhase is true — R&D phase, plus a
+// trailing Clear button. Callers are responsible for supplying the
+// filters object; this component does not call useGlobalFilters() itself.
 
 import { Dropdown } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
-import { useGlobalFilters } from './useGlobalFilters';
 
-export default function GlobalFilterBar() {
-  const filters = useGlobalFilters();
-
+export default function GlobalFilterBar({ filters, showRdPhase = true }) {
   return (
     <div
       data-portfolio-filter-bar
@@ -63,18 +61,20 @@ export default function GlobalFilterBar() {
             variant="outlined"
           />
         </div>
-        <div className="min-w-[220px]">
-          <Dropdown
-            label="R&D phase"
-            value={filters.rdPhase}
-            onChange={filters.setRdPhase}
-            placeholder="All"
-            options={filters.rdPhaseOptions}
-            multiSelect={true}
-            loading={filters.loading.phases}
-            variant="outlined"
-          />
-        </div>
+        {showRdPhase && (
+          <div className="min-w-[220px]">
+            <Dropdown
+              label="R&D phase"
+              value={filters.rdPhase}
+              onChange={filters.setRdPhase}
+              placeholder="All"
+              options={filters.rdPhaseOptions}
+              multiSelect={true}
+              loading={filters.loading.phases}
+              variant="outlined"
+            />
+          </div>
+        )}
         <div className="flex-1" />
         <button
           onClick={filters.clearAll}

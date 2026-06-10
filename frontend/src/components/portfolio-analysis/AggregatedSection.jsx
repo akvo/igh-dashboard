@@ -68,7 +68,7 @@ import {
   ProductSlideIn,
   TrialSlideIn,
 } from '@/components/slideins';
-import { useGlobalFilters } from './useGlobalFilters';
+import { useGlobalFilters } from '@/components/global-filters';
 
 const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
 const approvedFilterSerializer = makeFilterSerializer(APPROVED_PRODUCT_COLUMNS);

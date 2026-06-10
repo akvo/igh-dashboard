@@ -6,7 +6,7 @@ import {
   PlusIcon,
   CloseIcon,
 } from '@/components/icons';
-import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { useGlobalFilters } from '@/components/global-filters';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 

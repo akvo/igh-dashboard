@@ -21,7 +21,7 @@ import { VECTOR_CONTROL_PRODUCT_NAMES, vcpMemberKeys } from '@/lib/filterGroups'
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
-import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { useGlobalFilters } from '@/components/global-filters';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
 export default function CrossPipelineAnalytics() {

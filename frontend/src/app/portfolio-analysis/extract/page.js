@@ -45,7 +45,7 @@ import {
   EXTRACT_TAB_COLUMNS,
   EXTRACT_ROW_KEY,
 } from '@/lib/extractColumnConfig';
-import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { useGlobalFilters } from '@/components/global-filters';
 import PageHeader from '@/components/layout/PageHeader';
 
 const ext1FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['candidates-approved'] || []);

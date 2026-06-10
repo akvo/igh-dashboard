@@ -25,9 +25,9 @@ import Sidebar from '@/components/layout/Sidebar';
 import {
   ExploreSection,
   AggregatedSection,
-  GlobalFilterBar,
   usePortfolioScrollSpy,
 } from '@/components/portfolio-analysis';
+import { GlobalFilterBar, useGlobalFilters } from '@/components/global-filters';
 import PageHeader from '@/components/layout/PageHeader';
 
 export default function PortfolioAnalysisPage() {
@@ -47,6 +47,8 @@ export default function PortfolioAnalysisPage() {
     rootRef: mainRef,
     sections,
   });
+
+  const globalFilters = useGlobalFilters();
 
   // Click-driven scroll. When the URL hash changes — either
   // because the Sidebar fired a same-route <Link> click, or
@@ -143,7 +145,7 @@ export default function PortfolioAnalysisPage() {
             />
           </div>
 
-          <GlobalFilterBar />
+          <GlobalFilterBar filters={globalFilters} />
 
           <section id="explore" ref={exploreRef}>
             <ExploreSection />
