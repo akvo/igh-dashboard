@@ -65,6 +65,7 @@ export default function HierarchicalProductFilter({
   placeholder = 'All',
   className = '',
   variant = 'outlined',
+  compact = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -341,7 +342,7 @@ export default function HierarchicalProductFilter({
           if (!isOpen) setSearchQuery('');
         }}
         className={`flex items-center justify-between text-sm font-normal text-black cursor-pointer text-left transition-colors
-          w-full px-4 py-2.5 h-[44px]
+          ${compact ? 'gap-2 px-3 h-9 w-[180px] max-w-full' : 'w-full px-4 py-2.5 h-[44px]'}
           ${
             variant === 'outlined'
               ? `border ${isOpen ? 'bg-white border-orange-500' : 'bg-white border-black-24'}`

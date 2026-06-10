@@ -35,6 +35,8 @@ import {
   RefreshIcon,
 } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 import {
   usePortfolioCandidates,
   useClinicalTrials,
@@ -502,16 +504,15 @@ export default function ExtractCustomDetailsPage() {
                 </div>
                 {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
                   <div className="min-w-[180px]">
-                    <Dropdown
+                    <HierarchicalProductFilter
                       label="Product type"
-                      value={product}
+                      selected={product}
                       onChange={(v) => { setProduct(v); setExtractPage(1); }}
                       placeholder="All"
                       options={productOptions}
-                      multiSelect={true}
-                      showAllOption={true}
-                      compact={true}
+                      groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
                       variant="outlined"
+                      compact={true}
                     />
                   </div>
                 )}
