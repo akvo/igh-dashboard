@@ -17,8 +17,12 @@ import PageHeader from '@/components/layout/PageHeader';
 import ViewToggle from '@/components/pipeline-explorer/ViewToggle';
 import { GlobalFilterBar, useGlobalFilters } from '@/components/global-filters';
 
-const PAGE_INTRO =
-  'Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv. Page-level filters stay applied as you move across the tabs or to the table builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.';
+// Two paragraphs: what the two views are, then how filters/sharing/tables
+// behave. PageHeader renders an array as separate <p> blocks.
+const PAGE_INTRO = [
+  'Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv.',
+  'Page-level filters stay applied as you move across the tabs or to the table builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.',
+];
 
 export default function PipelineExplorerLayout({ children }) {
   const globalFilters = useGlobalFilters();
