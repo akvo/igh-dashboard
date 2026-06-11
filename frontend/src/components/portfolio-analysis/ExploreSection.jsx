@@ -33,7 +33,7 @@ import {
   mergeVectorControlChartData,
   mergeVectorControlStackedData,
 } from '@/lib/filterGroups';
-import { useGlobalFilters } from './useGlobalFilters';
+import { useGlobalFilters } from '@/components/global-filters';
 
 // Donut chart colours — brand chart palette (from design system)
 const productTypeColors = [

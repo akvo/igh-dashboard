@@ -48,7 +48,7 @@ import {
 import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
 import { vcpMemberKeys } from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
-import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { useGlobalFilters } from '@/components/global-filters';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [

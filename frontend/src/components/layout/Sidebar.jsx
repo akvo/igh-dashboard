@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useQueryParams } from '@/lib/useQueryParams';
 import { useHash } from '@/lib/useHash';
+import { useFilterPreservingHref } from '@/lib/useFilterPreservingHref';
 import {
   HomeIcon,
   ChartIcon,
@@ -127,12 +127,6 @@ export default function Sidebar({
 
   const pathname = usePathname();
   const hash = useHash();
-  // Read query params via the project's reactive store rather than
-  // Next's useSearchParams() — the latter forces a Suspense boundary
-  // around any consumer during static prerender, and the Sidebar
-  // renders on every page in the app.
-  const [params] = useQueryParams();
-
   // matchesChildHref handles the case where a child's href contains a
   // fragment (`/portfolio-analysis#aggregated`). The pathname must
   // match the path portion, AND on /portfolio-analysis the current
@@ -197,38 +191,11 @@ export default function Sidebar({
     setUserOverride((prev) => ({ ...prev, [group.id]: !currentOpen }));
   };
 
-  // Navigation carries global filter query params (gha, primary,
-  // secondary, product, rdPhase) across ALL pages so the sidebar
-  // filter box stays in sync. Page-specific params (extTab, cols*,
-  // etc.) are only carried between portfolio-analysis siblings.
-  //
-  // If the target href contains a fragment (e.g. `…#aggregated`),
-  // the fragment is appended after the query string so the
-  // resulting Next.js navigation drives both the route and the
-  // scroll-target hash in one go.
-  const GLOBAL_FILTER_KEYS = new Set(['gha', 'primary', 'secondary', 'product', 'rdPhase']);
-
-  const buildHref = (targetHref) => {
-    const [targetPath, targetHash = ''] = targetHref.split('#');
-    const bothInGroup =
-      pathname &&
-      pathname.startsWith('/portfolio-analysis') &&
-      targetPath.startsWith('/portfolio-analysis');
-    let href = targetPath;
-    const out = new URLSearchParams();
-    params.forEach((v, k) => {
-      if (k === 'tab') return;
-      // Always carry global filter keys; carry other keys only
-      // between portfolio-analysis siblings.
-      if (GLOBAL_FILTER_KEYS.has(k) || bothInGroup) {
-        out.set(k, v);
-      }
-    });
-    const qs = out.toString();
-    if (qs) href = `${targetPath}?${qs}`;
-    if (targetHash) href = `${href}#${targetHash}`;
-    return href;
-  };
+  // Filter-preserving href builder: carries the global filter keys across
+  // every route and sibling/page-specific params within the same top-level
+  // path segment. Hash fragments (e.g. #aggregated) pass through until the
+  // separate Portfolio Analysis hash-removal task lands.
+  const buildHref = useFilterPreservingHref();
 
   return (
     <aside

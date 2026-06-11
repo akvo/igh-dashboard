@@ -36,13 +36,7 @@ import {
   toCSVColumns,
 } from '@/lib/exploreColumnConfig';
 import { CandidateSlideIn } from '@/components/slideins/CandidateSlideIn';
-import {
-  encodeFilters,
-  decodeFilters,
-  hydrateFiltersFromUrl,
-  encodeSort,
-  decodeSort,
-} from '@/lib/dataTableUrl';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
@@ -56,6 +50,8 @@ import {
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
+
+const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
 
 // Page size for the candidates table — kept module-scope so the
 // hook fetch size and the DataTable pagination UI never drift.
@@ -412,19 +408,6 @@ export default function IndividualPriorityAnalysisSection() {
   // Table state — mirrors AggregatedSection's `f.candidates`/`s.candidates`/
   // `cols.candidates`/`cPage` pattern but with a `who-priority` namespace
   // so we don't collide with Portfolio Analysis's keys.
-  const candidatesFilterSerializer = useMemo(
-    () => ({
-      serialize: encodeFilters,
-      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CANDIDATE_COLUMNS),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const sortSerializer = useMemo(
-    () => ({ serialize: encodeSort, deserialize: decodeSort }),
-    [],
-  );
-
   const [candidatesFilters, setCandidatesFilters] = useUrlState(
     'f.who-priority',
     {},

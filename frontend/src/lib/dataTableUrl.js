@@ -208,3 +208,23 @@ export function hydrateFiltersFromUrl(decoded, columns) {
   }
   return out;
 }
+
+// =============================================================================
+// Reusable useUrlState serializers built on the encoders above
+// =============================================================================
+//
+// `sortSerializer` is column-config-independent, so it is a plain module
+// constant (strictly more stable than a useMemo([]) copy). `makeFilterSerializer`
+// closes over a column config so TEXT vs CATEGORY is recovered on URL load;
+// callers pass a static module-level column config and build the serializer
+// once at module scope.
+
+export const sortSerializer = { serialize: encodeSort, deserialize: decodeSort };
+
+export function makeFilterSerializer(columns, debounceMs = 500) {
+  return {
+    serialize: encodeFilters,
+    deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), columns),
+    debounceMs,
+  };
+}
