@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { useGlobalFilters } from '@/components/global-filters';
 import {
   usePortfolioKPIs,
@@ -9,8 +9,11 @@ import {
   useProductDistribution,
   usePortfolioCandidates,
 } from '@/graphql/hooks';
-import { buildCandidateColumns } from '@/lib/exploreColumnConfig';
+import { buildCandidateColumns, CANDIDATE_COLUMNS } from '@/lib/exploreColumnConfig';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { DataTable } from '@/components/ui';
@@ -33,17 +36,19 @@ import { TAB_LABELS, ITEMS_PER_PAGE, STAT_CARD_COLORS } from './shared/primitive
 // The tab owns no slide-in state. When a row's Explore action fires it calls
 // the `onExplore(type, key)` callback; the host page decides what to render.
 
+const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
+
 export default function CandidatesTab({ onExplore }) {
   const { healthArea, primary, secondary, expandedProduct, rdPhase } = useGlobalFilters();
 
-  // Per-table state is deliberately local React state rather than URL state:
-  // each Visual Insights tab mounts its own DataTable, and URL-backed keys
-  // (page/filters/sort) would collide across tabs that share the same param
-  // names. Local state keeps each tab's pagination independent.
-  const [candidatesPage, setCandidatesPage] = useState(1);
-  const [candidatesFilters, setCandidatesFilters] = useState({});
-  const [candidatesSort, setCandidatesSort] = useState(null);
-  const [candidatesVisibleCols, setCandidatesVisibleCols] = useState([]);
+  // Per-table filter / sort / visible-columns / page state lives in the URL,
+  // namespaced per tab (`f.candidates`, `s.candidates`, …) so it survives tab
+  // switches and is shareable, matching the portfolio-analysis convention. The
+  // filter serializer debounces text-input writes by 500ms.
+  const [candidatesPage, setCandidatesPage] = useUrlState('cPage', 1, numberSerializer);
+  const [candidatesFilters, setCandidatesFilters] = useUrlState('f.candidates', {}, candidatesFilterSerializer);
+  const [candidatesSort, setCandidatesSort] = useUrlState('s.candidates', null, sortSerializer);
+  const [candidatesVisibleCols, setCandidatesVisibleCols] = useUrlState('cols.candidates', [], arraySerializer);
 
   // PNG-capture refs for the two charts, handed to the shared chart components.
   const diseasesChartRef = useRef(null);

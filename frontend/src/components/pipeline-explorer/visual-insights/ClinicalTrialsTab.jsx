@@ -22,8 +22,11 @@ import {
   useGeographicDistribution,
   useClinicalTrials,
 } from '@/graphql/hooks';
-import { buildClinicalTrialColumns } from '@/lib/exploreColumnConfig';
+import { buildClinicalTrialColumns, CLINICAL_TRIAL_COLUMNS } from '@/lib/exploreColumnConfig';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { WorldMap } from '@/components/charts';
@@ -64,21 +67,25 @@ import {
 // filters from useGlobalFilters(), and the tab owns no slide-in state — row
 // Explore actions call onExplore(type, key).
 
+const trialsFilterSerializer = makeFilterSerializer(CLINICAL_TRIAL_COLUMNS);
+
 export default function ClinicalTrialsTab({ onExplore }) {
   const { healthArea, primary, secondary, expandedProduct, rdPhase } = useGlobalFilters();
 
   // Local trial-status sub-filter for the geographic map. Empty array means
   // "all statuses"; the geo hook receives null in that case so the map is
-  // unfiltered. This is map-local and independent of the global filter bar.
+  // unfiltered. This is map-local (not a DataTable column filter) and stays
+  // local React state.
   const [mapTrialStatus, setMapTrialStatus] = useState([]);
 
-  // Per-table state is local React state rather than URL state: each Visual
-  // Insights tab mounts its own DataTable and URL-backed keys would collide
-  // across tabs that share param names. Local state keeps pagination independent.
-  const [trialsPage, setTrialsPage] = useState(1);
-  const [trialsFilters, setTrialsFilters] = useState({});
-  const [trialsSort, setTrialsSort] = useState(null);
-  const [trialsVisibleCols, setTrialsVisibleCols] = useState([]);
+  // Per-table filter / sort / visible-columns / page state lives in the URL,
+  // namespaced per tab (`f.trials`, `s.trials`, …) so it survives tab switches
+  // and is shareable, matching the portfolio-analysis convention. The filter
+  // serializer debounces text-input writes by 500ms.
+  const [trialsPage, setTrialsPage] = useUrlState('tPage', 1, numberSerializer);
+  const [trialsFilters, setTrialsFilters] = useUrlState('f.trials', {}, trialsFilterSerializer);
+  const [trialsSort, setTrialsSort] = useUrlState('s.trials', null, sortSerializer);
+  const [trialsVisibleCols, setTrialsVisibleCols] = useUrlState('cols.trials', [], arraySerializer);
 
   // PNG-capture refs for the two top-5 charts and the three trial charts.
   const diseasesChartRef = useRef(null);

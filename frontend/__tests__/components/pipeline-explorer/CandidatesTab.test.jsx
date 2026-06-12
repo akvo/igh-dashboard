@@ -32,9 +32,16 @@ vi.mock('@/components/global-filters', () => ({
 }));
 
 import CandidatesTab from '@/components/pipeline-explorer/visual-insights/CandidatesTab';
+import { makeFilterSerializer } from '@/lib/dataTableUrl';
+import { CANDIDATE_COLUMNS } from '@/lib/exploreColumnConfig';
 
 describe('CandidatesTab', () => {
-  beforeEach(() => Object.values(hooks).forEach((h) => h.mockClear()));
+  beforeEach(() => {
+    Object.values(hooks).forEach((h) => h.mockClear());
+    // The table state is now URL-backed; reset the URL so a param seeded by one
+    // test does not leak into the others (which assert the unfiltered call).
+    window.history.replaceState(null, '', '/');
+  });
 
   it('passes the active global filters into its KPI and table hooks', () => {
     render(<CandidatesTab onExplore={() => {}} />);
@@ -52,6 +59,18 @@ describe('CandidatesTab', () => {
       productNames: ['Vaccine'],
       phaseNames: ['Phase 1'],
     });
+  });
+
+  it('reads candidate column filters from the f.candidates url param into the table hook', () => {
+    const ser = makeFilterSerializer(CANDIDATE_COLUMNS);
+    // candidate_name is a text-filterable candidate column; deserialize runs on
+    // read (no debounce), so the seeded filter reaches the hook synchronously.
+    const encoded = ser.serialize({ candidate_name: { kind: 'text', text: 'malaria' } });
+    window.history.replaceState(null, '', `/?f.candidates=${encodeURIComponent(encoded)}`);
+    render(<CandidatesTab onExplore={() => {}} />);
+    const tableFilter = hooks.usePortfolioCandidates.mock.calls[0][0];
+    expect(tableFilter.columnFilters).toBeTruthy();
+    expect(JSON.stringify(tableFilter.columnFilters)).toContain('malaria');
   });
 
   it('passes global filters into the disease-summaries hook (Top 5 diseases)', () => {

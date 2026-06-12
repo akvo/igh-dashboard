@@ -18,8 +18,11 @@ import {
   usePortfolioCandidates,
   useTechnologyTypeDistribution,
 } from '@/graphql/hooks';
-import { buildCandidateColumns } from '@/lib/exploreColumnConfig';
+import { buildCandidateColumns, CANDIDATE_COLUMNS } from '@/lib/exploreColumnConfig';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { downloadPNG } from '@/lib/png';
 import { DataTable, ChartMenu } from '@/components/ui';
 import { VECTOR_CONTROL_PRODUCT_NAMES, VECTOR_CONTROL_CONSOLIDATED_NAME } from '@/lib/filterGroups';
@@ -60,6 +63,10 @@ export function effectiveProductNames(globalProducts, localProducts) {
   return both.length > 0 ? both : localProducts;
 }
 
+// The accordion table is a candidate-type table, so its column filters use the
+// candidate column config for TEXT/CATEGORY reconciliation on URL load.
+const techFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
+
 export default function TechnologyTypesTab({ onExplore }) {
   const { healthArea, primary, secondary, expandedProduct, rdPhase } = useGlobalFilters();
 
@@ -74,12 +81,15 @@ export default function TechnologyTypesTab({ onExplore }) {
   // VCP sub-category state: null = show sub-category cards, string = exploring a specific VCP sub-product
   const [vcpSubProduct, setVcpSubProduct] = useState(null);
 
-  // Tech accordion DataTable state. Local React state (not URL-backed) keeps
-  // each Visual Insights tab's pagination independent.
-  const [techAccPage, setTechAccPage] = useState(1);
-  const [techAccFilters, setTechAccFilters] = useState({});
-  const [techAccSort, setTechAccSort] = useState(null);
-  const [techAccVisibleCols, setTechAccVisibleCols] = useState([]);
+  // Tech accordion DataTable filter / sort / visible-columns / page state lives
+  // in the URL, namespaced per tab (`f.tech`, `s.tech`, …) so it survives tab
+  // switches and is shareable, matching the portfolio-analysis convention. The
+  // filter serializer debounces text-input writes by 500ms. (Drill-down
+  // selection state above stays local React state.)
+  const [techAccPage, setTechAccPage] = useUrlState('techPage', 1, numberSerializer);
+  const [techAccFilters, setTechAccFilters] = useUrlState('f.tech', {}, techFilterSerializer);
+  const [techAccSort, setTechAccSort] = useUrlState('s.tech', null, sortSerializer);
+  const [techAccVisibleCols, setTechAccVisibleCols] = useUrlState('cols.tech', [], arraySerializer);
 
   // PNG-capture refs and the accordion scroll anchor.
   const accordionRef = useRef(null);

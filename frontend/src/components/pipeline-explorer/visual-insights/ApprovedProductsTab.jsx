@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import {
   ResponsiveContainer,
   PieChart,
@@ -17,8 +17,11 @@ import {
   useRegulatoryDistribution,
   usePortfolioCandidates,
 } from '@/graphql/hooks';
-import { buildApprovedProductColumns } from '@/lib/exploreColumnConfig';
+import { buildApprovedProductColumns, APPROVED_PRODUCT_COLUMNS } from '@/lib/exploreColumnConfig';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
+import { useUrlState } from '@/lib/useUrlState';
+import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { DataTable, ChartMenu } from '@/components/ui';
@@ -55,16 +58,19 @@ import {
 // in this map falls back to the shared STATUS_COLORS cycle.
 const WHO_PREQUAL_COLORS = { Yes: '#fe7449', No: '#e3d6c1', Unknown: '#B28FC9', Pending: '#54A5C4', 'N/A': '#8DD6A9' };
 
+const approvedFilterSerializer = makeFilterSerializer(APPROVED_PRODUCT_COLUMNS);
+
 export default function ApprovedProductsTab({ onExplore }) {
   const { healthArea, primary, secondary, expandedProduct, rdPhase } = useGlobalFilters();
 
-  // Per-table state is local React state rather than URL state: each Visual
-  // Insights tab mounts its own DataTable and URL-backed keys would collide
-  // across tabs that share param names. Local state keeps pagination independent.
-  const [approvedPage, setApprovedPage] = useState(1);
-  const [approvedFilters, setApprovedFilters] = useState({});
-  const [approvedSort, setApprovedSort] = useState(null);
-  const [approvedVisibleCols, setApprovedVisibleCols] = useState([]);
+  // Per-table filter / sort / visible-columns / page state lives in the URL,
+  // namespaced per tab (`f.approved`, `s.approved`, …) so it survives tab
+  // switches and is shareable, matching the portfolio-analysis convention. The
+  // filter serializer debounces text-input writes by 500ms.
+  const [approvedPage, setApprovedPage] = useUrlState('aPage', 1, numberSerializer);
+  const [approvedFilters, setApprovedFilters] = useUrlState('f.approved', {}, approvedFilterSerializer);
+  const [approvedSort, setApprovedSort] = useUrlState('s.approved', null, sortSerializer);
+  const [approvedVisibleCols, setApprovedVisibleCols] = useUrlState('cols.approved', [], arraySerializer);
 
   // PNG-capture refs for the two top-5 charts and the three regulatory charts.
   const diseasesChartRef = useRef(null);
