@@ -13,8 +13,20 @@ export const GET_PORTFOLIO_KPIS = gql`
 
 // Bubble Chart - Scale of R&D by global health area
 export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
-  query BubbleChart($candidateTypes: [String!]) {
-    globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+  query BubbleChart(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    globalHealthAreaSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      phase_names: $phaseNames
+    ) {
       global_health_area
       candidateCount
       diseaseCount
@@ -37,8 +49,24 @@ export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Bubble Chart — Disease view
 export const GET_DISEASE_SUMMARIES = gql`
-  query BubbleChartDisease($candidateTypes: [String!], $productNames: [String!], $technologyTypes: [String!]) {
-    diseaseSummaries(candidate_types: $candidateTypes, product_names: $productNames, technology_types: $technologyTypes) {
+  query BubbleChartDisease(
+    $candidateTypes: [String!]
+    $productNames: [String!]
+    $technologyTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    diseaseSummaries(
+      candidate_types: $candidateTypes
+      product_names: $productNames
+      technology_types: $technologyTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      phase_names: $phaseNames
+    ) {
       disease_group_name
       global_health_area
       candidateCount
