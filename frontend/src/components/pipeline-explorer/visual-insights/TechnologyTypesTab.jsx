@@ -87,8 +87,7 @@ export default function TechnologyTypesTab({ onExplore }) {
   // Tech accordion DataTable filter / sort / visible-columns / page state lives
   // in the URL, namespaced per tab (`f.tech`, `s.tech`, …) so it survives tab
   // switches and is shareable, matching the portfolio-analysis convention. The
-  // filter serializer debounces text-input writes by 500ms. (Drill-down
-  // selection state above stays local React state.)
+  // filter serializer debounces text-input writes by 500ms.
   const [techAccPage, setTechAccPage] = useUrlState('techPage', 1, numberSerializer);
   const [techAccFilters, setTechAccFilters] = useUrlState('f.tech', {}, techFilterSerializer);
   const [techAccSort, setTechAccSort] = useUrlState('s.tech', null, sortSerializer);
