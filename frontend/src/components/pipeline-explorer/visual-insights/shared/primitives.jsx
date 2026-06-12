@@ -27,7 +27,6 @@ export const TAB_LABELS = {
   candidates: { disease: 'Top 5 diseases by candidate count', product: 'Top 5 product types by candidate count' },
   approved: { disease: 'Top 5 diseases by approved products count', product: 'Top 5 product types by approved product count' },
   trials: { disease: 'Top 5 disease count by clinical trials', product: 'Top 5 product types by clinical trials' },
-  technology: { disease: 'Top 5 diseases by technology type count', product: 'Top 5 product types by technology type count' },
 };
 
 export const APPROVING_AUTH_PHASES = [
