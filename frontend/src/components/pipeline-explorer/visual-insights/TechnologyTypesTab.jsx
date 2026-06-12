@@ -50,7 +50,7 @@ import {
 // effective product scope is their intersection. When only one side is set,
 // use that side. Empty global filter means "no global narrowing". If the two
 // are disjoint, the card selection wins (so clicking a card always shows it).
-function effectiveProductNames(globalProducts, localProducts) {
+export function effectiveProductNames(globalProducts, localProducts) {
   if (!localProducts || localProducts.length === 0) {
     return globalProducts && globalProducts.length > 0 ? globalProducts : undefined;
   }

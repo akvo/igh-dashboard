@@ -31,7 +31,7 @@ vi.mock('@/components/global-filters', () => ({
   }),
 }));
 
-import TechnologyTypesTab from '@/components/pipeline-explorer/visual-insights/TechnologyTypesTab';
+import TechnologyTypesTab, { effectiveProductNames } from '@/components/pipeline-explorer/visual-insights/TechnologyTypesTab';
 
 describe('TechnologyTypesTab', () => {
   beforeEach(() => Object.values(hooks).forEach((h) => h.mockClear()));
@@ -40,5 +40,24 @@ describe('TechnologyTypesTab', () => {
     render(<TechnologyTypesTab onExplore={() => {}} />);
     const args = hooks.useTechnologyTypeDistribution.mock.calls[0];
     expect(args.slice(0, 5)).toEqual([['Neglected disease'], ['Malaria'], [], ['Vaccine'], ['Phase 1']]);
+  });
+});
+
+describe('effectiveProductNames', () => {
+  it('returns the global filter when no card is selected', () => {
+    expect(effectiveProductNames(['Vaccine'], undefined)).toEqual(['Vaccine']);
+    expect(effectiveProductNames(['Vaccine'], [])).toEqual(['Vaccine']);
+  });
+  it('returns undefined when neither side narrows', () => {
+    expect(effectiveProductNames([], undefined)).toBeUndefined();
+  });
+  it('returns the local selection when there is no global filter', () => {
+    expect(effectiveProductNames([], ['Diagnostics'])).toEqual(['Diagnostics']);
+  });
+  it('returns the intersection when global and local overlap', () => {
+    expect(effectiveProductNames(['Vaccine', 'Diagnostics'], ['Diagnostics'])).toEqual(['Diagnostics']);
+  });
+  it('falls back to the local selection when global and local are disjoint', () => {
+    expect(effectiveProductNames(['Vaccine'], ['Diagnostics'])).toEqual(['Diagnostics']);
   });
 });
