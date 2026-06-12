@@ -44,6 +44,8 @@ describe('ClinicalTrialsTab', () => {
     );
     const geoArgs = hooks.useGeographicDistribution.mock.calls[0];
     expect(geoArgs.slice(2)).toEqual([['Neglected disease'], ['Malaria'], [], ['Vaccine'], ['Phase 1']]);
+    expect(geoArgs[0]).toBe('Trial Location');
+    expect(geoArgs[1]).toBeNull();
     const tableFilter = hooks.useClinicalTrials.mock.calls[0][0];
     expect(tableFilter).toMatchObject({ globalHealthAreas: ['Neglected disease'], phaseNames: ['Phase 1'] });
   });
