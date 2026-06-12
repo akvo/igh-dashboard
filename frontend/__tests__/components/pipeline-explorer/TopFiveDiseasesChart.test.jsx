@@ -12,5 +12,9 @@ describe('TopFiveDiseasesChart', () => {
       loading={false}
     />);
     expect(screen.getByText('Top 5 diseases by candidate count')).toBeInTheDocument();
+    // The GHA legend is distinctive DOM this chart renders (mapped from
+    // GHA_COLORS) and the product-types chart deliberately omits, so asserting a
+    // legend label is a meaningful smoke test.
+    expect(screen.getAllByText('Neglected diseases').length).toBeGreaterThan(0);
   });
 });
