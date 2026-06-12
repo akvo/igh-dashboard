@@ -5,14 +5,25 @@ import { GET_GLOBAL_HEALTH_AREA_SUMMARIES } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformGlobalHealthAreaSummaries } from '@/lib/transformations';
 
-export function useGlobalHealthAreaSummaries(candidateTypes) {
+const arr = (v) => (v && v.length > 0 ? v : undefined);
+
+export function useGlobalHealthAreaSummaries(
+  candidateTypes,
+  { globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames } = {},
+) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('globalHealthAreaSummaries', { candidateTypes });
+  const cacheKey = getCacheKey('globalHealthAreaSummaries', {
+    candidateTypes, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames,
+  });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_GLOBAL_HEALTH_AREA_SUMMARIES, {
     variables: {
-      candidateTypes: candidateTypes && candidateTypes.length > 0 ? candidateTypes : undefined,
+      candidateTypes: arr(candidateTypes),
+      globalHealthAreas: arr(globalHealthAreas),
+      primaryDiseaseNames: arr(primaryDiseaseNames),
+      secondaryDiseaseNames: arr(secondaryDiseaseNames),
+      phaseNames: arr(phaseNames),
     },
     skip: !!cachedData,
     fetchPolicy: 'network-only',
