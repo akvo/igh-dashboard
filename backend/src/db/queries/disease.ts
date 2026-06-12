@@ -46,7 +46,12 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
   // GHA/disease conditions need no join context; phase joins lazily.
   addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(filters?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
   const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
   addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 

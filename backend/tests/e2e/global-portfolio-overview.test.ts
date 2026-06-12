@@ -764,10 +764,9 @@ describe("diseaseSummaries filtering", () => {
   });
 
   it("restricting to one global health area returns only that area's rows", async () => {
-    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(
-      DISEASE_SUMMARIES,
-      { gha: ["Neglected disease"] },
-    );
+    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES, {
+      gha: ["Neglected disease"],
+    });
     expect(data.diseaseSummaries.length).toBeGreaterThan(0);
     data.diseaseSummaries.forEach((row) => {
       expect(row.global_health_area).toBe("Neglected disease");
@@ -776,10 +775,9 @@ describe("diseaseSummaries filtering", () => {
 
   it("a GHA filter yields no more rows than unfiltered", async () => {
     const all = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES);
-    const filtered = await query<{ diseaseSummaries: DiseaseSummary[] }>(
-      DISEASE_SUMMARIES,
-      { gha: ["Neglected disease"] },
-    );
+    const filtered = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES, {
+      gha: ["Neglected disease"],
+    });
     expect(filtered.data.diseaseSummaries.length).toBeLessThanOrEqual(
       all.data.diseaseSummaries.length,
     );
@@ -806,13 +804,18 @@ describe("globalHealthAreaSummaries filtering", () => {
   });
 
   it("a phase filter never increases candidate counts vs unfiltered", async () => {
-    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(GHA_SUMMARIES);
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+    );
     const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
       GHA_SUMMARIES,
       { phase: ["Phase 1"] },
     );
     const allTotal = all.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
-    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount,
+      0,
+    );
     expect(filteredTotal).toBeLessThan(allTotal);
   });
 });
