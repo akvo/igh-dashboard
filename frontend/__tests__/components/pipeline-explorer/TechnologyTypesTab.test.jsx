@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { render } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 
 const hooks = vi.hoisted(() => ({
   usePortfolioKPIs: vi.fn(() => ({ kpis: {}, raw: {}, loading: false })),
@@ -66,6 +66,27 @@ describe('TechnologyTypesTab', () => {
     // The tech accordion table hook should receive the disease as primaryDiseaseNames.
     const tableFilter = hooks.usePortfolioCandidates.mock.calls[0][0];
     expect(tableFilter.primaryDiseaseNames).toEqual(['Tuberculosis']);
+  });
+
+  it('keeps a url-provided table filter on mount (does not reset it on load)', () => {
+    vi.useFakeTimers();
+    try {
+      window.history.replaceState(
+        null,
+        '',
+        '/?tech.tt=Subunit&tech.cand=1&f.tech=candidate_name%3Abime',
+      );
+      act(() => {
+        render(<TechnologyTypesTab onExplore={() => {}} />);
+      });
+      // Advance past the 500ms reset-effect / filter-serializer debounce window.
+      act(() => {
+        vi.advanceTimersByTime(700);
+      });
+      expect(decodeURIComponent(window.location.search)).toContain('f.tech=candidate_name:bime');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

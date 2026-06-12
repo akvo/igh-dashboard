@@ -209,11 +209,20 @@ export default function TechnologyTypesTab({ onExplore }) {
     { skip: (!selectedDisease && !selectedTechType) || !candidatesAccordionOpen },
   );
 
-  // Reset accordion table page/sort/filters when tech type / disease changes.
+  // Reset the accordion table's page / sort / column-filters when the user picks
+  // a DIFFERENT tech type or disease — but NOT on initial mount, so a shared URL's
+  // table filters (f.tech / s.tech / techPage) survive hydration. Comparing the
+  // previous values (rather than a first-run flag) is also resilient to React
+  // StrictMode double-invoking effects in dev.
+  const prevTechSelection = useRef({ tt: selectedTechType, dis: selectedDisease });
   useEffect(() => {
-    setTechAccPage(1);
-    setTechAccFilters({});
-    setTechAccSort(null);
+    const prev = prevTechSelection.current;
+    if (prev.tt !== selectedTechType || prev.dis !== selectedDisease) {
+      prevTechSelection.current = { tt: selectedTechType, dis: selectedDisease };
+      setTechAccPage(1);
+      setTechAccFilters({});
+      setTechAccSort(null);
+    }
   }, [selectedTechType, selectedDisease]);
 
   const techAccColumns = useMemo(
