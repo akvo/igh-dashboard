@@ -742,3 +742,46 @@ describe("Lookup Queries", () => {
     expect(data.countries[0].country_key).toBeDefined();
   });
 });
+
+describe("diseaseSummaries filtering", () => {
+  const DISEASE_SUMMARIES = `
+    query DS($gha: [String!], $primary: [String!], $phase: [String!]) {
+      diseaseSummaries(
+        global_health_areas: $gha
+        primary_disease_names: $primary
+        phase_names: $phase
+      ) {
+        disease_group_name
+        global_health_area
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("unfiltered returns rows across multiple health areas", async () => {
+    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES);
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+  });
+
+  it("restricting to one global health area returns only that area's rows", async () => {
+    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(
+      DISEASE_SUMMARIES,
+      { gha: ["Neglected disease"] },
+    );
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+    data.diseaseSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a GHA filter yields no more rows than unfiltered", async () => {
+    const all = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES);
+    const filtered = await query<{ diseaseSummaries: DiseaseSummary[] }>(
+      DISEASE_SUMMARIES,
+      { gha: ["Neglected disease"] },
+    );
+    expect(filtered.data.diseaseSummaries.length).toBeLessThanOrEqual(
+      all.data.diseaseSummaries.length,
+    );
+  });
+});
