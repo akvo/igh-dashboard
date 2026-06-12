@@ -5,16 +5,36 @@ import { GET_DISEASE_SUMMARIES } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformDiseaseSummaries } from '@/lib/transformations';
 
-export function useDiseaseSummaries(candidateTypes, { skip = false, productNames, technologyTypes } = {}) {
+const arr = (v) => (v && v.length > 0 ? v : undefined);
+
+export function useDiseaseSummaries(
+  candidateTypes,
+  {
+    skip = false,
+    productNames,
+    technologyTypes,
+    globalHealthAreas,
+    primaryDiseaseNames,
+    secondaryDiseaseNames,
+    phaseNames,
+  } = {},
+) {
   const { actions } = useDashboardStore();
-  const cacheKey = getCacheKey('diseaseSummaries', { candidateTypes, productNames, technologyTypes });
+  const cacheKey = getCacheKey('diseaseSummaries', {
+    candidateTypes, productNames, technologyTypes,
+    globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames,
+  });
   const cachedData = actions.getCachedData(cacheKey);
 
   const { data, loading, error } = useQuery(GET_DISEASE_SUMMARIES, {
     variables: {
-      candidateTypes: candidateTypes && candidateTypes.length > 0 ? candidateTypes : undefined,
-      productNames: productNames && productNames.length > 0 ? productNames : undefined,
-      technologyTypes: technologyTypes && technologyTypes.length > 0 ? technologyTypes : undefined,
+      candidateTypes: arr(candidateTypes),
+      productNames: arr(productNames),
+      technologyTypes: arr(technologyTypes),
+      globalHealthAreas: arr(globalHealthAreas),
+      primaryDiseaseNames: arr(primaryDiseaseNames),
+      secondaryDiseaseNames: arr(secondaryDiseaseNames),
+      phaseNames: arr(phaseNames),
     },
     skip: skip || !!cachedData,
     fetchPolicy: 'network-only',
