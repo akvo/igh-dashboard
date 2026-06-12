@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -21,7 +21,7 @@ import {
 import { buildCandidateColumns, CANDIDATE_COLUMNS } from '@/lib/exploreColumnConfig';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { useUrlState } from '@/lib/useUrlState';
-import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
+import { arraySerializer, numberSerializer, stringSerializer, booleanSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { downloadPNG } from '@/lib/png';
 import { DataTable, ChartMenu } from '@/components/ui';
@@ -72,14 +72,17 @@ export default function TechnologyTypesTab({ onExplore }) {
 
   // Drill-down selection state. The flow is: pick a product-type card →
   // (optionally) a VCP sub-product → a tech-type bar → a disease bar. Each
-  // selection resets the levels below it.
-  const [selectedProductType, setSelectedProductType] = useState(null);
-  const [selectedTechType, setSelectedTechType] = useState(null);
-  const [coverageOpen, setCoverageOpen] = useState(false);
-  const [selectedDisease, setSelectedDisease] = useState(null);
-  const [candidatesAccordionOpen, setCandidatesAccordionOpen] = useState(false);
+  // selection resets the levels below it. This lives in the URL (namespaced
+  // `tech.*`) so a shared link reproduces the drilled-in view; the accordion
+  // open-state is included because it gates the drilled content. The boolean
+  // open-states use a `false` default so they elide from the URL when closed.
+  const [selectedProductType, setSelectedProductType] = useUrlState('tech.pt', null, stringSerializer);
+  const [selectedTechType, setSelectedTechType] = useUrlState('tech.tt', null, stringSerializer);
+  const [coverageOpen, setCoverageOpen] = useUrlState('tech.cov', false, booleanSerializer);
+  const [selectedDisease, setSelectedDisease] = useUrlState('tech.dis', null, stringSerializer);
+  const [candidatesAccordionOpen, setCandidatesAccordionOpen] = useUrlState('tech.cand', false, booleanSerializer);
   // VCP sub-category state: null = show sub-category cards, string = exploring a specific VCP sub-product
-  const [vcpSubProduct, setVcpSubProduct] = useState(null);
+  const [vcpSubProduct, setVcpSubProduct] = useUrlState('tech.vcp', null, stringSerializer);
 
   // Tech accordion DataTable filter / sort / visible-columns / page state lives
   // in the URL, namespaced per tab (`f.tech`, `s.tech`, …) so it survives tab

@@ -34,12 +34,38 @@ vi.mock('@/components/global-filters', () => ({
 import TechnologyTypesTab, { effectiveProductNames } from '@/components/pipeline-explorer/visual-insights/TechnologyTypesTab';
 
 describe('TechnologyTypesTab', () => {
-  beforeEach(() => Object.values(hooks).forEach((h) => h.mockClear()));
+  beforeEach(() => {
+    Object.values(hooks).forEach((h) => h.mockClear());
+    // The drill-down selection is now URL-backed, so reset the URL between
+    // tests to keep seeded query params from leaking across them.
+    window.history.replaceState(null, '', '/');
+  });
 
   it('passes global filters into the technology distribution hook', () => {
     render(<TechnologyTypesTab onExplore={() => {}} />);
     const args = hooks.useTechnologyTypeDistribution.mock.calls[0];
     expect(args.slice(0, 5)).toEqual([['Neglected disease'], ['Malaria'], [], ['Vaccine'], ['Phase 1']]);
+  });
+
+  it('reads the selected tech type from the tech.tt url param into the coverage hook', () => {
+    window.history.replaceState(null, '', '/?tech.tt=mRNA');
+    render(<TechnologyTypesTab onExplore={() => {}} />);
+    // useDiseaseSummaries is the coverage-bubbles hook; with a tech type selected
+    // it must be called un-skipped with that technology type.
+    const opts = hooks.useDiseaseSummaries.mock.calls.at(-1)[1];
+    expect(opts.technologyTypes).toEqual(['mRNA']);
+    expect(opts.skip).toBe(false);
+  });
+
+  it('reads the selected disease from the tech.dis url param into the table hook', () => {
+    // Use a disease that differs from the global `primary` mock (['Malaria']) so
+    // the assertion proves the drilled disease overrides the global filter
+    // rather than coincidentally matching it.
+    window.history.replaceState(null, '', '/?tech.dis=Tuberculosis');
+    render(<TechnologyTypesTab onExplore={() => {}} />);
+    // The tech accordion table hook should receive the disease as primaryDiseaseNames.
+    const tableFilter = hooks.usePortfolioCandidates.mock.calls[0][0];
+    expect(tableFilter.primaryDiseaseNames).toEqual(['Tuberculosis']);
   });
 });
 
