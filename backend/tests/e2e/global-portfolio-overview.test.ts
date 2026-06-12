@@ -813,6 +813,6 @@ describe("globalHealthAreaSummaries filtering", () => {
     );
     const allTotal = all.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
     const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
-    expect(filteredTotal).toBeLessThanOrEqual(allTotal);
+    expect(filteredTotal).toBeLessThan(allTotal);
   });
 });
