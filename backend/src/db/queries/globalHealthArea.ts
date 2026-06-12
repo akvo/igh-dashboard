@@ -1,9 +1,13 @@
 import { getDatabase } from "../connection.js";
 import type { GlobalHealthAreaSummary } from "../types.js";
-import { PIPELINE_FILTER } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface GlobalHealthAreaFilters {
   candidate_types?: string[];
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
+  phase_names?: string[];
 }
 
 /**
@@ -28,6 +32,12 @@ export function getGlobalHealthAreaSummaries(
     conditions.push(`c.candidate_type IN (${placeholders})`);
     params.push(...filters.candidate_types);
   }
+
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(filters?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 
   // `diseaseCount` counts distinct hierarchy leaves per GHA -- the
   // sub-disease name when one exists, otherwise the primary name.

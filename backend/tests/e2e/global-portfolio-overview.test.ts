@@ -785,3 +785,34 @@ describe("diseaseSummaries filtering", () => {
     );
   });
 });
+
+describe("globalHealthAreaSummaries filtering", () => {
+  const GHA_SUMMARIES = `
+    query GHAS($gha: [String!], $phase: [String!]) {
+      globalHealthAreaSummaries(global_health_areas: $gha, phase_names: $phase) {
+        global_health_area
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area", async () => {
+    const { data } = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+      { gha: ["Neglected disease"] },
+    );
+    expect(data.globalHealthAreaSummaries).toHaveLength(1);
+    expect(data.globalHealthAreaSummaries[0].global_health_area).toBe("Neglected disease");
+  });
+
+  it("a phase filter never increases candidate counts vs unfiltered", async () => {
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(GHA_SUMMARIES);
+    const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+      { phase: ["Phase 1"] },
+    );
+    const allTotal = all.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    expect(filteredTotal).toBeLessThanOrEqual(allTotal);
+  });
+});
