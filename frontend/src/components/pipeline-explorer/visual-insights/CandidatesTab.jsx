@@ -53,7 +53,7 @@ export default function CandidatesTab({ onExplore }) {
   // API hooks (all scoped to 'Candidate' and the global filters)
   // =========================================================
 
-  const { kpis, loading: kpisLoading, raw: kpisRaw } = usePortfolioKPIs(
+  const { raw: kpisRaw } = usePortfolioKPIs(
     healthArea, primary, secondary, expandedProduct, rdPhase,
   );
 
@@ -170,14 +170,14 @@ export default function CandidatesTab({ onExplore }) {
           title={TAB_LABELS.candidates.disease}
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
-          onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top5-diseases')}
+          onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
           title={TAB_LABELS.candidates.product}
           loading={productsLoading}
           chartRef={productsChartRef}
-          onDownloadPNG={() => downloadPNG(productsChartRef, 'top5-products')}
+          onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
         />
       </div>
 
@@ -187,7 +187,7 @@ export default function CandidatesTab({ onExplore }) {
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount.toLocaleString()}</span>
         </div>
         <DataTable
-          tableId="ai-candidates"
+          tableId="vi-candidates"
           graphqlTable="PORTFOLIO_CANDIDATES"
           filterContext={candidatesFilterContext}
           columns={candidateColumns}

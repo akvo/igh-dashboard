@@ -41,6 +41,9 @@ describe('CandidatesTab', () => {
     expect(hooks.usePortfolioKPIs).toHaveBeenCalledWith(
       ['Neglected disease'], ['Malaria'], [], ['Vaccine'], ['Phase 1'],
     );
+    expect(hooks.useProductDistribution).toHaveBeenCalledWith(
+      ['Neglected disease'], ['Malaria'], [], ['Vaccine'], ['Phase 1'], 'Candidate',
+    );
     const tableFilter = hooks.usePortfolioCandidates.mock.calls[0][0];
     expect(tableFilter).toMatchObject({
       candidateType: 'Candidate',
