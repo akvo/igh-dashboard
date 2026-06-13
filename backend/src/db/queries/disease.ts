@@ -6,6 +6,10 @@ interface DiseaseFilters {
   candidate_types?: string[];
   product_names?: string[];
   technology_types?: string[];
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
+  phase_names?: string[];
 }
 
 /**
@@ -37,6 +41,19 @@ export function getDiseaseSummaries(filters?: DiseaseFilters): DiseaseSummary[] 
     conditions.push(`c.candidate_type IN (${placeholders})`);
     params.push(...filters.candidate_types);
   }
+
+  // Global page filters. `d` (dim_disease) is already joined, so the
+  // GHA/disease conditions need no join context; phase joins lazily.
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
+  const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
 
   const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
   addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);

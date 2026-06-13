@@ -109,21 +109,32 @@ export const resolvers = {
       }),
 
     // Bubble chart — four views share the same candidate_types filter shape
-    globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getGlobalHealthAreaSummaries({ candidate_types: args.candidate_types }),
+    globalHealthAreaSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getGlobalHealthAreaSummaries(args),
 
     ghaProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
       getGhaProductTypeSummaries({ candidate_types: args.candidate_types }),
 
     diseaseSummaries: (
       _: unknown,
-      args: { candidate_types?: string[]; product_names?: string[]; technology_types?: string[] },
-    ) =>
-      getDiseaseSummaries({
-        candidate_types: args.candidate_types,
-        product_names: args.product_names,
-        technology_types: args.technology_types,
-      }),
+      args: {
+        candidate_types?: string[];
+        product_names?: string[];
+        technology_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getDiseaseSummaries(args),
 
     diseaseProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
       getDiseaseProductTypeSummaries({ candidate_types: args.candidate_types }),

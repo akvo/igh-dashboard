@@ -56,3 +56,18 @@ export const stringSerializer = {
   serialize: (s) => (s === '' ? null : s),
   deserialize: (str) => str ?? null,
 };
+
+/**
+ * Serialize/deserialize booleans.
+ *
+ *   true → '1' (present in the URL)
+ *   false → null (absent from the URL)
+ *   '1' → true
+ *   anything else → false
+ *
+ * Pair with a `false` default in useUrlState so false elides from the URL.
+ */
+export const booleanSerializer = {
+  serialize: (value) => (value ? '1' : null),
+  deserialize: (str) => str === '1',
+};
