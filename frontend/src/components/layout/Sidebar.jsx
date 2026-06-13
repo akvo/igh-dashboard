@@ -24,12 +24,22 @@ import {
   ChevronDownIcon,
 } from '../icons';
 import SidebarFilterBox from './SidebarFilterBox';
+import { matchesItemHref } from './menuActive';
 
 const defaultMenuItems = [
   {
     section: 'GENERAL',
     items: [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
+      {
+        id: 'pipeline-explorer',
+        label: 'Pipeline Explorer',
+        icon: SearchIcon,
+        href: '/pipeline-explorer',
+        // Single entry that stays highlighted across both child routes
+        // (/pipeline-explorer and /pipeline-explorer/table-builder).
+        match: 'prefix',
+      },
       {
         id: 'portfolio-analysis',
         label: 'Portfolio Analysis',
@@ -127,26 +137,10 @@ export default function Sidebar({
 
   const pathname = usePathname();
   const hash = useHash();
-  // matchesChildHref handles the case where a child's href contains a
-  // fragment (`/portfolio-analysis#aggregated`). The pathname must
-  // match the path portion, AND on /portfolio-analysis the current
-  // hash must match the child's hash (with empty hash treated as
-  // equivalent to `#explore`, the default section).
-  const matchesChildHref = (childHref) => {
-    const [childPath, childHash = ''] = childHref.split('#');
-    if (pathname !== childPath) return false;
-    if (childPath === '/portfolio-analysis') {
-      const wanted = childHash || 'explore';
-      const current = hash || 'explore';
-      return wanted === current;
-    }
-    return true;
-  };
-
   const isItemActive = (item) => {
     if (activeId !== undefined) return activeId === item.id;
     if (!pathname) return false;
-    return matchesChildHref(item.href);
+    return matchesItemHref(item.href, { pathname, hash, match: item.match });
   };
 
   const isGroupActive = (group) => {
