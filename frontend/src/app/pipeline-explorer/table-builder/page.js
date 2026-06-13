@@ -1,11 +1,11 @@
-// Table Builder view body. Shares the Pipeline Explorer layout shell;
-// the custom-dataset table and CSV export are a follow-up task —
-// placeholder for now.
+'use client';
+
+// Table Builder view body. The shell (header, toggle, intro) lives in the
+// shared layout; this route only renders the view body — the
+// TableBuilderTabs host, which owns the sub-tab, filter, and table state.
+
+import TableBuilderTabs from '@/components/pipeline-explorer/table-builder/TableBuilderTabs';
 
 export default function PipelineExplorerTableBuilderPage() {
-  return (
-    <div className="py-16 text-center text-gray-400">
-      Table Builder — coming soon
-    </div>
-  );
+  return <TableBuilderTabs />;
 }
