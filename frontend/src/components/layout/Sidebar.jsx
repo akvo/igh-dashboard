@@ -30,6 +30,7 @@ const defaultMenuItems = [
     section: 'GENERAL',
     items: [
       { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
+      { id: 'pipeline-overview', label: 'Pipeline Overview', icon: GridIcon, href: '/pipeline-overview' },
       {
         id: 'pipeline-explorer',
         label: 'Pipeline Explorer',
