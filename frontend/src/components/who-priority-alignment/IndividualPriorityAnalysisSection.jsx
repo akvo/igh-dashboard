@@ -405,9 +405,9 @@ export default function IndividualPriorityAnalysisSection() {
     productNames: page.expandedProduct,
   });
 
-  // Table state — mirrors AggregatedSection's `f.candidates`/`s.candidates`/
-  // `cols.candidates`/`cPage` pattern but with a `who-priority` namespace
-  // so we don't collide with Portfolio Analysis's keys.
+  // Table state — mirrors the shared DataTable `f.<tab>`/`s.<tab>`/
+  // `cols.<tab>`/`<tab>-page` URL-state pattern but with a `who-priority`
+  // namespace so we don't collide with other pages' keys.
   const [candidatesFilters, setCandidatesFilters] = useUrlState(
     'f.who-priority',
     {},
@@ -481,7 +481,7 @@ export default function IndividualPriorityAnalysisSection() {
   );
 
   // CSV download: fetches all rows via the paginating `fetchAllCandidates`
-  // helper (same pattern as AggregatedSection) so the export isn't
+  // helper (the shared batched-CSV export pattern) so the export isn't
   // capped at the visible page.
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const handleCandidatesDownloadCSV = useCallback(async () => {
