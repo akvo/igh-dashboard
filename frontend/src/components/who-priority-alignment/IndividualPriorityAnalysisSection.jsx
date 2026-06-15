@@ -20,7 +20,7 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
-import { Dropdown, StatCard, Chip, DataTable, ChartMenu } from '@/components/ui';
+import { Dropdown, StatCard, DataTable, ChartMenu } from '@/components/ui';
 import { StackedBarChart, ChartEmptyState } from '@/components/charts';
 import { InfoIcon, RefreshIcon, CloudDownloadIcon } from '@/components/icons';
 import {

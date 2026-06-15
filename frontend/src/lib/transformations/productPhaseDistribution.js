@@ -3,7 +3,6 @@
  * Transforms raw API response into stacked bar chart format grouped by product name
  */
 
-import { PHASE_COLORS, SIMPLIFIED_PHASE_NAMES } from './constants';
 import { phaseNameToKey, extractPhases } from './phaseDistribution';
 
 /**
