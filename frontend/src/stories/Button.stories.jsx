@@ -1,5 +1,5 @@
 import Button, { TextLink } from '../components/ui/Button';
-import { DownloadIcon, PlusIcon, ArrowRightIcon } from '../components/icons';
+import { DownloadIcon, PlusIcon } from '../components/icons';
 
 export default {
   title: 'UI/Button',

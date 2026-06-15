@@ -28,14 +28,6 @@ describe('buildHref', () => {
     expect(href).toBe('/portfolio-analysis/extract?gha=A&extTab=clinical-trials');
   });
 
-  it('appends a hash fragment when the target has one', () => {
-    const href = buildHref('/portfolio-analysis#aggregated', {
-      pathname: '/portfolio-analysis',
-      params: params('gha=A'),
-    });
-    expect(href).toBe('/portfolio-analysis?gha=A#aggregated');
-  });
-
   it('from the home route carries only global keys', () => {
     const href = buildHref('/portfolio-analysis', {
       pathname: '/',

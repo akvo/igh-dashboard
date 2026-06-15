@@ -20,7 +20,6 @@ import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 export default function GlobalFilterBar({ filters, showRdPhase = true }) {
   return (
     <div
-      data-portfolio-filter-bar
       className="sticky top-0 z-20 bg-white -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 mb-8"
     >
       <div className="flex items-end gap-4">

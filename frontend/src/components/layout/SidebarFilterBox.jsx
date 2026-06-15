@@ -16,8 +16,8 @@ export default function SidebarFilterBox({ isExpanded }) {
   return <SidebarFilterBoxInner isExpanded={isExpanded} isOpen={isOpen} setIsOpen={setIsOpen} />;
 }
 
-// Separate inner component so useGlobalFilters() is only called on
-// portfolio-analysis pages (avoids unnecessary queries elsewhere).
+// Inner component holds the global-filters subscription; the thin outer
+// wrapper owns the local open/close state.
 function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
   const {
     healthArea,
