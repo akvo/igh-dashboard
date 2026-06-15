@@ -49,4 +49,13 @@ describe('ClinicalTrialsTab', () => {
     const tableFilter = hooks.useClinicalTrials.mock.calls[0][0];
     expect(tableFilter).toMatchObject({ globalHealthAreas: ['Neglected disease'], phaseNames: ['Phase 1'] });
   });
+
+  it('renders the orientation intro, renamed table heading, and corrected geographic copy', () => {
+    const { getByText, queryByText } = render(<ClinicalTrialsTab onExplore={() => {}} />);
+    expect(getByText(/The clinical-trial layer of the pipeline/)).toBeInTheDocument();
+    expect(getByText('Selected clinical trials')).toBeInTheDocument();
+    expect(getByText(/The global heat map shows the country-level distribution/)).toBeInTheDocument();
+    expect(queryByText(/spatial heat map/)).not.toBeInTheDocument();
+    expect(getByText(/Proportion of clinical trial participants in each age bracket/)).toBeInTheDocument();
+  });
 });
