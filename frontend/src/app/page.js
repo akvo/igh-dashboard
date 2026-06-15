@@ -616,14 +616,14 @@ export default function Home() {
             )}
           </div>
 
-          {/* Cross-pipeline Analytics */}
+          {/* Pipeline trends */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Cross-pipeline analytics
+                Pipeline trends
               </h3>
               <a
-                href="/cross-pipeline-analytics"
+                href="/pipeline-trends"
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Make custom comparison

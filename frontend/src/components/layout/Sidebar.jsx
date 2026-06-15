@@ -32,7 +32,7 @@ const defaultMenuItems = [
         // (/pipeline-explorer and /pipeline-explorer/table-builder).
         match: 'prefix',
       },
-      { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
+      { id: 'pipeline-trends', label: 'Pipeline trends', icon: RefreshIcon, href: '/pipeline-trends' },
       { id: 'who-priority-alignment', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority-alignment' },
     ],
   },

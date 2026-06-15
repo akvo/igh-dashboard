@@ -24,7 +24,7 @@ import HierarchicalProductFilter from '@/components/filters/HierarchicalProductF
 import { useGlobalFilters } from '@/components/global-filters';
 import TemporalTrendsSection from './TemporalTrendsSection';
 
-export default function CrossPipelineAnalytics() {
+export default function PipelineTrends() {
   // Shared global filters (synced with sidebar filter box).
   const {
     healthArea: selectedHealthArea,
@@ -147,7 +147,7 @@ export default function CrossPipelineAnalytics() {
 
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
-      <Sidebar activeId="cross-pipeline-analytics" />
+      <Sidebar activeId="pipeline-trends" />
 
       <main className="flex-1 min-w-0">
         <div className="p-4 sm:p-6 lg:p-8">
@@ -156,7 +156,7 @@ export default function CrossPipelineAnalytics() {
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                  Cross-pipeline analytics
+                  Pipeline trends
                 </h1>
                 <p className="text-sm text-gray-500">
                   Explore how the global health R&D pipeline evolves over time across global health areas, diseases, and product types. Track changes by R&D stage for specific IGH review years, and build custom comparisons by selecting one or multiple portfolios for deeper temporal analysis.
@@ -176,11 +176,11 @@ export default function CrossPipelineAnalytics() {
             </div>
           </div>
 
-          {/* Cross-pipeline analytics section */}
+          {/* Pipeline trends section */}
           <div className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-bold text-black">Cross-pipeline analytics</h3>
+              <h3 className="text-xl font-bold text-black">Pipeline trends</h3>
               <div className="flex items-center gap-3">
                 <ChartMenu onDownloadCSV={() => {
                   const visiblePhases = phases.filter((p) => isPhaseVisible(p.key));
@@ -189,8 +189,8 @@ export default function CrossPipelineAnalytics() {
                     ...visiblePhases.map((p) => ({ label: p.label, accessor: p.key })),
                   ];
                   const csv = buildCSV(columns, chartData);
-                  downloadCSV(csv, 'cross-pipeline-analytics');
-                }} onDownloadPNG={() => downloadPNG(crossPipelineChartRef, 'cross-pipeline-analytics')} />
+                  downloadCSV(csv, 'pipeline-trends');
+                }} onDownloadPNG={() => downloadPNG(crossPipelineChartRef, 'pipeline-trends')} />
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
