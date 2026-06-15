@@ -32,13 +32,9 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setRdPhase,
   } = useGlobalFilters();
 
-  // Section-local URL-state filters (home page + cross-pipeline analytics).
+  // Section-local URL-state filters (cross-pipeline analytics temporal section).
   // Reading them here lets the sidebar reflect all active filters regardless
   // of which page/section set them.
-  const [hProduct, setHProduct] = useUrlState('hProduct', [], arraySerializer);
-  const [hRdStage, setHRdStage] = useUrlState('hRdStage', [], arraySerializer);
-  const [crossGha, setCrossGha] = useUrlState('crossGha', [], arraySerializer);
-  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
   const [ttPrimary, setTtPrimary] = useUrlState('ttPrimary', [], arraySerializer);
   const [ttSecondary, setTtSecondary] = useUrlState('ttSecondary', [], arraySerializer);
   const [ttProduct, setTtProduct] = useUrlState('ttProduct', [], arraySerializer);
@@ -47,13 +43,13 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
 
   // One declarative source of truth for the sidebar's filter inventory.
   // Each category aggregates its global selection with any section-local
-  // URL-state mirrors (home page + cross-pipeline + temporal) so the
-  // sidebar reflects every active filter regardless of which page set it.
+  // URL-state mirrors (temporal trends) so the sidebar reflects every
+  // active filter regardless of which page set it.
   const categories = [
     {
       label: 'Global health area',
-      count: healthArea.length + crossGha.length,
-      clear: () => { setHealthArea([]); setCrossGha([]); },
+      count: healthArea.length,
+      clear: () => { setHealthArea([]); },
     },
     {
       label: 'Disease',
@@ -62,13 +58,13 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     },
     {
       label: 'Product',
-      count: product.length + hProduct.length + crossProduct.length + ttProduct.length,
-      clear: () => { setProduct([]); setHProduct([]); setCrossProduct([]); setTtProduct([]); },
+      count: product.length + ttProduct.length,
+      clear: () => { setProduct([]); setTtProduct([]); },
     },
     {
       label: 'R&D stage',
-      count: rdPhase.length + hRdStage.length,
-      clear: () => { setRdPhase([]); setHRdStage([]); },
+      count: rdPhase.length,
+      clear: () => { setRdPhase([]); },
     },
     {
       label: 'Year',

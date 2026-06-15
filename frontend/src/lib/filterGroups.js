@@ -11,8 +11,6 @@ const VC_KEY_SEP = '|';
 export const GLOBAL_FILTER_KEYS = [
   // Core global filters
   'gha', 'primary', 'secondary', 'product', 'rdPhase',
-  // Home-page section filters
-  'hProduct', 'hRdStage', 'crossGha', 'crossProduct',
   // Temporal-trends section filters
   'ttPrimary', 'ttSecondary', 'ttProduct', 'ttYear', 'cpYear',
 ];

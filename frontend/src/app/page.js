@@ -9,8 +9,6 @@ import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
-import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
-import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -39,16 +37,10 @@ import {
   useAvailableYears,
   useLastSyncDate,
   usePhases,
-  useDiseases,
-  useSecondaryDiseases,
   useDiseaseHierarchy,
-  usePipelineFilterPairs,
-  useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
-import { vcpMemberKeys } from '@/lib/filterGroups';
-import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
-import { useGlobalFilters } from '@/components/global-filters';
+import { displayHealthArea } from '@/lib/transformations/constants';
+import { useGlobalFilters, GlobalFilterBar } from '@/components/global-filters';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -114,14 +106,10 @@ export default function Home() {
   // Global filters from sidebar filter box (shared across all pages).
   const globalFilters = useGlobalFilters();
 
-  const [product, setProduct] = useUrlState('hProduct', [], arraySerializer);
-  const [rdStage, setRdStage] = useUrlState('hRdStage', [], arraySerializer);
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
   const [bubbleView, setBubbleView] = useUrlState('bubbleView', 'gha', stringSerializer);
   const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
   const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
-  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
-  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
   // Hidden phase keys for the two StackedBarCharts. Storing hidden
   // (not visible) keeps the URL short when most phases are shown.
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
@@ -289,24 +277,29 @@ export default function Home() {
   }, [activeBubbleData]);
   const { products, loading: productsLoading } = useProducts();
   const { phases, loading: phasesLoading } = usePhases();
-  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
-  const { raw: secondaryDiseasesRaw } = useSecondaryDiseases();
   const { hierarchy: diseaseHierarchy } = useDiseaseHierarchy();
-  // Two pair sources, one per section: Portfolio Overview pulls from the
-  // active-only set so its dropdowns never offer empty-chart combinations;
-  // Cross-pipeline keeps the broader set because its temporal chart
-  // legitimately spans retired snapshots.
-  const { pairs: activePairs, loading: activePairsLoading } = useActivePipelineFilterPairs();
-  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
     mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
   );
-  const expandedCrossProduct = crossProduct;
+  // Convert global product names → product keys for hooks that need int keys.
+  const nameToKeyMap = useMemo(() => {
+    const map = new Map();
+    (products || []).forEach((p) => map.set(p.product_name, p.product_key));
+    return map;
+  }, [products]);
+  const globalProductKeys = useMemo(() => {
+    if (globalFilters.product.length === 0) return null;
+    const keys = globalFilters.product.map((n) => nameToKeyMap.get(n)).filter((k) => k != null);
+    return keys.length > 0 ? keys : null;
+  }, [globalFilters.product, nameToKeyMap]);
+
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
-    crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
-    expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
+    globalFilters.healthArea.length > 0 ? globalFilters.healthArea : null,
+    globalProductKeys,
+    globalFilters.primary.length > 0 ? globalFilters.primary : null,
+    globalFilters.secondary.length > 0 ? globalFilters.secondary : null,
   );
 
   // WHO Priority Alignment data — single consolidated query feeds the
@@ -351,105 +344,11 @@ export default function Home() {
     globalFilters.product,
   ]);
 
-  // Candidate type distribution with filters
-  // Product keys are strings in state (URL-safe), convert to integers for the API.
-  const expandedProduct = product;
+  // Candidate type distribution — driven by global product + R&D phase filters.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
-    rdStage.length > 0 ? rdStage : null,
+    globalProductKeys,
+    globalFilters.rdPhase.length > 0 ? globalFilters.rdPhase : null,
   );
-
-  // Product options for dropdown (from API).
-  // Values are strings to stay consistent with URL serialization.
-  const allProductOptions = useMemo(
-    () => products.map((p) => ({ label: p.product_name, value: String(p.product_key) })),
-    [products],
-  );
-
-  // VCP child option values (product keys) for the hierarchical filter.
-  const productGroupMembers = useMemo(() => vcpMemberKeys(products), [products]);
-
-  // Phase options shaped to feed `useCrossFilteredOptions`.
-  // Values are the canonical phase names (matching what the URL stores in
-  // `rdStage`); labels apply the simplified-name override when present.
-  const allPhaseOptions = useMemo(
-    () => phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    })),
-    [phases]
-  );
-
-  // Portfolio section: cross-filter Product type ↔ R&D stage via the hook.
-  // No GHA/disease filters are exposed here — pass empty arrays. Pruning of
-  // stale selections is handled inside the hook.
-  const {
-    productOptions,
-    rdPhaseOptions: rdStageOptions,
-  } = useCrossFilteredOptions({
-    data: {
-      healthAreas: [],
-      diseasesRaw,
-      pairs: activePairs,
-      allProductOptions,
-      allPhaseOptions,
-    },
-    selections: {
-      healthArea: [],
-      disease: [],
-      product,
-      rdPhase: rdStage,
-    },
-    setters: {},
-    loading: {
-      healthAreas: false,
-      diseases: diseasesLoading,
-      products: productsLoading,
-      pairs: activePairsLoading,
-    },
-    mode: 'by-key',
-  });
-
-  // Cross-pipeline section: cross-filter GHA ↔ product via the hook
-  const {
-    healthAreaOptions: crossHealthAreaOptions,
-    productOptions: crossProductFilteredOptions,
-  } = useCrossFilteredOptions({
-    data: { healthAreas: gqlBubbleData, diseasesRaw, pairs, allProductOptions },
-    selections: { healthArea: crossGlobalHealthArea, disease: [], product: crossProduct },
-    setters: {},
-    loading: { healthAreas: bubbleLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
-    mode: 'by-key',
-  });
-
-  // Local pruning: clear stale homepage-local selections when options narrow.
-  useEffect(() => {
-    if (product.length === 0 || productOptions.length === 0) return;
-    const validValues = new Set(productOptions.map((o) => o.value));
-    const valid = product.filter((v) => validValues.has(v));
-    if (valid.length !== product.length) setProduct(valid);
-  }, [productOptions, product, setProduct]);
-
-  useEffect(() => {
-    if (rdStage.length === 0 || rdStageOptions.length === 0) return;
-    const validValues = new Set(rdStageOptions.map((o) => o.value));
-    const valid = rdStage.filter((v) => validValues.has(v));
-    if (valid.length !== rdStage.length) setRdStage(valid);
-  }, [rdStageOptions, rdStage, setRdStage]);
-
-  useEffect(() => {
-    if (crossGlobalHealthArea.length === 0 || crossHealthAreaOptions.length === 0) return;
-    const validValues = new Set(crossHealthAreaOptions.map((o) => o.value));
-    const valid = crossGlobalHealthArea.filter((v) => validValues.has(v));
-    if (valid.length !== crossGlobalHealthArea.length) setCrossGlobalHealthArea(valid);
-  }, [crossHealthAreaOptions, crossGlobalHealthArea, setCrossGlobalHealthArea]);
-
-  useEffect(() => {
-    if (crossProduct.length === 0 || crossProductFilteredOptions.length === 0) return;
-    const validValues = new Set(crossProductFilteredOptions.map((o) => o.value));
-    const valid = crossProduct.filter((v) => validValues.has(v));
-    if (valid.length !== crossProduct.length) setCrossProduct(valid);
-  }, [crossProductFilteredOptions, crossProduct, setCrossProduct]);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const portfolioVisiblePhases = useMemo(() =>
@@ -504,6 +403,8 @@ export default function Home() {
               </span>
             </div>
           </div>
+
+          <GlobalFilterBar filters={globalFilters} />
 
           {/* Stat Cards - Connected to GraphQL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -688,50 +589,9 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
+                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
-
-            {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-4">
-              <div className="w-[280px]">
-                <HierarchicalProductFilter
-                  label="Product type"
-                  selected={product}
-                  onChange={setProduct}
-                  placeholder="All"
-                  options={productOptions}
-                  groupMembers={productGroupMembers}
-                />
-              </div>
-              <div className="w-[280px]">
-                <Dropdown
-                  label="Select R&D stage"
-                  value={rdStage}
-                  onChange={setRdStage}
-                  placeholder="All"
-                  options={rdStageOptions}
-                  multiSelect={true}
-                  showSearch={true}
-                  showClearText={true}
-                />
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={() => {
-                  setProduct([]);
-                  setRdStage([]);
-                }}
-                disabled={product.length === 0 && rdStage.length === 0}
-                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
-                  product.length > 0 || rdStage.length > 0
-                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
-                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
-                }`}
-              >
-                Reset filters
-              </button>
-            </div>
 
             {/* Chart */}
             {portfolioLoading || productsLoading || phasesLoading ? (
@@ -770,50 +630,9 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
+            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
-
-            {/* Filters */}
-            <div className="flex flex-wrap items-end gap-4 mb-4">
-              <div className="w-[280px]">
-                <Dropdown
-                  label="Global health area"
-                  value={crossGlobalHealthArea}
-                  onChange={setCrossGlobalHealthArea}
-                  placeholder="All"
-                  options={crossHealthAreaOptions}
-                  multiSelect={true}
-                  showClearText={true}
-                  loading={bubbleLoading}
-                />
-              </div>
-              <div className="w-[280px]">
-                <HierarchicalProductFilter
-                  label="Product type"
-                  selected={crossProduct}
-                  onChange={setCrossProduct}
-                  placeholder="All"
-                  options={crossProductFilteredOptions}
-                  groupMembers={productGroupMembers}
-                />
-              </div>
-              <div className="flex-1" />
-              <button
-                onClick={() => {
-                  setCrossGlobalHealthArea([]);
-                  setCrossProduct([]);
-                }}
-                disabled={crossGlobalHealthArea.length === 0 && crossProduct.length === 0}
-                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
-                  crossGlobalHealthArea.length > 0 || crossProduct.length > 0
-                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
-                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
-                }`}
-              >
-                Reset filters
-              </button>
-            </div>
 
             {temporalLoading || yearsLoading ? (
               <div className="h-[220px] flex items-center justify-center">
@@ -845,45 +664,12 @@ export default function Home() {
                   Compare WHO priorities with pipeline
                 </p>
               </div>
-              {/* In-section disease dropdown is bound to the same
-                  primary/secondary URL params as the sidebar's Disease
-                  filter, so picking a disease here updates the sidebar
-                  too (and vice versa). The neighbouring button flips
-                  from white/border "View all" to the orange "Explore
-                  selected" CTA as soon as any global filter axis is
-                  active — pairing them visually so the state change
-                  is obvious without making users hunt for the sidebar.
-                  Destination page reads the same URL keys via
-                  `useWhoPageFilters`, so the selection carries over. */}
-              <div className="flex items-center gap-2">
-                <div className="w-[240px]">
-                  <HierarchicalDiseaseFilter
-                    hierarchy={globalFilters.narrowedHierarchy}
-                    primarySelected={globalFilters.primary}
-                    secondarySelected={globalFilters.secondary}
-                    onChange={({ primarySelected, secondarySelected }) => {
-                      globalFilters.setPrimary(primarySelected);
-                      globalFilters.setSecondary(secondarySelected);
-                    }}
-                    placeholder="Select disease"
-                  />
-                </div>
-                {globalFilters.hasFilters ? (
-                  <a
-                    href={exploreHref}
-                    className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
-                  >
-                    Explore selected
-                  </a>
-                ) : (
-                  <a
-                    href={exploreHref}
-                    className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    View all
-                  </a>
-                )}
-              </div>
+              <a
+                href={exploreHref}
+                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
+              >
+                Explore
+              </a>
             </div>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
