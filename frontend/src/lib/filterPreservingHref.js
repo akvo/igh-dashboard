@@ -14,8 +14,6 @@
 //      /portfolio-analysis/extract both start with `portfolio-analysis`).
 //      This generalises the previously hardcoded `/portfolio-analysis`
 //      check so a future renamed route + its nested pages group for free.
-//   3. Re-append the target's hash fragment if present.
-
 import { GLOBAL_FILTER_KEYS } from './filterGroups';
 
 const globalKeys = new Set(GLOBAL_FILTER_KEYS);
@@ -27,7 +25,7 @@ function topSegment(path) {
 }
 
 export function buildHref(targetHref, { pathname, params }) {
-  const [targetPath, targetHash = ''] = targetHref.split('#');
+  const targetPath = targetHref.split('#')[0];
 
   const fromSegment = pathname ? topSegment(pathname) : '';
   const sameGroup = fromSegment !== '' && fromSegment === topSegment(targetPath);
@@ -41,9 +39,6 @@ export function buildHref(targetHref, { pathname, params }) {
     }
   });
 
-  let href = targetPath;
   const qs = out.toString();
-  if (qs) href = `${targetPath}?${qs}`;
-  if (targetHash) href = `${href}#${targetHash}`;
-  return href;
+  return qs ? `${targetPath}?${qs}` : targetPath;
 }
