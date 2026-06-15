@@ -152,8 +152,7 @@ export default function PrioritiesOverviewSection() {
         <div>
           <h3 className="text-base sm:text-lg font-bold text-black">Priorities overview</h3>
           <p className="text-sm text-gray-500">
-            {/* Designer to supply final copy; placeholder per spec. */}
-            Lorem ipsum dolor sit amet consectetur. Rhoncus risus tortor vel nibh sed cursus.
+            An overview of the WHO priorities across the whole portfolio — how many are in scope, how the pipeline addressing them is distributed across product types, and the share of priorities dedicated to neglected diseases, emerging infectious diseases and women&apos;s or children&apos;s health.
           </p>
         </div>
       </div>
@@ -214,7 +213,7 @@ export default function PrioritiesOverviewSection() {
               onDownloadPNG={() => downloadPNG(productTypesChartRef, 'who-priority-product-types')}
             />
           </div>
-          <p className="text-sm text-gray-500 mb-3">Distribution of R&D pipeline across product types.</p>
+          <p className="text-sm text-gray-500 mb-3">A snapshot of how the R&D pipeline is distributed across product types. Use the ··· menu to export the chart as an image or the underlying data as .csv.</p>
           <div className="flex-1 flex items-center justify-center">
             {loading ? (
               <div className="h-[280px] flex items-center justify-center">
@@ -261,7 +260,7 @@ export default function PrioritiesOverviewSection() {
             />
           </div>
           <p className="text-sm text-gray-500 mb-3">
-            Yes / No split with priorities still awaiting classification shown as NA.
+            How priorities split between those dedicated to women or children (Yes), those that are not (No), and those still awaiting classification (NA). Use the ··· menu to export the chart or its data.
           </p>
           <div className="flex-1 flex items-center justify-center">
             {loading ? (

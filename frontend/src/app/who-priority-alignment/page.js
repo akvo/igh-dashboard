@@ -19,6 +19,9 @@ import {
   IndividualPriorityAnalysisSection,
 } from '@/components/who-priority-alignment';
 
+const INTRO =
+  'The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Use the filters to scope the page by global health area, disease or product type.';
+
 export default function WhoPriorityAlignmentPage() {
   return (
     <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
@@ -30,7 +33,7 @@ export default function WhoPriorityAlignmentPage() {
           <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-0">
             <PageHeader
               title="WHO Priority alignment"
-              description="These core priorities are anchored in the 2030 Sustainable Development Goals (SDGs) agenda and are linked to three bold targets for the health sector's contribution to the SDGs: the triple billion targets."
+              description={INTRO}
             />
           </div>
 
