@@ -258,7 +258,7 @@ export default function TechnologyTypesTab({ onExplore }) {
     if (vcpTotal > 0) {
       rest.push({ name: VECTOR_CONTROL_CONSOLIDATED_NAME, candidates: vcpTotal, techTypes: vcpTechTypes, approvedProducts: vcpApproved });
     }
-    return rest.sort((a, b) => b.candidates - a.candidates);
+    return rest.sort((a, b) => a.name.localeCompare(b.name));
   }, [productChartData]);
 
   // VCP sub-category cards.

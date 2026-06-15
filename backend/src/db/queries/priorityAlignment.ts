@@ -29,7 +29,7 @@ const FIXED_GHA_ORDER = [
 // aggregate: totalPriorities, byArea numerator, product types donut,
 // the priorities list, and diseaseOptions.
 
-const NON_EMPTY_PRIORITY = "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != ''";
+const NON_EMPTY_PRIORITY = "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != '' AND p.priority_name != 'Test_TO'";
 
 /**
  * Single consolidated query for the WHO Priority Alignment section.
@@ -60,8 +60,8 @@ export function getPriorityAlignmentOverview(
   // runPriorities: dim_disease is joined only when a GHA/disease filter
   // is active, and the pipeline bridge tables are joined only when a
   // product filter is active. The unfiltered case is a bare COUNT(DISTINCT)
-  // on dim_priority so that priorities with a NULL disease_key (e.g. key 5
-  // "Test_TO") are correctly included, keeping totalPriorities at 66.
+  // on dim_priority so that priorities with a NULL disease_key are
+  // correctly included, keeping totalPriorities at 65.
   // ---------------------------------------------------------------------
   const totalRow = runTotalPriorities(db, filters);
 

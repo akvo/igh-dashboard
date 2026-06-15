@@ -39,6 +39,9 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
   const [hRdStage, setHRdStage] = useUrlState('hRdStage', [], arraySerializer);
   const [crossGha, setCrossGha] = useUrlState('crossGha', [], arraySerializer);
   const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
+  const [ttPrimary, setTtPrimary] = useUrlState('ttPrimary', [], arraySerializer);
+  const [ttSecondary, setTtSecondary] = useUrlState('ttSecondary', [], arraySerializer);
+  const [ttProduct, setTtProduct] = useUrlState('ttProduct', [], arraySerializer);
   const [ttYear, setTtYear] = useUrlState('ttYear', [], arraySerializer);
   const [cpYear, setCpYear] = useUrlState('cpYear', '', stringSerializer);
 
@@ -54,13 +57,13 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     },
     {
       label: 'Disease',
-      count: primary.length + secondary.length,
-      clear: () => { setPrimary([]); setSecondary([]); },
+      count: primary.length + secondary.length + ttPrimary.length + ttSecondary.length,
+      clear: () => { setPrimary([]); setSecondary([]); setTtPrimary([]); setTtSecondary([]); },
     },
     {
       label: 'Product',
-      count: product.length + hProduct.length + crossProduct.length,
-      clear: () => { setProduct([]); setHProduct([]); setCrossProduct([]); },
+      count: product.length + hProduct.length + crossProduct.length + ttProduct.length,
+      clear: () => { setProduct([]); setHProduct([]); setCrossProduct([]); setTtProduct([]); },
     },
     {
       label: 'R&D stage',

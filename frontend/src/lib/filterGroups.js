@@ -2,11 +2,20 @@
 // value.  Must NOT be a comma — the URL array serializer splits on commas.
 const VC_KEY_SEP = '|';
 
-// The five URL query-param keys that hold the app-wide ("global") filter
-// selections. Navigation preserves these across every route so the sidebar
-// filter box stays in sync. Single source of truth — imported by the
-// filter-preserving navigation helper.
-export const GLOBAL_FILTER_KEYS = ['gha', 'primary', 'secondary', 'product', 'rdPhase'];
+// Every URL query-param key that holds a filter selection — global or
+// section-local. Navigation preserves ALL of these across every route so
+// that a filter set on any page stays active until the user explicitly
+// clears it (via the sidebar filter box or the global page header).
+// Single source of truth — imported by the filter-preserving navigation
+// helper.
+export const GLOBAL_FILTER_KEYS = [
+  // Core global filters
+  'gha', 'primary', 'secondary', 'product', 'rdPhase',
+  // Home-page section filters
+  'hProduct', 'hRdStage', 'crossGha', 'crossProduct',
+  // Temporal-trends section filters
+  'ttPrimary', 'ttSecondary', 'ttProduct', 'ttYear', 'cpYear',
+];
 
 // Vector control product name consolidation
 export const VECTOR_CONTROL_PRODUCT_NAMES = [

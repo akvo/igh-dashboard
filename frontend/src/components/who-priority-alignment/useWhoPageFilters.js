@@ -19,6 +19,7 @@ import {
   useDiseaseHierarchy,
   useProducts,
   useActivePipelineFilterPairs,
+  usePriorityAlignment,
 } from '@/graphql/hooks';
 
 export function useWhoPageFilters() {
@@ -43,6 +44,21 @@ export function useWhoPageFilters() {
     [productsList],
   );
 
+  // Fetch the list of diseases that have at least one WHO priority
+  // linked. The disease dropdown should only offer these so the user
+  // can't filter to a disease with zero priority coverage. The call
+  // uses no filters so the list is stable regardless of selections.
+  const { diseaseOptions: priorityDiseases } = usePriorityAlignment(null, null, null, null);
+
+  // Restrict the disease hierarchy to only diseases bearing a priority.
+  const priorityDiseaseHierarchy = useMemo(() => {
+    if (!priorityDiseases || priorityDiseases.length === 0) return diseaseHierarchy;
+    const nameSet = new Set(priorityDiseases.map((d) => d.disease_filter));
+    // Also match by disease_name for rows where disease_filter is null.
+    for (const d of priorityDiseases) nameSet.add(d.disease_name);
+    return (diseaseHierarchy || []).filter((r) => nameSet.has(r.primary_disease));
+  }, [diseaseHierarchy, priorityDiseases]);
+
   // Cross-filtering needs an R&D-phase axis on the helper's contract;
   // we pass empty arrays/stubs since the WHO page doesn't expose that
   // filter. `useCrossFilteredOptions` skips pruning when its phase
@@ -51,7 +67,7 @@ export function useWhoPageFilters() {
     useCrossFilteredOptions({
       data: {
         healthAreas,
-        diseaseHierarchy,
+        diseaseHierarchy: priorityDiseaseHierarchy,
         pairs,
         allProductOptions,
         allPhaseOptions: [],
