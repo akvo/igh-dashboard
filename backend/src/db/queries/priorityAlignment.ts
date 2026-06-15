@@ -29,7 +29,8 @@ const FIXED_GHA_ORDER = [
 // aggregate: totalPriorities, byArea numerator, product types donut,
 // the priorities list, and diseaseOptions.
 
-const NON_EMPTY_PRIORITY = "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != '' AND p.priority_name != 'Test_TO'";
+const NON_EMPTY_PRIORITY =
+  "p.priority_name IS NOT NULL AND TRIM(p.priority_name) != '' AND p.priority_name != 'Test_TO'";
 
 /**
  * Single consolidated query for the WHO Priority Alignment section.
