@@ -3,10 +3,10 @@ import { matchesItemHref } from '@/components/layout/menuActive';
 
 describe('matchesItemHref', () => {
   it('matches a plain leaf by exact pathname', () => {
-    expect(matchesItemHref('/cross-pipeline-analytics', {
-      pathname: '/cross-pipeline-analytics',
+    expect(matchesItemHref('/pipeline-trends', {
+      pathname: '/pipeline-trends',
     })).toBe(true);
-    expect(matchesItemHref('/cross-pipeline-analytics', {
+    expect(matchesItemHref('/pipeline-trends', {
       pathname: '/who-priority-alignment',
     })).toBe(false);
   });
@@ -34,7 +34,7 @@ describe('matchesItemHref', () => {
       pathname: '/pipeline-explorer-archive', match: 'prefix',
     })).toBe(false);
     expect(matchesItemHref('/pipeline-explorer', {
-      pathname: '/cross-pipeline-analytics', match: 'prefix',
+      pathname: '/pipeline-trends', match: 'prefix',
     })).toBe(false);
   });
 });

@@ -14,7 +14,7 @@ export default {
         'home',
         'pipeline-overview',
         'pipeline-explorer',
-        'cross-pipeline-analytics',
+        'pipeline-trends',
         'who-priority-alignment',
       ],
       description: 'Currently active menu item',
