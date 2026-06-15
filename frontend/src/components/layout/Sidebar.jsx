@@ -7,11 +7,8 @@ import { useHash } from '@/lib/useHash';
 import { useFilterPreservingHref } from '@/lib/useFilterPreservingHref';
 import {
   HomeIcon,
-  ChartIcon,
   RefreshIcon,
   ListIcon,
-  PieChartIcon,
-  LayersIcon,
   BoltIcon,
   GridIcon,
   FileIcon,
@@ -39,21 +36,6 @@ const defaultMenuItems = [
         // Single entry that stays highlighted across both child routes
         // (/pipeline-explorer and /pipeline-explorer/table-builder).
         match: 'prefix',
-      },
-      {
-        id: 'portfolio-analysis',
-        label: 'Portfolio Analysis',
-        icon: ChartIcon,
-        // Parent groups carry a "first child" href used only for
-        // the icon-only collapsed-mode click target. Clicking the
-        // parent in the expanded sidebar toggles the chevron, not
-        // the route.
-        href: '/portfolio-analysis',
-        children: [
-          { id: 'portfolio-analysis-explore', label: 'Portfolio Analysis', icon: PieChartIcon, href: '/portfolio-analysis' },
-          { id: 'portfolio-analysis-extract', label: 'Extract custom details', icon: ListIcon, href: '/portfolio-analysis/extract' },
-          { id: 'portfolio-analysis-aggregated', label: 'Aggregated portfolio', icon: LayersIcon, href: '/portfolio-analysis#aggregated' },
-        ],
       },
       { id: 'cross-pipeline-analytics', label: 'Cross-pipeline analytics', icon: RefreshIcon, href: '/cross-pipeline-analytics' },
       { id: 'who-priority-alignment', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority-alignment' },
