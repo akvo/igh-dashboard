@@ -36,6 +36,8 @@ import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
 import {
   TAB_LABELS,
+  TAB_DESCRIPTIONS,
+  KPI_TOOLTIPS,
   ITEMS_PER_PAGE,
   STAT_CARD_COLORS,
   STATUS_COLORS,
@@ -178,14 +180,19 @@ export default function ClinicalTrialsTab({ onExplore }) {
     const ghaCards = (ghaSummaries || []).map((g, i) => {
       const count = g.candidateCount;
       const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
       return {
-        title: g.global_health_area ? displayHealthArea(g.global_health_area) : g.name,
+        title,
         value: count,
         percentage: pct,
         color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
+        tooltip: KPI_TOOLTIPS.trials[title],
       };
     });
-    return [{ title: 'Total clinical trials', value: total, percentage: null }, ...ghaCards];
+    return [
+      { title: 'Total clinical trials', value: total, percentage: null, tooltip: KPI_TOOLTIPS.trials.total },
+      ...ghaCards,
+    ];
   }, [totalTrials, ghaSummaries]);
 
   // =========================================================
@@ -232,12 +239,17 @@ export default function ClinicalTrialsTab({ onExplore }) {
 
   return (
     <>
+      <p className="text-sm text-gray-500 mb-6">
+        The clinical-trial layer of the pipeline — who is being studied, where, and at what stage. Two charts, a map and a searchable table cover age group, status, geography and trial-level detail.
+      </p>
+
       <KpiStatCards cards={statCards} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <TopFiveDiseasesChart
           data={top5Diseases}
           title={TAB_LABELS.trials.disease}
+          description={TAB_DESCRIPTIONS.trials.disease}
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
@@ -245,6 +257,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
         <TopFiveProductTypesChart
           data={top5Products}
           title={TAB_LABELS.trials.product}
+          description={TAB_DESCRIPTIONS.trials.product}
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
@@ -255,10 +268,13 @@ export default function ClinicalTrialsTab({ onExplore }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Age groups */}
         <div className="bg-white border border-gray-200 p-4">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Age groups in clinical trials</h3>
             <ChartMenu onDownloadPNG={() => downloadPNG(ageGroupsRef, 'age-groups')} />
           </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
+          </p>
           <div ref={ageGroupsRef}>
             {trialsStatsLoading ? (
               <div className="h-[260px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
@@ -289,10 +305,13 @@ export default function ClinicalTrialsTab({ onExplore }) {
 
         {/* Trial status */}
         <div className="bg-white border border-gray-200 p-4">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Clinical trial status</h3>
             <ChartMenu onDownloadPNG={() => downloadPNG(trialStatusRef, 'trial-status')} />
           </div>
+          <p className="text-sm text-gray-500 mb-4">
+            Number of studies at each stage across the portfolio, from ongoing to completed.
+          </p>
           <div ref={trialStatusRef}>
             {trialsStatsLoading ? (
               <div className="h-[260px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
@@ -344,7 +363,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           <ChartMenu onDownloadPNG={() => downloadPNG(geoMapRef, 'geographic-distribution-trials')} />
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          The spatial heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher number of studies, and can be filtered by clinical trial status.
+          The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
         </p>
         <div ref={geoMapRef}>
           {geoLoading ? (
@@ -357,10 +376,13 @@ export default function ClinicalTrialsTab({ onExplore }) {
       </div>
 
       <div className="bg-white border border-gray-200 p-4">
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Clinical trials</h3>
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
+          <h3 className="text-base sm:text-lg font-bold text-black">Selected clinical trials</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount.toLocaleString()}</span>
         </div>
+        <p className="text-sm text-gray-500 mb-4">
+          The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
+        </p>
         <DataTable
           tableId="vi-trials"
           graphqlTable="CLINICAL_TRIALS"

@@ -22,7 +22,7 @@ import { BarTooltip } from './primitives';
 // and the PNG-download handler arrive via props; the CSV export stays
 // self-contained since it only needs the lib helpers and the `data` prop.
 
-export function TopFiveProductTypesChart({ data, title, loading, chartRef, onDownloadPNG }) {
+export function TopFiveProductTypesChart({ data, title, description, loading, chartRef, onDownloadPNG }) {
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-start justify-between mb-1">
@@ -36,7 +36,7 @@ export function TopFiveProductTypesChart({ data, title, loading, chartRef, onDow
           onDownloadPNG={onDownloadPNG}
         />
       </div>
-      <p className="text-sm text-gray-500 mb-4">Lorem ipsum dolor sit amet consectetur.</p>
+      <p className="text-sm text-gray-500 mb-4">{description}</p>
       <div ref={chartRef}>
         {loading ? (
           <div className="h-[260px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>

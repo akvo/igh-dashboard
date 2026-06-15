@@ -31,6 +31,8 @@ import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
 import {
   TAB_LABELS,
+  TAB_DESCRIPTIONS,
+  KPI_TOOLTIPS,
   ITEMS_PER_PAGE,
   STAT_CARD_COLORS,
   STATUS_COLORS,
@@ -151,14 +153,19 @@ export default function ApprovedProductsTab({ onExplore }) {
     const ghaCards = (ghaSummaries || []).map((g, i) => {
       const count = g.productCount;
       const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
       return {
-        title: g.global_health_area ? displayHealthArea(g.global_health_area) : g.name,
+        title,
         value: count,
         percentage: pct,
         color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
+        tooltip: KPI_TOOLTIPS.approved[title],
       };
     });
-    return [{ title: 'Total approved products', value: total, percentage: null }, ...ghaCards];
+    return [
+      { title: 'Total approved products', value: total, percentage: null, tooltip: KPI_TOOLTIPS.approved.total },
+      ...ghaCards,
+    ];
   }, [kpisRaw, ghaSummaries]);
 
   // =========================================================
@@ -207,12 +214,17 @@ export default function ApprovedProductsTab({ onExplore }) {
 
   return (
     <>
+      <p className="text-sm text-gray-500 mb-6">
+        Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
+      </p>
+
       <KpiStatCards cards={statCards} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <TopFiveDiseasesChart
           data={top5Diseases}
           title={TAB_LABELS.approved.disease}
+          description={TAB_DESCRIPTIONS.approved.disease}
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
@@ -220,6 +232,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         <TopFiveProductTypesChart
           data={top5Products}
           title={TAB_LABELS.approved.product}
+          description={TAB_DESCRIPTIONS.approved.product}
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
@@ -230,10 +243,13 @@ export default function ApprovedProductsTab({ onExplore }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Approval status */}
         <div className="bg-white border border-gray-200 p-4">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Approval status</h3>
             <ChartMenu onDownloadPNG={() => downloadPNG(approvalStatusRef, 'approval-status')} />
           </div>
+          <p className="text-sm text-gray-500 mb-4">
+            This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
+          </p>
           <div ref={approvalStatusRef}>
             {regulatoryLoading ? (
               <div className="h-[280px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
@@ -253,10 +269,13 @@ export default function ApprovedProductsTab({ onExplore }) {
 
         {/* Approving Authorities */}
         <div className="bg-white border border-gray-200 p-4">
-          <div className="flex items-start justify-between mb-4">
-            <h3 className="text-base sm:text-lg font-bold text-black">Approving Authorities</h3>
+          <div className="flex items-start justify-between mb-1">
+            <h3 className="text-base sm:text-lg font-bold text-black">Approving authorities</h3>
             <ChartMenu onDownloadPNG={() => downloadPNG(authoritiesRef, 'approving-authorities')} />
           </div>
+          <p className="text-sm text-gray-500 mb-4">
+            The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
+          </p>
           <div ref={authoritiesRef}>
             {regulatoryLoading ? (
               <div className="h-[280px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
@@ -281,10 +300,13 @@ export default function ApprovedProductsTab({ onExplore }) {
 
         {/* WHO prequalification */}
         <div className="bg-white border border-gray-200 p-4">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">WHO prequalification</h3>
             <ChartMenu onDownloadPNG={() => downloadPNG(whoPrequalRef, 'who-prequalification')} />
           </div>
+          <p className="text-sm text-gray-500 mb-4">
+            A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
+          </p>
           <div ref={whoPrequalRef}>
             {regulatoryLoading ? (
               <div className="h-[220px] flex items-center justify-center"><div className="animate-pulse text-gray-400">Loading...</div></div>
@@ -315,10 +337,13 @@ export default function ApprovedProductsTab({ onExplore }) {
       </div>
 
       <div className="bg-white border border-gray-200 p-4">
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Approved products</h3>
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
+          <h3 className="text-base sm:text-lg font-bold text-black">Selected approved products</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount.toLocaleString()}</span>
         </div>
+        <p className="text-sm text-gray-500 mb-4">
+          A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
+        </p>
         <DataTable
           tableId="vi-approved"
           graphqlTable="PORTFOLIO_CANDIDATES"

@@ -68,6 +68,12 @@ describe('TechnologyTypesTab', () => {
     expect(tableFilter.primaryDiseaseNames).toEqual(['Tuberculosis']);
   });
 
+  it('renders the section description and no placeholder copy', () => {
+    const { getByText, queryByText } = render(<TechnologyTypesTab onExplore={() => {}} />);
+    expect(getByText(/Each card shows a product type with its total candidate count/)).toBeInTheDocument();
+    expect(queryByText(/make custom comparison page/)).not.toBeInTheDocument();
+  });
+
   it('keeps a url-provided table filter on mount (does not reset it on load)', () => {
     vi.useFakeTimers();
     try {

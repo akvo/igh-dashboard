@@ -82,4 +82,11 @@ describe('CandidatesTab', () => {
       phaseNames: ['Phase 1'],
     });
   });
+
+  it('renders the renamed table heading and the chart descriptions', () => {
+    const { getByText } = render(<CandidatesTab onExplore={() => {}} />);
+    expect(getByText('Selected candidates')).toBeInTheDocument();
+    expect(getByText(/Ranks the five diseases with the most candidates/)).toBeInTheDocument();
+    expect(getByText(/Ranks the five product types with the most candidates/)).toBeInTheDocument();
+  });
 });
