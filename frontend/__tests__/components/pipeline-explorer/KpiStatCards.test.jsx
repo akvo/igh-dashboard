@@ -34,4 +34,16 @@ describe('KpiStatCards', () => {
     fireEvent.mouseEnter(icon);
     expect(screen.getByText(tip)).toBeInTheDocument();
   });
+
+  it('positions the tooltip fixed so it escapes the clipped scroll container', () => {
+    // Regression guard: the popover must use fixed positioning, not an absolute
+    // box that the Pipeline Explorer `overflow-x-hidden` container clips against
+    // the sidebar.
+    const tip = 'Some tooltip text';
+    const { container } = render(<KpiStatCards cards={[
+      { title: 'Total candidates', value: 759, percentage: null, tooltip: tip },
+    ]} />);
+    fireEvent.mouseEnter(container.querySelector('svg'));
+    expect(screen.getByText(tip).className).toContain('fixed');
+  });
 });

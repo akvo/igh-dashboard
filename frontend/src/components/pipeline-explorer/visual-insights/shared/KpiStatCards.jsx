@@ -16,21 +16,46 @@ import { MiniDonut } from './primitives';
 // tooltip when it carries a `tooltip` string. The hover behaviour mirrors
 // the shared StatCard component.
 
+// Tooltip width in px; must match the `w-64` class on the popover below.
+const TOOLTIP_WIDTH = 256;
+
 function InfoTooltip({ text }) {
-  const [hovered, setHovered] = useState(false);
+  // The popover is positioned `fixed` rather than `absolute`, on purpose: the
+  // KPI cards live inside the Pipeline Explorer scroll container, which sets
+  // `overflow-x-hidden` (layout.js). An absolutely-positioned popover that
+  // extended past the leftmost card's edge got clipped against the sidebar.
+  // Fixed positioning escapes that clip; we compute the coordinates from the
+  // icon's bounding rect on hover and clamp them to the viewport so the box
+  // stays fully visible for every card (leftmost and rightmost alike).
+  const [pos, setPos] = useState(null);
+
+  const show = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Right-align the box to the icon when there's room, but never let it slip
+    // past either viewport edge (8px gutter).
+    const left = Math.max(
+      8,
+      Math.min(rect.right - TOOLTIP_WIDTH, window.innerWidth - TOOLTIP_WIDTH - 8),
+    );
+    setPos({ top: rect.bottom + 6, left });
+  };
+
   return (
-    <div className="relative">
+    <>
       <InfoIcon
         className="w-5 h-5 text-gray-400 cursor-pointer"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onMouseEnter={show}
+        onMouseLeave={() => setPos(null)}
       />
-      {hovered && (
-        <div className="absolute top-7 right-0 bg-black text-white text-xs leading-relaxed px-3 py-2 rounded-md z-10 w-64">
+      {pos && (
+        <div
+          className="fixed bg-black text-white text-xs leading-relaxed px-3 py-2 rounded-md z-50 w-64"
+          style={{ top: `${pos.top}px`, left: `${pos.left}px` }}
+        >
           {text}
         </div>
       )}
-    </div>
+    </>
   );
 }
 
