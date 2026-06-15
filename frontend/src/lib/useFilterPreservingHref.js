@@ -6,7 +6,7 @@
 //
 // Binds the pure buildHref to the live route (usePathname) and query
 // params (useQueryParams), returning a `(targetHref) => href` builder.
-// Matches the lib/ convention of useQueryParams / useHash / useUrlState.
+// Matches the lib/ convention of useQueryParams / useUrlState.
 
 import { usePathname } from 'next/navigation';
 import { useQueryParams } from './useQueryParams';
