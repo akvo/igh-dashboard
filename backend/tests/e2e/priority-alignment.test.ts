@@ -156,9 +156,10 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (66)", () => {
+  it("totalPriorities matches snapshot (65)", () => {
     // All non-stub priorities from dim_priority are counted (no pipeline gate).
-    expect(baseline.totalPriorities).toBe(66);
+    // Test_TO is excluded as a test/stub priority.
+    expect(baseline.totalPriorities).toBe(65);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -231,12 +232,12 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 1 unknown)", () => {
+  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 0 unknown)", () => {
     // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
-    // The sum equals totalPriorities.
+    // The sum equals totalPriorities. Test_TO was the sole unknown entry.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
     expect(baseline.womenOrChildrenShare.no).toBe(31);
-    expect(baseline.womenOrChildrenShare.unknown).toBe(1);
+    expect(baseline.womenOrChildrenShare.unknown).toBe(0);
     const sum =
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +
