@@ -20,7 +20,7 @@ import { DataTable } from '@/components/ui';
 import { KpiStatCards } from './shared/KpiStatCards';
 import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
-import { TAB_LABELS, ITEMS_PER_PAGE, STAT_CARD_COLORS } from './shared/primitives';
+import { TAB_LABELS, TAB_DESCRIPTIONS, KPI_TOOLTIPS, ITEMS_PER_PAGE, STAT_CARD_COLORS } from './shared/primitives';
 
 // =========================================================
 // Candidates tab — Visual Insights
@@ -111,14 +111,19 @@ export default function CandidatesTab({ onExplore }) {
     const ghaCards = (ghaSummaries || []).map((g, i) => {
       const count = g.candidateCount;
       const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
+      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
       return {
-        title: g.global_health_area ? displayHealthArea(g.global_health_area) : g.name,
+        title,
         value: count,
         percentage: pct,
         color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
+        tooltip: KPI_TOOLTIPS.candidates[title],
       };
     });
-    return [{ title: 'Total candidates', value: total, percentage: null }, ...ghaCards];
+    return [
+      { title: 'Total candidates', value: total, percentage: null, tooltip: KPI_TOOLTIPS.candidates.total },
+      ...ghaCards,
+    ];
   }, [kpisRaw, ghaSummaries]);
 
   // =========================================================
@@ -173,6 +178,7 @@ export default function CandidatesTab({ onExplore }) {
         <TopFiveDiseasesChart
           data={top5Diseases}
           title={TAB_LABELS.candidates.disease}
+          description={TAB_DESCRIPTIONS.candidates.disease}
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
@@ -180,6 +186,7 @@ export default function CandidatesTab({ onExplore }) {
         <TopFiveProductTypesChart
           data={top5Products}
           title={TAB_LABELS.candidates.product}
+          description={TAB_DESCRIPTIONS.candidates.product}
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
@@ -187,10 +194,13 @@ export default function CandidatesTab({ onExplore }) {
       </div>
 
       <div className="bg-white border border-gray-200 p-4">
-        <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Candidates</h3>
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
+          <h3 className="text-base sm:text-lg font-bold text-black">Selected candidates</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount.toLocaleString()}</span>
         </div>
+        <p className="text-sm text-gray-500 mb-4">
+          A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more.
+        </p>
         <DataTable
           tableId="vi-candidates"
           graphqlTable="PORTFOLIO_CANDIDATES"
