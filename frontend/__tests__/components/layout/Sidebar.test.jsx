@@ -49,3 +49,36 @@ describe('Sidebar — Pipeline Explorer entry', () => {
     expect(pipelineExplorerLink().className).not.toContain('bg-sidebar-active');
   });
 });
+
+const pipelineOverviewLink = () =>
+  screen.getByRole('link', { name: 'Pipeline Overview' });
+
+describe('Sidebar — Pipeline Overview entry', () => {
+  it('renders the Pipeline Overview entry', () => {
+    usePathname.mockReturnValue('/');
+    render(<Sidebar />);
+    expect(pipelineOverviewLink()).toBeTruthy();
+  });
+
+  it('orders Pipeline Overview before Pipeline Explorer', () => {
+    usePathname.mockReturnValue('/');
+    render(<Sidebar />);
+    const overview = screen.getByRole('link', { name: 'Pipeline Overview' });
+    const explorer = screen.getByRole('link', { name: 'Pipeline Explorer' });
+    // DOCUMENT_POSITION_FOLLOWING set => explorer comes after overview.
+    const rel = overview.compareDocumentPosition(explorer);
+    expect(rel & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('highlights the entry on /pipeline-overview', () => {
+    usePathname.mockReturnValue('/pipeline-overview');
+    render(<Sidebar />);
+    expect(pipelineOverviewLink().className).toContain('bg-sidebar-active');
+  });
+
+  it('does not highlight the entry on /pipeline-explorer', () => {
+    usePathname.mockReturnValue('/pipeline-explorer');
+    render(<Sidebar />);
+    expect(pipelineOverviewLink().className).not.toContain('bg-sidebar-active');
+  });
+});

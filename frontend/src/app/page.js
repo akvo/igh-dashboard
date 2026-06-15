@@ -681,7 +681,7 @@ export default function Home() {
                 Portfolio overview by global health area
               </h3>
               <a
-                href="/portfolio-analysis"
+                href="/pipeline-overview"
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Explore portfolio analysis

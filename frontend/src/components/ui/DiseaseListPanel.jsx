@@ -142,7 +142,7 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
   //                                              semantic on the
   //                                              destination page)
   //   kind === 'secondary' -> ?primary=<parent>&secondary=<child>
-  //   kind === '' (no name) -> /portfolio-analysis (Find out more)
+  //   kind === '' (no name) -> /pipeline-overview (Find out more)
   //
   // `globalHealthArea` is always preserved on `?gha=` so the
   // destination page hydrates the GHA filter as the user expects.
@@ -150,7 +150,7 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
     (kind, name, primaryParent, globalHealthArea) => {
       onClose();
       if (!kind || !name) {
-        window.location.href = '/portfolio-analysis';
+        window.location.href = '/pipeline-overview';
         return;
       }
       const params = new URLSearchParams();
@@ -161,7 +161,7 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
         if (primaryParent) params.set('primary', primaryParent);
         params.set('secondary', name);
       }
-      window.location.href = `/portfolio-analysis?${params.toString()}`;
+      window.location.href = `/pipeline-overview?${params.toString()}`;
     },
     [onClose],
   );
