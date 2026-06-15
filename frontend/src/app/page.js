@@ -139,20 +139,38 @@ export default function Home() {
   const womenChildrenChartRef = useRef(null);
 
   const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  // Normalise global filter arrays → null when empty so hooks treat them as
+  // "no filter" rather than "empty array = match nothing".
+  const ghaArg = globalFilters.healthArea.length > 0 ? globalFilters.healthArea : null;
+  const primaryArg = globalFilters.primary.length > 0 ? globalFilters.primary : null;
+  const secondaryArg = globalFilters.secondary.length > 0 ? globalFilters.secondary : null;
+  const productArg = globalFilters.product.length > 0 ? globalFilters.product : null;
+  const rdPhaseArg = globalFilters.rdPhase.length > 0 ? globalFilters.rdPhase : null;
+
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(ghaArg, primaryArg, secondaryArg, productArg, rdPhaseArg);
   // The GHA-only summary feeds both the bubble chart (gha view) and the
   // cross-pipeline dropdown down-page, so it always fetches. The three
   // expanded views only fetch when their tab is active.
   const bubbleCandidateArg =
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes;
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(bubbleCandidateArg);
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
+    bubbleCandidateArg,
+    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg },
+  );
   const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
     bubbleCandidateArg,
     { skip: bubbleView !== 'ghaType' },
   );
   const { bubbleData: diseaseBubbleData, loading: diseaseBubbleLoading } = useDiseaseSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'disease' },
+    {
+      skip: bubbleView !== 'disease',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
   const { bubbleData: diseaseTypeBubbleData, loading: diseaseTypeLoading } = useDiseaseProductTypeSummaries(
     bubbleCandidateArg,
@@ -280,7 +298,13 @@ export default function Home() {
   const { hierarchy: diseaseHierarchy } = useDiseaseHierarchy();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
-    mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
+    mapTab === 'trials' ? 'Trial Location' : 'Developer Location',
+    null, // statuses
+    ghaArg,
+    primaryArg,
+    secondaryArg,
+    productArg,
+    rdPhaseArg,
   );
   // Convert global product names → product keys for hooks that need int keys.
   const nameToKeyMap = useMemo(() => {
@@ -296,10 +320,10 @@ export default function Home() {
 
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
-    globalFilters.healthArea.length > 0 ? globalFilters.healthArea : null,
+    ghaArg,
     globalProductKeys,
-    globalFilters.primary.length > 0 ? globalFilters.primary : null,
-    globalFilters.secondary.length > 0 ? globalFilters.secondary : null,
+    primaryArg,
+    secondaryArg,
   );
 
   // WHO Priority Alignment data — single consolidated query feeds the
@@ -315,9 +339,9 @@ export default function Home() {
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
   } = usePriorityAlignment(
-    globalFilters.healthArea,
-    globalFilters.primary,
-    globalFilters.secondary,
+    ghaArg,
+    primaryArg,
+    secondaryArg,
     globalFilters.expandedProduct,
   );
 
@@ -347,7 +371,7 @@ export default function Home() {
   // Candidate type distribution — driven by global product + R&D phase filters.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     globalProductKeys,
-    globalFilters.rdPhase.length > 0 ? globalFilters.rdPhase : null,
+    rdPhaseArg,
   );
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
