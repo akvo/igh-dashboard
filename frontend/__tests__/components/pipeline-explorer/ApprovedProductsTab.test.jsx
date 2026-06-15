@@ -48,4 +48,12 @@ describe('ApprovedProductsTab', () => {
     const tableFilter = hooks.usePortfolioCandidates.mock.calls[0][0];
     expect(tableFilter).toMatchObject({ candidateType: 'Product', productNames: ['Vaccine'], phaseNames: ['Phase 1'] });
   });
+
+  it('renders the orientation intro, renamed table heading and chart descriptions', () => {
+    const { getByText } = render(<ApprovedProductsTab onExplore={() => {}} />);
+    expect(getByText(/Three summary charts cover approval status/)).toBeInTheDocument();
+    expect(getByText('Selected approved products')).toBeInTheDocument();
+    expect(getByText('Approving authorities')).toBeInTheDocument();
+    expect(getByText(/A comparison of approved products that have a WHO prequalification/)).toBeInTheDocument();
+  });
 });
