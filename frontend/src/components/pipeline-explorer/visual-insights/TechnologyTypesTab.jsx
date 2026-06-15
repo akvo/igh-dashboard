@@ -347,7 +347,7 @@ export default function TechnologyTypesTab({ onExplore }) {
           </div>
         </div>
         <p className="text-sm text-gray-500 mb-6">
-          This matrix grid shows the technology types for which candidates are being developed against the R&D stages. It provides an overview of the portfolio&apos;s progress for each technology type.
+          Each card shows a product type with its total candidate count and technology count. Select a card to see how that product type breaks down by technology and R&D stage in the chart below.
         </p>
 
         {/* Product type cards */}
@@ -473,7 +473,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                 <ChartMenu onDownloadPNG={() => downloadPNG(techChartRef, 'technology-types')} />
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                This visualization tracks the evolution of the global pipeline over time. It is showing how candidates have successfully progressed through clinical phases toward market readiness. In the make custom comparison page, it is possible to set up your own comparison of a pipeline over time, or between two or more diseases.
+                Each bar shows a technology type within the selected product, split by R&D stage.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -554,7 +554,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mb-4">
-                    This visualization tracks the evolution of the global pipeline over time. It is showing how candidates have successfully progressed through clinical phases toward market readiness. In the make custom comparison page, it is possible to set up your own comparison of a pipeline over time, or between two or more diseases.
+                    How the selected technology type covers individual diseases, split by global health area. Select a bar to see the candidates and approved products for that disease.
                   </p>
                   <ResponsiveContainer width="100%" height={Math.max(180, (diseaseCoverageData?.length || 3) * 44)}>
                     <BarChart data={diseaseCoverageData} layout="vertical" margin={{ left: 120, right: 20, top: 5, bottom: 5 }}>
