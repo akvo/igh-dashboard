@@ -133,11 +133,11 @@ describe('HierarchicalProductFilter — hiddenMemberLabels', () => {
     // Only the parent group row carries this label now — the child is gone.
     expect(screen.getAllByLabelText('Vector control products')).toHaveLength(1);
     // The other three children are still rendered.
-    expect(screen.getByLabelText('Biological vector control products')).toBeTruthy();
-    expect(screen.getByLabelText('Chemical vector control products')).toBeTruthy();
+    expect(screen.queryByLabelText('Biological vector control products')).not.toBeNull();
+    expect(screen.queryByLabelText('Chemical vector control products')).not.toBeNull();
     expect(
-      screen.getByLabelText('Vector control products Reservoir targeted vaccines'),
-    ).toBeTruthy();
+      screen.queryByLabelText('Vector control products Reservoir targeted vaccines'),
+    ).not.toBeNull();
   });
 
   it('excludes a hidden member from the group toggle', () => {

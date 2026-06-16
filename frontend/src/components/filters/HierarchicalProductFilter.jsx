@@ -31,6 +31,12 @@ import CheckboxBox from './_shared/CheckboxBox';
 // Sentinel value for the synthetic group row (never a real option).
 const GROUP_ROW_VALUE = '__vcp_group__';
 
+// Stable default for `hiddenMemberLabels` so the filtering memo keeps a
+// constant dependency reference (and never re-fires) when the caller
+// omits the prop — an inline `= []` default would be a fresh array each
+// render.
+const EMPTY_LABELS = [];
+
 // Derive the parent group's checkbox state from its AVAILABLE child
 // values (those present in the current options) and the selection.
 export function deriveGroupState(availableChildValues, selectedValues) {
@@ -59,7 +65,7 @@ export default function HierarchicalProductFilter({
   options = [],
   groupMembers = [],
   groupLabel = 'Vector control products',
-  hiddenMemberLabels = [],
+  hiddenMemberLabels = EMPTY_LABELS,
   selected = [],
   onChange,
   label,
