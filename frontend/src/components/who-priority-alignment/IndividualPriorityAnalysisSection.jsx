@@ -109,18 +109,18 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
       </div>
       <div className="flex-1 mt-2">
         {loading ? (
-          <div className="h-[280px] flex items-center justify-center">
+          <div className="h-[220px] flex items-center justify-center">
             <div className="animate-pulse text-gray-400">Loading chart...</div>
           </div>
         ) : chartData.length === 0 ? (
-          <ChartEmptyState variant="bar" height={280} />
+          <ChartEmptyState variant="bar" height={220} />
         ) : (
           <StackedBarChart
             data={chartData}
             phases={phases}
             categoryKey="category"
             layout="vertical"
-            height={Math.max(220, chartData.length * 60)}
+            height={Math.max(180, chartData.length * 48)}
             xAxisLabel="Amount"
             barRadius={0}
           />
@@ -248,12 +248,6 @@ function ActiveBody({
           <StatCard
             title="Number of candidates linked to selected priority"
             value={analysis.counts.candidatesCount}
-            variant="number"
-            loading={analysis.loading}
-          />
-          <StatCard
-            title="Number of approved products linked to selected priority"
-            value={analysis.counts.approvedProductsCount}
             variant="number"
             loading={analysis.loading}
           />

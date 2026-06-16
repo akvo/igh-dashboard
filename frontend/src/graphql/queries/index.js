@@ -544,7 +544,6 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
       product_names: $productNames
     ) {
       candidatesCount
-      approvedProductsCount
       targetPopulation
       pipelineBuildUp {
         product_name
