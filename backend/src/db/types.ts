@@ -441,6 +441,7 @@ export interface PortfolioCandidateFilter {
   phase_names?: string[];
   priority_keys?: number[];
   column_filters?: ColumnFilterInput[];
+  new_include_in_pipeline_2025?: boolean;
 }
 
 export interface PortfolioCandidateConnection {

@@ -47,6 +47,12 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     params.push(filter.candidate_type);
   }
 
+  // WHO Priority page opts in to the strict 2025 inclusion rule. Other
+  // callers leave this unset and keep the forward-filled behaviour.
+  if (filter?.new_include_in_pipeline_2025) {
+    conditions.push("c.new_include_in_pipeline_2025 = 1");
+  }
+
   applyPriorityKeysFilter(filter, conditions, params, extraJoins);
 
   if (filter?.column_filters) {
