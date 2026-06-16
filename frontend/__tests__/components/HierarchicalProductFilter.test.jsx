@@ -174,7 +174,23 @@ describe('HierarchicalProductFilter — auto-scroll on expand', () => {
     try {
       renderOpen({ selected: [] });
       fireEvent.click(screen.getByLabelText('Expand Vector control products'));
-      expect(spy).toHaveBeenCalled();
+      expect(spy).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it('does not scroll when the group collapses', () => {
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      renderOpen({ selected: [] });
+      const toggle = screen.getByLabelText('Expand Vector control products');
+      fireEvent.click(toggle); // expand → scrolls
+      spy.mockClear();
+      fireEvent.click(toggle); // collapse → must not scroll
+      expect(spy).not.toHaveBeenCalled();
     } finally {
       Element.prototype.scrollIntoView = original;
     }
