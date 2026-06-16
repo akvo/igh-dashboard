@@ -59,6 +59,7 @@ export default function HierarchicalProductFilter({
   options = [],
   groupMembers = [],
   groupLabel = 'Vector control products',
+  hiddenMemberLabels = [],
   selected = [],
   onChange,
   label,
@@ -83,10 +84,24 @@ export default function HierarchicalProductFilter({
     [options],
   );
 
-  const { flat, children } = useMemo(
+  const { flat, children: allChildren } = useMemo(
     () => partitionOptions(normOptions, groupMembers),
     [normOptions, groupMembers],
   );
+
+  // Suppress specific group members (by product-name label) from the
+  // expandable group. Excluding them from `children` here drops them from
+  // the rendered list AND from `childValues` (group-state derivation and
+  // the group toggle), so the control stays self-consistent. Interim
+  // measure: see
+  // docs/superpowers/notes/2026-06-17-vcp-include-in-pipeline-stale-2019-flag.md.
+  // Once the upstream data fix lands the hidden product leaves the active
+  // data and this becomes a no-op — remove the prop with that fix.
+  const children = useMemo(() => {
+    if (hiddenMemberLabels.length === 0) return allChildren;
+    const hidden = new Set(hiddenMemberLabels);
+    return allChildren.filter((c) => !hidden.has(c.label));
+  }, [allChildren, hiddenMemberLabels]);
 
   const childValues = useMemo(() => children.map((c) => c.value), [children]);
 
