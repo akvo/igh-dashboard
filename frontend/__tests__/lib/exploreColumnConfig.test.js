@@ -7,31 +7,29 @@ import {
 } from '@/lib/exploreColumnConfig';
 
 describe('specificDiseaseLabel', () => {
-  it('shows the secondary (specific) disease when present', () => {
-    expect(
-      specificDiseaseLabel({ disease_name: 'Diarrhoeal diseases', secondary_disease_name: 'Cholera' }),
-    ).toBe('Cholera');
+  it('shows the canonical label the backend returns as disease_name', () => {
+    expect(specificDiseaseLabel({ disease_name: 'Cholera' })).toBe('Cholera');
   });
 
-  it('falls back to the parent when there is no secondary disease', () => {
+  it('passes through the Malaria combined label unchanged', () => {
     expect(
-      specificDiseaseLabel({ disease_name: 'Dengue', secondary_disease_name: null }),
-    ).toBe('Dengue');
+      specificDiseaseLabel({ disease_name: 'Malaria – P. falciparum' }),
+    ).toBe('Malaria – P. falciparum');
   });
 
-  it('returns an empty string when neither is present', () => {
+  it('returns an empty string when no disease name is present', () => {
     expect(specificDiseaseLabel({})).toBe('');
   });
 });
 
-describe('Disease column shows the specific disease with a flat category filter', () => {
-  const row = { disease_name: 'Diarrhoeal diseases', secondary_disease_name: 'Cholera' };
+describe('Disease column shows the canonical label with a flat category filter', () => {
+  const row = { disease_name: 'Cholera' };
 
   for (const [name, build] of [
     ['candidates', buildCandidateColumns],
     ['approved products', buildApprovedProductColumns],
   ]) {
-    it(`uses the specific disease for CSV and stays a flat category filter (${name})`, () => {
+    it(`uses the canonical label for CSV and stays a flat category filter (${name})`, () => {
       const col = build().find((c) => c.header === 'Disease');
       expect(col.csvAccessor(row)).toBe('Cholera');
       expect(col.filter).toEqual({ kind: 'category' });

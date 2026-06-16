@@ -43,7 +43,7 @@ export function CandidateSlideIn({ candidateKey, onClose }) {
   }
 
   const { candidate, product, diseases } = slideIn;
-  const diseaseLabel = diseases.secondary || diseases.primary;
+  const diseaseLabel = diseases.label;
 
   return (
     <SlideInPanel eyebrow="Key candidate information" onClose={onClose}>
