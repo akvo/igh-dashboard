@@ -9,6 +9,9 @@ import { downloadPNG } from '@/lib/png';
 import { chartColors, colors } from '@/lib/theme';
 import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
+import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
+import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -611,9 +614,50 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
+                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+
+            {/* Filters — bound to global filter state so selections sync across pages */}
+            <div className="flex flex-wrap items-end gap-4 mb-4">
+              <div className="w-[280px]">
+                <HierarchicalProductFilter
+                  label="Product type"
+                  selected={globalFilters.product}
+                  onChange={globalFilters.setProduct}
+                  placeholder="All"
+                  options={globalFilters.productOptions}
+                  groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
+                />
+              </div>
+              <div className="w-[280px]">
+                <Dropdown
+                  label="Select R&D stage"
+                  value={globalFilters.rdPhase}
+                  onChange={globalFilters.setRdPhase}
+                  placeholder="All"
+                  options={globalFilters.rdPhaseOptions}
+                  multiSelect={true}
+                  showSearch={true}
+                  showClearText={true}
+                />
+              </div>
+              <div className="flex-1" />
+              <button
+                onClick={() => {
+                  globalFilters.setProduct([]);
+                  globalFilters.setRdPhase([]);
+                }}
+                disabled={globalFilters.product.length === 0 && globalFilters.rdPhase.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  globalFilters.product.length > 0 || globalFilters.rdPhase.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                Reset filters
+              </button>
+            </div>
 
             {/* Chart */}
             {portfolioLoading || productsLoading || phasesLoading ? (
@@ -652,9 +696,50 @@ export default function Home() {
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
+            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
+
+            {/* Filters — bound to global filter state so selections sync across pages */}
+            <div className="flex flex-wrap items-end gap-4 mb-4">
+              <div className="w-[280px]">
+                <Dropdown
+                  label="Global health area"
+                  value={globalFilters.healthArea}
+                  onChange={globalFilters.setHealthArea}
+                  placeholder="All"
+                  options={globalFilters.healthAreaOptions}
+                  multiSelect={true}
+                  showClearText={true}
+                  loading={globalFilters.loading.gha}
+                />
+              </div>
+              <div className="w-[280px]">
+                <HierarchicalProductFilter
+                  label="Product type"
+                  selected={globalFilters.product}
+                  onChange={globalFilters.setProduct}
+                  placeholder="All"
+                  options={globalFilters.productOptions}
+                  groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
+                />
+              </div>
+              <div className="flex-1" />
+              <button
+                onClick={() => {
+                  globalFilters.setHealthArea([]);
+                  globalFilters.setProduct([]);
+                }}
+                disabled={globalFilters.healthArea.length === 0 && globalFilters.product.length === 0}
+                className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
+                  globalFilters.healthArea.length > 0 || globalFilters.product.length > 0
+                    ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
+                    : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                Reset filters
+              </button>
+            </div>
 
             {temporalLoading || yearsLoading ? (
               <div className="h-[220px] flex items-center justify-center">
@@ -686,12 +771,35 @@ export default function Home() {
                   Compare WHO priorities with pipeline
                 </p>
               </div>
-              <a
-                href={exploreHref}
-                className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
-              >
-                Explore
-              </a>
+              <div className="flex items-center gap-2">
+                <div className="w-[240px]">
+                  <HierarchicalDiseaseFilter
+                    hierarchy={globalFilters.narrowedHierarchy}
+                    primarySelected={globalFilters.primary}
+                    secondarySelected={globalFilters.secondary}
+                    onChange={({ primarySelected, secondarySelected }) => {
+                      globalFilters.setPrimary(primarySelected);
+                      globalFilters.setSecondary(secondarySelected);
+                    }}
+                    placeholder="Select disease"
+                  />
+                </div>
+                {globalFilters.hasFilters ? (
+                  <a
+                    href={exploreHref}
+                    className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
+                  >
+                    Explore selected
+                  </a>
+                ) : (
+                  <a
+                    href={exploreHref}
+                    className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    View all
+                  </a>
+                )}
+              </div>
             </div>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 

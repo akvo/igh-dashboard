@@ -15,7 +15,9 @@
 // pruning effects.
 
 import { createContext, useContext, useMemo } from 'react';
+import { usePathname } from 'next/navigation';
 import { useUrlState } from '@/lib/useUrlState';
+import { useSyncOnNavigation } from '@/lib/useQueryParams';
 import { arraySerializer } from '@/lib/url-serializers';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
@@ -33,6 +35,12 @@ import {
 const GlobalFiltersContext = createContext(null);
 
 export function GlobalFiltersProvider({ children }) {
+  // Next.js <Link> navigation uses pushState which doesn't fire popstate.
+  // This hook detects pathname changes and notifies useQueryParams subscribers
+  // so all URL-backed state (including global filters) re-reads the URL.
+  const pathname = usePathname();
+  useSyncOnNavigation(pathname);
+
   const filters = useGlobalFiltersCore();
   return (
     <GlobalFiltersContext.Provider value={filters}>

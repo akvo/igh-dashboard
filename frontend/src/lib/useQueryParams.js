@@ -10,7 +10,7 @@
 // Next.js useSearchParams() to avoid Suspense boundary
 // requirements — safe because all pages are 'use client'.
 
-import { useSyncExternalStore, useCallback } from 'react';
+import { useSyncExternalStore, useCallback, useEffect, useRef } from 'react';
 
 // Coalesce rapid URL updates into a single popstate notification.
 // Deferring to a macrotask lets React finish batching any useState
@@ -23,6 +23,28 @@ function notifySubscribers() {
   popstateTimer = setTimeout(() => {
     window.dispatchEvent(new PopStateEvent('popstate'));
   }, 0);
+}
+
+// Monkey-patch pushState/replaceState so that ANY URL change —
+// including Next.js <Link> client-side navigation — notifies our
+// useSyncExternalStore subscribers. Without this, navigating between
+// pages via the sidebar would NOT update the global filter context
+// because pushState does not fire popstate.
+/**
+ * Call from any component that has access to Next.js's usePathname()
+ * to ensure useSyncExternalStore picks up URL changes caused by
+ * client-side <Link> navigation (which uses pushState internally and
+ * does NOT fire popstate).
+ */
+export function useSyncOnNavigation(pathname) {
+  const prevSearch = useRef(typeof window !== 'undefined' ? window.location.search : '');
+  useEffect(() => {
+    const currentSearch = window.location.search;
+    if (currentSearch !== prevSearch.current) {
+      prevSearch.current = currentSearch;
+      notifySubscribers();
+    }
+  }, [pathname]);
 }
 
 // ---- External store contract for useSyncExternalStore ----

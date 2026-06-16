@@ -32,7 +32,7 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setRdPhase,
   } = useGlobalFilters();
 
-  // Section-local URL-state filters (cross-pipeline analytics temporal section).
+  // Section-local URL-state filters (temporal-trends section).
   // Reading them here lets the sidebar reflect all active filters regardless
   // of which page/section set them.
   const [ttPrimary, setTtPrimary] = useUrlState('ttPrimary', [], arraySerializer);
