@@ -66,7 +66,15 @@ beforeAll(() => {
          WHERE p.priority_name IS NOT NULL
            AND TRIM(p.priority_name) != ''
            AND p.target_population IS NOT NULL
-           AND p.priority_key IN (SELECT priority_key FROM bridge_candidate_priority)
+           AND p.priority_key IN (
+             SELECT bp.priority_key
+             FROM bridge_candidate_priority bp
+             JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key
+             JOIN dim_candidate_core c ON c.candidate_key = f.candidate_key
+             WHERE f.is_active_flag = 1 AND f.include_in_pipeline = 1
+               AND c.candidate_type = 'Candidate'
+               AND c.new_include_in_pipeline_2025 = 1
+           )
          LIMIT 1`,
       )
       .get() as {
@@ -113,6 +121,9 @@ describe("individualPriorityAnalysis", () => {
         )
         .get(pickedPriorityKey) as { n: number };
       expect(a.candidatesCount).toBe(n);
+      // Confirm the picked priority genuinely has strict candidates, so the
+      // assertions above are not trivially satisfied by 0 === 0.
+      expect(a.candidatesCount).toBeGreaterThan(0);
     } finally {
       db.close();
     }

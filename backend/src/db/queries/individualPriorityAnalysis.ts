@@ -38,8 +38,9 @@ function buildPipelineWhere(input: IndividualPriorityAnalysisInput) {
   const conditions = [
     "f.is_active_flag = 1",
     PIPELINE_FILTER,
-    // Strict 2025 rule: only candidates whose actual 2025
-    // new_includeinpipeline is Yes (not the forward-filled flag).
+    // Strict 2025 rule: new_include_in_pipeline_2025 = 1 means the source
+    // CRM field new_includeinpipeline was "Yes" in 2025 — not the
+    // forward-filled include_in_pipeline fact flag used by other pages.
     "c.new_include_in_pipeline_2025 = 1",
     // The WHO drill-down counts/charts true candidates only; approved
     // products are excluded from the count, chart, and table.
