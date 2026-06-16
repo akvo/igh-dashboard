@@ -612,7 +612,6 @@ export interface PipelineBuildUpRow {
 
 export interface IndividualPriorityAnalysis {
   candidatesCount: number;
-  approvedProductsCount: number;
   targetPopulation: string | null;
   pipelineBuildUp: PipelineBuildUpRow[];
 }

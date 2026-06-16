@@ -629,7 +629,6 @@ export const typeDefs = `#graphql
 
   type IndividualPriorityAnalysis {
     candidatesCount: Int!
-    approvedProductsCount: Int!
     targetPopulation: String
     pipelineBuildUp: [PipelineBuildUpRow!]!
   }
