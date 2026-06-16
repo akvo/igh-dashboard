@@ -92,10 +92,9 @@ beforeAll(() => {
 
 describe("individualPriorityAnalysis", () => {
   it("counts only strict-2025 candidates and excludes products", async () => {
-    const { data } = await query<{ individualPriorityAnalysis: Analysis }>(
-      GQL,
-      { priorityKey: pickedPriorityKey },
-    );
+    const { data } = await query<{ individualPriorityAnalysis: Analysis }>(GQL, {
+      priorityKey: pickedPriorityKey,
+    });
     const a = data.individualPriorityAnalysis;
 
     // Build-up is candidate-only now, so its sum equals candidatesCount.
@@ -103,10 +102,7 @@ describe("individualPriorityAnalysis", () => {
     expect(sumByRow).toBe(a.candidatesCount);
 
     // candidatesCount equals the strict SQL count for this priority.
-    const db = new Database(
-      path.resolve(__dirname, "../star_schema.db"),
-      { readonly: true },
-    );
+    const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
     try {
       const { n } = db
         .prepare(

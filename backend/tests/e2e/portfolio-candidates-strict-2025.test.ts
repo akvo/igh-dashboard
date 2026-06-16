@@ -61,19 +61,14 @@ describe("portfolioCandidates strict 2025 flag", () => {
       limit: 100,
     });
     expect(data.portfolioCandidates.totalCount).toBe(strictSql);
-    expect(
-      data.portfolioCandidates.nodes.every((n) => n.candidate_type !== "Product"),
-    ).toBe(true);
+    expect(data.portfolioCandidates.nodes.every((n) => n.candidate_type !== "Product")).toBe(true);
   });
 
   it("omitting the flag does not reduce below the strict count (flag is opt-in)", async () => {
-    const { data } = await query<{ portfolioCandidates: { totalCount: number } }>(
-      GQL,
-      {
-        filter: { candidate_type: "Candidate", priority_keys: [priorityKey] },
-        limit: 1,
-      },
-    );
+    const { data } = await query<{ portfolioCandidates: { totalCount: number } }>(GQL, {
+      filter: { candidate_type: "Candidate", priority_keys: [priorityKey] },
+      limit: 1,
+    });
     expect(data.portfolioCandidates.totalCount).toBeGreaterThanOrEqual(strictSql);
   });
 });
