@@ -12,6 +12,7 @@ export function buildCandidateFilterVars(filter) {
       filter?.secondaryDiseaseNames?.length > 0 ? filter.secondaryDiseaseNames : undefined,
     product_names: filter?.productNames?.length > 0 ? filter.productNames : undefined,
     candidate_type: filter?.candidateType || undefined,
+    new_include_in_pipeline_2025: filter?.newIncludeInPipeline2025 ? true : undefined,
     phase_names: filter?.phaseNames?.length > 0 ? filter.phaseNames : undefined,
     priority_keys: filter?.priorityKeys?.length > 0 ? filter.priorityKeys : undefined,
     column_filters: filter?.columnFilters,

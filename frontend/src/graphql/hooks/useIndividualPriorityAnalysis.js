@@ -9,7 +9,6 @@ import { useDashboardStore, getCacheKey } from '@/store';
 // render skeletons against a stable shape (no null-check fan-out).
 const EMPTY = Object.freeze({
   candidatesCount: 0,
-  approvedProductsCount: 0,
   targetPopulation: null,
   pipelineBuildUp: [],
 });
@@ -76,7 +75,6 @@ export function useIndividualPriorityAnalysis({
   return {
     counts: {
       candidatesCount: payload.candidatesCount,
-      approvedProductsCount: payload.approvedProductsCount,
     },
     targetPopulation: payload.targetPopulation,
     pipelineBuildUp: payload.pipelineBuildUp,

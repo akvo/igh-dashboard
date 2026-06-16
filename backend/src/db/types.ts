@@ -441,6 +441,7 @@ export interface PortfolioCandidateFilter {
   phase_names?: string[];
   priority_keys?: number[];
   column_filters?: ColumnFilterInput[];
+  new_include_in_pipeline_2025?: boolean;
 }
 
 export interface PortfolioCandidateConnection {
@@ -612,7 +613,6 @@ export interface PipelineBuildUpRow {
 
 export interface IndividualPriorityAnalysis {
   candidatesCount: number;
-  approvedProductsCount: number;
   targetPopulation: string | null;
   pipelineBuildUp: PipelineBuildUpRow[];
 }

@@ -26,6 +26,25 @@ function applyPriorityKeysFilter(
   addArrayCondition(filter.priority_keys, "bp.priority_key", conditions, params);
 }
 
+// Scalar equality filters on dim_candidate_core. Extracted from
+// `buildWhere` (like `applyPriorityKeysFilter`) so the parent stays under
+// the cyclomatic-complexity threshold. `new_include_in_pipeline_2025` is
+// opt-in: only the WHO Priority page sets it, so every other caller keeps
+// the forward-filled `include_in_pipeline` behaviour untouched.
+function applyCandidateScalarFilters(
+  filter: PortfolioCandidateFilter | undefined,
+  conditions: string[],
+  params: (string | number)[],
+): void {
+  if (filter?.candidate_type) {
+    conditions.push("c.candidate_type = ?");
+    params.push(filter.candidate_type);
+  }
+  if (filter?.new_include_in_pipeline_2025) {
+    conditions.push("c.new_include_in_pipeline_2025 = 1");
+  }
+}
+
 function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
@@ -42,10 +61,7 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   addArrayCondition(filter?.product_names, "pr.product_name", conditions, params);
   addArrayCondition(filter?.phase_names, "p.phase_name", conditions, params);
 
-  if (filter?.candidate_type) {
-    conditions.push("c.candidate_type = ?");
-    params.push(filter.candidate_type);
-  }
+  applyCandidateScalarFilters(filter, conditions, params);
 
   applyPriorityKeysFilter(filter, conditions, params, extraJoins);
 

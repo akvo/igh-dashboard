@@ -20,7 +20,6 @@ interface PipelineBuildUpRow {
 
 interface Analysis {
   candidatesCount: number;
-  approvedProductsCount: number;
   targetPopulation: string | null;
   pipelineBuildUp: PipelineBuildUpRow[];
 }
@@ -37,7 +36,6 @@ const GQL = `
       primary_disease_names: $primaryDiseaseNames
     ) {
       candidatesCount
-      approvedProductsCount
       targetPopulation
       pipelineBuildUp {
         product_name
@@ -68,7 +66,15 @@ beforeAll(() => {
          WHERE p.priority_name IS NOT NULL
            AND TRIM(p.priority_name) != ''
            AND p.target_population IS NOT NULL
-           AND p.priority_key IN (SELECT priority_key FROM bridge_candidate_priority)
+           AND p.priority_key IN (
+             SELECT bp.priority_key
+             FROM bridge_candidate_priority bp
+             JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key
+             JOIN dim_candidate_core c ON c.candidate_key = f.candidate_key
+             WHERE f.is_active_flag = 1 AND f.include_in_pipeline = 1
+               AND c.candidate_type = 'Candidate'
+               AND c.new_include_in_pipeline_2025 = 1
+           )
          LIMIT 1`,
       )
       .get() as {
@@ -85,20 +91,38 @@ beforeAll(() => {
 });
 
 describe("individualPriorityAnalysis", () => {
-  it("returns counts + target_population + pipelineBuildUp for a known priority", async () => {
-    const { data } = await query<{
-      individualPriorityAnalysis: Analysis;
-    }>(GQL, { priorityKey: pickedPriorityKey });
+  it("counts only strict-2025 candidates and excludes products", async () => {
+    const { data } = await query<{ individualPriorityAnalysis: Analysis }>(GQL, {
+      priorityKey: pickedPriorityKey,
+    });
     const a = data.individualPriorityAnalysis;
 
-    expect(a.targetPopulation).toBe(pickedTargetPopulation);
-    expect(a.candidatesCount).toBeGreaterThanOrEqual(0);
-    expect(a.approvedProductsCount).toBeGreaterThanOrEqual(0);
-    expect(a.candidatesCount + a.approvedProductsCount).toBeGreaterThan(0);
+    // Build-up is candidate-only now, so its sum equals candidatesCount.
+    const sumByRow = a.pipelineBuildUp.reduce((s, r) => s + r.candidateCount, 0);
+    expect(sumByRow).toBe(a.candidatesCount);
 
-    // Q3 confirms disjoint sets — chart rows sum to the total of both cards.
-    const sumByRow = a.pipelineBuildUp.reduce((sum, r) => sum + r.candidateCount, 0);
-    expect(sumByRow).toBe(a.candidatesCount + a.approvedProductsCount);
+    // candidatesCount equals the strict SQL count for this priority.
+    const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
+    try {
+      const { n } = db
+        .prepare(
+          `SELECT COUNT(DISTINCT f.candidate_key) AS n
+           FROM fact_pipeline_snapshot f
+           JOIN dim_candidate_core c ON c.candidate_key = f.candidate_key
+           JOIN bridge_candidate_priority bp ON bp.candidate_key = f.candidate_key
+           WHERE f.is_active_flag = 1 AND f.include_in_pipeline = 1
+             AND c.candidate_type = 'Candidate'
+             AND c.new_include_in_pipeline_2025 = 1
+             AND bp.priority_key = ?`,
+        )
+        .get(pickedPriorityKey) as { n: number };
+      expect(a.candidatesCount).toBe(n);
+      // Confirm the picked priority genuinely has strict candidates, so the
+      // assertions above are not trivially satisfied by 0 === 0.
+      expect(a.candidatesCount).toBeGreaterThan(0);
+    } finally {
+      db.close();
+    }
   });
 
   it("returns null targetPopulation when the priority has none", async () => {
@@ -148,7 +172,6 @@ describe("individualPriorityAnalysis", () => {
     const a = d3.individualPriorityAnalysis;
 
     expect(a.candidatesCount).toBe(0);
-    expect(a.approvedProductsCount).toBe(0);
     expect(a.pipelineBuildUp).toEqual([]);
     // target_population is a property of the priority itself, not narrowed.
     expect(a.targetPopulation).toBe(pickedTargetPopulation);
@@ -161,7 +184,6 @@ describe("individualPriorityAnalysis", () => {
     const a = d4.individualPriorityAnalysis;
 
     expect(a.candidatesCount).toBe(0);
-    expect(a.approvedProductsCount).toBe(0);
     expect(a.targetPopulation).toBeNull();
     expect(a.pipelineBuildUp).toEqual([]);
   });

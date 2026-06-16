@@ -533,6 +533,7 @@ export const typeDefs = `#graphql
     phase_names: [String!]
     priority_keys: [Int!]
     column_filters: [ColumnFilter!]
+    new_include_in_pipeline_2025: Boolean
   }
 
   input ClinicalTrialFilter {
@@ -629,7 +630,6 @@ export const typeDefs = `#graphql
 
   type IndividualPriorityAnalysis {
     candidatesCount: Int!
-    approvedProductsCount: Int!
     targetPopulation: String
     pipelineBuildUp: [PipelineBuildUpRow!]!
   }

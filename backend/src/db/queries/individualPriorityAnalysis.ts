@@ -11,23 +11,21 @@ import type {
 // =========================================================
 // One resolver returns three pipeline aggregates for a single priority:
 //   - candidatesCount         — distinct active-pipeline candidates of
-//                                candidate_type = 'Candidate' bridged to
-//                                the selected priority (Q1).
-//   - approvedProductsCount   — same shape but candidate_type = 'Product' (Q2).
-//                                Disjoint from candidatesCount by
-//                                construction (Q3).
+//                                candidate_type = 'Candidate' with
+//                                new_include_in_pipeline_2025 = 1,
+//                                bridged to the selected priority.
 //   - targetPopulation        — dim_priority.target_population, read
-//                                verbatim (Q8). Not narrowed by page filters.
+//                                verbatim. Not narrowed by page filters.
 //   - pipelineBuildUp         — one row per (product_name × phase_name)
-//                                including BOTH candidate_types so approved
-//                                products surface in the Approved phase (Q6).
-//                                Distinct candidates per cell (Q5a) under the
-//                                active-pipeline guard (Q5b).
+//                                for candidate_type = 'Candidate' only
+//                                (no approved-product "Approved" phase).
+//                                Distinct candidates per cell under the
+//                                active-pipeline + strict-2025 guard.
 //
 // The four page-level filters (GHA / primary disease / secondary disease /
 // product type) narrow the counts and the chart but do NOT narrow
 // target_population — that's a property of the priority itself, not of
-// the candidates linked to it (Q7).
+// the candidates linked to it.
 
 const COMMON_JOINS = `
   JOIN dim_candidate_core c         ON c.candidate_key  = f.candidate_key
@@ -37,7 +35,18 @@ const COMMON_JOINS = `
 `;
 
 function buildPipelineWhere(input: IndividualPriorityAnalysisInput) {
-  const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER, "bp.priority_key = ?"];
+  const conditions = [
+    "f.is_active_flag = 1",
+    PIPELINE_FILTER,
+    // Strict 2025 rule: new_include_in_pipeline_2025 = 1 means the source
+    // CRM field new_includeinpipeline was "Yes" in 2025 — not the
+    // forward-filled include_in_pipeline fact flag used by other pages.
+    "c.new_include_in_pipeline_2025 = 1",
+    // The WHO drill-down counts/charts true candidates only; approved
+    // products are excluded from the count, chart, and table.
+    "c.candidate_type = 'Candidate'",
+    "bp.priority_key = ?",
+  ];
   const params: (string | number)[] = [input.priority_key];
 
   addArrayCondition(
@@ -70,19 +79,17 @@ export function getIndividualPriorityAnalysis(
   const { whereClause, params } = buildPipelineWhere(input);
 
   // ---------------------------------------------------------------------
-  // Counts — one query, conditional aggregation on candidate_type.
+  // Counts — candidate_type = 'Candidate' is pinned in the WHERE, so
+  // no conditional aggregation needed.
   // ---------------------------------------------------------------------
   const countsSql = `
-    SELECT
-      COUNT(DISTINCT CASE WHEN c.candidate_type = 'Candidate' THEN f.candidate_key END) AS candidatesCount,
-      COUNT(DISTINCT CASE WHEN c.candidate_type = 'Product'   THEN f.candidate_key END) AS approvedProductsCount
+    SELECT COUNT(DISTINCT f.candidate_key) AS candidatesCount
     FROM fact_pipeline_snapshot f
     ${COMMON_JOINS}
     ${whereClause}
   `;
   const counts = db.prepare(countsSql).get(...params) as {
     candidatesCount: number;
-    approvedProductsCount: number;
   };
 
   // ---------------------------------------------------------------------
@@ -99,9 +106,9 @@ export function getIndividualPriorityAnalysis(
   const targetPopulation = rawTarget === "" ? null : rawTarget;
 
   // ---------------------------------------------------------------------
-  // Pipeline build-up — one row per (product_name, phase) including BOTH
-  // candidate_type values (Q6). Rows with zero candidates in every phase
-  // are naturally absent.
+  // Pipeline build-up — one row per (product_name, phase) for
+  // candidate_type = 'Candidate' only (no approved-product rows).
+  // Rows with zero candidates are naturally absent.
   // ---------------------------------------------------------------------
   const buildUpSql = `
     SELECT pr.product_name,
@@ -119,7 +126,6 @@ export function getIndividualPriorityAnalysis(
 
   return {
     candidatesCount: counts.candidatesCount,
-    approvedProductsCount: counts.approvedProductsCount,
     targetPopulation,
     pipelineBuildUp,
   };
