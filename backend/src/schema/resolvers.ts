@@ -538,8 +538,7 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key)
-        return { primary: "Unknown", secondary: null, label: "Unknown" };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
@@ -589,8 +588,7 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key)
-        return { primary: "Unknown", secondary: null, label: "Unknown" };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
