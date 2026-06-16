@@ -40,7 +40,7 @@ import {
   useDiseaseHierarchy,
 } from '@/graphql/hooks';
 import { displayHealthArea } from '@/lib/transformations/constants';
-import { useGlobalFilters, GlobalFilterBar } from '@/components/global-filters';
+import { useGlobalFilters } from '@/components/global-filters';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -427,8 +427,6 @@ export default function Home() {
               </span>
             </div>
           </div>
-
-          <GlobalFilterBar filters={globalFilters} />
 
           {/* Stat Cards - Connected to GraphQL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
