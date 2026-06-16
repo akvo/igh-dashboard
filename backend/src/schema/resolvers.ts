@@ -538,11 +538,14 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
+        // The headline label the slide-in prints. Falls back to the
+        // primary group for the niche rows with no computed label.
+        label: d?.disease_label || shortDiseaseName(d),
       };
     },
     ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
@@ -585,11 +588,14 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
+        // The headline label the slide-in prints. Falls back to the
+        // primary group for the niche rows with no computed label.
+        label: d?.disease_label || shortDiseaseName(d),
       };
     },
     ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>

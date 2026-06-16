@@ -20,14 +20,13 @@
 
 import { displayHealthArea } from './transformations/constants';
 
-// The Disease column shows the *specific* disease (the secondary /
-// child, e.g. "Cholera"), falling back to the parent disease when the
-// secondary value is null or empty (childless diseases like "Dengue").
-// Each row already carries both fields from the portfolio-candidates
-// query, so this is display-only. The column's flat category filter is
-// aligned to this same value via the backend registry (COALESCE).
+// The Disease column shows the canonical disease label, which the ETL
+// computes once (secondary, else primary group, with Malaria strains
+// prefixed) and the backend returns as `disease_name`. The column's flat
+// category filter is aligned to the same value via the backend registry.
+// Kept as a named helper so the table configs read intent, not a field.
 export function specificDiseaseLabel(row) {
-  return row?.secondary_disease_name || row?.disease_name || '';
+  return row?.disease_name || '';
 }
 
 // =========================================================

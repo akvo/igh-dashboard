@@ -34,6 +34,7 @@ export const GET_SLIDE_IN_CANDIDATE = gql`
       diseases {
         primary
         secondary
+        label
       }
       ageGroups
       pipelineHistory {
@@ -96,6 +97,7 @@ export const GET_SLIDE_IN_PRODUCT = gql`
       diseases {
         primary
         secondary
+        label
       }
       ageGroups
       pipelineHistory {
@@ -172,7 +174,7 @@ export const GET_SLIDE_IN_TRIAL = gql`
         candidate_name
       }
       disease {
-        disease_name
+        disease_label
       }
     }
   }

@@ -33,7 +33,7 @@ export function TrialSlideIn({ trialId, onClose }) {
   return (
     <SlideInPanel eyebrow="Key clinical trial information" onClose={onClose}>
       <CTIdentitySection
-        disease={disease?.disease_name}
+        disease={disease?.disease_label}
         registryId={trial.trial_name}
         registryUrl={trial.source_text}
         title={trial.trial_title}
