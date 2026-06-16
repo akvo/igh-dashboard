@@ -164,3 +164,19 @@ describe('HierarchicalProductFilter — hiddenMemberLabels', () => {
     expect(onChange).toHaveBeenCalledWith([]);
   });
 });
+
+describe('HierarchicalProductFilter — auto-scroll on expand', () => {
+  it('scrolls the expanded sub-options into view', () => {
+    // jsdom does not implement scrollIntoView; install a spy and restore it.
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      renderOpen({ selected: [] });
+      fireEvent.click(screen.getByLabelText('Expand Vector control products'));
+      expect(spy).toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+});
