@@ -58,9 +58,9 @@ describe("columnRegistry", () => {
 });
 
 describe("disease_name aligns filter/sort with the displayed specific disease", () => {
-  it("is a flat CATEGORY column whose expression is COALESCE(secondary, parent)", () => {
+  it("is a flat CATEGORY column whose expression is the canonical disease_label", () => {
     expect(resolveColumn("PORTFOLIO_CANDIDATES", "disease_name")).toEqual({
-      sqlExpr: "COALESCE(d.secondary_disease_name, d.disease_filter)",
+      sqlExpr: "d.disease_label",
       sortable: true,
       filterKind: "CATEGORY",
       isAggregated: false,

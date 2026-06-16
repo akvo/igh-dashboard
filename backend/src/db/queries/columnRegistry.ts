@@ -79,13 +79,15 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     filterKind: "CATEGORY",
     isAggregated: false,
   },
-  // The Disease column displays the specific disease (child, else parent).
-  // Filter/sort/distinct-values run on the same coalesced value so the
-  // flat dropdown's options and the sort order match the cells. Kept a
-  // plain CATEGORY column, so distinctValues still applies the global +
-  // other-column filters (contextual narrowing) and the dropdown stays compact.
+  // The Disease column displays the canonical disease label computed in
+  // the ETL (dim_disease.disease_label: secondary, else primary, with the
+  // Malaria strains prefixed). Filter/sort/distinct-values run on the same
+  // value so the flat dropdown's options and the sort order match the
+  // cells. Kept a plain CATEGORY column, so distinctValues still applies
+  // the global + other-column filters (contextual narrowing) and the
+  // dropdown stays compact.
   disease_name: {
-    sqlExpr: "COALESCE(d.secondary_disease_name, d.disease_filter)",
+    sqlExpr: "d.disease_label",
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
@@ -366,7 +368,7 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
   },
   age_groups: { sqlExpr: "t.age_groups", sortable: false, filterKind: "TEXT", isAggregated: false },
   disease_name: {
-    sqlExpr: "d.disease_filter",
+    sqlExpr: "d.disease_label",
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
@@ -417,9 +419,9 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
 };
 
 // R&D priorities (no candidate join). The priority table is aliased
-// as `p` and dim_disease as `d` in rdPriorities.ts. Disease names live
-// on `d.disease_filter` in this resolver (not `disease_group_name`,
-// which is the candidate-side label).
+// as `p` and dim_disease as `d` in rdPriorities.ts. Disease names use
+// the canonical `d.disease_label` in this resolver (not
+// `disease_group_name`, which is the candidate-side label).
 const RD_PRIORITIES: Record<string, ColumnDef> = {
   priority_name: {
     sqlExpr: "p.priority_name",
@@ -441,7 +443,7 @@ const RD_PRIORITIES: Record<string, ColumnDef> = {
     isAggregated: false,
   },
   disease_name: {
-    sqlExpr: "d.disease_filter",
+    sqlExpr: "d.disease_label",
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,

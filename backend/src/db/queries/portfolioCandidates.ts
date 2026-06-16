@@ -131,7 +131,7 @@ export function getPortfolioCandidates(
         c.key_clinical_trial,
         t.technology_type,
         d.global_health_area,
-        d.disease_filter AS disease_name,
+        d.disease_label AS disease_name,
         d.secondary_disease_name AS secondary_disease_name,
         pr.product_name,
         sp.product_name AS sub_product_name,

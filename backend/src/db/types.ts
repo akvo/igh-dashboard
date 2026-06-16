@@ -33,6 +33,10 @@ export interface DimDisease {
   // has no secondary -- the "No secondary disease" sentinel and
   // empty strings are normalized to NULL in bronze-to-silver.
   secondary_disease_name: string | null;
+  // Canonical display label computed in the ETL: the secondary, else
+  // the primary group, with Malaria strains prefixed ("Malaria – P.
+  // falciparum"). The one string tables and slide-ins print.
+  disease_label: string | null;
 }
 
 export interface DimPhase {

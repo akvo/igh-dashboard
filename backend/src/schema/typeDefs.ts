@@ -19,6 +19,7 @@ export const typeDefs = `#graphql
     disease_type: String
     disease_filter: String
     secondary_disease_name: String
+    disease_label: String
   }
 
   type DimPhase {
@@ -656,6 +657,7 @@ export const typeDefs = `#graphql
   type DiseaseSummaryPair {
     primary: String!
     secondary: String
+    label: String
   }
 
   type FactPublication {

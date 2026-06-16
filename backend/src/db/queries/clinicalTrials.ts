@@ -73,7 +73,7 @@ export function getClinicalTrials(
       t.trial_phase,
       t.status,
       c.candidate_name,
-      d.disease_filter AS disease_name,
+      d.disease_label AS disease_name,
       pr.product_name,
       dt.full_date as start_date,
       dt2.full_date as end_date,
