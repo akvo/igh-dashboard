@@ -15,10 +15,7 @@ import { Dropdown } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
-import {
-  VECTOR_CONTROL_PRODUCT_NAMES,
-  VECTOR_CONTROL_CONSOLIDATED_NAME,
-} from '@/lib/filterGroups';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 
 export default function GlobalFilterBar({ filters, showRdPhase = true }) {
   return (
@@ -60,7 +57,6 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
             placeholder="All"
             options={filters.productOptions}
             groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
-            hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
             variant="outlined"
           />
         </div>
