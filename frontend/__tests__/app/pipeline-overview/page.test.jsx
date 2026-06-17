@@ -22,7 +22,7 @@ describe('Pipeline Overview page', () => {
     render(<PipelineOverviewPage />);
     expect(screen.getByRole('heading', { name: 'Pipeline overview' })).toBeTruthy();
     expect(
-      screen.getByText(/Page-level filters scope every chart here/i),
+      screen.getByText(/Filters apply across the whole portal/i),
     ).toBeTruthy();
   });
 
