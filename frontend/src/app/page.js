@@ -11,10 +11,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
-import {
-  VECTOR_CONTROL_PRODUCT_NAMES,
-  VECTOR_CONTROL_CONSOLIDATED_NAME,
-} from '@/lib/filterGroups';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -631,7 +628,6 @@ export default function Home() {
                   placeholder="All"
                   options={globalFilters.productOptions}
                   groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
-                  hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
                 />
               </div>
               <div className="w-[280px]">
@@ -726,7 +722,6 @@ export default function Home() {
                   placeholder="All"
                   options={globalFilters.productOptions}
                   groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
-                  hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
                 />
               </div>
               <div className="flex-1" />

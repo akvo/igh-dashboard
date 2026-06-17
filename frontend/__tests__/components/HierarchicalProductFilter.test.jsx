@@ -124,47 +124,6 @@ describe('HierarchicalProductFilter — interactions', () => {
   });
 });
 
-describe('HierarchicalProductFilter — hiddenMemberLabels', () => {
-  const HIDDEN = 'Vector control products';
-
-  it('does not render a hidden member as a child when expanded', () => {
-    renderOpen({ selected: [], hiddenMemberLabels: [HIDDEN] });
-    fireEvent.click(screen.getByLabelText('Expand Vector control products'));
-    // Only the parent group row carries this label now — the child is gone.
-    expect(screen.getAllByLabelText('Vector control products')).toHaveLength(1);
-    // The other three children are still rendered.
-    expect(screen.queryByLabelText('Biological vector control products')).not.toBeNull();
-    expect(screen.queryByLabelText('Chemical vector control products')).not.toBeNull();
-    expect(
-      screen.queryByLabelText('Vector control products Reservoir targeted vaccines'),
-    ).not.toBeNull();
-  });
-
-  it('excludes a hidden member from the group toggle', () => {
-    const { onChange } = renderOpen({ selected: [], hiddenMemberLabels: [HIDDEN] });
-    // Click the parent (first element labelled with the group name).
-    fireEvent.click(screen.getAllByLabelText('Vector control products')[0]);
-    expect(onChange).toHaveBeenCalledWith([
-      'Biological vector control products',
-      'Chemical vector control products',
-      'Vector control products Reservoir targeted vaccines',
-    ]);
-  });
-
-  it('derives group state from visible children only', () => {
-    // With the three visible children all selected, the group reads
-    // "checked", so clicking the parent clears them (and never the hidden one).
-    const visible = [
-      'Biological vector control products',
-      'Chemical vector control products',
-      'Vector control products Reservoir targeted vaccines',
-    ];
-    const { onChange } = renderOpen({ selected: visible, hiddenMemberLabels: [HIDDEN] });
-    fireEvent.click(screen.getAllByLabelText('Vector control products')[0]);
-    expect(onChange).toHaveBeenCalledWith([]);
-  });
-});
-
 describe('HierarchicalProductFilter — auto-scroll on expand', () => {
   it('scrolls the expanded sub-options into view', () => {
     // jsdom does not implement scrollIntoView; install a spy and restore it.
