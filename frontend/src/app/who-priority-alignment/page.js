@@ -20,7 +20,7 @@ import {
 } from '@/components/who-priority-alignment';
 
 const INTRO =
-  'The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Use the filters to scope the page by global health area, disease or product type.';
+  'The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Filters apply across the whole portal — use them to scope by global health area, disease or product type; your selection stays active as you move between pages and remains until you clear it, from the global filter menu at the top or the active-filter box at the lower left.';
 
 export default function WhoPriorityAlignmentPage() {
   return (
