@@ -99,11 +99,14 @@ export default function HierarchicalProductFilter({
   // Suppress specific group members (by product-name label) from the
   // expandable group. Excluding them from `children` here drops them from
   // the rendered list AND from `childValues` (group-state derivation and
-  // the group toggle), so the control stays self-consistent. Interim
-  // measure: see
-  // docs/superpowers/notes/2026-06-17-vcp-include-in-pipeline-stale-2019-flag.md.
-  // Once the upstream data fix lands the hidden product leaves the active
-  // data and this becomes a no-op — remove the prop with that fix.
+  // the group toggle), so the control stays self-consistent.
+  //
+  // Interim measure pending a data-analyst decision on an upstream ETL
+  // fix: the hidden product ("Vector control products") sits in the
+  // active pipeline only via a stale 2019 flag that no later year
+  // reaffirms. Once that data fix lands the product leaves the active
+  // data and this becomes a no-op — remove the prop (and the call-site
+  // wiring) with that fix.
   const children = useMemo(() => {
     if (hiddenMemberLabels.length === 0) return allChildren;
     const hidden = new Set(hiddenMemberLabels);
