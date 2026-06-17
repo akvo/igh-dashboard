@@ -16,7 +16,10 @@ import {
   phaseNameToKey,
   AGGREGATE_STAGE_LABELS,
 } from '@/lib/transformations';
-import { expandProductKeySelection } from '@/lib/filterGroups';
+import {
+  expandProductKeySelection,
+  VECTOR_CONTROL_CONSOLIDATED_NAME,
+} from '@/lib/filterGroups';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import { createHeatmapScale } from '@/lib/heatmap';
@@ -1084,6 +1087,7 @@ export default function TemporalTrendsSection({
                   placeholder="All"
                   options={effectiveProductOptions}
                   groupMembers={productGroupMembers}
+                  hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
                 />
               </div>
               <div className="min-w-[160px]">

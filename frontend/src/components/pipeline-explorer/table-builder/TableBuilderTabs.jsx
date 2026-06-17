@@ -29,7 +29,10 @@ import {
 } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
-import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
+import {
+  VECTOR_CONTROL_PRODUCT_NAMES,
+  VECTOR_CONTROL_CONSOLIDATED_NAME,
+} from '@/lib/filterGroups';
 import {
   usePortfolioCandidates,
   useClinicalTrials,
@@ -460,6 +463,7 @@ export default function TableBuilderTabs() {
                   placeholder="All"
                   options={productOptions}
                   groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
+                  hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
                   variant="outlined"
                   compact={true}
                 />

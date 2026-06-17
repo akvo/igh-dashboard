@@ -17,7 +17,11 @@ import {
   useDiseaseHierarchy,
   usePipelineFilterPairs,
 } from '@/graphql/hooks';
-import { VECTOR_CONTROL_PRODUCT_NAMES, vcpMemberKeys } from '@/lib/filterGroups';
+import {
+  VECTOR_CONTROL_PRODUCT_NAMES,
+  VECTOR_CONTROL_CONSOLIDATED_NAME,
+  vcpMemberKeys,
+} from '@/lib/filterGroups';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
@@ -235,6 +239,7 @@ export default function PipelineTrends() {
                     placeholder="All"
                     options={productOptions}
                     groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
+                    hiddenMemberLabels={[VECTOR_CONTROL_CONSOLIDATED_NAME]}
                   />
                 </div>
                 <div className="flex-1" />

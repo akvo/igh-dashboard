@@ -31,6 +31,12 @@ import CheckboxBox from './_shared/CheckboxBox';
 // Sentinel value for the synthetic group row (never a real option).
 const GROUP_ROW_VALUE = '__vcp_group__';
 
+// Stable default for `hiddenMemberLabels` so the filtering memo keeps a
+// constant dependency reference (and never re-fires) when the caller
+// omits the prop — an inline `= []` default would be a fresh array each
+// render.
+const EMPTY_LABELS = [];
+
 // Derive the parent group's checkbox state from its AVAILABLE child
 // values (those present in the current options) and the selection.
 export function deriveGroupState(availableChildValues, selectedValues) {
@@ -59,6 +65,7 @@ export default function HierarchicalProductFilter({
   options = [],
   groupMembers = [],
   groupLabel = 'Vector control products',
+  hiddenMemberLabels = EMPTY_LABELS,
   selected = [],
   onChange,
   label,
@@ -72,6 +79,7 @@ export default function HierarchicalProductFilter({
   const [searchQuery, setSearchQuery] = useState('');
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
+  const expandedChildrenRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Normalize options to {value,label} so callers may pass strings.
@@ -83,10 +91,27 @@ export default function HierarchicalProductFilter({
     [options],
   );
 
-  const { flat, children } = useMemo(
+  const { flat, children: allChildren } = useMemo(
     () => partitionOptions(normOptions, groupMembers),
     [normOptions, groupMembers],
   );
+
+  // Suppress specific group members (by product-name label) from the
+  // expandable group. Excluding them from `children` here drops them from
+  // the rendered list AND from `childValues` (group-state derivation and
+  // the group toggle), so the control stays self-consistent.
+  //
+  // Interim measure pending a data-analyst decision on an upstream ETL
+  // fix: the hidden product ("Vector control products") sits in the
+  // active pipeline only via a stale 2019 flag that no later year
+  // reaffirms. Once that data fix lands the product leaves the active
+  // data and this becomes a no-op — remove the prop (and the call-site
+  // wiring) with that fix.
+  const children = useMemo(() => {
+    if (hiddenMemberLabels.length === 0) return allChildren;
+    const hidden = new Set(hiddenMemberLabels);
+    return allChildren.filter((c) => !hidden.has(c.label));
+  }, [allChildren, hiddenMemberLabels]);
 
   const childValues = useMemo(() => children.map((c) => c.value), [children]);
 
@@ -200,6 +225,19 @@ export default function HierarchicalProductFilter({
     setExpanded((v) => !v);
   }
 
+  // When the group expands, scroll its newly revealed children into the
+  // visible part of the fixed-height dropdown so the interaction is
+  // obvious. Optional chaining keeps this a no-op under jsdom (no scroll
+  // implementation); real browsers scroll smoothly.
+  useEffect(() => {
+    if (expanded && expandedChildrenRef.current) {
+      expandedChildrenRef.current.scrollIntoView?.({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
+    }
+  }, [expanded]);
+
   function clearAll(e) {
     e.stopPropagation();
     emit([]);
@@ -301,7 +339,7 @@ export default function HierarchicalProductFilter({
                       </button>
                     </div>
                     {expanded && (
-                      <div className="pl-7 pb-1 bg-gray-50/50">
+                      <div ref={expandedChildrenRef} className="pl-7 pb-1 bg-gray-50/50">
                         {children.map((c) => {
                           const childChecked = selected.includes(c.value);
                           return (
