@@ -29,6 +29,7 @@ describe('Pipeline Explorer layout', () => {
     expect(screen.getByTestId('global-filter-bar')).toBeInTheDocument();
     expect(screen.getByText(/two complementary views/i)).toBeInTheDocument();
     expect(screen.queryByText(/Build custom tables/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Filters apply across the whole portal/i)).toBeInTheDocument();
   });
 
   it('hides the filter bar and shows the Table Builder intro on the table-builder route', () => {
@@ -37,5 +38,6 @@ describe('Pipeline Explorer layout', () => {
     expect(screen.queryByTestId('global-filter-bar')).not.toBeInTheDocument();
     expect(screen.getByText(/Build custom tables/i)).toBeInTheDocument();
     expect(screen.queryByText(/two complementary views/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Filters apply across the whole portal/i)).toBeInTheDocument();
   });
 });
