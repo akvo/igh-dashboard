@@ -162,7 +162,7 @@ export default function PipelineTrends() {
                   Pipeline trends
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Explore how the global health R&D pipeline evolves over time across global health areas, diseases, and product types. Track changes by R&D stage for specific IGH review years, and build custom comparisons by selecting one or multiple portfolios for deeper temporal analysis.
+                  Explore how the global health R&D pipeline evolves over time across global health areas, diseases and product types. Track changes by R&D stage across specific IGH review years, and build custom comparisons by selecting one or more portfolios for deeper temporal analysis. Filters apply across the whole portal — any filter you set stays active here and on every other page until you clear it, from the global filter menu at the top or the active-filter box at the lower left.
                 </p>
               </div>
               <button
