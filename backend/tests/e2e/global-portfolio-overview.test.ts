@@ -966,7 +966,9 @@ describe("globalHealthAreaSummaries filtering", () => {
           productCount
         }
       }`;
-    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(PRODUCT_QUERY);
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      PRODUCT_QUERY,
+    );
     const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
       PRODUCT_QUERY,
       { products: [productName] },

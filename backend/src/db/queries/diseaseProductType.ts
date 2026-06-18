@@ -48,7 +48,12 @@ export function getDiseaseProductTypeSummaries(
   // is taken by dim_product here.
   addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(filters?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
   addArrayCondition(filters?.product_names, "p.product_name", conditions, params);
   const phaseCtx = { joins, join: "JOIN dim_phase ph ON f.phase_key = ph.phase_key" };
   addArrayCondition(filters?.phase_names, "ph.phase_name", conditions, params, phaseCtx);
