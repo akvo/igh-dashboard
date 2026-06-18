@@ -146,8 +146,17 @@ export const resolvers = {
       },
     ) => getDiseaseSummaries(args),
 
-    diseaseProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getDiseaseProductTypeSummaries({ candidate_types: args.candidate_types }),
+    diseaseProductTypeSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getDiseaseProductTypeSummaries(args),
 
     // Stacked bar chart
     phaseDistribution: (

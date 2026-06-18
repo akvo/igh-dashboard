@@ -445,6 +445,74 @@ describe("Bubble Chart — Disease × Product Type view", () => {
   });
 });
 
+describe("diseaseProductTypeSummaries filtering", () => {
+  const QUERY = `
+    query DPT($gha: [String!], $phase: [String!], $products: [String!]) {
+      diseaseProductTypeSummaries(
+        global_health_areas: $gha
+        phase_names: $phase
+        product_names: $products
+      ) {
+        disease_group_name
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area's rows", async () => {
+    const { data } = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { gha: ["Neglected disease"] },
+    );
+    expect(data.diseaseProductTypeSummaries.length).toBeGreaterThan(0);
+    data.diseaseProductTypeSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a phase filter never increases counts vs unfiltered", async () => {
+    const all = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { phase: ["Phase I"] },
+    );
+    const allTotal = all.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+
+  it("a product filter never increases counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    const productName = lookup.products[0].product_name;
+    const all = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { products: [productName] },
+    );
+    const allTotal = all.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+});
+
 describe("Geographic Map", () => {
   it("returns countries for Trial Location tab", async () => {
     const { data } = await query<{

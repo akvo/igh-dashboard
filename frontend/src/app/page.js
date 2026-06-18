@@ -184,7 +184,14 @@ export default function Home() {
   );
   const { bubbleData: diseaseTypeBubbleData, loading: diseaseTypeLoading } = useDiseaseProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'diseaseType' },
+    {
+      skip: bubbleView !== 'diseaseType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
 
   // Active-view data + loading switch. Each view owns its column set and

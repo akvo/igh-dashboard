@@ -93,8 +93,22 @@ export const GET_DISEASE_SUMMARIES = gql`
 
 // Bubble Chart — Disease × Product Type view
 export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartDiseaseProductType($candidateTypes: [String!]) {
-    diseaseProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartDiseaseProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    diseaseProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       disease_group_name
       global_health_area
       product_type
