@@ -158,7 +158,7 @@ export default function Home() {
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes;
   const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
     bubbleCandidateArg,
-    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg },
+    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg, productNames: productArg },
   );
   const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
     bubbleCandidateArg,

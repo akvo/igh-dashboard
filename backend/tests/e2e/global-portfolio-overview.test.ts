@@ -818,4 +818,36 @@ describe("globalHealthAreaSummaries filtering", () => {
     );
     expect(filteredTotal).toBeLessThan(allTotal);
   });
+
+  it("a product filter never increases candidate counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    expect(lookup.products.length).toBeGreaterThan(0);
+    const productName = lookup.products[0].product_name;
+
+    const PRODUCT_QUERY = `
+      query GHASP($products: [String!]) {
+        globalHealthAreaSummaries(product_names: $products) {
+          global_health_area
+          candidateCount
+          productCount
+        }
+      }`;
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(PRODUCT_QUERY);
+    const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      PRODUCT_QUERY,
+      { products: [productName] },
+    );
+    const allTotal = all.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
 });

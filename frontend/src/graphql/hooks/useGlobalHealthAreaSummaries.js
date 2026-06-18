@@ -7,11 +7,11 @@ import { transformGlobalHealthAreaSummaries } from '@/lib/transformations';
 
 export function useGlobalHealthAreaSummaries(
   candidateTypes,
-  { globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames } = {},
+  { globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames, productNames } = {},
 ) {
   const { actions } = useDashboardStore();
   const cacheKey = getCacheKey('globalHealthAreaSummaries', {
-    candidateTypes, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames,
+    candidateTypes, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, phaseNames, productNames,
   });
   const cachedData = actions.getCachedData(cacheKey);
 
@@ -22,6 +22,7 @@ export function useGlobalHealthAreaSummaries(
       primaryDiseaseNames: primaryDiseaseNames && primaryDiseaseNames.length > 0 ? primaryDiseaseNames : undefined,
       secondaryDiseaseNames: secondaryDiseaseNames && secondaryDiseaseNames.length > 0 ? secondaryDiseaseNames : undefined,
       phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
+      productNames: productNames && productNames.length > 0 ? productNames : undefined,
     },
     skip: !!cachedData,
     fetchPolicy: 'network-only',

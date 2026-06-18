@@ -117,6 +117,7 @@ export const resolvers = {
         primary_disease_names?: string[];
         secondary_disease_names?: string[];
         phase_names?: string[];
+        product_names?: string[];
       },
     ) => getGlobalHealthAreaSummaries(args),
 

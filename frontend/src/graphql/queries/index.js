@@ -19,6 +19,7 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
     $primaryDiseaseNames: [String!]
     $secondaryDiseaseNames: [String!]
     $phaseNames: [String!]
+    $productNames: [String!]
   ) {
     globalHealthAreaSummaries(
       candidate_types: $candidateTypes
@@ -26,6 +27,7 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
       primary_disease_names: $primaryDiseaseNames
       secondary_disease_names: $secondaryDiseaseNames
       phase_names: $phaseNames
+      product_names: $productNames
     ) {
       global_health_area
       candidateCount
