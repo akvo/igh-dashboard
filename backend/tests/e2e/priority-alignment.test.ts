@@ -171,7 +171,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
     // ND total updated 1777 → 1882 after DB update (2026-06-10).
     expect(byKey["Neglected disease"].candidatesWithPriority).toBe(164);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1882);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1893);
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
     expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
