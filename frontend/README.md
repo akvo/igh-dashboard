@@ -32,6 +32,10 @@ npm test
 npm run test:watch
 ```
 
+## Special Case comments
+
+Code paths that work around known defects in the upstream CRM data are marked with a `// Special Case:` comment followed by an explanation on the next line. These are intended to be temporary — once the source data is corrected, search for `Special Case` to find and remove them.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
