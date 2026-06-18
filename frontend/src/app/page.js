@@ -162,7 +162,14 @@ export default function Home() {
   );
   const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'ghaType' },
+    {
+      skip: bubbleView !== 'ghaType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
   const { bubbleData: diseaseBubbleData, loading: diseaseBubbleLoading } = useDiseaseSummaries(
     bubbleCandidateArg,

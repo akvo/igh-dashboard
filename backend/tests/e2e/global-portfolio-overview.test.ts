@@ -784,6 +784,70 @@ describe("diseaseSummaries filtering", () => {
   });
 });
 
+describe("ghaProductTypeSummaries filtering", () => {
+  const QUERY = `
+    query GPT($gha: [String!], $phase: [String!], $products: [String!]) {
+      ghaProductTypeSummaries(
+        global_health_areas: $gha
+        phase_names: $phase
+        product_names: $products
+      ) {
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area's rows", async () => {
+    const { data } = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      gha: ["Neglected disease"],
+    });
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(0);
+    data.ghaProductTypeSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a phase filter never increases counts vs unfiltered", async () => {
+    const all = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      phase: ["Phase I"],
+    });
+    const allTotal = all.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+
+  it("a product filter never increases counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    const productName = lookup.products[0].product_name;
+    const all = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      products: [productName],
+    });
+    const allTotal = all.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+});
+
 describe("globalHealthAreaSummaries filtering", () => {
   const GHA_SUMMARIES = `
     query GHAS($gha: [String!], $phase: [String!]) {

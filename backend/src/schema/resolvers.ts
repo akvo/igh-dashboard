@@ -121,8 +121,17 @@ export const resolvers = {
       },
     ) => getGlobalHealthAreaSummaries(args),
 
-    ghaProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getGhaProductTypeSummaries({ candidate_types: args.candidate_types }),
+    ghaProductTypeSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getGhaProductTypeSummaries(args),
 
     diseaseSummaries: (
       _: unknown,

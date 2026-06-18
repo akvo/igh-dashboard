@@ -39,8 +39,22 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
 
 // Bubble Chart — GHA × Product Type view
 export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartGhaProductType($candidateTypes: [String!]) {
-    ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartGhaProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    ghaProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       global_health_area
       product_type
       candidateCount
