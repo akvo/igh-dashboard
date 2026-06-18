@@ -2,6 +2,7 @@ import { getDatabase } from "../connection.js";
 import type {
   ClinicalTrialStatusRow,
   AgeGroupDistributionRow,
+  ClinicalTrialProductTypeRow,
   ClinicalTrialStats,
 } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
@@ -118,9 +119,31 @@ export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): Clin
   `;
   const ageGroupDistribution = db.prepare(ageSql).all(...ac.params) as AgeGroupDistributionRow[];
 
+  // Product type distribution — trials grouped by product name
+  const pc = buildFilterClauses(filters);
+  const productJoin = "JOIN dim_product pr ON t.product_key = pr.product_key";
+  if (!pc.joins.includes(productJoin)) {
+    pc.joins.push(productJoin);
+  }
+  pc.conditions.push("pr.product_name IS NOT NULL");
+  const productSql = `
+    SELECT
+      pr.product_name,
+      COUNT(DISTINCT t.trial_id) as trialCount
+    FROM fact_clinical_trial_event t
+    ${pc.joins.join("\n    ")}
+    WHERE ${pc.conditions.join("\n      AND ")}
+    GROUP BY pr.product_name
+    ORDER BY trialCount DESC
+  `;
+  const productTypeDistribution = db
+    .prepare(productSql)
+    .all(...pc.params) as ClinicalTrialProductTypeRow[];
+
   return {
     totalTrials: total.count,
     statusDistribution,
     ageGroupDistribution,
+    productTypeDistribution,
   };
 }

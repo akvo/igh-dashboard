@@ -17,7 +17,6 @@ import { useGlobalFilters } from '@/components/global-filters';
 import {
   useGlobalHealthAreaSummaries,
   useDiseaseSummaries,
-  useProductDistribution,
   useClinicalTrialStats,
   useGeographicDistribution,
   useClinicalTrials,
@@ -119,18 +118,13 @@ export default function ClinicalTrialsTab({ onExplore }) {
     phaseNames: rdPhase,
   });
 
-  // Product distribution feeds the Top 5 product types chart (no candidate
-  // type filter here — trials span both candidates and products).
-  const { chartData: productChartData, loading: productsLoading } = useProductDistribution(
-    healthArea, primary, secondary, expandedProduct, rdPhase, undefined,
-  );
-
-  // Trial statistics feed the headline total, the age-groups donut, and the
-  // trial-status bar chart.
+  // Trial statistics feed the headline total, the age-groups donut, the
+  // trial-status bar chart, and the Top 5 product types chart.
   const {
     totalTrials,
     statusDistribution: trialStatusData,
     ageGroupDistribution: ageGroupsData,
+    productTypeDistribution: productChartData,
     loading: trialsStatsLoading,
   } = useClinicalTrialStats(healthArea, primary, secondary, expandedProduct, rdPhase);
 
@@ -258,7 +252,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           data={top5Products}
           title={TAB_LABELS.trials.product}
           description={TAB_DESCRIPTIONS.trials.product}
-          loading={productsLoading}
+          loading={trialsStatsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
         />

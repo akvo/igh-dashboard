@@ -305,6 +305,10 @@ export const GET_CLINICAL_TRIAL_STATS = gql`
         age_group_name
         candidateCount
       }
+      productTypeDistribution {
+        product_name
+        trialCount
+      }
     }
   }
 `;

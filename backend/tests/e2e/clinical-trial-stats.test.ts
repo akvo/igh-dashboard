@@ -15,10 +15,16 @@ interface AgeGroupDistributionRow {
   candidateCount: number;
 }
 
+interface ClinicalTrialProductTypeRow {
+  product_name: string;
+  trialCount: number;
+}
+
 interface ClinicalTrialStats {
   totalTrials: number;
   statusDistribution: ClinicalTrialStatusRow[];
   ageGroupDistribution: AgeGroupDistributionRow[];
+  productTypeDistribution: ClinicalTrialProductTypeRow[];
 }
 
 const STATS_QUERY = `{
@@ -31,6 +37,10 @@ const STATS_QUERY = `{
     ageGroupDistribution {
       age_group_name
       candidateCount
+    }
+    productTypeDistribution {
+      product_name
+      trialCount
     }
   }
 }`;
@@ -70,6 +80,21 @@ describe("Clinical Trial Stats", () => {
     data.clinicalTrialStats.ageGroupDistribution.forEach((row) => {
       expect(row.candidateCount).toBeGreaterThan(0);
     });
+  });
+
+  it("productTypeDistribution returns non-empty results ordered by trialCount desc", async () => {
+    const { data } = await query<{ clinicalTrialStats: ClinicalTrialStats }>(STATS_QUERY);
+
+    const dist = data.clinicalTrialStats.productTypeDistribution;
+    expect(dist.length).toBeGreaterThan(0);
+    dist.forEach((row) => {
+      expect(row.product_name).toBeTruthy();
+      expect(row.trialCount).toBeGreaterThan(0);
+    });
+    // Verify descending order
+    for (let i = 1; i < dist.length; i++) {
+      expect(dist[i - 1].trialCount).toBeGreaterThanOrEqual(dist[i].trialCount);
+    }
   });
 
   it("returns last_updated as YYYY-MM-DD or null", async () => {

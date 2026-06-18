@@ -245,10 +245,16 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ClinicalTrialProductTypeRow {
+    product_name: String!
+    trialCount: Int!
+  }
+
   type ClinicalTrialStats {
     totalTrials: Int!
     statusDistribution: [ClinicalTrialStatusRow!]!
     ageGroupDistribution: [AgeGroupDistributionRow!]!
+    productTypeDistribution: [ClinicalTrialProductTypeRow!]!
   }
 
   type ApprovalStatusRow {

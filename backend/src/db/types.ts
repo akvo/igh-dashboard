@@ -326,10 +326,16 @@ export interface AgeGroupDistributionRow {
   candidateCount: number;
 }
 
+export interface ClinicalTrialProductTypeRow {
+  product_name: string;
+  trialCount: number;
+}
+
 export interface ClinicalTrialStats {
   totalTrials: number;
   statusDistribution: ClinicalTrialStatusRow[];
   ageGroupDistribution: AgeGroupDistributionRow[];
+  productTypeDistribution: ClinicalTrialProductTypeRow[];
 }
 
 export interface ClinicalTrialNode {

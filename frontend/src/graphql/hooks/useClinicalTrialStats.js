@@ -47,10 +47,19 @@ export function useClinicalTrialStats(globalHealthAreas, primaryDiseaseNames, se
     [rawData?.ageGroupDistribution]
   );
 
+  const productTypeDistribution = useMemo(() =>
+    (rawData?.productTypeDistribution || []).map(row => ({
+      name: row.product_name,
+      value: row.trialCount,
+    })),
+    [rawData?.productTypeDistribution]
+  );
+
   return {
     totalTrials,
     statusDistribution,
     ageGroupDistribution,
+    productTypeDistribution,
     loading: loading && !cachedData,
     error,
     usingCache: !!cachedData,
