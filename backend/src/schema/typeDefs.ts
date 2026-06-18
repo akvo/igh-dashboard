@@ -712,10 +712,10 @@ export const typeDefs = `#graphql
     portfolioKPIs(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): PortfolioKPIs!
 
     # Bubble chart — four views
-    globalHealthAreaSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], phase_names: [String!]): [GlobalHealthAreaSummary!]!
-    ghaProductTypeSummaries(candidate_types: [String!]): [GhaProductTypeSummary!]!
+    globalHealthAreaSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], phase_names: [String!], product_names: [String!]): [GlobalHealthAreaSummary!]!
+    ghaProductTypeSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GhaProductTypeSummary!]!
     diseaseSummaries(candidate_types: [String!], product_names: [String!], technology_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], phase_names: [String!]): [DiseaseSummary!]!
-    diseaseProductTypeSummaries(candidate_types: [String!]): [DiseaseProductTypeSummary!]!
+    diseaseProductTypeSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [DiseaseProductTypeSummary!]!
 
     # Stacked bar chart
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!

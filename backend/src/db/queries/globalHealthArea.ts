@@ -8,6 +8,7 @@ interface GlobalHealthAreaFilters {
   primary_disease_names?: string[];
   secondary_disease_names?: string[];
   phase_names?: string[];
+  product_names?: string[];
 }
 
 /**
@@ -43,6 +44,8 @@ export function getGlobalHealthAreaSummaries(
   );
   const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
   addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
 
   // `diseaseCount` counts distinct hierarchy leaves per GHA -- the
   // sub-disease name when one exists, otherwise the primary name.

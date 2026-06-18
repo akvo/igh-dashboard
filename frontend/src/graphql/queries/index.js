@@ -19,6 +19,7 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
     $primaryDiseaseNames: [String!]
     $secondaryDiseaseNames: [String!]
     $phaseNames: [String!]
+    $productNames: [String!]
   ) {
     globalHealthAreaSummaries(
       candidate_types: $candidateTypes
@@ -26,6 +27,7 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
       primary_disease_names: $primaryDiseaseNames
       secondary_disease_names: $secondaryDiseaseNames
       phase_names: $phaseNames
+      product_names: $productNames
     ) {
       global_health_area
       candidateCount
@@ -37,8 +39,22 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
 
 // Bubble Chart — GHA × Product Type view
 export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartGhaProductType($candidateTypes: [String!]) {
-    ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartGhaProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    ghaProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       global_health_area
       product_type
       candidateCount
@@ -77,8 +93,22 @@ export const GET_DISEASE_SUMMARIES = gql`
 
 // Bubble Chart — Disease × Product Type view
 export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartDiseaseProductType($candidateTypes: [String!]) {
-    diseaseProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartDiseaseProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    diseaseProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       disease_group_name
       global_health_area
       product_type

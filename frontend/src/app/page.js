@@ -158,11 +158,18 @@ export default function Home() {
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes;
   const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
     bubbleCandidateArg,
-    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg },
+    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg, productNames: productArg },
   );
   const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'ghaType' },
+    {
+      skip: bubbleView !== 'ghaType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
   const { bubbleData: diseaseBubbleData, loading: diseaseBubbleLoading } = useDiseaseSummaries(
     bubbleCandidateArg,
@@ -177,7 +184,14 @@ export default function Home() {
   );
   const { bubbleData: diseaseTypeBubbleData, loading: diseaseTypeLoading } = useDiseaseProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'diseaseType' },
+    {
+      skip: bubbleView !== 'diseaseType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
 
   // Active-view data + loading switch. Each view owns its column set and
