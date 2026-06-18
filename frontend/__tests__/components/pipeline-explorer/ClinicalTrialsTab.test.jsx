@@ -10,7 +10,7 @@ const hooks = vi.hoisted(() => ({
   useProductDistribution: vi.fn(() => ({ chartData: [], loading: false })),
   usePortfolioCandidates: vi.fn(() => ({ candidates: [], totalCount: 0, hasNextPage: false, loading: false })),
   useRegulatoryDistribution: vi.fn(() => ({ approvalStatus: [], whoPrequalification: [], approvingAuthorities: [], loading: false })),
-  useClinicalTrialStats: vi.fn(() => ({ totalTrials: 0, statusDistribution: [], ageGroupDistribution: [], productTypeDistribution: [], loading: false })),
+  useClinicalTrialStats: vi.fn(() => ({ totalTrials: 0, statusDistribution: [], ageGroupDistribution: [], diseaseDistribution: [], productTypeDistribution: [], loading: false })),
   useClinicalTrials: vi.fn(() => ({ trials: [], totalCount: 0, hasNextPage: false, loading: false })),
   useGeographicDistribution: vi.fn(() => ({ mapData: [], loading: false })),
   useTechnologyTypeDistribution: vi.fn(() => ({ tableData: [], phases: [], loading: false })),

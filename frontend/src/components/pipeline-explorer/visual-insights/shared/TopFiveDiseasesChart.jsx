@@ -24,7 +24,7 @@ import { BarTooltip, GHA_COLORS } from './primitives';
 // stays self-contained since it only needs the lib helpers and the `data`
 // prop. Bars are coloured by Global Health Area exactly as the source did.
 
-export function TopFiveDiseasesChart({ data, title, description, loading, chartRef, onDownloadPNG }) {
+export function TopFiveDiseasesChart({ data, title, description, loading, chartRef, onDownloadPNG, axisLabel = 'Number of candidates' }) {
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-start justify-between mb-1">
@@ -51,7 +51,7 @@ export function TopFiveDiseasesChart({ data, title, description, loading, chartR
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: 'Number of candidates', position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
+                <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: axisLabel, position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
                 <YAxis type="category" dataKey="name" width={180} tick={{ fontSize: 11 }} />
                 <Tooltip content={<BarTooltip />} />
                 <Bar dataKey="value" barSize={20} radius={[0, 4, 4, 0]}>

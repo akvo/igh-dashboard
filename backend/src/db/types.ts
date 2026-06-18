@@ -326,8 +326,19 @@ export interface AgeGroupDistributionRow {
   candidateCount: number;
 }
 
+export interface ClinicalTrialDiseaseRow {
+  disease_name: string;
+  global_health_area: string;
+  trialCount: number;
+}
+
 export interface ClinicalTrialProductTypeRow {
   product_name: string;
+  trialCount: number;
+}
+
+export interface ClinicalTrialGhaRow {
+  global_health_area: string;
   trialCount: number;
 }
 
@@ -335,7 +346,9 @@ export interface ClinicalTrialStats {
   totalTrials: number;
   statusDistribution: ClinicalTrialStatusRow[];
   ageGroupDistribution: AgeGroupDistributionRow[];
+  diseaseDistribution: ClinicalTrialDiseaseRow[];
   productTypeDistribution: ClinicalTrialProductTypeRow[];
+  ghaDistribution: ClinicalTrialGhaRow[];
 }
 
 export interface ClinicalTrialNode {

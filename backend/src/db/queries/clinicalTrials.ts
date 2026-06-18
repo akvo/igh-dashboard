@@ -7,6 +7,7 @@ const MAX_LIMIT = 100;
 
 function buildWhere(filter?: ClinicalTrialFilter) {
   const joins = [
+    "JOIN fact_pipeline_snapshot fps ON t.candidate_key = fps.candidate_key AND fps.is_active_flag = 1 AND fps.include_in_pipeline = 1",
     "LEFT JOIN dim_candidate_core c ON t.candidate_key = c.candidate_key",
     "LEFT JOIN dim_disease d ON t.disease_key = d.disease_key",
     "LEFT JOIN dim_product pr ON t.product_key = pr.product_key",
@@ -56,7 +57,7 @@ export function getClinicalTrials(
   const orderBy = buildOrderBy("CLINICAL_TRIALS", sort) ?? "ORDER BY t.trial_id DESC NULLS LAST";
 
   const countSql = `
-    SELECT COUNT(*) as total
+    SELECT COUNT(DISTINCT t.trial_id) as total
     FROM fact_clinical_trial_event t
     ${joins.join("\n    ")}
     ${whereClause}
@@ -65,7 +66,7 @@ export function getClinicalTrials(
   const totalCount = countResult.total;
 
   const dataSql = `
-    SELECT
+    SELECT DISTINCT
       t.trial_id,
       t.clinicaltrialid,
       t.trial_name,
