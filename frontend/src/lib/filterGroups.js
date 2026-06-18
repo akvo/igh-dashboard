@@ -19,7 +19,6 @@ export const GLOBAL_FILTER_KEYS = [
 export const VECTOR_CONTROL_PRODUCT_NAMES = [
   'Biological vector control products',
   'Chemical vector control products',
-  'Vector control products',
   'Vector control products Reservoir targeted vaccines',
 ];
 export const VECTOR_CONTROL_CONSOLIDATED_NAME = 'Vector control products';
