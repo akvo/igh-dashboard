@@ -10,7 +10,7 @@ const hooks = vi.hoisted(() => ({
   useProductDistribution: vi.fn(() => ({ chartData: [], loading: false })),
   usePortfolioCandidates: vi.fn(() => ({ candidates: [], totalCount: 0, hasNextPage: false, loading: false })),
   useRegulatoryDistribution: vi.fn(() => ({ approvalStatus: [], whoPrequalification: [], approvingAuthorities: [], loading: false })),
-  useClinicalTrialStats: vi.fn(() => ({ totalTrials: 0, statusDistribution: [], ageGroupDistribution: [], loading: false })),
+  useClinicalTrialStats: vi.fn(() => ({ totalTrials: 0, statusDistribution: [], ageGroupDistribution: [], diseaseDistribution: [], productTypeDistribution: [], ghaDistribution: [], loading: false })),
   useClinicalTrials: vi.fn(() => ({ trials: [], totalCount: 0, hasNextPage: false, loading: false })),
   useGeographicDistribution: vi.fn(() => ({ mapData: [], loading: false })),
   useTechnologyTypeDistribution: vi.fn(() => ({ tableData: [], phases: [], loading: false })),
@@ -50,11 +50,12 @@ describe('ClinicalTrialsTab', () => {
     expect(tableFilter).toMatchObject({ globalHealthAreas: ['Neglected disease'], phaseNames: ['Phase 1'] });
   });
 
-  it('product-scopes the GHA summaries that feed the KPI cards', () => {
+  it('GHA stat cards use ghaDistribution from useClinicalTrialStats (not useGlobalHealthAreaSummaries)', () => {
     render(<ClinicalTrialsTab onExplore={() => {}} />);
-    const [types, opts] = hooks.useGlobalHealthAreaSummaries.mock.calls[0];
-    expect(types).toEqual(['Candidate']);
-    expect(opts).toMatchObject({ productNames: ['Vaccine'] });
+    // useGlobalHealthAreaSummaries should no longer be called
+    expect(hooks.useGlobalHealthAreaSummaries).not.toHaveBeenCalled();
+    // useClinicalTrialStats is the single source for GHA trial counts
+    expect(hooks.useClinicalTrialStats).toHaveBeenCalled();
   });
 
   it('renders the orientation intro, renamed table heading, and corrected geographic copy', () => {

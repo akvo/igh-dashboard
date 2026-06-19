@@ -47,10 +47,38 @@ export function useClinicalTrialStats(globalHealthAreas, primaryDiseaseNames, se
     [rawData?.ageGroupDistribution]
   );
 
+  const diseaseDistribution = useMemo(() =>
+    (rawData?.diseaseDistribution || []).map(row => ({
+      name: row.disease_name,
+      value: row.trialCount,
+      group: row.global_health_area,
+    })),
+    [rawData?.diseaseDistribution]
+  );
+
+  const productTypeDistribution = useMemo(() =>
+    (rawData?.productTypeDistribution || []).map(row => ({
+      name: row.product_name,
+      value: row.trialCount,
+    })),
+    [rawData?.productTypeDistribution]
+  );
+
+  const ghaDistribution = useMemo(() =>
+    (rawData?.ghaDistribution || []).map(row => ({
+      name: row.global_health_area,
+      value: row.trialCount,
+    })),
+    [rawData?.ghaDistribution]
+  );
+
   return {
     totalTrials,
     statusDistribution,
     ageGroupDistribution,
+    diseaseDistribution,
+    productTypeDistribution,
+    ghaDistribution,
     loading: loading && !cachedData,
     error,
     usingCache: !!cachedData,

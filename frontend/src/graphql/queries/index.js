@@ -305,6 +305,19 @@ export const GET_CLINICAL_TRIAL_STATS = gql`
         age_group_name
         candidateCount
       }
+      diseaseDistribution {
+        disease_name
+        global_health_area
+        trialCount
+      }
+      productTypeDistribution {
+        product_name
+        trialCount
+      }
+      ghaDistribution {
+        global_health_area
+        trialCount
+      }
     }
   }
 `;

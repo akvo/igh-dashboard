@@ -15,9 +15,6 @@ import {
 } from 'recharts';
 import { useGlobalFilters } from '@/components/global-filters';
 import {
-  useGlobalHealthAreaSummaries,
-  useDiseaseSummaries,
-  useProductDistribution,
   useClinicalTrialStats,
   useGeographicDistribution,
   useClinicalTrials,
@@ -100,38 +97,15 @@ export default function ClinicalTrialsTab({ onExplore }) {
   // API hooks (all threaded with the global filters)
   // =========================================================
 
-  // GHA summaries feed the per-Global-Health-Area stat cards. The trial view
-  // still groups by candidate counts, so the summaries are scoped to
-  // 'Candidate' like the candidates tab.
-  const { bubbleData: ghaSummaries } = useGlobalHealthAreaSummaries(['Candidate'], {
-    globalHealthAreas: healthArea,
-    primaryDiseaseNames: primary,
-    secondaryDiseaseNames: secondary,
-    productNames: expandedProduct,
-    phaseNames: rdPhase,
-  });
-
-  // Disease summaries feed the Top 5 diseases chart.
-  const { bubbleData: diseaseBubble, loading: diseasesLoading } = useDiseaseSummaries(['Candidate', 'Product'], {
-    globalHealthAreas: healthArea,
-    primaryDiseaseNames: primary,
-    secondaryDiseaseNames: secondary,
-    productNames: expandedProduct,
-    phaseNames: rdPhase,
-  });
-
-  // Product distribution feeds the Top 5 product types chart (no candidate
-  // type filter here — trials span both candidates and products).
-  const { chartData: productChartData, loading: productsLoading } = useProductDistribution(
-    healthArea, primary, secondary, expandedProduct, rdPhase, undefined,
-  );
-
-  // Trial statistics feed the headline total, the age-groups donut, and the
-  // trial-status bar chart.
+  // Trial statistics feed the headline total, the per-GHA stat cards, the
+  // age-groups donut, the trial-status bar chart, and both Top 5 charts.
   const {
     totalTrials,
     statusDistribution: trialStatusData,
     ageGroupDistribution: ageGroupsData,
+    diseaseDistribution: diseaseChartData,
+    productTypeDistribution: productChartData,
+    ghaDistribution,
     loading: trialsStatsLoading,
   } = useClinicalTrialStats(healthArea, primary, secondary, expandedProduct, rdPhase);
 
@@ -148,14 +122,12 @@ export default function ClinicalTrialsTab({ onExplore }) {
   // =========================================================
 
   const top5Diseases = useMemo(() => {
-    if (!diseaseBubble?.length) return [];
-    const sorted = [...diseaseBubble].sort((a, b) => b.value - a.value);
-    return sorted.slice(0, 5).map((d) => ({
-      name: d.name,
-      value: d.value,
-      gha: d.group,
-    }));
-  }, [diseaseBubble]);
+    if (!diseaseChartData?.length) return [];
+    return [...diseaseChartData]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5)
+      .map((d) => ({ name: d.name, value: d.value, gha: d.group }));
+  }, [diseaseChartData]);
 
   const top5Products = useMemo(() => {
     if (!productChartData?.length) return [];
@@ -174,14 +146,14 @@ export default function ClinicalTrialsTab({ onExplore }) {
     [ageGroupsData],
   );
 
-  // Stat cards: a total-clinical-trials card followed by one card per GHA. The
-  // total is the trial count; the per-GHA cards still count candidates.
+  // Stat cards: a total-clinical-trials card followed by one card per GHA.
+  // Both the total and per-GHA cards now count trials (pipeline-gated).
   const statCards = useMemo(() => {
     const total = totalTrials ?? 0;
-    const ghaCards = (ghaSummaries || []).map((g, i) => {
-      const count = g.candidateCount;
+    const ghaCards = (ghaDistribution || []).map((g, i) => {
+      const count = g.value;
       const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
-      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
+      const title = displayHealthArea(g.name);
       return {
         title,
         value: count,
@@ -194,7 +166,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
       { title: 'Total clinical trials', value: total, percentage: null, tooltip: KPI_TOOLTIPS.trials.total },
       ...ghaCards,
     ];
-  }, [totalTrials, ghaSummaries]);
+  }, [totalTrials, ghaDistribution]);
 
   // =========================================================
   // Clinical-trials DataTable (server-side pagination)
@@ -251,17 +223,19 @@ export default function ClinicalTrialsTab({ onExplore }) {
           data={top5Diseases}
           title={TAB_LABELS.trials.disease}
           description={TAB_DESCRIPTIONS.trials.disease}
-          loading={diseasesLoading}
+          loading={trialsStatsLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
+          axisLabel="Number of clinical trials"
         />
         <TopFiveProductTypesChart
           data={top5Products}
           title={TAB_LABELS.trials.product}
           description={TAB_DESCRIPTIONS.trials.product}
-          loading={productsLoading}
+          loading={trialsStatsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
+          axisLabel="Number of clinical trials"
         />
       </div>
 
