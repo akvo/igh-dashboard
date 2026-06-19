@@ -142,9 +142,7 @@ describe("Clinical Trial Stats", () => {
     // appear in multiple GHAs if its disease maps to more than one, or
     // some trials may lack a GHA).
     const ghaSum = dist.reduce((s, r) => s + r.trialCount, 0);
-    expect(ghaSum).toBeLessThanOrEqual(
-      data.clinicalTrialStats.totalTrials * dist.length,
-    );
+    expect(ghaSum).toBeLessThanOrEqual(data.clinicalTrialStats.totalTrials * dist.length);
   });
 
   it("returns last_updated as YYYY-MM-DD or null", async () => {

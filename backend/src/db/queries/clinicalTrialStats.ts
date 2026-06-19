@@ -141,9 +141,7 @@ export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): Clin
     GROUP BY d.disease_filter, d.global_health_area
     ORDER BY trialCount DESC
   `;
-  const diseaseDistribution = db
-    .prepare(diseaseSql)
-    .all(...dc.params) as ClinicalTrialDiseaseRow[];
+  const diseaseDistribution = db.prepare(diseaseSql).all(...dc.params) as ClinicalTrialDiseaseRow[];
 
   // Product type distribution — pipeline-gated trials grouped by product name
   const pc = buildFilterClauses(filters);
@@ -183,9 +181,7 @@ export function getClinicalTrialStats(filters?: ClinicalTrialStatsFilters): Clin
     GROUP BY d.global_health_area
     ORDER BY trialCount DESC
   `;
-  const ghaDistribution = db
-    .prepare(ghaSql)
-    .all(...gc.params) as ClinicalTrialGhaRow[];
+  const ghaDistribution = db.prepare(ghaSql).all(...gc.params) as ClinicalTrialGhaRow[];
 
   return {
     totalTrials: total.count,
