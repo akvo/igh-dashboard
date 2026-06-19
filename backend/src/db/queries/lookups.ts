@@ -90,17 +90,37 @@ export function getDiseaseHierarchy(): DiseaseHierarchyRow[] {
   return db
     .prepare(
       `
-    SELECT DISTINCT
-      d.disease_filter AS primary_disease,
-      COALESCE(d.secondary_disease_name, d.disease_filter) AS secondary_disease,
-      d.global_health_area
-    FROM dim_disease d
-    JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
-    WHERE f.is_active_flag = 1
-      AND f.include_in_pipeline = 1
-      AND d.disease_filter IS NOT NULL
-      AND d.global_health_area IS NOT NULL
-    ORDER BY d.global_health_area, d.disease_filter, secondary_disease
+    SELECT DISTINCT primary_disease, secondary_disease, global_health_area
+    FROM (
+      -- Diseases with active pipeline candidates
+      SELECT DISTINCT
+        d.disease_filter AS primary_disease,
+        COALESCE(d.secondary_disease_name, d.disease_filter) AS secondary_disease,
+        d.global_health_area
+      FROM dim_disease d
+      JOIN fact_pipeline_snapshot f ON d.disease_key = f.disease_key
+      WHERE f.is_active_flag = 1
+        AND f.include_in_pipeline = 1
+        AND d.disease_filter IS NOT NULL
+        AND d.global_health_area IS NOT NULL
+
+      UNION
+
+      -- Diseases linked to WHO priorities (e.g. "Multiple filoviral diseases"
+      -- which has a priority but no pipeline candidates)
+      SELECT DISTINCT
+        d.disease_filter AS primary_disease,
+        COALESCE(d.secondary_disease_name, d.disease_filter) AS secondary_disease,
+        d.global_health_area
+      FROM dim_disease d
+      JOIN dim_priority p ON p.disease_key = d.disease_key
+      WHERE p.priority_name IS NOT NULL
+        AND TRIM(p.priority_name) != ''
+        AND p.priority_name != 'Test_TO'
+        AND d.disease_filter IS NOT NULL
+        AND d.global_health_area IS NOT NULL
+    )
+    ORDER BY global_health_area, primary_disease, secondary_disease
   `,
     )
     .all() as DiseaseHierarchyRow[];
