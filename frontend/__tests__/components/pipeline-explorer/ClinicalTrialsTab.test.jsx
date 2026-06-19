@@ -50,6 +50,13 @@ describe('ClinicalTrialsTab', () => {
     expect(tableFilter).toMatchObject({ globalHealthAreas: ['Neglected disease'], phaseNames: ['Phase 1'] });
   });
 
+  it('product-scopes the GHA summaries that feed the KPI cards', () => {
+    render(<ClinicalTrialsTab onExplore={() => {}} />);
+    const [types, opts] = hooks.useGlobalHealthAreaSummaries.mock.calls[0];
+    expect(types).toEqual(['Candidate']);
+    expect(opts).toMatchObject({ productNames: ['Vaccine'] });
+  });
+
   it('renders the orientation intro, renamed table heading, and corrected geographic copy', () => {
     const { getByText, queryByText } = render(<ClinicalTrialsTab onExplore={() => {}} />);
     expect(getByText(/The clinical-trial layer of the pipeline/)).toBeInTheDocument();

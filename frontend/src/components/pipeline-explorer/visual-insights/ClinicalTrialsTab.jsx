@@ -107,6 +107,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
     globalHealthAreas: healthArea,
     primaryDiseaseNames: primary,
     secondaryDiseaseNames: secondary,
+    productNames: expandedProduct,
     phaseNames: rdPhase,
   });
 

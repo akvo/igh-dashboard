@@ -67,6 +67,7 @@ export default function CandidatesTab({ onExplore }) {
     globalHealthAreas: healthArea,
     primaryDiseaseNames: primary,
     secondaryDiseaseNames: secondary,
+    productNames: expandedProduct,
     phaseNames: rdPhase,
   });
 
