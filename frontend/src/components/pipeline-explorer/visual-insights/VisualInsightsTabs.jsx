@@ -14,7 +14,7 @@
 // onExplore(type, key) callback; this host translates those into the
 // 'slide'/'slideKey' URL params and renders the matching slide-in.
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useUrlState } from '@/lib/useUrlState';
 import { stringSerializer, numberSerializer } from '@/lib/url-serializers';
@@ -30,8 +30,6 @@ import ApprovedProductsTab from './ApprovedProductsTab';
 import ClinicalTrialsTab from './ClinicalTrialsTab';
 import TechnologyTypesTab from './TechnologyTypesTab';
 
-// Tab order and labels. The `value` is what lands in the URL; the
-// `label` is what TabNav renders.
 const TABS = [
   { label: 'Candidates', value: 'candidates' },
   { label: 'Approved Products', value: 'approved' },
@@ -65,19 +63,43 @@ export default function VisualInsightsTabs() {
     [setSlideInOpen, setSlideInKey],
   );
 
+  // Measure the GlobalFilterBar height so the tabs stick right below it.
+  const [filterBarHeight, setFilterBarHeight] = useState(0);
+  const tabRef = useRef(null);
+
+  useEffect(() => {
+    const scrollContainer = tabRef.current?.closest('main');
+    if (!scrollContainer) return;
+    const filterBar = scrollContainer.querySelector('.sticky.top-0');
+    if (!filterBar) return;
+    const update = () => setFilterBarHeight(filterBar.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(filterBar);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div>
-      <TabNav
-        tabs={TABS}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        className="mb-6"
-      />
+      <div
+        ref={tabRef}
+        className="sticky z-[19] bg-cream-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-2"
+        style={{ top: filterBarHeight }}
+      >
+        <TabNav
+          tabs={TABS}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          className="mb-4"
+        />
+      </div>
 
-      {activeTab === 'candidates' && <CandidatesTab onExplore={onExplore} />}
-      {activeTab === 'approved' && <ApprovedProductsTab onExplore={onExplore} />}
-      {activeTab === 'trials' && <ClinicalTrialsTab onExplore={onExplore} />}
-      {activeTab === 'technology' && <TechnologyTypesTab onExplore={onExplore} />}
+      <div className="relative z-0">
+        {activeTab === 'candidates' && <CandidatesTab onExplore={onExplore} />}
+        {activeTab === 'approved' && <ApprovedProductsTab onExplore={onExplore} />}
+        {activeTab === 'trials' && <ClinicalTrialsTab onExplore={onExplore} />}
+        {activeTab === 'technology' && <TechnologyTypesTab onExplore={onExplore} />}
+      </div>
 
       {/* Slide-in panels — only one can be open at a time */}
       {slideInOpen === 'candidate' && slideInKey != null && (

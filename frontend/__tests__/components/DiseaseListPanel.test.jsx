@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import DiseaseListPanel from '../../src/components/ui/DiseaseListPanel';
+import DiseaseListPanel, { diseaseExploreHref } from '../../src/components/ui/DiseaseListPanel';
 
 // Fixture covers both leaf shapes:
 //   - Tuberculosis: childless primary (the self-row sentinel
@@ -77,5 +77,43 @@ describe('DiseaseListPanel leaf rows', () => {
     // descendant leaf rows.
     const malariaButton = screen.getByRole('button', { name: 'Malaria' });
     expect(malariaButton.textContent).not.toContain('Explore');
+  });
+});
+
+describe('diseaseExploreHref', () => {
+  const params = (qs) => new URLSearchParams(qs);
+
+  it('preserves other global filters and imposes the clicked primary, clearing stale secondary', () => {
+    const href = diseaseExploreHref(
+      'primary', 'Tuberculosis', null, 'Neglected disease',
+      params('product=Vaccines&rdPhase=Phase+1&secondary=Stale'),
+    );
+    const u = new URL(href, 'http://x');
+    expect(u.pathname).toBe('/pipeline-overview');
+    expect(u.searchParams.get('product')).toBe('Vaccines');     // preserved
+    expect(u.searchParams.get('rdPhase')).toBe('Phase 1');       // preserved
+    expect(u.searchParams.get('gha')).toBe('Neglected disease'); // imposed
+    expect(u.searchParams.get('primary')).toBe('Tuberculosis');  // imposed
+    expect(u.searchParams.get('secondary')).toBeNull();          // cleared
+  });
+
+  it('sets both primary and secondary for a sub-disease click', () => {
+    const href = diseaseExploreHref(
+      'secondary', 'P. vivax', 'Malaria', 'Neglected disease',
+      params('product=Vaccines'),
+    );
+    const u = new URL(href, 'http://x');
+    expect(u.searchParams.get('primary')).toBe('Malaria');
+    expect(u.searchParams.get('secondary')).toBe('P. vivax');
+    expect(u.searchParams.get('product')).toBe('Vaccines');
+  });
+
+  it('"Find out more" (no disease) preserves only the active global filters', () => {
+    const href = diseaseExploreHref('', '', null, null, params('product=Vaccines&rdPhase=Phase+1'));
+    const u = new URL(href, 'http://x');
+    expect(u.pathname).toBe('/pipeline-overview');
+    expect(u.searchParams.get('product')).toBe('Vaccines');
+    expect(u.searchParams.get('rdPhase')).toBe('Phase 1');
+    expect(u.searchParams.get('primary')).toBeNull();
   });
 });

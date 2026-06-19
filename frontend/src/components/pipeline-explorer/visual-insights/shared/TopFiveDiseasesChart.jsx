@@ -62,9 +62,9 @@ export function TopFiveDiseasesChart({ data, title, description, loading, chartR
               </BarChart>
             </ResponsiveContainer>
             <div className="flex flex-wrap items-center gap-4 mt-3">
-              {Object.entries(GHA_COLORS).map(([label, color]) => (
+              {[...new Set(data.map((d) => d.gha))].map((label) => (
                 <div key={label} className="flex items-center gap-1.5 text-xs text-gray-600">
-                  <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
+                  <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: GHA_COLORS[label] || '#B28FC9' }} />
                   {label}
                 </div>
               ))}

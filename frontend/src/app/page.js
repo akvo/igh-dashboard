@@ -44,6 +44,7 @@ import {
 } from '@/graphql/hooks';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { useGlobalFilters } from '@/components/global-filters';
+import { useFilterPreservingHref } from '@/lib/useFilterPreservingHref';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -108,6 +109,7 @@ const WHO_W_OR_C_COLORS = {
 export default function Home() {
   // Global filters from sidebar filter box (shared across all pages).
   const globalFilters = useGlobalFilters();
+  const buildHref = useFilterPreservingHref();
 
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
   const [bubbleView, setBubbleView] = useUrlState('bubbleView', 'gha', stringSerializer);
@@ -362,29 +364,6 @@ export default function Home() {
     globalFilters.expandedProduct,
   );
 
-  // Build the /who-priority-alignment link with the four shared URL
-  // keys so navigation preserves the active selection. A plain
-  // <a href="/who-priority-alignment"> drops the query string, which
-  // is why the destination page used to boot unfiltered. The WHO
-  // page's useWhoPageFilters reads `gha`, `primary`, `secondary`,
-  // `product` — same encoding (comma-joined arrays via
-  // arraySerializer) — so we encode each non-empty axis below and
-  // skip empties to keep the URL short.
-  const exploreHref = useMemo(() => {
-    const params = new URLSearchParams();
-    if (globalFilters.healthArea.length > 0) params.set('gha', globalFilters.healthArea.join(','));
-    if (globalFilters.primary.length > 0) params.set('primary', globalFilters.primary.join(','));
-    if (globalFilters.secondary.length > 0) params.set('secondary', globalFilters.secondary.join(','));
-    if (globalFilters.product.length > 0) params.set('product', globalFilters.product.join(','));
-    const qs = params.toString();
-    return qs ? `/who-priority-alignment?${qs}` : '/who-priority-alignment';
-  }, [
-    globalFilters.healthArea,
-    globalFilters.primary,
-    globalFilters.secondary,
-    globalFilters.product,
-  ]);
-
   // Candidate type distribution — driven by global product + R&D phase filters.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     globalProductKeys,
@@ -465,7 +444,7 @@ export default function Home() {
                   value={kpi.value}
                   description={kpi.description}
                   buttonText={kpi.buttonText}
-                  buttonHref={kpi.buttonHref}
+                  buttonHref={kpi.buttonHref ? buildHref(kpi.buttonHref) : undefined}
                   onButtonClick={kpi.id === 'diseases' ? () => setDiseasePanelOpen(true) : undefined}
                   tooltip={kpi.tooltip}
                 />
@@ -621,7 +600,7 @@ export default function Home() {
                 Portfolio overview by global health area
               </h3>
               <a
-                href="/pipeline-overview"
+                href={buildHref('/pipeline-overview')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Explore portfolio analysis
@@ -703,7 +682,7 @@ export default function Home() {
                 Pipeline trends
               </h3>
               <a
-                href="/pipeline-trends"
+                href={buildHref('/pipeline-trends')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Make custom comparison
@@ -800,14 +779,14 @@ export default function Home() {
                 </div>
                 {globalFilters.hasFilters ? (
                   <a
-                    href={exploreHref}
+                    href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
                   >
                     Explore selected
                   </a>
                 ) : (
                   <a
-                    href={exploreHref}
+                    href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     View all

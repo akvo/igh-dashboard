@@ -138,12 +138,18 @@ export default function HierarchicalDiseaseFilter({
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const menuHeight = 384; // max-h-96 = 24rem = 384px
+      const menuWidth = Math.max(420, rect.width);
       const spaceBelow = window.innerHeight - rect.bottom;
       const fitsBelow = spaceBelow >= menuHeight + 4;
       const top = fitsBelow
         ? rect.bottom + 4
         : Math.max(4, rect.top - menuHeight - 4);
-      setMenuPosition({ top, left: rect.left, width: rect.width });
+      // If the menu would overflow the right edge, align to the right of the button
+      let left = rect.left;
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = rect.right - menuWidth;
+      }
+      setMenuPosition({ top, left: Math.max(4, left), width: rect.width });
     }
   }, []);
 
@@ -282,7 +288,7 @@ export default function HierarchicalDiseaseFilter({
             top: `${menuPosition.top}px`,
             left: `${menuPosition.left}px`,
             width: `${menuPosition.width}px`,
-            minWidth: '260px',
+            minWidth: '420px',
           }}
         >
           <div className="p-2 border-b border-gray-100">

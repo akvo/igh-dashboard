@@ -94,6 +94,7 @@ export default function ApprovedProductsTab({ onExplore }) {
     globalHealthAreas: healthArea,
     primaryDiseaseNames: primary,
     secondaryDiseaseNames: secondary,
+    productNames: expandedProduct,
     phaseNames: rdPhase,
   });
 

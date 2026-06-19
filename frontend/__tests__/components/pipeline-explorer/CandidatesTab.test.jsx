@@ -83,6 +83,13 @@ describe('CandidatesTab', () => {
     });
   });
 
+  it('product-scopes the GHA summaries that feed the KPI cards', () => {
+    render(<CandidatesTab onExplore={() => {}} />);
+    const [types, opts] = hooks.useGlobalHealthAreaSummaries.mock.calls[0];
+    expect(types).toEqual(['Candidate']);
+    expect(opts).toMatchObject({ productNames: ['Vaccine'] });
+  });
+
   it('renders the renamed table heading and the chart descriptions', () => {
     const { getByText } = render(<CandidatesTab onExplore={() => {}} />);
     expect(getByText('Selected candidates')).toBeInTheDocument();
