@@ -111,9 +111,10 @@ const tabs = [
   { value: 'compare', label: 'Compare different portfolios' },
 ];
 
-function ComparePortfoliosTab({
+export function ComparePortfoliosTab({
   narrowedHierarchy = [],
   productOptions = [],
+  productGroupMembers = [],
   yearOptions = [],
   filterPairs = [],
 }) {
@@ -508,13 +509,13 @@ function ComparePortfoliosTab({
                   />
                 </div>
                 <div className="flex-1">
-                  <Dropdown
+                  <HierarchicalProductFilter
                     label="Product type"
-                    value={portfolios[idx].product}
+                    selected={portfolios[idx].product}
                     onChange={(val) => handleProductChange(idx, val)}
                     placeholder="All"
                     options={validProducts[idx] ?? productOptions}
-                    multiSelect={true}
+                    groupMembers={productGroupMembers}
                   />
                 </div>
               </div>
@@ -1280,6 +1281,7 @@ export default function TemporalTrendsSection({
         <ComparePortfoliosTab
           narrowedHierarchy={narrowedHierarchy}
           productOptions={productOptions}
+          productGroupMembers={productGroupMembers}
           yearOptions={yearOptions}
           filterPairs={pairs}
         />

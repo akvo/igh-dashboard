@@ -49,6 +49,13 @@ describe('ApprovedProductsTab', () => {
     expect(tableFilter).toMatchObject({ candidateType: 'Product', productNames: ['Vaccine'], phaseNames: ['Phase 1'] });
   });
 
+  it('product-scopes the GHA summaries that feed the KPI cards', () => {
+    render(<ApprovedProductsTab onExplore={() => {}} />);
+    const [types, opts] = hooks.useGlobalHealthAreaSummaries.mock.calls[0];
+    expect(types).toEqual(['Product']);
+    expect(opts).toMatchObject({ productNames: ['Vaccine'] });
+  });
+
   it('renders the orientation intro, renamed table heading and chart descriptions', () => {
     const { getByText } = render(<ApprovedProductsTab onExplore={() => {}} />);
     expect(getByText(/Three summary charts cover approval status/)).toBeInTheDocument();
