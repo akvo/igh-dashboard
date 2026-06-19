@@ -207,7 +207,7 @@ export function buildClinicalTrialColumns({ onExplore } = {}) {
     { header: 'Last updated', accessor: 'last_updated', filter: { kind: 'date' } },
     { header: 'Sponsor', accessor: 'sponsor', filter: { kind: 'text' } },
     { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
-    { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
+    { header: 'Source', accessor: 'source_text', type: 'link', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   ];
 }
 

@@ -326,6 +326,27 @@ describe('DataTable', () => {
     expect(screen.getByText('Clear all filters')).toBeTruthy();
   });
 
+  // -------- LINK --------
+
+  it('renders a link-type cell as an anchor opening in a new tab', () => {
+    renderTable({
+      columns: [{ header: 'Source', accessor: 'source', type: 'link' }],
+      data: [{ source: 'https://clinicaltrials.gov/study/NCT04406727' }],
+    });
+    const link = screen.getByRole('link', { name: 'https://clinicaltrials.gov/study/NCT04406727' });
+    expect(link.getAttribute('href')).toBe('https://clinicaltrials.gov/study/NCT04406727');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('renders no link for a blank link-type cell', () => {
+    renderTable({
+      columns: [{ header: 'Source', accessor: 'source', type: 'link' }],
+      data: [{ source: '' }],
+    });
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
   // -------- NUMBER --------
 
   it('NUMBER filter fires onFiltersChange with operator + value (after debounce)', async () => {

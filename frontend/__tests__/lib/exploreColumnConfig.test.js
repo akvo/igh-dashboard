@@ -3,6 +3,7 @@ import {
   specificDiseaseLabel,
   buildCandidateColumns,
   buildApprovedProductColumns,
+  buildClinicalTrialColumns,
   toCSVColumns,
 } from '@/lib/exploreColumnConfig';
 
@@ -59,4 +60,13 @@ describe('Product column shows the specific sub-VCP (no consolidation)', () => {
       expect(row.product_name).not.toBe('Vector control products');
     });
   }
+});
+
+describe('Clinical trial Source column links to each trial registration', () => {
+  it('marks the Source column as a link so the cell is clickable', () => {
+    const columns = buildClinicalTrialColumns();
+    const source = columns.find((c) => c.accessor === 'source_text');
+    expect(source).toBeTruthy();
+    expect(source.type).toBe('link');
+  });
 });

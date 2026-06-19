@@ -541,6 +541,29 @@ function renderCell(row, column) {
           {value}
         </span>
       ) : emptyPlaceholder;
+    case 'link':
+      if (!value) return emptyPlaceholder;
+      // Only linkify real URLs; show anything else as plain text so a stray
+      // non-URL value never produces a broken anchor.
+      return /^https?:\/\//i.test(value) ? (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block overflow-hidden text-blue-600 hover:underline"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: column.lines || 3,
+            WebkitBoxOrient: 'vertical',
+            maxWidth: column.maxWidth || '250px',
+          }}
+          title={value}
+        >
+          {value}
+        </a>
+      ) : (
+        <span className="text-black">{value}</span>
+      );
     case 'line-clamp':
       return value ? (
         <span
