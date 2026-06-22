@@ -112,6 +112,9 @@ export default function ClinicalTrialsTab({ onExplore }) {
 
   // Geographic distribution feeds the WorldMap. The local mapTrialStatus
   // sub-filter narrows the map by trial status; null means all statuses.
+  // We take both shapes the hook returns: `mapData` is keyed by country code
+  // for the WorldMap, while `distributionList` is the flat row list the CSV
+  // export needs.
   const { mapData: clinicalTrialsMapData, distributionList: trialsGeoList, loading: geoLoading } = useGeographicDistribution(
     'Trial Location',
     mapTrialStatus.length > 0 ? mapTrialStatus : null,
