@@ -24,6 +24,8 @@ import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer, booleanSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { downloadPNG } from '@/lib/png';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { stackedCSVColumns } from '@/lib/visualInsightsCsv';
 import { DataTable, ChartMenu } from '@/components/ui';
 import { VECTOR_CONTROL_PRODUCT_NAMES, VECTOR_CONTROL_CONSOLIDATED_NAME } from '@/lib/filterGroups';
 import {
@@ -406,7 +408,16 @@ export default function TechnologyTypesTab({ onExplore }) {
               <div className="flex items-center gap-3 mb-2">
                 <h4 className="text-base sm:text-lg font-bold text-black">Vector Control Products - Sub-categories</h4>
                 <div className="flex-1" />
-                <ChartMenu onDownloadPNG={() => downloadPNG(techChartRef, 'vcp-sub-categories')} />
+                <ChartMenu
+                  onDownloadCSV={() => {
+                    const columns = [
+                      { label: 'Sub-category', accessor: 'name' },
+                      { label: 'Candidates', accessor: 'candidates' },
+                    ];
+                    downloadCSV(buildCSV(columns, vcpSubCategories), 'vcp-sub-categories');
+                  }}
+                  onDownloadPNG={() => downloadPNG(techChartRef, 'vcp-sub-categories')}
+                />
               </div>
               <p className="text-sm text-gray-500 mb-4">Select a category to explore its technology breakdown</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -470,7 +481,16 @@ export default function TechnologyTypesTab({ onExplore }) {
                     Back to VCP
                   </button>
                 )}
-                <ChartMenu onDownloadPNG={() => downloadPNG(techChartRef, 'technology-types')} />
+                <ChartMenu
+                  onDownloadCSV={() => {
+                    const columns = stackedCSVColumns(
+                      { label: 'Technology type', accessor: 'technology_type' },
+                      techPhases,
+                    );
+                    downloadCSV(buildCSV(columns, techChartData || []), 'technology-types');
+                  }}
+                  onDownloadPNG={() => downloadPNG(techChartRef, 'technology-types')}
+                />
               </div>
               <p className="text-sm text-gray-500 mb-4">
                 Each bar shows a technology type within the selected product, split by R&D stage.
