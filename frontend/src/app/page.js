@@ -387,7 +387,7 @@ export default function Home() {
   }, [setCrossHiddenPhases]);
 
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex min-h-[calc(100vh-90px)] bg-cream-200">
       {/* Sidebar */}
       <Sidebar activeId="home" />
 

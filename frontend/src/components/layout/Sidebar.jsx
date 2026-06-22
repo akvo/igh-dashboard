@@ -91,7 +91,7 @@ export default function Sidebar({
 
   return (
     <aside
-      style={{ height: 'calc(100vh - 74px)', position: 'sticky', top: '74px' }}
+      style={{ height: 'calc(100vh - 90px)', position: 'sticky', top: '90px' }}
       className={`hidden lg:flex flex-col transition-all duration-300 bg-sidebar-bg ${
         isExpanded ? 'w-64' : 'w-16'
       }`}

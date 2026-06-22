@@ -16,7 +16,7 @@
 // Visual Insights and the in-page R&D-stage control stays in sync with
 // the sidebar filter box (both read the global rdPhase key).
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApolloClient } from '@apollo/client/react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer, stringSerializer } from '@/lib/url-serializers';
@@ -370,20 +370,40 @@ export default function TableBuilderTabs() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apolloClient, extractTab, appliedColumns, healthArea, primary, secondary, product, rdPhase, ext1ColumnFilters, ext2ColumnFilters, ext3ColumnFilters, ext4ColumnFilters]);
 
+  // Measure the sticky tab block so the inline filter row pins right below it,
+  // mirroring how VisualInsightsTabs offsets its tabs below the GlobalFilterBar.
+  const tabRef = useRef(null);
+  const [tabsHeight, setTabsHeight] = useState(0);
+  useEffect(() => {
+    const el = tabRef.current;
+    if (!el) return;
+    const update = () => setTabsHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <div>
-      {/* Sub-tab navigation (was the page-header band's button row) */}
-      <TabNav
-        tabs={[
-          { value: 'candidates-approved', label: 'Candidates & approved products' },
-          { value: 'rd-priorities', label: 'R&D priorities & candidates' },
-          { value: 'clinical-trials', label: 'Clinical trials & candidates' },
-          { value: 'rd-only', label: 'R&D priorities' },
-        ]}
-        activeTab={extractTab}
-        onChange={setExtractTab}
-        className="mb-6"
-      />
+      {/* Sub-tab navigation — frozen at the top of the scroll area.
+          Full-bleed cream background covers content scrolling beneath. */}
+      <div
+        ref={tabRef}
+        className="sticky top-0 z-20 bg-cream-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-2"
+      >
+        <TabNav
+          tabs={[
+            { value: 'candidates-approved', label: 'Candidates & approved products' },
+            { value: 'rd-priorities', label: 'R&D priorities & candidates' },
+            { value: 'clinical-trials', label: 'Clinical trials & candidates' },
+            { value: 'rd-only', label: 'R&D priorities' },
+          ]}
+          activeTab={extractTab}
+          onChange={setExtractTab}
+          className="mb-6"
+        />
+      </div>
 
       {/* Main content card */}
       <div className="bg-white border border-gray-200">
@@ -421,7 +441,10 @@ export default function TableBuilderTabs() {
             candidates and clinical-trials sub-tabs; R&D stage only on
             candidates-approved. Each onChange resets the active sub-tab's
             page to 1 — matches legacy behavior. */}
-        <div className="sticky top-0 z-20 bg-white px-4 py-4 border-b border-gray-200">
+        <div
+          className="sticky z-[19] bg-white px-4 py-4 border-b border-gray-200"
+          style={{ top: tabsHeight }}
+        >
           <div className="flex flex-wrap items-end gap-4">
             <div className="min-w-[180px]">
               <Dropdown
