@@ -24,6 +24,8 @@ import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
+import { buildCSV, downloadCSV } from '@/lib/csv';
+import { stackedCSVColumns } from '@/lib/visualInsightsCsv';
 import { DataTable, ChartMenu } from '@/components/ui';
 import { BarChart as ChartBarChart, StackedBarChart, ChartEmptyState } from '@/components/charts';
 import { KpiStatCards } from './shared/KpiStatCards';
@@ -246,7 +248,16 @@ export default function ApprovedProductsTab({ onExplore }) {
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Approval status</h3>
-            <ChartMenu onDownloadPNG={() => downloadPNG(approvalStatusRef, 'approval-status')} />
+            <ChartMenu
+              onDownloadCSV={() => {
+                const columns = [
+                  { label: 'Approval status', accessor: 'name' },
+                  { label: 'Count', accessor: 'value' },
+                ];
+                downloadCSV(buildCSV(columns, approvalStatusData || []), 'approval-status');
+              }}
+              onDownloadPNG={() => downloadPNG(approvalStatusRef, 'approval-status')}
+            />
           </div>
           <p className="text-sm text-gray-500 mb-4">
             This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
@@ -272,7 +283,16 @@ export default function ApprovedProductsTab({ onExplore }) {
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Approving authorities</h3>
-            <ChartMenu onDownloadPNG={() => downloadPNG(authoritiesRef, 'approving-authorities')} />
+            <ChartMenu
+              onDownloadCSV={() => {
+                const columns = stackedCSVColumns(
+                  { label: 'Authority', accessor: 'category' },
+                  APPROVING_AUTH_PHASES,
+                );
+                downloadCSV(buildCSV(columns, approvingAuthoritiesData || []), 'approving-authorities');
+              }}
+              onDownloadPNG={() => downloadPNG(authoritiesRef, 'approving-authorities')}
+            />
           </div>
           <p className="text-sm text-gray-500 mb-4">
             The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
@@ -303,7 +323,16 @@ export default function ApprovedProductsTab({ onExplore }) {
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">WHO prequalification</h3>
-            <ChartMenu onDownloadPNG={() => downloadPNG(whoPrequalRef, 'who-prequalification')} />
+            <ChartMenu
+              onDownloadCSV={() => {
+                const columns = [
+                  { label: 'Status', accessor: 'name' },
+                  { label: 'Count', accessor: 'value' },
+                ];
+                downloadCSV(buildCSV(columns, whoPrequalData || []), 'who-prequalification');
+              }}
+              onDownloadPNG={() => downloadPNG(whoPrequalRef, 'who-prequalification')}
+            />
           </div>
           <p className="text-sm text-gray-500 mb-4">
             A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
