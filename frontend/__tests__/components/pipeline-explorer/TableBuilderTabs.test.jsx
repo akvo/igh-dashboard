@@ -4,6 +4,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 
+// jsdom has no ResizeObserver; TableBuilderTabs uses one to measure its
+// sticky tab block. Stub it as a no-op so the measurement effect can run.
+vi.stubGlobal('ResizeObserver', class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+});
+
 // Only the active sub-tab's data hook actually fetches; all four are
 // called every render (with a skip flag), so stub them to empty results.
 const hooks = vi.hoisted(() => ({
