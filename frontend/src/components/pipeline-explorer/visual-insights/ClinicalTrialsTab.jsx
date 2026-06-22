@@ -26,6 +26,7 @@ import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
+import { buildCSV, downloadCSV } from '@/lib/csv';
 import { WorldMap } from '@/components/charts';
 import { DataTable, ChartMenu, Dropdown } from '@/components/ui';
 import { KpiStatCards } from './shared/KpiStatCards';
@@ -111,7 +112,10 @@ export default function ClinicalTrialsTab({ onExplore }) {
 
   // Geographic distribution feeds the WorldMap. The local mapTrialStatus
   // sub-filter narrows the map by trial status; null means all statuses.
-  const { mapData: clinicalTrialsMapData, loading: geoLoading } = useGeographicDistribution(
+  // We take both shapes the hook returns: `mapData` is keyed by country code
+  // for the WorldMap, while `distributionList` is the flat row list the CSV
+  // export needs.
+  const { mapData: clinicalTrialsMapData, distributionList: trialsGeoList, loading: geoLoading } = useGeographicDistribution(
     'Trial Location',
     mapTrialStatus.length > 0 ? mapTrialStatus : null,
     healthArea, primary, secondary, expandedProduct, rdPhase,
@@ -245,7 +249,16 @@ export default function ClinicalTrialsTab({ onExplore }) {
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Age groups in clinical trials</h3>
-            <ChartMenu onDownloadPNG={() => downloadPNG(ageGroupsRef, 'age-groups')} />
+            <ChartMenu
+              onDownloadCSV={() => {
+                const columns = [
+                  { label: 'Age group', accessor: 'name' },
+                  { label: 'Count', accessor: 'value' },
+                ];
+                downloadCSV(buildCSV(columns, coloredAgeGroups), 'age-groups');
+              }}
+              onDownloadPNG={() => downloadPNG(ageGroupsRef, 'age-groups')}
+            />
           </div>
           <p className="text-sm text-gray-500 mb-4">
             Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
@@ -282,7 +295,16 @@ export default function ClinicalTrialsTab({ onExplore }) {
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
             <h3 className="text-base sm:text-lg font-bold text-black">Clinical trial status</h3>
-            <ChartMenu onDownloadPNG={() => downloadPNG(trialStatusRef, 'trial-status')} />
+            <ChartMenu
+              onDownloadCSV={() => {
+                const columns = [
+                  { label: 'Status', accessor: 'name' },
+                  { label: 'Count', accessor: 'value' },
+                ];
+                downloadCSV(buildCSV(columns, coloredTrialStatus), 'trial-status');
+              }}
+              onDownloadPNG={() => downloadPNG(trialStatusRef, 'trial-status')}
+            />
           </div>
           <p className="text-sm text-gray-500 mb-4">
             Number of studies at each stage across the portfolio, from ongoing to completed.
@@ -335,7 +357,17 @@ export default function ClinicalTrialsTab({ onExplore }) {
               compact
             />
           </div>
-          <ChartMenu onDownloadPNG={() => downloadPNG(geoMapRef, 'geographic-distribution-trials')} />
+          <ChartMenu
+            onDownloadCSV={() => {
+              const columns = [
+                { label: 'Country', accessor: 'country_name' },
+                { label: 'ISO code', accessor: 'iso_code' },
+                { label: 'Count', accessor: 'candidateCount' },
+              ];
+              downloadCSV(buildCSV(columns, trialsGeoList || []), 'geographic-distribution-trials');
+            }}
+            onDownloadPNG={() => downloadPNG(geoMapRef, 'geographic-distribution-trials')}
+          />
         </div>
         <p className="text-sm text-gray-500 mb-4">
           The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
