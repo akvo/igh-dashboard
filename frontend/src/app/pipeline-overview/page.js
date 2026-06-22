@@ -24,7 +24,7 @@ export default function PipelineOverviewPage() {
   const globalFilters = useGlobalFilters();
 
   return (
-    <div className="flex h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex h-[calc(100vh-90px)] bg-cream-200">
       <Sidebar />
 
       <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">

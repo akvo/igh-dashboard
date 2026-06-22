@@ -24,7 +24,7 @@ const INTRO =
 
 export default function WhoPriorityAlignmentPage() {
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex min-h-[calc(100vh-90px)] bg-cream-200">
       <Sidebar />
 
       <main className="flex-1 min-w-0 overflow-x-hidden">

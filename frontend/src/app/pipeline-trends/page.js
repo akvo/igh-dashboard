@@ -149,7 +149,7 @@ export default function PipelineTrends() {
   const isLoading = temporalLoading || yearsLoading;
 
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex min-h-[calc(100vh-90px)] bg-cream-200">
       <Sidebar activeId="pipeline-trends" />
 
       <main className="flex-1 min-w-0">
