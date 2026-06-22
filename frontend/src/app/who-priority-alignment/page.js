@@ -24,10 +24,10 @@ const INTRO =
 
 export default function WhoPriorityAlignmentPage() {
   return (
-    <div className="flex min-h-[calc(100vh-90px)] bg-cream-200">
+    <div className="flex h-[calc(100vh-90px)] bg-cream-200">
       <Sidebar />
 
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Page header band */}
           <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-0">
