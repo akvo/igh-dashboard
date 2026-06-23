@@ -740,7 +740,7 @@ export const typeDefs = `#graphql
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!
 
     # Portfolio overview - candidate type distribution
-    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
+    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!

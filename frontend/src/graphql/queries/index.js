@@ -121,8 +121,8 @@ export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
-  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {
-    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!], $globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!]) {
+    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames, global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames) {
       global_health_area
       candidate_type
       candidateCount

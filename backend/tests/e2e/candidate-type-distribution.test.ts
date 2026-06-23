@@ -31,13 +31,25 @@ const ALL_STAGE_NAMES = Object.keys(STAGE_TO_PHASE_MAP);
 // ---------------------------------------------------------------------------
 
 async function queryDistribution(
-  variables: { productKeys?: number[]; phaseNames?: string[] } = {},
+  variables: {
+    productKeys?: number[];
+    phaseNames?: string[];
+    globalHealthAreas?: string[];
+    primaryDiseaseNames?: string[];
+    secondaryDiseaseNames?: string[];
+  } = {},
 ): Promise<CandidateTypeDistributionRow[]> {
   const { data } = await query<{
     candidateTypeDistribution: CandidateTypeDistributionRow[];
   }>(
-    `query ($productKeys: [Int!], $phaseNames: [String!]) {
-      candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+    `query ($productKeys: [Int!], $phaseNames: [String!], $globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!]) {
+      candidateTypeDistribution(
+        product_keys: $productKeys,
+        phase_names: $phaseNames,
+        global_health_areas: $globalHealthAreas,
+        primary_disease_names: $primaryDiseaseNames,
+        secondary_disease_names: $secondaryDiseaseNames
+      ) {
         global_health_area
         candidate_type
         candidateCount
@@ -387,5 +399,28 @@ describe("Monotonicity + edge cases", () => {
       assertFilterReducesOrMaintainsCounts(rows, baselineRows, tag);
     }
     console.log(`[${tag}] total: ${sumCounts(rows)}, rows: ${rows.length}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 7. GHA + Disease filters
+// ---------------------------------------------------------------------------
+
+describe("GHA + Disease filters", () => {
+  it("global_health_areas restricts rows to the selected area", async () => {
+    const rows = await queryDistribution({ globalHealthAreas: ["Neglected disease"] });
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      expect(r.global_health_area).toBe("Neglected disease");
+    }
+    // Strictly fewer total than the 3-area baseline.
+    expect(sumCounts(rows)).toBeLessThan(sumCounts(baselineRows));
+  });
+
+  it("primary_disease_names reduces or maintains counts vs baseline", async () => {
+    const rows = await queryDistribution({ primaryDiseaseNames: ["Tuberculosis"] });
+    expect(rows.length).toBeGreaterThan(0);
+    assertStructuralInvariants(rows, "primary=Tuberculosis");
+    assertFilterReducesOrMaintainsCounts(rows, baselineRows, "primary=Tuberculosis");
   });
 });

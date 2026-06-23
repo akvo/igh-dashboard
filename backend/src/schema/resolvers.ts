@@ -172,11 +172,20 @@ export const resolvers = {
     // Portfolio overview - candidate type distribution
     candidateTypeDistribution: (
       _: unknown,
-      args: { product_keys?: number[]; phase_names?: string[] },
+      args: {
+        product_keys?: number[];
+        phase_names?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+      },
     ) =>
       getCandidateTypeDistribution({
         product_keys: args.product_keys,
         phase_names: args.phase_names,
+        global_health_areas: args.global_health_areas,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
       }),
 
     // Map
