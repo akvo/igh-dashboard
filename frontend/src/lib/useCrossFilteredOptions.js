@@ -406,6 +406,14 @@ export function useCrossFilteredOptions({
   useEffect(() => {
     if (!setRdPhase) return;
     if (loading.pairs) return;
+    // Don't prune until the phase option list itself has loaded. Unlike the
+    // app-level provider (where phases load once, long before navigation),
+    // page-level hooks mount fresh and usePhases() can resolve *after* pairs.
+    // In that window rdPhaseOptions is momentarily empty, and pruning would
+    // wipe a deep-linked rdPhase. An empty allPhaseOptions means "not loaded
+    // yet" (the full phase list is never legitimately empty), not "no valid
+    // phases", so skip pruning until it populates.
+    if (!allPhaseOptions || allPhaseOptions.length === 0) return;
     if (rdPhase.length === 0) return;
     const validValues = new Set(rdPhaseOptions.map((o) => o.value));
     const valid = rdPhase.filter((v) => validValues.has(v));
