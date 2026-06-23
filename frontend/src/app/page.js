@@ -362,12 +362,16 @@ export default function Home() {
     primaryArg,
     secondaryArg,
     globalFilters.expandedProduct,
+    rdPhaseArg,
   );
 
-  // Candidate type distribution — driven by global product + R&D phase filters.
+  // Candidate type distribution — driven by global product, R&D phase, GHA, and disease filters.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
     globalProductKeys,
     rdPhaseArg,
+    ghaArg,
+    primaryArg,
+    secondaryArg,
   );
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.

@@ -52,6 +52,7 @@ export function getPriorityAlignmentOverview(
     primary_disease_names: input.primary_disease_names ?? undefined,
     secondary_disease_names: input.secondary_disease_names ?? undefined,
     product_names: input.product_names ?? undefined,
+    phase_names: input.phase_names ?? undefined,
   };
 
   // ---------------------------------------------------------------------
@@ -60,7 +61,7 @@ export function getPriorityAlignmentOverview(
   // Uses the same conditional-join pattern as womenOrChildrenShare and
   // runPriorities: dim_disease is joined only when a GHA/disease filter
   // is active, and the pipeline bridge tables are joined only when a
-  // product filter is active. The unfiltered case is a bare COUNT(DISTINCT)
+  // product or phase filter is active. The unfiltered case is a bare COUNT(DISTINCT)
   // on dim_priority so that priorities with a NULL disease_key are
   // correctly included, keeping totalPriorities at 65.
   // ---------------------------------------------------------------------
@@ -162,6 +163,7 @@ interface ResolvedFilters {
   primary_disease_names?: string[];
   secondary_disease_names?: string[];
   product_names?: string[];
+  phase_names?: string[];
 }
 
 // Returns true when at least one disease-side filter axis is active.
@@ -171,6 +173,13 @@ function hasAnyDiseaseFilter(filters: ResolvedFilters): boolean {
     (filters.primary_disease_names?.length ?? 0) > 0 ||
     (filters.secondary_disease_names?.length ?? 0) > 0
   );
+}
+
+// True when at least one candidate-side filter (product or phase) is active.
+// These are the filters that force the priority-catalog sub-queries to route
+// through the pipeline (bridge -> fact) instead of counting dim_priority directly.
+function hasAnyPipelineFilter(filters: ResolvedFilters): boolean {
+  return (filters.product_names?.length ?? 0) > 0 || (filters.phase_names?.length ?? 0) > 0;
 }
 
 // Priority-side disease rows have `disease_filter = NULL` for 17 of 19
@@ -215,12 +224,16 @@ function runTotalPriorities(
       params,
     );
   }
-  if ((filters.product_names?.length ?? 0) > 0) {
+  if (hasAnyPipelineFilter(filters)) {
     joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
     joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
     conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+    if (filters.phase_names && filters.phase_names.length > 0) {
+      joins.push("JOIN dim_phase ph ON ph.phase_key = f.phase_key");
+      addArrayCondition(filters.phase_names, "ph.phase_name", conditions, params);
+    }
   }
 
   const sql = `SELECT COUNT(DISTINCT p.priority_key) AS total
@@ -266,6 +279,10 @@ function runByArea(
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
   }
+  if (filters.phase_names && filters.phase_names.length > 0) {
+    joins.push("JOIN dim_phase ph ON ph.phase_key = f.phase_key");
+    addArrayCondition(filters.phase_names, "ph.phase_name", conditions, params);
+  }
 
   const sql = `SELECT
                  d.global_health_area,
@@ -307,6 +324,10 @@ function runProductTypeBreakdown(
     params,
   );
   addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+  if (filters.phase_names && filters.phase_names.length > 0) {
+    joins.push("JOIN dim_phase ph ON ph.phase_key = f.phase_key");
+    addArrayCondition(filters.phase_names, "ph.phase_name", conditions, params);
+  }
 
   // Group by GHA + product_name so we can both project the flat donut
   // shape and compute applicableProductNames per GHA in post-processing.
@@ -378,15 +399,19 @@ function runWomenOrChildrenShare(
       params,
     );
   }
-  if ((filters.product_names?.length ?? 0) > 0) {
+  if (hasAnyPipelineFilter(filters)) {
     joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
     joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
     conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+    if (filters.phase_names && filters.phase_names.length > 0) {
+      joins.push("JOIN dim_phase ph ON ph.phase_key = f.phase_key");
+      addArrayCondition(filters.phase_names, "ph.phase_name", conditions, params);
+    }
   }
 
-  // When product filter is active the bridge join fans out (one priority →
+  // When product or phase filter is active the bridge join fans out (one priority →
   // many candidates), so always use COUNT(DISTINCT) to avoid double-counting.
   const sql = WC_SQL_FANOUT(joins, conditions);
 
@@ -417,12 +442,16 @@ function runPriorities(
       params,
     );
   }
-  if ((filters.product_names?.length ?? 0) > 0) {
+  if (hasAnyPipelineFilter(filters)) {
     joins.push("JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key");
     joins.push("JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key");
     conditions.push("f.is_active_flag = 1");
     joins.push("JOIN dim_product pr ON pr.product_key = f.product_key");
     addArrayCondition(filters.product_names, "pr.product_name", conditions, params);
+    if (filters.phase_names && filters.phase_names.length > 0) {
+      joins.push("JOIN dim_phase ph ON ph.phase_key = f.phase_key");
+      addArrayCondition(filters.phase_names, "ph.phase_name", conditions, params);
+    }
   }
 
   const sql = `SELECT DISTINCT p.priority_key, p.priority_name

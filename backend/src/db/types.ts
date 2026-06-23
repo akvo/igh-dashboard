@@ -609,6 +609,7 @@ export interface PriorityAlignmentInput {
   primary_disease_names?: string[] | null;
   secondary_disease_names?: string[] | null;
   product_names?: string[] | null;
+  phase_names?: string[] | null;
 }
 
 // =============================================================================
@@ -621,6 +622,7 @@ export interface IndividualPriorityAnalysisInput {
   primary_disease_names?: string[] | null;
   secondary_disease_names?: string[] | null;
   product_names?: string[] | null;
+  phase_names?: string[] | null;
 }
 
 export interface PipelineBuildUpRow {

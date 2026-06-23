@@ -30,6 +30,7 @@ const EMPTY = Object.freeze({
  * @param {string[]} [args.primaryDiseaseNames]
  * @param {string[]} [args.secondaryDiseaseNames]
  * @param {string[]} [args.productNames]
+ * @param {string[]} [args.phaseNames]
  */
 export function useIndividualPriorityAnalysis({
   priorityKey,
@@ -37,6 +38,7 @@ export function useIndividualPriorityAnalysis({
   primaryDiseaseNames,
   secondaryDiseaseNames,
   productNames,
+  phaseNames,
 }) {
   const { actions } = useDashboardStore();
 
@@ -52,8 +54,9 @@ export function useIndividualPriorityAnalysis({
           ? secondaryDiseaseNames
           : undefined,
       productNames: productNames && productNames.length > 0 ? productNames : undefined,
+      phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
     }),
-    [priorityKey, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames],
+    [priorityKey, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames],
   );
 
   const cacheKey = getCacheKey('individualPriorityAnalysis', variables);

@@ -459,7 +459,43 @@ describe("priorityAlignmentOverview — applicableDiseases / applicableProductNa
 });
 
 // ---------------------------------------------------------------------------
-// 4. priority_keys filter on rdPriorities
+// 4. phase_names filter on priorityAlignmentOverview
+// ---------------------------------------------------------------------------
+
+describe("phase_names filter", () => {
+  const ask = (phaseNames?: string[]) =>
+    query<{
+      priorityAlignmentOverview: {
+        totalPriorities: number;
+        byArea: { totalCandidates: number }[];
+        productTypeBreakdown: { candidateCount: number }[];
+      };
+    }>(
+      `query ($phaseNames: [String!]) {
+         priorityAlignmentOverview(phase_names: $phaseNames) {
+           totalPriorities
+           byArea { totalCandidates }
+           productTypeBreakdown { candidateCount }
+         }
+       }`,
+      { phaseNames },
+    );
+
+  it("Phase I never increases byArea candidate totals vs unfiltered", async () => {
+    const all = (await ask()).data.priorityAlignmentOverview;
+    const p1 = (await ask(["Phase I"])).data.priorityAlignmentOverview;
+
+    const sumCandidates = (o: typeof all) => o.byArea.reduce((s, a) => s + a.totalCandidates, 0);
+    expect(sumCandidates(p1)).toBeLessThanOrEqual(sumCandidates(all));
+
+    const sumProduct = (o: typeof all) =>
+      o.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
+    expect(sumProduct(p1)).toBeLessThanOrEqual(sumProduct(all));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. priority_keys filter on rdPriorities
 // ---------------------------------------------------------------------------
 
 describe("rdPriorities — priority_keys filter", () => {

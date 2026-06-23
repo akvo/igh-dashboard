@@ -172,11 +172,20 @@ export const resolvers = {
     // Portfolio overview - candidate type distribution
     candidateTypeDistribution: (
       _: unknown,
-      args: { product_keys?: number[]; phase_names?: string[] },
+      args: {
+        product_keys?: number[];
+        phase_names?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+      },
     ) =>
       getCandidateTypeDistribution({
         product_keys: args.product_keys,
         phase_names: args.phase_names,
+        global_health_areas: args.global_health_areas,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
       }),
 
     // Map
@@ -210,6 +219,7 @@ export const resolvers = {
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getTemporalSnapshots({
@@ -219,6 +229,7 @@ export const resolvers = {
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Pipeline filter pairs (disease×product) for cross-filtering
@@ -369,6 +380,7 @@ export const resolvers = {
         primary_disease_names?: string[] | null;
         secondary_disease_names?: string[] | null;
         product_names?: string[] | null;
+        phase_names?: string[] | null;
       },
     ) =>
       getPriorityAlignmentOverview({
@@ -376,6 +388,7 @@ export const resolvers = {
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,
         product_names: args.product_names ?? null,
+        phase_names: args.phase_names ?? null,
       }),
 
     // WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
@@ -387,6 +400,7 @@ export const resolvers = {
         primary_disease_names?: string[] | null;
         secondary_disease_names?: string[] | null;
         product_names?: string[] | null;
+        phase_names?: string[] | null;
       },
     ) =>
       getIndividualPriorityAnalysis({
@@ -395,6 +409,7 @@ export const resolvers = {
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,
         product_names: args.product_names ?? null,
+        phase_names: args.phase_names ?? null,
       }),
 
     // Portfolio analysis - product distribution (donut chart)

@@ -740,13 +740,13 @@ export const typeDefs = `#graphql
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!
 
     # Portfolio overview - candidate type distribution
-    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
+    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String, phase_names: [String!]): [TemporalSnapshotRow!]!
 
     # Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: [PipelineFilterPair!]!
@@ -792,6 +792,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): PriorityAlignmentOverview!
 
     # WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
@@ -801,6 +802,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): IndividualPriorityAnalysis!
 
     # Portfolio analysis - product distribution (donut chart)

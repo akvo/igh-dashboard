@@ -188,3 +188,37 @@ describe("individualPriorityAnalysis", () => {
     expect(a.pipelineBuildUp).toEqual([]);
   });
 });
+
+describe("phase_names filter", () => {
+  it("filtered candidatesCount <= unfiltered candidatesCount", async () => {
+    const ask = (phaseNames?: string[]) =>
+      query<{ individualPriorityAnalysis: { candidatesCount: number } }>(
+        `query ($k: Int!, $phaseNames: [String!]) {
+           individualPriorityAnalysis(priority_key: $k, phase_names: $phaseNames) {
+             candidatesCount
+           }
+         }`,
+        { k: pickedPriorityKey, phaseNames },
+      );
+
+    const all = (await ask()).data.individualPriorityAnalysis.candidatesCount;
+    const phase1 = (await ask(["Phase I"])).data.individualPriorityAnalysis.candidatesCount;
+    expect(phase1).toBeLessThanOrEqual(all);
+  });
+
+  it("pipelineBuildUp rows are restricted to the selected phase", async () => {
+    const { data } = await query<{
+      individualPriorityAnalysis: { pipelineBuildUp: { phase_name: string }[] };
+    }>(
+      `query ($k: Int!, $phaseNames: [String!]) {
+         individualPriorityAnalysis(priority_key: $k, phase_names: $phaseNames) {
+           pipelineBuildUp { phase_name }
+         }
+       }`,
+      { k: pickedPriorityKey, phaseNames: ["Phase I"] },
+    );
+    for (const r of data.individualPriorityAnalysis.pipelineBuildUp) {
+      expect(r.phase_name).toBe("Phase I");
+    }
+  });
+});

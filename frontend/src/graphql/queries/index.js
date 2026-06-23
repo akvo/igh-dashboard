@@ -121,8 +121,8 @@ export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
-  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {
-    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!], $globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!]) {
+    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames, global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames) {
       global_health_area
       candidate_type
       candidateCount
@@ -144,8 +144,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
-    temporalSnapshots(years: $years, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
+  query TemporalAnalysis($years: [Int!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!], $phaseNames: [String!]) {
+    temporalSnapshots(years: $years, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys, phase_names: $phaseNames) {
       year
       phase_name
       sort_order
@@ -522,20 +522,22 @@ export const GET_PHASES = gql`
 // =========================================================
 // Single consolidated payload powering both the Home section's
 // cards/donuts and the WHO page's Priorities overview section.
-// The four filter args mirror the standard filter convention used by
+// The five filter args mirror the standard filter convention used by
 // `portfolioKPIs`, `productDistribution`, etc.
 export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
   query PriorityAlignmentOverview(
     $globalHealthAreas: [String!],
     $primaryDiseaseNames: [String!],
     $secondaryDiseaseNames: [String!],
-    $productNames: [String!]
+    $productNames: [String!],
+    $phaseNames: [String!]
   ) {
     priorityAlignmentOverview(
       global_health_areas: $globalHealthAreas,
       primary_disease_names: $primaryDiseaseNames,
       secondary_disease_names: $secondaryDiseaseNames,
       product_names: $productNames,
+      phase_names: $phaseNames,
     ) {
       totalPriorities
       byArea {
@@ -578,6 +580,7 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
     $primaryDiseaseNames: [String!]
     $secondaryDiseaseNames: [String!]
     $productNames: [String!]
+    $phaseNames: [String!]
   ) {
     individualPriorityAnalysis(
       priority_key: $priorityKey
@@ -585,6 +588,7 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
       primary_disease_names: $primaryDiseaseNames
       secondary_disease_names: $secondaryDiseaseNames
       product_names: $productNames
+      phase_names: $phaseNames
     ) {
       candidatesCount
       targetPopulation
