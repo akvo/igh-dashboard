@@ -380,6 +380,7 @@ export const resolvers = {
         primary_disease_names?: string[] | null;
         secondary_disease_names?: string[] | null;
         product_names?: string[] | null;
+        phase_names?: string[] | null;
       },
     ) =>
       getPriorityAlignmentOverview({
@@ -387,6 +388,7 @@ export const resolvers = {
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,
         product_names: args.product_names ?? null,
+        phase_names: args.phase_names ?? null,
       }),
 
     // WHO Priority alignment — single-priority drill-down (Individual priority analysis section).

@@ -792,6 +792,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): PriorityAlignmentOverview!
 
     # WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
