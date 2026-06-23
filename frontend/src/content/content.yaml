@@ -90,9 +90,9 @@ pipeline_explorer:
     trials_total: "The number of clinical trials linked to the pipeline that match the current filters."
     trials_womens_health: "The number of those trials addressing women's health conditions."
   page:
-    tb_intro: "Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns."
+    table_builder_intro: "Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns."
     title: "Pipeline Explorer"
-    vi_intro: |
+    visual_insights_intro: |
       Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv.
 
       Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.
@@ -116,17 +116,17 @@ pipeline_explorer:
     vcp_select_prompt: "Select a category to explore its technology breakdown"
   top5:
     approved_disease: "Top 5 diseases by approved product count"
-    approved_disease_desc: "Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters."
+    approved_disease_description: "Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters."
     approved_product: "Top 5 product types by approved product count"
-    approved_product_desc: "Ranks the five product types with the most approved products. Reflects the active filters."
+    approved_product_description: "Ranks the five product types with the most approved products. Reflects the active filters."
     candidates_disease: "Top 5 diseases by candidate count"
-    candidates_disease_desc: "Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters."
+    candidates_disease_description: "Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters."
     candidates_product: "Top 5 product types by candidate count"
-    candidates_product_desc: "Ranks the five product types with the most candidates. Reflects the active filters."
+    candidates_product_description: "Ranks the five product types with the most candidates. Reflects the active filters."
     trials_disease: "Top 5 diseases by clinical trial count"
-    trials_disease_desc: "Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters."
+    trials_disease_description: "Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters."
     trials_product: "Top 5 product types by clinical trial count"
-    trials_product_desc: "Ranks the five product types with the most clinical trials. Reflects the active filters."
+    trials_product_description: "Ranks the five product types with the most clinical trials. Reflects the active filters."
   trials:
     age_groups_description: "Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio."
     age_groups_title: "Age groups in clinical trials"
@@ -197,12 +197,12 @@ pipeline_trends:
     title: "Pipeline trends"
   temporal:
     compare:
-      a:
+      portfolio_comparison:
         description: "Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression."
         title: "Portfolio comparison by R&D stage in selected year"
-      b:
+      comparison_table:
         description: "Explore the underlying data for the selected portfolios by aggregated R&D stage in the chosen year, enabling detailed comparison of portfolio compositions."
-      c:
+      aggregated_trends:
         description: "Explore the temporal trends for each selected portfolio with R&D stages aggregated into early development, late development, and approved products across IGH review years."
         title: "Temporal trends in aggregated R&D stages across portfolios"
       empty_portfolios_chart: "Select portfolios and click Apply to see comparison data."
@@ -214,13 +214,13 @@ pipeline_trends:
       description: "Explore how selected portfolios evolve over time in the global health R&D pipeline. Analyse the temporal progression of a single portfolio, by one or more diseases and products, or compare up to four portfolios side by side to identify differences in stage distribution and trajectory."
       title: "Temporal trends & portfolio comparison"
     single:
-      a:
+      granular_stages:
         description: "Explore the temporal trends in a single portfolio, showing how distributions across R&D stages change over time. Filter by disease and product, and use the R&D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis."
         title: "Temporal trends in portfolio composition across R&D stages"
-      b:
+      aggregated_stages:
         description: "Explore the temporal trends in a single portfolio with R&D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above."
         title: "Temporal trends in aggregated R&D stages"
-      c:
+      aggregated_stages_table:
         description: "Explore the underlying data for aggregated R&D stages, including year-on-year changes and total growth in portfolio composition over time."
         empty_description: "No data available for the selected filters."
         empty_title: "No data available"

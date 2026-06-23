@@ -595,7 +595,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
-            {t('pipeline_trends.temporal.compare.a.title')}
+            {t('pipeline_trends.temporal.compare.portfolio_comparison.title')}
           </h4>
           <ChartMenu onDownloadCSV={() => {
               const visiblePhases = apiPhases.filter((p) => comparePhases.includes(p.key));
@@ -608,7 +608,7 @@ export function ComparePortfoliosTab({
             }} onDownloadPNG={() => downloadPNG(portfolioCompareRef, `portfolio-comparison-rd-stage-${targetYear}`)} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          {t('pipeline_trends.temporal.compare.a.description')}
+          {t('pipeline_trends.temporal.compare.portfolio_comparison.description')}
         </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -653,7 +653,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm text-gray-500">
-            {t('pipeline_trends.temporal.compare.b.description')}
+            {t('pipeline_trends.temporal.compare.comparison_table.description')}
           </p>
           <ChartMenu onDownloadCSV={() => {
             const csvColumns = [
@@ -699,7 +699,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
-            {t('pipeline_trends.temporal.compare.c.title')}
+            {t('pipeline_trends.temporal.compare.aggregated_trends.title')}
           </h4>
           <ChartMenu onDownloadCSV={() => {
               const visibleStages = STAGE_SERIES.filter((s) => acrossStages.includes(s.key));
@@ -713,7 +713,7 @@ export function ComparePortfoliosTab({
             }} onDownloadPNG={() => downloadPNG(acrossPortfoliosRef, 'temporal-trends-aggregated-rd-stages-across-portfolios')} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          {t('pipeline_trends.temporal.compare.c.description')}
+          {t('pipeline_trends.temporal.compare.aggregated_trends.description')}
         </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1126,7 +1126,7 @@ export default function TemporalTrendsSection({
           <div className="mt-4 mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
-                {t('pipeline_trends.temporal.single.a.title')}
+                {t('pipeline_trends.temporal.single.granular_stages.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                 const columns = [
@@ -1138,7 +1138,7 @@ export default function TemporalTrendsSection({
               }} onDownloadPNG={() => downloadPNG(portfolioCompositionRef, 'temporal-trends-portfolio-composition')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              {t('pipeline_trends.temporal.single.a.description')}
+              {t('pipeline_trends.temporal.single.granular_stages.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1158,7 +1158,7 @@ export default function TemporalTrendsSection({
                   <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
                 </div>
               ) : !chartData || chartData.length === 0 ? (
-                <ChartEmptyState variant="stackedBar" height={280} description={t('pipeline_trends.temporal.single.c.empty_description')} />
+                <ChartEmptyState variant="stackedBar" height={280} description={t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description')} />
               ) : (
                 <StackedBarChart
                   data={chartData}
@@ -1178,7 +1178,7 @@ export default function TemporalTrendsSection({
           <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
-                {t('pipeline_trends.temporal.single.b.title')}
+                {t('pipeline_trends.temporal.single.aggregated_stages.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                   const columns = [
@@ -1190,7 +1190,7 @@ export default function TemporalTrendsSection({
                 }} onDownloadPNG={() => downloadPNG(aggregatedStagesRef, 'temporal-trends-aggregated-rd-stages')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              {t('pipeline_trends.temporal.single.b.description')}
+              {t('pipeline_trends.temporal.single.aggregated_stages.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1200,7 +1200,7 @@ export default function TemporalTrendsSection({
                   <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
                 </div>
               ) : !groupedChartData || groupedChartData.length === 0 ? (
-                <ChartEmptyState variant="bar" height={380} description={t('pipeline_trends.temporal.single.c.empty_description')} />
+                <ChartEmptyState variant="bar" height={380} description={t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description')} />
               ) : (
                 <GroupedBarChart
                   data={groupedChartData}
@@ -1224,7 +1224,7 @@ export default function TemporalTrendsSection({
           <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-lg font-bold text-black">
-                {t('pipeline_trends.temporal.single.c.title')}
+                {t('pipeline_trends.temporal.single.aggregated_stages_table.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                 const years = growthTable.years;
@@ -1250,7 +1250,7 @@ export default function TemporalTrendsSection({
               }} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              {t('pipeline_trends.temporal.single.c.description')}
+              {t('pipeline_trends.temporal.single.aggregated_stages_table.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1270,8 +1270,8 @@ export default function TemporalTrendsSection({
                 visibleColumns={growthVisibleColumns}
                 onVisibleColumnsChange={setGrowthVisibleColumns}
                 emptyState={{
-                  title: t('pipeline_trends.temporal.single.c.empty_title'),
-                  description: t('pipeline_trends.temporal.single.c.empty_description'),
+                  title: t('pipeline_trends.temporal.single.aggregated_stages_table.empty_title'),
+                  description: t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description'),
                 }}
               />
             )}

@@ -34,16 +34,16 @@ export const TAB_LABELS = {
 // `TAB_DESCRIPTIONS[scope].disease` for the description.
 export const TAB_DESCRIPTIONS = {
   candidates: {
-    disease: t('pipeline_explorer.top5.candidates_disease_desc'),
-    product: t('pipeline_explorer.top5.candidates_product_desc'),
+    disease: t('pipeline_explorer.top5.candidates_disease_description'),
+    product: t('pipeline_explorer.top5.candidates_product_description'),
   },
   approved: {
-    disease: t('pipeline_explorer.top5.approved_disease_desc'),
-    product: t('pipeline_explorer.top5.approved_product_desc'),
+    disease: t('pipeline_explorer.top5.approved_disease_description'),
+    product: t('pipeline_explorer.top5.approved_product_description'),
   },
   trials: {
-    disease: t('pipeline_explorer.top5.trials_disease_desc'),
-    product: t('pipeline_explorer.top5.trials_product_desc'),
+    disease: t('pipeline_explorer.top5.trials_disease_description'),
+    product: t('pipeline_explorer.top5.trials_product_description'),
   },
 };
 
