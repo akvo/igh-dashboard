@@ -45,8 +45,38 @@ const T_RE = /(?<![A-Za-z0-9_$.])t\(\s*['"`]([A-Za-z0-9_.]+)['"`]\s*\)/g;
 // <Markdown ... path="key" ...> and path={'key'} / path={"key"}.
 const MD_RE = /<Markdown\b[^>]*?\bpath\s*=\s*(?:["']([A-Za-z0-9_.]+)["']|\{\s*['"`]([A-Za-z0-9_.]+)['"`]\s*\})/g;
 
+// Strip `//` line comments from JavaScript source while leaving `//` inside
+// string literals intact. The naive regex approach (/\/\/.*$/gm) treats the
+// `//` in URLs like `href: 'https://example.com'` as a comment start, which
+// wipes any t('key') callsite that follows it on the same line.
+//
+// We do a single character-scan per line, tracking whether we are inside a
+// quoted string ('..."...'  "..."  `...`). Backslash-escaped quotes are
+// skipped so we don't mistake `\'` for a string end. The scan is deliberately
+// minimal: no support for multi-line template literals (callsite keys are
+// always on a single line) and no regex or parser dependency.
 function stripLineComments(src) {
-  return src.replace(/\/\/.*$/gm, '');
+  return src
+    .split('\n')
+    .map((line) => {
+      let inStr = null; // current string delimiter, or null when outside a string
+      for (let i = 0; i < line.length - 1; i++) {
+        const ch = line[i];
+        if (inStr) {
+          if (ch === '\\') {
+            i++; // skip the escaped character
+          } else if (ch === inStr) {
+            inStr = null; // string closed
+          }
+        } else if (ch === "'" || ch === '"' || ch === '`') {
+          inStr = ch; // string opened
+        } else if (ch === '/' && line[i + 1] === '/') {
+          return line.slice(0, i); // real comment — drop it
+        }
+      }
+      return line; // no unquoted // found
+    })
+    .join('\n');
 }
 
 export function findTextCallsiteKeys(src) {

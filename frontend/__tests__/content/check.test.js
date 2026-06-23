@@ -44,6 +44,18 @@ describe('findTextCallsiteKeys', () => {
     const src = `const a = obj.t('home.hero.title'); const b = i18n.t('x.y');`;
     expect(findTextCallsiteKeys(src)).toEqual([]);
   });
+
+  it('finds t() call on a line that also contains a URL with //', () => {
+    // Bug: the naive regex strips from the first // to EOL, which wipes the
+    // t() callsite that follows an href URL on the same line.
+    const src = `{ href: 'https://example.com', label: t('layout.header.about.link') }`;
+    expect(findTextCallsiteKeys(src)).toEqual(['layout.header.about.link']);
+  });
+
+  it('still ignores a genuinely commented-out t() call', () => {
+    const src = `// t('dead.key')\nconst v = t('home.hero.title');`;
+    expect(findTextCallsiteKeys(src)).toEqual(['home.hero.title']);
+  });
 });
 
 describe('findMarkdownCallsiteKeys', () => {
