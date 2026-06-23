@@ -746,7 +746,7 @@ export const typeDefs = `#graphql
     geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String, phase_names: [String!]): [TemporalSnapshotRow!]!
 
     # Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: [PipelineFilterPair!]!

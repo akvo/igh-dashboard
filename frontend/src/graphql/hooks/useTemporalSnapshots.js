@@ -5,11 +5,11 @@ import { GET_TEMPORAL_SNAPSHOTS } from '../queries';
 import { useDashboardStore, getCacheKey } from '@/store';
 import { transformTemporalSnapshots } from '@/lib/transformations';
 
-export function useTemporalSnapshots(years, globalHealthAreas, productKeys, primaryDiseaseNames, secondaryDiseaseNames) {
+export function useTemporalSnapshots(years, globalHealthAreas, productKeys, primaryDiseaseNames, secondaryDiseaseNames, phaseNames) {
   const { actions } = useDashboardStore();
 
-  const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0) || (primaryDiseaseNames?.length > 0) || (secondaryDiseaseNames?.length > 0);
-  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys, primaryDiseaseNames, secondaryDiseaseNames });
+  const hasFilters = (years?.length > 0) || (globalHealthAreas?.length > 0) || (productKeys?.length > 0) || (primaryDiseaseNames?.length > 0) || (secondaryDiseaseNames?.length > 0) || (phaseNames?.length > 0);
+  const cacheKey = getCacheKey('temporalSnapshots', { years, globalHealthAreas, productKeys, primaryDiseaseNames, secondaryDiseaseNames, phaseNames });
   const cachedData = hasFilters ? null : actions.getCachedData(cacheKey);
 
   const { data, loading, error, refetch } = useQuery(GET_TEMPORAL_SNAPSHOTS, {
@@ -19,6 +19,7 @@ export function useTemporalSnapshots(years, globalHealthAreas, productKeys, prim
       secondaryDiseaseNames: secondaryDiseaseNames?.length > 0 ? secondaryDiseaseNames : undefined,
       globalHealthAreas: globalHealthAreas?.length > 0 ? globalHealthAreas : undefined,
       productKeys: productKeys?.length > 0 ? productKeys : undefined,
+      phaseNames: phaseNames?.length > 0 ? phaseNames : undefined,
     },
     skip: !!cachedData,
     fetchPolicy: hasFilters ? 'network-only' : 'cache-first',

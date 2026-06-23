@@ -219,6 +219,7 @@ export const resolvers = {
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getTemporalSnapshots({
@@ -228,6 +229,7 @@ export const resolvers = {
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Pipeline filter pairs (disease×product) for cross-filtering

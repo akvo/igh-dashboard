@@ -34,10 +34,13 @@ export default function PipelineTrends() {
     primary,
     secondary,
     product: selectedProduct,
+    rdPhase,
     setHealthArea: setSelectedHealthArea,
     setPrimary,
     setSecondary,
     setProduct: setSelectedProduct,
+    setRdPhase,
+    rdPhaseOptions,
   } = useGlobalFilters();
 
   // Fetch filter options first
@@ -68,8 +71,10 @@ export default function PipelineTrends() {
   const selectedPrimary = primary.length > 0 ? primary : null;
   const selectedSecondary = secondary.length > 0 ? secondary : null;
 
+  const selectedRdPhase = rdPhase.length > 0 ? rdPhase : null;
+
   // Fetch chart data with filters
-  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedPrimary, selectedSecondary);
+  const { chartData, phases: apiPhases, loading: temporalLoading } = useTemporalSnapshots(null, selectedHealthAreas, selectedProductKeys, selectedPrimary, selectedSecondary, selectedRdPhase);
 
   // Only unselected/hidden phase keys are stored in the URL so that
   // the default state (all visible) produces a clean URL.
@@ -134,13 +139,14 @@ export default function PipelineTrends() {
     );
   };
 
-  const hasCrossFilters = selectedHealthArea.length > 0 || primary.length > 0 || secondary.length > 0 || selectedProduct.length > 0 || hiddenPhases.length > 0;
+  const hasCrossFilters = selectedHealthArea.length > 0 || primary.length > 0 || secondary.length > 0 || selectedProduct.length > 0 || rdPhase.length > 0 || hiddenPhases.length > 0;
 
   const handleResetFilters = () => {
     setSelectedHealthArea([]);
     setPrimary([]);
     setSecondary([]);
     setSelectedProduct([]);
+    setRdPhase([]);
     // Reset phases to all visible
     setHiddenPhases([]);
   };
@@ -238,6 +244,18 @@ export default function PipelineTrends() {
                     placeholder="All"
                     options={productOptions}
                     groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
+                  />
+                </div>
+                <div className="min-w-[220px]">
+                  <Dropdown
+                    label="Select R&D stage"
+                    value={rdPhase}
+                    onChange={setRdPhase}
+                    placeholder="All"
+                    options={rdPhaseOptions}
+                    multiSelect={true}
+                    showSearch={true}
+                    showClearText={true}
                   />
                 </div>
                 <div className="flex-1" />
