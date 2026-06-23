@@ -1,4 +1,62 @@
 # Canonical static content. Editable by devs; also written by the
 # content-sync bot from akvo/igh-dashboard-content. Compiled into
 # content.generated.js at build time.
-{}
+home:
+  bubble_chart:
+    description: "Switch between candidates in development and approved products through the dropdown above."
+    footnote: "This bubble chart shows the relative scale of the product development landscape across global health areas. Each bubble represents a global health area, with its size indicating the number of products in scope. Use the toggle to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated."
+    loading: "Loading chart..."
+    title: "Scale of R&D by global health area"
+  filters:
+    reset: "Reset filters"
+  hero:
+    subtitle: "An end-to-end interactive view of the global health R&D pipeline, from investigational candidates to approved products reaching people in need."
+    title: "From discovery to approval: mapping the global health R&D pipeline"
+  map:
+    description: "A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based."
+    footnote: "This global heat map illustrates where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence."
+    loading: "Loading map..."
+    tab_developers: "Location of developers"
+    tab_trials: "Location of clinical trials"
+    title: "Geographic distribution of clinical trials and developers"
+  portfolio:
+    cta: "Explore portfolio analysis"
+    description: "A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle."
+    loading: "Loading chart..."
+    title: "Portfolio overview by global health area"
+  priority:
+    area_description: "Pipeline aligned with a WHO priority."
+    cta_all: "View all"
+    cta_selected: "Explore selected"
+    product_types:
+      description: "Distribution of R&D pipeline across product types."
+      loading: "Loading chart..."
+      title: "Product types"
+    subtitle: "Compare WHO priorities with pipeline"
+    title: "Priority Alignment"
+    women_children:
+      description: "Yes / No split with priorities still awaiting classification shown as NA."
+      loading: "Loading chart..."
+      title: "Share of priorities dedicated to women or children"
+  reports:
+    card_1_description: "An overview of key takeaways from the G-FINDER survey"
+    card_1_image: "https://cdn.impactglobalhealth.org/media/2025%20G-FINDER%20cover-404x341.webp"
+    card_1_title: "Funding for global health R&D in 2024"
+    card_1_url: "https://www.impactglobalhealth.org/insights/report-library/funding-for-global-health-rd-in-2024"
+    card_2_description: "Executive briefing presenting findings from three case studies demonstrating how selected global health innovations enhance health outcomes and provide economic value across the US, UK, Japan, and Europe."
+    card_2_image: "https://cdn.impactglobalhealth.org/media/Ripple%20effect%202.0%20image.jpg"
+    card_2_title: "The Ripple Effect 2.0: from global health to domestic value"
+    card_2_url: "https://www.impactglobalhealth.org/insights/report-library/ripple-effect-2"
+    card_3_description: "The 100 Days Mission's 5th Implementation Report and Scorecard highlight limited progress has been made in an R&D ecosystem that remains reactive and reliant on US funding."
+    card_3_image: "https://cdn.impactglobalhealth.org/media/Untitled%20design%20(7)-404x404.webp"
+    card_3_title: "100 Days Mission: 5th Implementation Report and Scorecard"
+    card_3_url: "https://www.impactglobalhealth.org/insights/report-library/ipps-report-2026"
+    cta_all: "View all insights"
+    read_more: "Read more"
+    subtitle: "Discover the insights that two decades of global health data have given us."
+    title: "Reports and insights"
+  trends:
+    cta: "Make custom comparison"
+    description: "A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time."
+    loading: "Loading chart..."
+    title: "Pipeline trends"
