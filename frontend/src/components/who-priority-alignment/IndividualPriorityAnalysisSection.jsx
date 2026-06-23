@@ -401,6 +401,7 @@ export default function IndividualPriorityAnalysisSection() {
     primaryDiseaseNames: page.primary,
     secondaryDiseaseNames: page.secondary,
     productNames: page.expandedProduct,
+    phaseNames: page.rdPhase,
   });
 
   // Table state — mirrors the shared DataTable `f.<tab>`/`s.<tab>`/
@@ -444,6 +445,7 @@ export default function IndividualPriorityAnalysisSection() {
       primary_disease_names: page.primary?.length > 0 ? page.primary : undefined,
       secondary_disease_names: page.secondary?.length > 0 ? page.secondary : undefined,
       product_names: page.expandedProduct?.length > 0 ? page.expandedProduct : undefined,
+      phase_names: page.rdPhase?.length > 0 ? page.rdPhase : undefined,
       candidate_type: 'Candidate',
       priority_keys:
         state.committedPriority != null ? [state.committedPriority] : undefined,
@@ -454,6 +456,7 @@ export default function IndividualPriorityAnalysisSection() {
       page.primary,
       page.secondary,
       page.expandedProduct,
+      page.rdPhase,
       state.committedPriority,
       candidatesColumnFilters,
     ],
@@ -465,6 +468,7 @@ export default function IndividualPriorityAnalysisSection() {
       primaryDiseaseNames: page.primary,
       secondaryDiseaseNames: page.secondary,
       productNames: page.expandedProduct,
+      phaseNames: page.rdPhase,
       candidateType: 'Candidate',
       newIncludeInPipeline2025: true,
       priorityKeys:

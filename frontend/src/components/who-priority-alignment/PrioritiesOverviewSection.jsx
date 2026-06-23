@@ -119,6 +119,7 @@ export default function PrioritiesOverviewSection() {
     filters.primary.length > 0 ? filters.primary : null,
     filters.secondary.length > 0 ? filters.secondary : null,
     filters.expandedProduct.length > 0 ? filters.expandedProduct : null,
+    filters.rdPhase.length > 0 ? filters.rdPhase : null,
   );
 
   // Filter mode drives the Column-1 reshape rule per the spec:

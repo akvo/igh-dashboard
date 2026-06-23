@@ -529,13 +529,15 @@ export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
     $globalHealthAreas: [String!],
     $primaryDiseaseNames: [String!],
     $secondaryDiseaseNames: [String!],
-    $productNames: [String!]
+    $productNames: [String!],
+    $phaseNames: [String!]
   ) {
     priorityAlignmentOverview(
       global_health_areas: $globalHealthAreas,
       primary_disease_names: $primaryDiseaseNames,
       secondary_disease_names: $secondaryDiseaseNames,
       product_names: $productNames,
+      phase_names: $phaseNames,
     ) {
       totalPriorities
       byArea {
@@ -578,6 +580,7 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
     $primaryDiseaseNames: [String!]
     $secondaryDiseaseNames: [String!]
     $productNames: [String!]
+    $phaseNames: [String!]
   ) {
     individualPriorityAnalysis(
       priority_key: $priorityKey
@@ -585,6 +588,7 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
       primary_disease_names: $primaryDiseaseNames
       secondary_disease_names: $secondaryDiseaseNames
       product_names: $productNames
+      phase_names: $phaseNames
     ) {
       candidatesCount
       targetPopulation

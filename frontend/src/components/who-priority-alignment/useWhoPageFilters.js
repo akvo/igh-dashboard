@@ -1,10 +1,10 @@
 'use client';
 
 // =========================================================
-// useWhoPageFilters — WHO page's three global filters
+// useWhoPageFilters — WHO page's full global filter set
 // =========================================================
-// Same shape as Portfolio Analysis's `useGlobalFilters` minus the R&D
-// phase axis. URL keys (`gha`, `primary`, `secondary`, `product`) are
+// Mirrors `useGlobalFilters` including R&D phase (URL key `rdPhase`).
+// The other URL keys (`gha`, `primary`, `secondary`, `product`) are
 // deliberately shared with Portfolio Analysis so a user navigating
 // between the two pages with the same filter query string lands with
 // the same selections applied.
@@ -13,11 +13,13 @@ import { useMemo } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
 import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
+import { SIMPLIFIED_PHASE_NAMES } from '@/lib/transformations/constants';
 import {
   useGlobalHealthAreaSummaries,
   useDiseases,
   useDiseaseHierarchy,
   useProducts,
+  usePhases,
   useActivePipelineFilterPairs,
   usePriorityAlignment,
 } from '@/graphql/hooks';
@@ -27,6 +29,7 @@ export function useWhoPageFilters() {
   const [primary, setPrimary] = useUrlState('primary', [], arraySerializer);
   const [secondary, setSecondary] = useUrlState('secondary', [], arraySerializer);
   const [product, setProduct] = useUrlState('product', [], arraySerializer);
+  const [rdPhase, setRdPhase] = useUrlState('rdPhase', [], arraySerializer);
 
   // Selections are concrete product names; no expansion needed.
   const expandedProduct = product;
@@ -38,10 +41,20 @@ export function useWhoPageFilters() {
   const { hierarchy: diseaseHierarchy, loading: hierarchyLoading } =
     useDiseaseHierarchy();
   const { pairs, loading: pairsLoading } = useActivePipelineFilterPairs();
+  const { phases, loading: phasesLoading } = usePhases();
 
   const allProductOptions = useMemo(
     () => (productsList || []).map((p) => p.product_name),
     [productsList],
+  );
+
+  const allPhaseOptions = useMemo(
+    () =>
+      phases.map((p) => ({
+        label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
+        value: p.name,
+      })),
+    [phases],
   );
 
   // Fetch the list of diseases that have at least one WHO priority
@@ -59,26 +72,22 @@ export function useWhoPageFilters() {
     return (diseaseHierarchy || []).filter((r) => nameSet.has(r.primary_disease));
   }, [diseaseHierarchy, priorityDiseases]);
 
-  // Cross-filtering needs an R&D-phase axis on the helper's contract;
-  // we pass empty arrays/stubs since the WHO page doesn't expose that
-  // filter. `useCrossFilteredOptions` skips pruning when its phase
-  // inputs are empty.
-  const { healthAreaOptions, narrowedHierarchy, productOptions } =
+  const { healthAreaOptions, narrowedHierarchy, productOptions, rdPhaseOptions } =
     useCrossFilteredOptions({
       data: {
         healthAreas,
         diseaseHierarchy: priorityDiseaseHierarchy,
         pairs,
         allProductOptions,
-        allPhaseOptions: [],
+        allPhaseOptions,
       },
-      selections: { healthArea, primary, secondary, product, rdPhase: [] },
+      selections: { healthArea, primary, secondary, product, rdPhase },
       setters: {
         setHealthArea,
         setPrimary,
         setSecondary,
         setProduct,
-        setRdPhase: () => {},
+        setRdPhase,
       },
       loading: {
         healthAreas: healthAreasLoading,
@@ -92,13 +101,15 @@ export function useWhoPageFilters() {
     healthArea.length > 0 ||
     primary.length > 0 ||
     secondary.length > 0 ||
-    product.length > 0;
+    product.length > 0 ||
+    rdPhase.length > 0;
 
   const clearAll = () => {
     setHealthArea([]);
     setPrimary([]);
     setSecondary([]);
     setProduct([]);
+    setRdPhase([]);
   };
 
   return {
@@ -106,21 +117,25 @@ export function useWhoPageFilters() {
     primary,
     secondary,
     product,
+    rdPhase,
     expandedProduct,
 
     setHealthArea,
     setPrimary,
     setSecondary,
     setProduct,
+    setRdPhase,
 
     healthAreaOptions,
     narrowedHierarchy,
     productOptions,
+    rdPhaseOptions,
 
     loading: {
       gha: healthAreasLoading,
       diseases: hierarchyLoading || diseasesLoading,
       products: productsLoading,
+      phases: phasesLoading,
     },
 
     hasFilters,

@@ -362,6 +362,7 @@ export default function Home() {
     primaryArg,
     secondaryArg,
     globalFilters.expandedProduct,
+    rdPhaseArg,
   );
 
   // Candidate type distribution — driven by global product, R&D phase, GHA, and disease filters.
