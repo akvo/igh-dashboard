@@ -12,13 +12,11 @@
 // machinery from the old combined page is needed here: this page is
 // just the header band, the filter bar, and one section.
 
+import { t } from '@/content';
 import Sidebar from '@/components/layout/Sidebar';
 import { GlobalFilterBar, useGlobalFilters } from '@/components/global-filters';
 import PageHeader from '@/components/layout/PageHeader';
 import PipelineOverviewSection from '@/components/pipeline-overview/PipelineOverviewSection';
-
-const INTRO =
-  'An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Page-level filters scope every chart here. Use Share this view to copy a link with your filters preserved.';
 
 export default function PipelineOverviewPage() {
   const globalFilters = useGlobalFilters();
@@ -31,7 +29,7 @@ export default function PipelineOverviewPage() {
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Page header band */}
           <div className="flex flex-col gap-6 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-0">
-            <PageHeader title="Pipeline overview" description={INTRO} />
+            <PageHeader title={t('pipeline_overview.page.title')} description={t('pipeline_overview.page.intro')} />
           </div>
 
           <GlobalFilterBar filters={globalFilters} />

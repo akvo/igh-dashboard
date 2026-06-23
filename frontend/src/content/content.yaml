@@ -139,6 +139,33 @@ pipeline_explorer:
     table_title: "Selected clinical trials"
     trial_status_description: "Number of studies at each stage across the portfolio, from ongoing to completed."
     trial_status_title: "Clinical trial status"
+pipeline_overview:
+  chart:
+    description: "Each horizontal bar shows a product type, with colour-coded segments for how many candidates and approved products sit at each R&D stage. Use the page-level filters to narrow the view, click items in the legend to toggle stages on or off, or use Export Visual to save the chart as an image."
+    export: "Export Visual"
+    exporting: "Exporting..."
+    loading: "Loading chart data..."
+    title: "Global pipeline overview"
+    x_axis: "Number of candidates / approved products"
+    y_axis: "Product type"
+  kpi:
+    approved_description: "Approved products"
+    approved_title: "Approved health products"
+    approved_tooltip: "Number of products that have received approval"
+    candidates_description: "Active candidates"
+    candidates_title: "Candidates in development"
+    candidates_tooltip: "Number of candidates currently in active development"
+    trials_description: "Ongoing clinical trials"
+    trials_title: "Linked clinical trials"
+    trials_tooltip: "Number of clinical trials currently in progress"
+  page:
+    intro: "An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Filters apply across the whole portal — any filter you set stays active as you move between pages and remains until you clear it, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved."
+    title: "Pipeline overview"
+  product_types:
+    description: "A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both. Use the ··· menu to export the chart as an image or the underlying data as .csv."
+    dropdown_all: "All"
+    loading: "Loading chart data..."
+    title: "Product types"
 table_builder:
   candidates_approved:
     description: "Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand."
