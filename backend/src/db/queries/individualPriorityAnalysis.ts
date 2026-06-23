@@ -69,23 +69,39 @@ function buildPipelineWhere(input: IndividualPriorityAnalysisInput) {
   );
   addArrayCondition(input.product_names ?? undefined, "pr.product_name", conditions, params);
 
-  return { whereClause: `WHERE ${conditions.join(" AND ")}`, params };
+  // Phase filter references `p.phase_name`. The build-up query already
+  // JOINs dim_phase; the counts query does not, so hand it a join string
+  // to interpolate only when a phase filter is active. Adding the join
+  // unconditionally would drop candidates whose phase_key is NULL from
+  // the unfiltered count.
+  let phaseJoin = "";
+  if (input.phase_names && input.phase_names.length > 0) {
+    phaseJoin = "JOIN dim_phase p ON p.phase_key = f.phase_key";
+    const placeholders = input.phase_names.map(() => "?").join(", ");
+    conditions.push(`p.phase_name IN (${placeholders})`);
+    params.push(...input.phase_names);
+  }
+
+  return { whereClause: `WHERE ${conditions.join(" AND ")}`, params, phaseJoin };
 }
 
 export function getIndividualPriorityAnalysis(
   input: IndividualPriorityAnalysisInput,
 ): IndividualPriorityAnalysis {
   const db = getDatabase();
-  const { whereClause, params } = buildPipelineWhere(input);
+  const { whereClause, params, phaseJoin } = buildPipelineWhere(input);
 
   // ---------------------------------------------------------------------
   // Counts — candidate_type = 'Candidate' is pinned in the WHERE, so
-  // no conditional aggregation needed.
+  // no conditional aggregation needed. phaseJoin is non-empty only when
+  // a phase filter is active; it is omitted otherwise to preserve counts
+  // for candidates whose phase_key is NULL.
   // ---------------------------------------------------------------------
   const countsSql = `
     SELECT COUNT(DISTINCT f.candidate_key) AS candidatesCount
     FROM fact_pipeline_snapshot f
     ${COMMON_JOINS}
+    ${phaseJoin}
     ${whereClause}
   `;
   const counts = db.prepare(countsSql).get(...params) as {

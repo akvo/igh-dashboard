@@ -801,6 +801,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): IndividualPriorityAnalysis!
 
     # Portfolio analysis - product distribution (donut chart)
