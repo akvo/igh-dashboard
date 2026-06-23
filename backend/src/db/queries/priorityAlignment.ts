@@ -61,7 +61,7 @@ export function getPriorityAlignmentOverview(
   // Uses the same conditional-join pattern as womenOrChildrenShare and
   // runPriorities: dim_disease is joined only when a GHA/disease filter
   // is active, and the pipeline bridge tables are joined only when a
-  // product filter is active. The unfiltered case is a bare COUNT(DISTINCT)
+  // product or phase filter is active. The unfiltered case is a bare COUNT(DISTINCT)
   // on dim_priority so that priorities with a NULL disease_key are
   // correctly included, keeping totalPriorities at 65.
   // ---------------------------------------------------------------------
