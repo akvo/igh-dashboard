@@ -21,6 +21,7 @@ import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
 import { buildGhaStatCards } from './shared/buildGhaStatCards';
 import { TAB_LABELS, TAB_DESCRIPTIONS, KPI_TOOLTIPS, ITEMS_PER_PAGE } from './shared/primitives';
+import { t } from '@/content';
 
 // =========================================================
 // Candidates tab — Visual Insights
@@ -183,11 +184,11 @@ export default function CandidatesTab({ onExplore }) {
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Selected candidates</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.candidates.table_title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more.
+          {t('pipeline_explorer.candidates.table_description')}
         </p>
         <DataTable
           tableId="vi-candidates"
@@ -208,7 +209,7 @@ export default function CandidatesTab({ onExplore }) {
           onSortChange={(next) => { setCandidatesSort(next); setCandidatesPage(1); }}
           visibleColumns={candidatesVisibleCols}
           onVisibleColumnsChange={setCandidatesVisibleCols}
-          emptyState={{ title: 'No candidates found' }}
+          emptyState={{ title: t('pipeline_explorer.candidates.table_empty') }}
         />
       </div>
     </>

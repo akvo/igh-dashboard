@@ -13,6 +13,8 @@
 // is needed here. Charts that consume these tooltips import recharts in their
 // own modules.
 
+import { t } from '@/content';
+
 // ---------- Constants ----------
 
 export const GHA_COLORS = {
@@ -22,9 +24,9 @@ export const GHA_COLORS = {
 };
 
 export const TAB_LABELS = {
-  candidates: { disease: 'Top 5 diseases by candidate count', product: 'Top 5 product types by candidate count' },
-  approved: { disease: 'Top 5 diseases by approved product count', product: 'Top 5 product types by approved product count' },
-  trials: { disease: 'Top 5 diseases by clinical trial count', product: 'Top 5 product types by clinical trial count' },
+  candidates: { disease: t('pipeline_explorer.top5.candidates_disease'), product: t('pipeline_explorer.top5.candidates_product') },
+  approved: { disease: t('pipeline_explorer.top5.approved_disease'), product: t('pipeline_explorer.top5.approved_product') },
+  trials: { disease: t('pipeline_explorer.top5.trials_disease'), product: t('pipeline_explorer.top5.trials_product') },
 };
 
 // Sub-title copy shown beneath each Top-5 chart title. Parallels TAB_LABELS so a
@@ -32,16 +34,16 @@ export const TAB_LABELS = {
 // `TAB_DESCRIPTIONS[scope].disease` for the description.
 export const TAB_DESCRIPTIONS = {
   candidates: {
-    disease: 'Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters.',
-    product: 'Ranks the five product types with the most candidates. Reflects the active filters.',
+    disease: t('pipeline_explorer.top5.candidates_disease_desc'),
+    product: t('pipeline_explorer.top5.candidates_product_desc'),
   },
   approved: {
-    disease: 'Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters.',
-    product: 'Ranks the five product types with the most approved products. Reflects the active filters.',
+    disease: t('pipeline_explorer.top5.approved_disease_desc'),
+    product: t('pipeline_explorer.top5.approved_product_desc'),
   },
   trials: {
-    disease: 'Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters.',
-    product: 'Ranks the five product types with the most clinical trials. Reflects the active filters.',
+    disease: t('pipeline_explorer.top5.trials_disease_desc'),
+    product: t('pipeline_explorer.top5.trials_product_desc'),
   },
 };
 
@@ -50,22 +52,22 @@ export const TAB_DESCRIPTIONS = {
 // returns and what GHA_COLORS uses) and differ only by the tab's noun.
 export const KPI_TOOLTIPS = {
   candidates: {
-    total: 'The number of active candidates in development that match the current filters.',
-    "Women's health": "The number of those candidates addressing women's health conditions.",
-    'Neglected diseases': 'The number of those candidates addressing neglected diseases.',
-    'Emerging infectious diseases': 'The number of those candidates addressing emerging infectious diseases.',
+    total: t('pipeline_explorer.kpi.candidates_total'),
+    "Women's health": t('pipeline_explorer.kpi.candidates_womens_health'),
+    'Neglected diseases': t('pipeline_explorer.kpi.candidates_neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.kpi.candidates_emerging'),
   },
   approved: {
-    total: 'The number of approved health products that match the current filters.',
-    "Women's health": "The number of those approved products addressing women's health conditions.",
-    'Neglected diseases': 'The number of those approved products addressing neglected diseases.',
-    'Emerging infectious diseases': 'The number of those approved products addressing emerging infectious diseases.',
+    total: t('pipeline_explorer.kpi.approved_total'),
+    "Women's health": t('pipeline_explorer.kpi.approved_womens_health'),
+    'Neglected diseases': t('pipeline_explorer.kpi.approved_neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.kpi.approved_emerging'),
   },
   trials: {
-    total: 'The number of clinical trials linked to the pipeline that match the current filters.',
-    "Women's health": "The number of those trials addressing women's health conditions.",
-    'Neglected diseases': 'The number of those trials addressing neglected diseases.',
-    'Emerging infectious diseases': 'The number of those trials addressing emerging infectious diseases.',
+    total: t('pipeline_explorer.kpi.trials_total'),
+    "Women's health": t('pipeline_explorer.kpi.trials_womens_health'),
+    'Neglected diseases': t('pipeline_explorer.kpi.trials_neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.kpi.trials_emerging'),
   },
 };
 

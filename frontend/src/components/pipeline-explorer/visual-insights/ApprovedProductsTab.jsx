@@ -40,6 +40,7 @@ import {
   APPROVING_AUTH_PHASES,
   DonutTooltip,
 } from './shared/primitives';
+import { t } from '@/content';
 
 // =========================================================
 // Approved Products tab — Visual Insights
@@ -206,7 +207,7 @@ export default function ApprovedProductsTab({ onExplore }) {
   return (
     <>
       <p className="text-sm text-gray-500 mb-6">
-        Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
+        {t('pipeline_explorer.approved.intro')}
       </p>
 
       <KpiStatCards cards={statCards} />
@@ -235,7 +236,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* Approval status */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">Approval status</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.approval_status_title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -248,7 +249,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
+            {t('pipeline_explorer.approved.approval_status_description')}
           </p>
           <div ref={approvalStatusRef}>
             {regulatoryLoading ? (
@@ -270,7 +271,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* Approving Authorities */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">Approving authorities</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.approving_auth_title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = stackedCSVColumns(
@@ -283,7 +284,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
+            {t('pipeline_explorer.approved.approving_auth_description')}
           </p>
           <div ref={authoritiesRef}>
             {regulatoryLoading ? (
@@ -310,7 +311,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* WHO prequalification */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">WHO prequalification</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.who_prequal_title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -323,7 +324,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
+            {t('pipeline_explorer.approved.who_prequal_description')}
           </p>
           <div ref={whoPrequalRef}>
             {regulatoryLoading ? (
@@ -356,11 +357,11 @@ export default function ApprovedProductsTab({ onExplore }) {
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Selected approved products</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.table_title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
+          {t('pipeline_explorer.approved.table_description')}
         </p>
         <DataTable
           tableId="vi-approved"
@@ -381,7 +382,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           onSortChange={(next) => { setApprovedSort(next); setApprovedPage(1); }}
           visibleColumns={approvedVisibleCols}
           onVisibleColumnsChange={setApprovedVisibleCols}
-          emptyState={{ title: 'No approved products found' }}
+          emptyState={{ title: t('pipeline_explorer.approved.table_empty') }}
         />
       </div>
     </>
