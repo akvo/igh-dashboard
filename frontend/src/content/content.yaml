@@ -166,6 +166,68 @@ pipeline_overview:
     dropdown_all: "All"
     loading: "Loading chart data..."
     title: "Product types"
+pipeline_trends:
+  axis:
+    x: "Number of candidates / approved products"
+    y: "Years"
+    y_portfolio: "Portfolio"
+    x_rd_stage: "R&D stage"
+  filter:
+    add_portfolio: "Add portfolio"
+    apply: "Apply"
+    clear: "Clear"
+  gfinder:
+    body_left: "G-FINDER is the gold-standard tracker of R&D funding for new products and technologies for global health. Updated annually, this is the evidence base informing all global health advocacy, investment and policy change."
+    body_right: |
+      **The case for change:** Explore funding trends over time, where there is innovation and where there are gaps.
+
+      **Drivers of impact:** Understand which initiatives are gaining strength and where there are weaknesses in global health R&D impact.
+    cta: "Explore G-Finder data"
+    heading: "Tracking global health investments: discover G-FINDER's impact"
+  loading:
+    chart: "Loading chart data..."
+    table: "Loading table data..."
+  page:
+    intro: "Explore how the global health R&D pipeline evolves over time across global health areas, diseases and product types. Track changes by R&D stage across specific IGH review years, and build custom comparisons by selecting one or more portfolios for deeper temporal analysis. Filters apply across the whole portal — any filter you set stays active here and on every other page until you clear it, from the global filter menu at the top or the active-filter box at the lower left."
+    share: "Share this view"
+    share_copied: "Copied!"
+    title: "Pipeline trends"
+  section:
+    description: "Explore the temporal trends in the global health R&D pipeline, tracking how distributions across R&D stages shift over time by global health area, disease, and product, with filters and legend controls to refine the analysis."
+    title: "Pipeline trends"
+  temporal:
+    compare:
+      a:
+        description: "Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression."
+        title: "Portfolio comparison by R&D stage in selected year"
+      b:
+        description: "Explore the underlying data for the selected portfolios by aggregated R&D stage in the chosen year, enabling detailed comparison of portfolio compositions."
+      c:
+        description: "Explore the temporal trends for each selected portfolio with R&D stages aggregated into early development, late development, and approved products across IGH review years."
+        title: "Temporal trends in aggregated R&D stages across portfolios"
+      empty_portfolios_chart: "Select portfolios and click Apply to see comparison data."
+      empty_portfolios_table_description: "Select portfolios and apply to see comparison data."
+      empty_portfolios_table_title: "No data available"
+      empty_portfolios_trends: "Select portfolios and click Apply to see temporal trends."
+      intro: "Compare up to four portfolios—each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&D stages to identify contrasts in growth and progression."
+    section:
+      description: "Explore how selected portfolios evolve over time in the global health R&D pipeline. Analyse the temporal progression of a single portfolio, by one or more diseases and products, or compare up to four portfolios side by side to identify differences in stage distribution and trajectory."
+      title: "Temporal trends & portfolio comparison"
+    single:
+      a:
+        description: "Explore the temporal trends in a single portfolio, showing how distributions across R&D stages change over time. Filter by disease and product, and use the R&D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis."
+        title: "Temporal trends in portfolio composition across R&D stages"
+      b:
+        description: "Explore the temporal trends in a single portfolio with R&D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above."
+        title: "Temporal trends in aggregated R&D stages"
+      c:
+        description: "Explore the underlying data for aggregated R&D stages, including year-on-year changes and total growth in portfolio composition over time."
+        empty_description: "No data available for the selected filters."
+        empty_title: "No data available"
+        title: "Temporal trends in aggregated R&D stages – table view"
+    tab:
+      compare: "Compare different portfolios"
+      single: "Compare a single portfolio over time"
 table_builder:
   candidates_approved:
     description: "Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand."
