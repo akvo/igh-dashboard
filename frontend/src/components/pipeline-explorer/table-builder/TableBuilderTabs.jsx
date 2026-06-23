@@ -445,7 +445,7 @@ export default function TableBuilderTabs() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="min-w-[180px]">
               <Dropdown
-                label="Global health area"
+                label={t('layout.filters.global_health_area')}
                 value={healthArea}
                 onChange={(v) => { setHealthArea(v); setExtractPage(1); }}
                 placeholder="All"
@@ -457,7 +457,7 @@ export default function TableBuilderTabs() {
             </div>
             <div className="min-w-[180px]">
               <HierarchicalDiseaseFilter
-                label="Disease"
+                label={t('layout.filters.disease')}
                 hierarchy={narrowedHierarchy}
                 primarySelected={primary}
                 secondarySelected={secondary}
@@ -474,7 +474,7 @@ export default function TableBuilderTabs() {
             {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
               <div className="min-w-[180px]">
                 <HierarchicalProductFilter
-                  label="Product type"
+                  label={t('layout.filters.product_type')}
                   selected={product}
                   onChange={(v) => { setProduct(v); setExtractPage(1); }}
                   placeholder="All"
@@ -488,7 +488,7 @@ export default function TableBuilderTabs() {
             {extractTab === 'candidates-approved' && (
               <div className="min-w-[180px]">
                 <Dropdown
-                  label="R&D stage"
+                  label={t('layout.filters.rd_stage')}
                   value={rdPhase}
                   onChange={(v) => { setRdPhase(v); setExtractPage(1); }}
                   placeholder="All"

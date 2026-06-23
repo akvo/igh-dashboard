@@ -16,6 +16,7 @@ import { RefreshIcon } from '@/components/icons';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
 import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
+import { t } from '@/content';
 
 export default function GlobalFilterBar({ filters, showRdPhase = true }) {
   return (
@@ -25,7 +26,7 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
       <div className="flex items-end gap-4">
         <div className="min-w-[220px]">
           <Dropdown
-            label="Global health area"
+            label={t('layout.filters.global_health_area')}
             value={filters.healthArea}
             onChange={filters.setHealthArea}
             placeholder="All"
@@ -37,7 +38,7 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
         </div>
         <div className="min-w-[220px]">
           <HierarchicalDiseaseFilter
-            label="Disease"
+            label={t('layout.filters.disease')}
             hierarchy={filters.narrowedHierarchy}
             primarySelected={filters.primary}
             secondarySelected={filters.secondary}
@@ -51,7 +52,7 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
         </div>
         <div className="min-w-[220px]">
           <HierarchicalProductFilter
-            label="Product type"
+            label={t('layout.filters.product_type')}
             selected={filters.product}
             onChange={filters.setProduct}
             placeholder="All"
@@ -63,7 +64,7 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
         {showRdPhase && (
           <div className="min-w-[220px]">
             <Dropdown
-              label="R&D phase"
+              label={t('layout.filters.rd_phase')}
               value={filters.rdPhase}
               onChange={filters.setRdPhase}
               placeholder="All"
@@ -84,7 +85,7 @@ export default function GlobalFilterBar({ filters, showRdPhase = true }) {
               : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
           }`}
         >
-          Clear
+          {t('layout.filters.clear')}
           <RefreshIcon className="w-4 h-4" />
         </button>
       </div>

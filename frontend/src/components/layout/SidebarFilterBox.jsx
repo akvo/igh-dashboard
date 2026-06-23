@@ -7,6 +7,7 @@ import {
   CloseIcon,
 } from '@/components/icons';
 import { useGlobalFilters } from '@/components/global-filters';
+import { t } from '@/content';
 
 export default function SidebarFilterBox({ isExpanded }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,22 +33,22 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
 
   const categories = [
     {
-      label: 'Global health area',
+      label: t('layout.filters.global_health_area'),
       count: healthArea.length,
       clear: () => { setHealthArea([]); },
     },
     {
-      label: 'Disease',
+      label: t('layout.filters.disease'),
       count: primary.length + secondary.length,
       clear: () => { setPrimary([]); setSecondary([]); },
     },
     {
-      label: 'Product',
+      label: t('layout.filters.product'),
       count: product.length,
       clear: () => { setProduct([]); },
     },
     {
-      label: 'R&D stage',
+      label: t('layout.filters.rd_stage'),
       count: rdPhase.length,
       clear: () => { setRdPhase([]); },
     },
@@ -121,7 +122,7 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
                   : 'text-gray-500 cursor-not-allowed'
               }`}
             >
-              Clear all
+              {t('layout.filters.clear_all')}
             </button>
             <button
               onClick={() => setIsOpen(false)}

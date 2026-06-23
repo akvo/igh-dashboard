@@ -16,24 +16,25 @@ import {
 } from '../icons';
 import SidebarFilterBox from './SidebarFilterBox';
 import { matchesItemHref } from './menuActive';
+import { t } from '@/content';
 
 const defaultMenuItems = [
   {
-    section: 'GENERAL',
+    section: t('layout.sidebar.section_general'),
     items: [
-      { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
-      { id: 'pipeline-overview', label: 'Pipeline Overview', icon: GridIcon, href: '/pipeline-overview' },
+      { id: 'home', label: t('layout.sidebar.nav_home'), icon: HomeIcon, href: '/' },
+      { id: 'pipeline-overview', label: t('layout.sidebar.nav_pipeline_overview'), icon: GridIcon, href: '/pipeline-overview' },
       {
         id: 'pipeline-explorer',
-        label: 'Pipeline Explorer',
+        label: t('layout.sidebar.nav_pipeline_explorer'),
         icon: SearchIcon,
         href: '/pipeline-explorer',
         // Single entry that stays highlighted across both child routes
         // (/pipeline-explorer and /pipeline-explorer/table-builder).
         match: 'prefix',
       },
-      { id: 'pipeline-trends', label: 'Pipeline trends', icon: RefreshIcon, href: '/pipeline-trends' },
-      { id: 'who-priority-alignment', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority-alignment' },
+      { id: 'pipeline-trends', label: t('layout.sidebar.nav_pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
+      { id: 'who-priority-alignment', label: t('layout.sidebar.nav_who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
     ],
   },
 ];
@@ -189,7 +190,7 @@ export default function Sidebar({
                     className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
                   >
                     <HelpIcon className="w-5 h-5 text-sidebar-icon group-hover:text-orange-500 transition-colors" strokeWidth={2.5} />
-                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">Help</span>
+                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">{t('layout.sidebar.help_button')}</span>
                   </button>
                   {showHelpPopup && (
                     <div
@@ -216,9 +217,9 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-2">{t('layout.sidebar.help_contact_heading')}</h4>
                       <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
+                        {t('layout.sidebar.help_contact_body_intro')}{' '}
                         <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
                       </p>
                       <a
@@ -229,7 +230,7 @@ export default function Sidebar({
                           <rect x="2" y="4" width="20" height="16" rx="2" />
                           <path d="M22 4L12 13L2 4" />
                         </svg>
-                        Send email
+                        {t('layout.sidebar.help_send_email')}
                       </a>
                     </div>
                   )}
@@ -281,9 +282,9 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">Contact information</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-2">{t('layout.sidebar.help_contact_heading')}</h4>
                       <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        For questions or help requests regarding the data and platform - reach out to the igh team via{' '}
+                        {t('layout.sidebar.help_contact_body_intro')}{' '}
                         <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
                       </p>
                       <a
@@ -294,7 +295,7 @@ export default function Sidebar({
                           <rect x="2" y="4" width="20" height="16" rx="2" />
                           <path d="M22 4L12 13L2 4" />
                         </svg>
-                        Send email
+                        {t('layout.sidebar.help_send_email')}
                       </a>
                     </div>
                   )}

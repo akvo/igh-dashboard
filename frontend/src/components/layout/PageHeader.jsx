@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { UploadIcon } from '@/components/icons';
+import { t } from '@/content';
 
 export default function PageHeader({ title, description }) {
   const [copied, setCopied] = useState(false);
@@ -41,7 +42,7 @@ export default function PageHeader({ title, description }) {
         className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors"
         onClick={handleShare}
       >
-        {copied ? 'Copied!' : 'Share this view'}
+        {copied ? t('layout.page_header.share_copied') : t('layout.page_header.share')}
         <UploadIcon className="w-4 h-4" />
       </button>
     </div>
