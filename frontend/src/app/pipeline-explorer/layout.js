@@ -39,7 +39,7 @@ export default function PipelineExplorerLayout({ children }) {
   // Builder intro is a single paragraph rendered as plain text.
   const intro = isTableBuilder
     ? t('pipeline_explorer.page.tb_intro')
-    : <Markdown path="pipeline_explorer.page.vi_intro" />;
+    : <Markdown path="pipeline_explorer.page.vi_intro" className="space-y-3" />;
 
   return (
     <div className="flex h-[calc(100vh-90px)] bg-cream-200">
