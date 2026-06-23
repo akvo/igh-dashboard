@@ -305,7 +305,7 @@ export default function DataTable({
   if (loading && visibleRows.length === 0) {
     return (
       <div className={`bg-white border border-gray-200 ${className}`}>
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
+        <div className="isolate overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
           <table className="w-full">
             <thead>
               <DataTableHeader
@@ -358,7 +358,7 @@ export default function DataTable({
         />
       </div>
 
-      <div className="relative overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
+      <div className="relative isolate overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
         {/* Refetch overlay. We keep stale rows visible (better than a
             full skeleton flash) but dim them slightly and pin a small
             "Loading…" badge so the user can see a request is in
