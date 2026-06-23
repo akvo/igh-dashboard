@@ -522,7 +522,7 @@ export const GET_PHASES = gql`
 // =========================================================
 // Single consolidated payload powering both the Home section's
 // cards/donuts and the WHO page's Priorities overview section.
-// The four filter args mirror the standard filter convention used by
+// The five filter args mirror the standard filter convention used by
 // `portfolioKPIs`, `productDistribution`, etc.
 export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
   query PriorityAlignmentOverview(

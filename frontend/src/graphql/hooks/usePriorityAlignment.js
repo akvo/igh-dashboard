@@ -26,6 +26,7 @@ const EMPTY = Object.freeze({
  * @param {string[]|null|undefined} primaryDiseaseNames
  * @param {string[]|null|undefined} secondaryDiseaseNames
  * @param {string[]|null|undefined} productNames
+ * @param {string[]|null|undefined} phaseNames
  */
 export function usePriorityAlignment(
   globalHealthAreas,

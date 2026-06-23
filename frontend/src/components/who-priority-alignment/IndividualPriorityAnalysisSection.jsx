@@ -342,6 +342,7 @@ export default function IndividualPriorityAnalysisSection() {
     page.primary.length > 0 ? page.primary : null,
     page.secondary.length > 0 ? page.secondary : null,
     page.expandedProduct.length > 0 ? page.expandedProduct : null,
+    page.rdPhase.length > 0 ? page.rdPhase : null,
   );
 
   const dropdownOptions = priorities.map((p) => ({

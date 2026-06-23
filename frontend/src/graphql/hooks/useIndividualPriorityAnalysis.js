@@ -30,6 +30,7 @@ const EMPTY = Object.freeze({
  * @param {string[]} [args.primaryDiseaseNames]
  * @param {string[]} [args.secondaryDiseaseNames]
  * @param {string[]} [args.productNames]
+ * @param {string[]} [args.phaseNames]
  */
 export function useIndividualPriorityAnalysis({
   priorityKey,
