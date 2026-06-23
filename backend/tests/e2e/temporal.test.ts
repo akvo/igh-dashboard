@@ -448,7 +448,9 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
 
 describe("phase_names filter", () => {
   async function totalFor(variables: Record<string, unknown>): Promise<number> {
-    const { data } = await query<{ temporalSnapshots: { phase_name: string; candidateCount: number }[] }>(
+    const { data } = await query<{
+      temporalSnapshots: { phase_name: string; candidateCount: number }[];
+    }>(
       `query ($phaseNames: [String!]) {
          temporalSnapshots(phase_names: $phaseNames) { phase_name candidateCount }
        }`,

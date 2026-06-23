@@ -207,7 +207,9 @@ describe("phase_names filter", () => {
   });
 
   it("pipelineBuildUp rows are restricted to the selected phase", async () => {
-    const { data } = await query<{ individualPriorityAnalysis: { pipelineBuildUp: { phase_name: string }[] } }>(
+    const { data } = await query<{
+      individualPriorityAnalysis: { pipelineBuildUp: { phase_name: string }[] };
+    }>(
       `query ($k: Int!, $phaseNames: [String!]) {
          individualPriorityAnalysis(priority_key: $k, phase_names: $phaseNames) {
            pipelineBuildUp { phase_name }

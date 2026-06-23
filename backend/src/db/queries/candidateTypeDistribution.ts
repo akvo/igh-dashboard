@@ -40,7 +40,12 @@ export function getCandidateTypeDistribution(
 
   addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
-  addArrayCondition(filters?.secondary_disease_names, "d.secondary_disease_name", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
 
   if (filters?.phase_names && filters.phase_names.length > 0) {
     joins.push("JOIN dim_phase p ON f.phase_key = p.phase_key");

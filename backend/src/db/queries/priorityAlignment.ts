@@ -179,10 +179,7 @@ function hasAnyDiseaseFilter(filters: ResolvedFilters): boolean {
 // These are the filters that force the priority-catalog sub-queries to route
 // through the pipeline (bridge -> fact) instead of counting dim_priority directly.
 function hasAnyPipelineFilter(filters: ResolvedFilters): boolean {
-  return (
-    (filters.product_names?.length ?? 0) > 0 ||
-    (filters.phase_names?.length ?? 0) > 0
-  );
+  return (filters.product_names?.length ?? 0) > 0 || (filters.phase_names?.length ?? 0) > 0;
 }
 
 // Priority-side disease rows have `disease_filter = NULL` for 17 of 19

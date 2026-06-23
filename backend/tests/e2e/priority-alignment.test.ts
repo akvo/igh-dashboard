@@ -485,8 +485,7 @@ describe("phase_names filter", () => {
     const all = (await ask()).data.priorityAlignmentOverview;
     const p1 = (await ask(["Phase I"])).data.priorityAlignmentOverview;
 
-    const sumCandidates = (o: typeof all) =>
-      o.byArea.reduce((s, a) => s + a.totalCandidates, 0);
+    const sumCandidates = (o: typeof all) => o.byArea.reduce((s, a) => s + a.totalCandidates, 0);
     expect(sumCandidates(p1)).toBeLessThanOrEqual(sumCandidates(all));
 
     const sumProduct = (o: typeof all) =>
