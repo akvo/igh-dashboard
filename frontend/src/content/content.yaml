@@ -139,3 +139,28 @@ pipeline_explorer:
     table_title: "Selected clinical trials"
     trial_status_description: "Number of studies at each stage across the portfolio, from ongoing to completed."
     trial_status_title: "Clinical trial status"
+table_builder:
+  candidates_approved:
+    description: "Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand."
+    title: "Candidates & approved products"
+  clinical_trials:
+    description: "Clinical trials joined to the candidates they study — useful for tracing trial activity back to specific assets in the pipeline. Filter by global health area, disease or product type, then choose columns for trial-level detail."
+    title: "Clinical trials & candidates"
+  download_csv: "Download CSV"
+  downloading: "Downloading..."
+  empty_state:
+    no_data_title: "No results available"
+    no_results_description: "No rows match the active filters. Clear them to see more."
+    no_results_title: "No results found"
+  rd_only:
+    description: "R&D priorities on their own, no candidate join — useful for understanding the priority landscape itself: author, publication date, target population, efficacy and safety expectations, source. Filter by global health area or disease, then choose columns to focus on what matters."
+    title: "R&D priorities"
+  rd_priorities:
+    description: "R&D priorities joined to the candidates that address them — useful for seeing which priorities are well covered and which remain open. Filter by global health area or disease, then choose columns to compare priority detail against candidate progress."
+    title: "R&D priorities & candidates"
+  reset_filters: "Reset filters"
+  tabs:
+    candidates_approved: "Candidates & approved products"
+    clinical_trials: "Clinical trials & candidates"
+    rd_only: "R&D priorities"
+    rd_priorities: "R&D priorities & candidates"
