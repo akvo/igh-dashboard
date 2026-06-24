@@ -24,7 +24,6 @@ import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
-import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { WorldMap } from '@/components/charts';
@@ -32,12 +31,12 @@ import { DataTable, ChartMenu, Dropdown } from '@/components/ui';
 import { KpiStatCards } from './shared/KpiStatCards';
 import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
+import { buildGhaStatCards } from './shared/buildGhaStatCards';
 import {
   TAB_LABELS,
   TAB_DESCRIPTIONS,
   KPI_TOOLTIPS,
   ITEMS_PER_PAGE,
-  STAT_CARD_COLORS,
   STATUS_COLORS,
   AGE_COLORS,
   BarTooltip,
@@ -150,27 +149,15 @@ export default function ClinicalTrialsTab({ onExplore }) {
     [ageGroupsData],
   );
 
-  // Stat cards: a total-clinical-trials card followed by one card per GHA.
-  // Both the total and per-GHA cards now count trials (pipeline-gated).
-  const statCards = useMemo(() => {
-    const total = totalTrials ?? 0;
-    const ghaCards = (ghaDistribution || []).map((g, i) => {
-      const count = g.value;
-      const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
-      const title = displayHealthArea(g.name);
-      return {
-        title,
-        value: count,
-        percentage: pct,
-        color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
-        tooltip: KPI_TOOLTIPS.trials[title],
-      };
-    });
-    return [
-      { title: 'Total clinical trials', value: total, percentage: null, tooltip: KPI_TOOLTIPS.trials.total },
-      ...ghaCards,
-    ];
-  }, [totalTrials, ghaDistribution]);
+  const statCards = useMemo(
+    () => buildGhaStatCards(ghaDistribution, {
+      total: totalTrials ?? 0,
+      totalLabel: 'Total clinical trials',
+      countFn: (g) => g.value,
+      tooltips: KPI_TOOLTIPS.trials,
+    }),
+    [totalTrials, ghaDistribution],
+  );
 
   // =========================================================
   // Clinical-trials DataTable (server-side pagination)

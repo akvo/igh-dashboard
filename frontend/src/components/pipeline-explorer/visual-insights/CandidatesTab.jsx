@@ -14,13 +14,13 @@ import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
-import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { DataTable } from '@/components/ui';
 import { KpiStatCards } from './shared/KpiStatCards';
 import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
-import { TAB_LABELS, TAB_DESCRIPTIONS, KPI_TOOLTIPS, ITEMS_PER_PAGE, STAT_CARD_COLORS } from './shared/primitives';
+import { buildGhaStatCards } from './shared/buildGhaStatCards';
+import { TAB_LABELS, TAB_DESCRIPTIONS, KPI_TOOLTIPS, ITEMS_PER_PAGE } from './shared/primitives';
 
 // =========================================================
 // Candidates tab — Visual Insights
@@ -104,28 +104,15 @@ export default function CandidatesTab({ onExplore }) {
     return [...productChartData].sort((a, b) => b.value - a.value).slice(0, 5);
   }, [productChartData]);
 
-  // Stat cards: a total-candidates card followed by one card per GHA. The
-  // original page branched these values on activeTab; here they are fixed to
-  // the candidate figures.
-  const statCards = useMemo(() => {
-    const total = kpisRaw?.totalCandidates ?? 0;
-    const ghaCards = (ghaSummaries || []).map((g, i) => {
-      const count = g.candidateCount;
-      const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
-      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
-      return {
-        title,
-        value: count,
-        percentage: pct,
-        color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
-        tooltip: KPI_TOOLTIPS.candidates[title],
-      };
-    });
-    return [
-      { title: 'Total candidates', value: total, percentage: null, tooltip: KPI_TOOLTIPS.candidates.total },
-      ...ghaCards,
-    ];
-  }, [kpisRaw, ghaSummaries]);
+  const statCards = useMemo(
+    () => buildGhaStatCards(ghaSummaries, {
+      total: kpisRaw?.totalCandidates ?? 0,
+      totalLabel: 'Total candidates',
+      countFn: (g) => g.candidateCount,
+      tooltips: KPI_TOOLTIPS.candidates,
+    }),
+    [kpisRaw, ghaSummaries],
+  );
 
   // =========================================================
   // Candidates DataTable (server-side pagination)

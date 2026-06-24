@@ -22,7 +22,6 @@ import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer, numberSerializer } from '@/lib/url-serializers';
 import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
-import { displayHealthArea } from '@/lib/transformations/constants';
 import { downloadPNG } from '@/lib/png';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { stackedCSVColumns } from '@/lib/visualInsightsCsv';
@@ -31,12 +30,12 @@ import { BarChart as ChartBarChart, StackedBarChart, ChartEmptyState } from '@/c
 import { KpiStatCards } from './shared/KpiStatCards';
 import { TopFiveDiseasesChart } from './shared/TopFiveDiseasesChart';
 import { TopFiveProductTypesChart } from './shared/TopFiveProductTypesChart';
+import { buildGhaStatCards } from './shared/buildGhaStatCards';
 import {
   TAB_LABELS,
   TAB_DESCRIPTIONS,
   KPI_TOOLTIPS,
   ITEMS_PER_PAGE,
-  STAT_CARD_COLORS,
   STATUS_COLORS,
   APPROVING_AUTH_PHASES,
   DonutTooltip,
@@ -150,26 +149,15 @@ export default function ApprovedProductsTab({ onExplore }) {
     [whoPrequalData],
   );
 
-  // Stat cards: a total-approved-products card followed by one card per GHA.
-  const statCards = useMemo(() => {
-    const total = kpisRaw?.approvedProducts ?? 0;
-    const ghaCards = (ghaSummaries || []).map((g, i) => {
-      const count = g.productCount;
-      const pct = total > 0 ? Math.round((count / total) * 1000) / 10 : 0;
-      const title = g.global_health_area ? displayHealthArea(g.global_health_area) : g.name;
-      return {
-        title,
-        value: count,
-        percentage: pct,
-        color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
-        tooltip: KPI_TOOLTIPS.approved[title],
-      };
-    });
-    return [
-      { title: 'Total approved products', value: total, percentage: null, tooltip: KPI_TOOLTIPS.approved.total },
-      ...ghaCards,
-    ];
-  }, [kpisRaw, ghaSummaries]);
+  const statCards = useMemo(
+    () => buildGhaStatCards(ghaSummaries, {
+      total: kpisRaw?.approvedProducts ?? 0,
+      totalLabel: 'Total approved products',
+      countFn: (g) => g.productCount,
+      tooltips: KPI_TOOLTIPS.approved,
+    }),
+    [kpisRaw, ghaSummaries],
+  );
 
   // =========================================================
   // Approved-products DataTable (server-side pagination)
