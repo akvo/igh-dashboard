@@ -12,6 +12,7 @@ import {
 import { ChartMenu } from '@/components/ui';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { BarTooltip } from './primitives';
+import { wrapLabel } from '@/lib/chart-utils';
 
 // =========================================================
 // Top 5 product types bar chart
@@ -45,7 +46,30 @@ export function TopFiveProductTypesChart({ data, title, description, loading, ch
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />
               <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: axisLabel, position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
-              <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 12 }} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={120}
+                interval={0}
+                axisLine={false}
+                tickLine={false}
+                tick={({ x, y, payload }) => {
+                  const label = payload.value;
+                  const lines = wrapLabel(label, 16);
+                  const lineHeight = 14;
+                  const startY = y - ((lines.length - 1) * lineHeight) / 2;
+                  return (
+                    <text x={x} y={startY} textAnchor="end" fill="#666" fontSize={12}>
+                      <title>{label}</title>
+                      {lines.map((line, i) => (
+                        <tspan key={i} x={x} dy={i === 0 ? 0 : lineHeight} dominantBaseline="central">
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
+                  );
+                }}
+              />
               <Tooltip content={<BarTooltip />} />
               <Bar dataKey="value" fill="#fe7449" barSize={20} radius={[0, 4, 4, 0]} />
             </BarChart>

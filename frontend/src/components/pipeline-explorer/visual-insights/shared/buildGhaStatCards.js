@@ -1,4 +1,4 @@
-import { STAT_CARD_COLORS } from './primitives';
+import { GHA_COLORS } from './primitives';
 import { displayHealthArea } from '@/lib/transformations/constants';
 
 export function buildGhaStatCards(ghaSummaries, { total, totalLabel, countFn, tooltips }) {
@@ -10,9 +10,9 @@ export function buildGhaStatCards(ghaSummaries, { total, totalLabel, countFn, to
       return { title, value: count, percentage: pct, tooltip: tooltips[title] };
     })
     .sort((a, b) => b.value - a.value)
-    .map((card, i) => ({
+    .map((card) => ({
       ...card,
-      color: STAT_CARD_COLORS[i % STAT_CARD_COLORS.length],
+      color: GHA_COLORS[card.title] || '#B28FC9',
     }));
 
   return [
