@@ -138,7 +138,10 @@ export default function GroupedBarChart({
                 top: 10,
                 right: 10,
                 left: 5,
-                bottom: showBarLabels ? 55 : (xAxisLabel ? 40 : 20),
+                // With per-bar labels on, the bottom band stacks three rows:
+                // the year label under each bar, the category name under each
+                // group, then the axis title. Give it enough room to clear.
+                bottom: showBarLabels ? 88 : (xAxisLabel ? 40 : 20),
               }}
               barCategoryGap="20%"
               barGap={4}
@@ -155,8 +158,8 @@ export default function GroupedBarChart({
                 interval={0}
                 axisLine={{ stroke: 'rgba(38, 38, 38, 0.24)' }}
                 tickLine={false}
-                tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 20 : 0 }}
-                label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
+                tick={{ fill: 'rgba(38, 38, 38, 0.88)', fontSize: 12, dy: showBarLabels ? 24 : 0 }}
+                label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: showBarLabels ? -48 : -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
               />
               <YAxis
                 type="number"
