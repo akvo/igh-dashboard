@@ -270,10 +270,10 @@ export default function ApprovedProductsTab({ onExplore }) {
             ) : (
               <ChartBarChart
                 data={approvalStatusData}
+                layout="vertical"
                 height={280}
-                maxTickChars={999}
-                xAxisLabel="Approval status"
-                yAxisLabel="Number of products"
+                xAxisLabel="Number of products"
+                yAxisLabel="Approval status"
               />
             )}
           </div>
