@@ -60,7 +60,9 @@ export function getGlobalHealthAreaSummaries(
     ${joins.join("\n    ")}
     WHERE ${conditions.join("\n      AND ")}
     GROUP BY d.global_health_area
-    ORDER BY candidateCount DESC
+    -- Sort by combined count so the highest-count GHA comes first regardless
+    -- of candidate_type filter (the irrelevant count is always 0).
+    ORDER BY (candidateCount + productCount) DESC
   `;
 
   return db.prepare(sql).all(...params) as GlobalHealthAreaSummary[];

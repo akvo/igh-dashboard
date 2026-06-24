@@ -21,8 +21,6 @@ export const GHA_COLORS = {
   'Emerging infectious diseases': '#8DD6A9',
 };
 
-export const STAT_CARD_COLORS = ['#B28FC9', '#8DD6A9', '#54A5C4'];
-
 export const TAB_LABELS = {
   candidates: { disease: 'Top 5 diseases by candidate count', product: 'Top 5 product types by candidate count' },
   approved: { disease: 'Top 5 diseases by approved product count', product: 'Top 5 product types by approved product count' },
