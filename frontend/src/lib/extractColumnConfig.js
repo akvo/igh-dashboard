@@ -111,6 +111,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'studyType', label: 'Study type', accessor: 'study_type', filter: { kind: 'category' } },
     { id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count', type: 'number', filter: { kind: 'number' } },
     { id: 'rdPhase', label: 'R&D phase', accessor: 'trial_phase', filter: { kind: 'category' } },
+    { id: 'ctStatus', label: 'CT status', accessor: 'status', filter: { kind: 'category' } },
     { id: 'ctResultsStatus', label: 'CT results status', accessor: 'ct_results_status', filter: { kind: 'category' } },
     { id: 'ctResultType', label: 'CT result type', accessor: 'ct_results_type', filter: { kind: 'category' } },
     { id: 'ctTerminatedReason', label: 'CT terminated reason', accessor: 'ct_terminated_reason', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
