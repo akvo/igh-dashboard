@@ -97,6 +97,14 @@ export default function PipelineTrends() {
   );
   const productGroupMembers = useMemo(() => vcpMemberKeys(productsList), [productsList]);
 
+  // GHA-only narrowed hierarchy for TemporalTrendsSection — decoupled from
+  // global Disease/Product selections so only GHA narrows the disease options.
+  const ghaFilteredHierarchy = useMemo(() => {
+    if (selectedHealthArea.length === 0) return diseaseHierarchy;
+    const ghaSet = new Set(selectedHealthArea);
+    return diseaseHierarchy.filter((r) => ghaSet.has(r.global_health_area));
+  }, [diseaseHierarchy, selectedHealthArea]);
+
   // Cross-filtering uses by-name mode (same as portfolio pages) with
   // the all-pipeline pairs so the dropdowns only offer options that
   // actually exist in the temporal dataset.
@@ -291,7 +299,7 @@ export default function PipelineTrends() {
 
           {/* Temporal trends & portfolio comparison */}
           <TemporalTrendsSection
-            narrowedHierarchy={narrowedHierarchy}
+            narrowedHierarchy={ghaFilteredHierarchy}
             productOptions={productOptionsByKey}
             productGroupMembers={productGroupMembers}
             availableYears={availableYears}
