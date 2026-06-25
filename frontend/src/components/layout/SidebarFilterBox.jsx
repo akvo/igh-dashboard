@@ -7,8 +7,6 @@ import {
   CloseIcon,
 } from '@/components/icons';
 import { useGlobalFilters } from '@/components/global-filters';
-import { useUrlState } from '@/lib/useUrlState';
-import { arraySerializer, stringSerializer } from '@/lib/url-serializers';
 
 export default function SidebarFilterBox({ isExpanded }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,19 +30,6 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     setRdPhase,
   } = useGlobalFilters();
 
-  // Section-local URL-state filters (temporal-trends section).
-  // Reading them here lets the sidebar reflect all active filters regardless
-  // of which page/section set them.
-  const [ttPrimary, setTtPrimary] = useUrlState('ttPrimary', [], arraySerializer);
-  const [ttSecondary, setTtSecondary] = useUrlState('ttSecondary', [], arraySerializer);
-  const [ttProduct, setTtProduct] = useUrlState('ttProduct', [], arraySerializer);
-  const [ttYear, setTtYear] = useUrlState('ttYear', [], arraySerializer);
-  const [cpYear, setCpYear] = useUrlState('cpYear', '', stringSerializer);
-
-  // One declarative source of truth for the sidebar's filter inventory.
-  // Each category aggregates its global selection with any section-local
-  // URL-state mirrors (temporal trends) so the sidebar reflects every
-  // active filter regardless of which page set it.
   const categories = [
     {
       label: 'Global health area',
@@ -53,23 +38,18 @@ function SidebarFilterBoxInner({ isExpanded, isOpen, setIsOpen }) {
     },
     {
       label: 'Disease',
-      count: primary.length + secondary.length + ttPrimary.length + ttSecondary.length,
-      clear: () => { setPrimary([]); setSecondary([]); setTtPrimary([]); setTtSecondary([]); },
+      count: primary.length + secondary.length,
+      clear: () => { setPrimary([]); setSecondary([]); },
     },
     {
       label: 'Product',
-      count: product.length + ttProduct.length,
-      clear: () => { setProduct([]); setTtProduct([]); },
+      count: product.length,
+      clear: () => { setProduct([]); },
     },
     {
       label: 'R&D stage',
       count: rdPhase.length,
       clear: () => { setRdPhase([]); },
-    },
-    {
-      label: 'Year',
-      count: ttYear.length + (cpYear ? 1 : 0),
-      clear: () => { setTtYear([]); setCpYear(''); },
     },
   ];
 
