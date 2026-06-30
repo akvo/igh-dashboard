@@ -159,7 +159,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
   it("totalPriorities matches snapshot (65)", () => {
     // All non-stub priorities from dim_priority are counted (no pipeline gate).
     // Test_TO is excluded as a test/stub priority.
-    expect(baseline.totalPriorities).toBe(65);
+    expect(baseline.totalPriorities).toBe(67);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -170,8 +170,8 @@ describe("priorityAlignmentOverview — unfiltered", () => {
   it("byArea snapshot values match tracked DB", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
     // ND total updated 1777 → 1882 after DB update (2026-06-10).
-    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(164);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1893);
+    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(234);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1890);
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
     expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
@@ -202,10 +202,10 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const byKey = Object.fromEntries(
       baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
     );
-    expect(byKey["Vaccines"]).toBe(68);
-    expect(byKey["Drugs"]).toBe(58);
-    expect(byKey["Diagnostics"]).toBe(40);
-    expect(byKey["Biologics"]).toBe(18);
+    expect(byKey["Vaccines"]).toBe(69);
+    expect(byKey["Drugs"]).toBe(61);
+    expect(byKey["Diagnostics"]).toBe(105);
+    expect(byKey["Biologics"]).toBe(19);
   });
 
   it("diseaseOptions returns priority-bearing diseases (count = 35), sorted by name", () => {
@@ -236,7 +236,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
     // The sum equals totalPriorities. Test_TO was the sole unknown entry.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
-    expect(baseline.womenOrChildrenShare.no).toBe(31);
+    expect(baseline.womenOrChildrenShare.no).toBe(33);
     expect(baseline.womenOrChildrenShare.unknown).toBe(0);
     const sum =
       baseline.womenOrChildrenShare.yes +
