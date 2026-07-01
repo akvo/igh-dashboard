@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
 } from '@tanstack/react-table';
 import DataTableHeader from './DataTableHeader';
+import StickyTableHeader from './StickyTableHeader';
 import DataTableFilterRow from './DataTableFilterRow';
 import ColumnsPopover from './ColumnsPopover';
 import Pagination from './Pagination';
@@ -176,8 +177,10 @@ export default function DataTable({
   // the sticky offset stays in sync as the table re-mounts and as column
   // widths shift after data arrives.
   const observerRef = useRef(null);
+  const realHeaderRowRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(46);
   const headerRowRef = useCallback((el) => {
+    realHeaderRowRef.current = el;
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
@@ -305,7 +308,7 @@ export default function DataTable({
   if (loading && visibleRows.length === 0) {
     return (
       <div className={`bg-white border border-gray-200 ${className}`}>
-        <div className="isolate overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
+        <div className="isolate overflow-x-auto" ref={scrollableRef}>
           <table className="w-full">
             <thead>
               <DataTableHeader
@@ -358,7 +361,24 @@ export default function DataTable({
         />
       </div>
 
-      <div className="relative isolate overflow-x-auto max-h-[70vh] overflow-y-auto" ref={scrollableRef}>
+      <StickyTableHeader
+        columns={orderedColumns}
+        activeSort={sort}
+        filters={filters}
+        onSort={onSort}
+        onHideColumn={onHideColumn}
+        onFilterChange={onFilterChange}
+        graphqlTable={graphqlTable}
+        filterContext={filterContext}
+        buildContextForColumn={buildContextForColumn}
+        serverSide={serverSide}
+        data={data}
+        scrollableRef={scrollableRef}
+        realHeaderRowRef={realHeaderRowRef}
+        headerHeight={headerHeight}
+      />
+
+      <div className="relative isolate overflow-x-auto" ref={scrollableRef}>
         {/* Refetch overlay. We keep stale rows visible (better than a
             full skeleton flash) but dim them slightly and pin a small
             "Loading…" badge so the user can see a request is in
