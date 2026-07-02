@@ -111,7 +111,7 @@ export default function StickyTableHeader({
 
     // Sticky bars pinned above this header (page filter bars, tab strips,
     // the Table Builder toolbar…). Measured from the DOM so no host needs
-    // to pass an offset: a bar counts if it lives in the same scroll
+    // to pass an offset: a bar counts if it pins to the same scroll
     // container, comes before the header, and horizontally overlaps it
     // (the last test drops side rails like the sticky sidebar). The set
     // only changes on layout, so it's cached and refreshed on resize.
@@ -122,6 +122,13 @@ export default function StickyTableHeader({
         if (el === container || container.contains(el) || el.contains(container)) return false;
         if (el.closest('table')) return false;
         if (getComputedStyle(el).position !== 'sticky') return false;
+        // Only bars that actually pin to *our* scroll container displace the
+        // header. A sticky bar nested in its own scroll box (e.g. the
+        // ColumnsPopover's `sticky top-0` header inside the open dropdown)
+        // pins to that box, not the page — counting it would inflate the
+        // offset and shove the clone down over the real header (the
+        // duplicate-header-on-reorder bug).
+        if (getScrollParent(el) !== scroller) return false;
         if (!(container.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING)) return false;
         const r = el.getBoundingClientRect();
         return r.right > cRect.left && r.left < cRect.right;
