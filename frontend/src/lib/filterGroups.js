@@ -2,6 +2,19 @@
 // value.  Must NOT be a comma — the URL array serializer splits on commas.
 const VC_KEY_SEP = '|';
 
+// Every URL query-param key that holds a filter selection — global or
+// section-local. Navigation preserves ALL of these across every route so
+// that a filter set on any page stays active until the user explicitly
+// clears it (via the sidebar filter box or the global page header).
+// Single source of truth — imported by the filter-preserving navigation
+// helper.
+export const GLOBAL_FILTER_KEYS = [
+  // Core global filters
+  'gha', 'primary', 'secondary', 'product', 'rdPhase',
+  // Temporal-trends section filters
+  'ttPrimary', 'ttSecondary', 'ttProduct', 'ttYear', 'cpYear',
+];
+
 // Vector control product name consolidation
 export const VECTOR_CONTROL_PRODUCT_NAMES = [
   'Biological vector control products',
@@ -40,6 +53,21 @@ export function normalizeProductName(name) {
     return VECTOR_CONTROL_CONSOLIDATED_NAME;
   }
   return name;
+}
+
+/**
+ * The charts collapse the four VCP subtypes into one umbrella row by default.
+ * We break them out only when the user has drilled the product filter down to
+ * VCP subtypes *exclusively* — every selected product is a VCP subtype and at
+ * least one is selected. Any non-VCP product in the mix (or an empty "All"
+ * selection) keeps the umbrella.
+ */
+export function isVcpOnlySelection(products) {
+  return (
+    Array.isArray(products) &&
+    products.length > 0 &&
+    products.every((name) => VECTOR_CONTROL_PRODUCT_NAMES.includes(name))
+  );
 }
 
 /**

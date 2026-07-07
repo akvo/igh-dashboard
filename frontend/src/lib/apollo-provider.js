@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { ApolloClient, InMemoryCache, HttpLink, from } from '@apollo/client/core';
 import { ApolloProvider as BaseApolloProvider } from '@apollo/client/react';
 import { onError } from '@apollo/client/link/error';

@@ -9,6 +9,7 @@ interface TemporalSnapshotFilters {
   global_health_areas?: string[];
   product_keys?: number[];
   candidate_type?: string;
+  phase_names?: string[];
 }
 
 const DISEASE_JOIN = "JOIN dim_disease d ON f.disease_key = d.disease_key";
@@ -45,6 +46,7 @@ function buildTemporalQuery(filters?: TemporalSnapshotFilters) {
     params,
     diseaseCtx,
   );
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params);
 
   if (filters?.candidate_type) {
     joins.push("JOIN dim_candidate_core c ON f.candidate_key = c.candidate_key");

@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
 import { useState } from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import { DataTable } from '@/components/ui/data-table';
+
+// The header + filter rows are rendered twice: once in the scrolling table
+// (inside `.overflow-x-auto`) and once in the aria-hidden page-sticky clone
+// (StickyTableHeader). Scope control queries to the real table so they
+// resolve to a single element.
+const realTable = () => within(document.querySelector('.overflow-x-auto'));
 
 const COLUMNS = [
   { header: 'Name', accessor: 'name', filter: { kind: 'text' }, sortable: true },
@@ -33,8 +39,10 @@ const renderTable = (props = {}) =>
 describe('DataTable', () => {
   it('renders all rows and column headers by default', () => {
     renderTable();
-    expect(screen.getByText('Name')).toBeTruthy();
-    expect(screen.getByText('Type')).toBeTruthy();
+    // Header labels appear twice: once in the table, once in the
+    // aria-hidden sticky-header clone (StickyTableHeader).
+    expect(screen.getAllByText('Name')[0]).toBeTruthy();
+    expect(screen.getAllByText('Type')[0]).toBeTruthy();
     expect(screen.getByText('Alpha')).toBeTruthy();
     expect(screen.getByText('Bravo')).toBeTruthy();
   });
@@ -43,7 +51,7 @@ describe('DataTable', () => {
     const onFiltersChange = vi.fn();
     renderTable({ onFiltersChange });
 
-    const input = screen.getByPlaceholderText('Filter…');
+    const input = realTable().getByPlaceholderText('Filter…');
     fireEvent.change(input, { target: { value: 'alpha' } });
 
     // Debouncing happens upstream in useUrlState; this component fires
@@ -326,6 +334,27 @@ describe('DataTable', () => {
     expect(screen.getByText('Clear all filters')).toBeTruthy();
   });
 
+  // -------- LINK --------
+
+  it('renders a link-type cell as an anchor opening in a new tab', () => {
+    renderTable({
+      columns: [{ header: 'Source', accessor: 'source', type: 'link' }],
+      data: [{ source: 'https://clinicaltrials.gov/study/NCT04406727' }],
+    });
+    const link = screen.getByRole('link', { name: 'https://clinicaltrials.gov/study/NCT04406727' });
+    expect(link.getAttribute('href')).toBe('https://clinicaltrials.gov/study/NCT04406727');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('renders no link for a blank link-type cell', () => {
+    renderTable({
+      columns: [{ header: 'Source', accessor: 'source', type: 'link' }],
+      data: [{ source: '' }],
+    });
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
   // -------- NUMBER --------
 
   it('NUMBER filter fires onFiltersChange with operator + value (after debounce)', async () => {
@@ -361,10 +390,10 @@ describe('DataTable', () => {
     );
 
     // Default operator is `eq`; switch to `gt` then type 50.
-    const opSelect = screen.getByLabelText('Number filter operator');
+    const opSelect = realTable().getByLabelText('Number filter operator');
     fireEvent.change(opSelect, { target: { value: 'gt' } });
 
-    const valueInput = screen.getByPlaceholderText('value');
+    const valueInput = realTable().getByPlaceholderText('value');
     fireEvent.change(valueInput, { target: { value: '50' } });
 
     // NumberFilter debounces 400ms — wait for the onChange to settle.
@@ -482,11 +511,11 @@ describe('DataTable', () => {
       </MockedProvider>,
     );
 
-    fireEvent.change(screen.getByLabelText('Date filter operator'), {
+    fireEvent.change(realTable().getByLabelText('Date filter operator'), {
       target: { value: 'between' },
     });
 
-    const dateInputs = document.querySelectorAll('input[type="date"]');
+    const dateInputs = document.querySelector('.overflow-x-auto').querySelectorAll('input[type="date"]');
     fireEvent.change(dateInputs[0], { target: { value: '2024-01-01' } });
     fireEvent.change(dateInputs[1], { target: { value: '2024-12-31' } });
 
@@ -550,10 +579,10 @@ describe('DataTable', () => {
 
     // Set operator > and type 20 — expect 3 rows (25, 35, 45) once
     // the debounced filter fires and re-renders.
-    fireEvent.change(screen.getByLabelText('Number filter operator'), {
+    fireEvent.change(realTable().getByLabelText('Number filter operator'), {
       target: { value: 'gt' },
     });
-    fireEvent.change(screen.getByPlaceholderText('value'), {
+    fireEvent.change(realTable().getByPlaceholderText('value'), {
       target: { value: '20' },
     });
 
@@ -600,10 +629,10 @@ describe('DataTable', () => {
 
     // Filter "after 2024-12-31" — expect 1 row (2025-02-05) after
     // the debounced filter fires.
-    fireEvent.change(screen.getByLabelText('Date filter operator'), {
+    fireEvent.change(realTable().getByLabelText('Date filter operator'), {
       target: { value: 'after' },
     });
-    const dateInput = document.querySelector('input[type="date"]');
+    const dateInput = document.querySelector('.overflow-x-auto input[type="date"]');
     fireEvent.change(dateInput, { target: { value: '2024-12-31' } });
 
     await waitFor(() => expect(countBodyRows()).toBe(1), { timeout: 1000 });

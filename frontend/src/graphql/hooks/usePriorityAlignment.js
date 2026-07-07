@@ -26,12 +26,14 @@ const EMPTY = Object.freeze({
  * @param {string[]|null|undefined} primaryDiseaseNames
  * @param {string[]|null|undefined} secondaryDiseaseNames
  * @param {string[]|null|undefined} productNames
+ * @param {string[]|null|undefined} phaseNames
  */
 export function usePriorityAlignment(
   globalHealthAreas,
   primaryDiseaseNames,
   secondaryDiseaseNames,
   productNames,
+  phaseNames,
 ) {
   const { actions } = useDashboardStore();
 
@@ -45,8 +47,9 @@ export function usePriorityAlignment(
       primaryDiseaseNames: primaryDiseaseNames && primaryDiseaseNames.length > 0 ? primaryDiseaseNames : undefined,
       secondaryDiseaseNames: secondaryDiseaseNames && secondaryDiseaseNames.length > 0 ? secondaryDiseaseNames : undefined,
       productNames: productNames && productNames.length > 0 ? productNames : undefined,
+      phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
     }),
-    [globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames],
+    [globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames],
   );
   const cacheKey = getCacheKey('priorityAlignment', variables);
   const cachedData = actions.getCachedData(cacheKey);

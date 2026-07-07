@@ -9,7 +9,6 @@ import { useDashboardStore, getCacheKey } from '@/store';
 // render skeletons against a stable shape (no null-check fan-out).
 const EMPTY = Object.freeze({
   candidatesCount: 0,
-  approvedProductsCount: 0,
   targetPopulation: null,
   pipelineBuildUp: [],
 });
@@ -31,6 +30,7 @@ const EMPTY = Object.freeze({
  * @param {string[]} [args.primaryDiseaseNames]
  * @param {string[]} [args.secondaryDiseaseNames]
  * @param {string[]} [args.productNames]
+ * @param {string[]} [args.phaseNames]
  */
 export function useIndividualPriorityAnalysis({
   priorityKey,
@@ -38,6 +38,7 @@ export function useIndividualPriorityAnalysis({
   primaryDiseaseNames,
   secondaryDiseaseNames,
   productNames,
+  phaseNames,
 }) {
   const { actions } = useDashboardStore();
 
@@ -53,8 +54,9 @@ export function useIndividualPriorityAnalysis({
           ? secondaryDiseaseNames
           : undefined,
       productNames: productNames && productNames.length > 0 ? productNames : undefined,
+      phaseNames: phaseNames && phaseNames.length > 0 ? phaseNames : undefined,
     }),
-    [priorityKey, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames],
+    [priorityKey, globalHealthAreas, primaryDiseaseNames, secondaryDiseaseNames, productNames, phaseNames],
   );
 
   const cacheKey = getCacheKey('individualPriorityAnalysis', variables);
@@ -76,7 +78,6 @@ export function useIndividualPriorityAnalysis({
   return {
     counts: {
       candidatesCount: payload.candidatesCount,
-      approvedProductsCount: payload.approvedProductsCount,
     },
     targetPopulation: payload.targetPopulation,
     pipelineBuildUp: payload.pipelineBuildUp,

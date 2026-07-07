@@ -445,6 +445,74 @@ describe("Bubble Chart — Disease × Product Type view", () => {
   });
 });
 
+describe("diseaseProductTypeSummaries filtering", () => {
+  const QUERY = `
+    query DPT($gha: [String!], $phase: [String!], $products: [String!]) {
+      diseaseProductTypeSummaries(
+        global_health_areas: $gha
+        phase_names: $phase
+        product_names: $products
+      ) {
+        disease_group_name
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area's rows", async () => {
+    const { data } = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { gha: ["Neglected disease"] },
+    );
+    expect(data.diseaseProductTypeSummaries.length).toBeGreaterThan(0);
+    data.diseaseProductTypeSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a phase filter never increases counts vs unfiltered", async () => {
+    const all = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { phase: ["Phase I"] },
+    );
+    const allTotal = all.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+
+  it("a product filter never increases counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    const productName = lookup.products[0].product_name;
+    const all = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ diseaseProductTypeSummaries: DiseaseProductTypeSummary[] }>(
+      QUERY,
+      { products: [productName] },
+    );
+    const allTotal = all.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.diseaseProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+});
+
 describe("Geographic Map", () => {
   it("returns countries for Trial Location tab", async () => {
     const { data } = await query<{
@@ -740,5 +808,180 @@ describe("Lookup Queries", () => {
 
     expect(data.countries.length).toBeGreaterThan(0);
     expect(data.countries[0].country_key).toBeDefined();
+  });
+});
+
+describe("diseaseSummaries filtering", () => {
+  const DISEASE_SUMMARIES = `
+    query DS($gha: [String!], $primary: [String!], $phase: [String!]) {
+      diseaseSummaries(
+        global_health_areas: $gha
+        primary_disease_names: $primary
+        phase_names: $phase
+      ) {
+        disease_group_name
+        global_health_area
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("unfiltered returns rows across multiple health areas", async () => {
+    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES);
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+  });
+
+  it("restricting to one global health area returns only that area's rows", async () => {
+    const { data } = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES, {
+      gha: ["Neglected disease"],
+    });
+    expect(data.diseaseSummaries.length).toBeGreaterThan(0);
+    data.diseaseSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a GHA filter yields no more rows than unfiltered", async () => {
+    const all = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES);
+    const filtered = await query<{ diseaseSummaries: DiseaseSummary[] }>(DISEASE_SUMMARIES, {
+      gha: ["Neglected disease"],
+    });
+    expect(filtered.data.diseaseSummaries.length).toBeLessThanOrEqual(
+      all.data.diseaseSummaries.length,
+    );
+  });
+});
+
+describe("ghaProductTypeSummaries filtering", () => {
+  const QUERY = `
+    query GPT($gha: [String!], $phase: [String!], $products: [String!]) {
+      ghaProductTypeSummaries(
+        global_health_areas: $gha
+        phase_names: $phase
+        product_names: $products
+      ) {
+        global_health_area
+        product_type
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area's rows", async () => {
+    const { data } = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      gha: ["Neglected disease"],
+    });
+    expect(data.ghaProductTypeSummaries.length).toBeGreaterThan(0);
+    data.ghaProductTypeSummaries.forEach((row) => {
+      expect(row.global_health_area).toBe("Neglected disease");
+    });
+  });
+
+  it("a phase filter never increases counts vs unfiltered", async () => {
+    const all = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      phase: ["Phase I"],
+    });
+    const allTotal = all.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+
+  it("a product filter never increases counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    const productName = lookup.products[0].product_name;
+    const all = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY);
+    const filtered = await query<{ ghaProductTypeSummaries: GhaProductTypeSummary[] }>(QUERY, {
+      products: [productName],
+    });
+    const allTotal = all.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.ghaProductTypeSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+});
+
+describe("globalHealthAreaSummaries filtering", () => {
+  const GHA_SUMMARIES = `
+    query GHAS($gha: [String!], $phase: [String!]) {
+      globalHealthAreaSummaries(global_health_areas: $gha, phase_names: $phase) {
+        global_health_area
+        candidateCount
+        productCount
+      }
+    }`;
+
+  it("restricting to one GHA returns only that area", async () => {
+    const { data } = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+      { gha: ["Neglected disease"] },
+    );
+    expect(data.globalHealthAreaSummaries).toHaveLength(1);
+    expect(data.globalHealthAreaSummaries[0].global_health_area).toBe("Neglected disease");
+  });
+
+  it("a phase filter never increases candidate counts vs unfiltered", async () => {
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+    );
+    const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      GHA_SUMMARIES,
+      { phase: ["Phase 1"] },
+    );
+    const allTotal = all.data.globalHealthAreaSummaries.reduce((s, r) => s + r.candidateCount, 0);
+    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount,
+      0,
+    );
+    expect(filteredTotal).toBeLessThan(allTotal);
+  });
+
+  it("a product filter never increases candidate counts vs unfiltered", async () => {
+    const { data: lookup } = await query<{ products: Array<{ product_name: string }> }>(
+      `{ products { product_name } }`,
+    );
+    expect(lookup.products.length).toBeGreaterThan(0);
+    const productName = lookup.products[0].product_name;
+
+    const PRODUCT_QUERY = `
+      query GHASP($products: [String!]) {
+        globalHealthAreaSummaries(product_names: $products) {
+          global_health_area
+          candidateCount
+          productCount
+        }
+      }`;
+    const all = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      PRODUCT_QUERY,
+    );
+    const filtered = await query<{ globalHealthAreaSummaries: GlobalHealthAreaSummary[] }>(
+      PRODUCT_QUERY,
+      { products: [productName] },
+    );
+    const allTotal = all.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    const filteredTotal = filtered.data.globalHealthAreaSummaries.reduce(
+      (s, r) => s + r.candidateCount + r.productCount,
+      0,
+    );
+    expect(filteredTotal).toBeGreaterThan(0);
+    expect(filteredTotal).toBeLessThan(allTotal);
   });
 });

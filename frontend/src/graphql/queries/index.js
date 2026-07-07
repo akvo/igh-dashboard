@@ -13,8 +13,22 @@ export const GET_PORTFOLIO_KPIS = gql`
 
 // Bubble Chart - Scale of R&D by global health area
 export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
-  query BubbleChart($candidateTypes: [String!]) {
-    globalHealthAreaSummaries(candidate_types: $candidateTypes) {
+  query BubbleChart(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $phaseNames: [String!]
+    $productNames: [String!]
+  ) {
+    globalHealthAreaSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      phase_names: $phaseNames
+      product_names: $productNames
+    ) {
       global_health_area
       candidateCount
       diseaseCount
@@ -25,8 +39,22 @@ export const GET_GLOBAL_HEALTH_AREA_SUMMARIES = gql`
 
 // Bubble Chart — GHA × Product Type view
 export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartGhaProductType($candidateTypes: [String!]) {
-    ghaProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartGhaProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    ghaProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       global_health_area
       product_type
       candidateCount
@@ -37,8 +65,24 @@ export const GET_GHA_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Bubble Chart — Disease view
 export const GET_DISEASE_SUMMARIES = gql`
-  query BubbleChartDisease($candidateTypes: [String!], $productNames: [String!], $technologyTypes: [String!]) {
-    diseaseSummaries(candidate_types: $candidateTypes, product_names: $productNames, technology_types: $technologyTypes) {
+  query BubbleChartDisease(
+    $candidateTypes: [String!]
+    $productNames: [String!]
+    $technologyTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    diseaseSummaries(
+      candidate_types: $candidateTypes
+      product_names: $productNames
+      technology_types: $technologyTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      phase_names: $phaseNames
+    ) {
       disease_group_name
       global_health_area
       candidateCount
@@ -49,8 +93,22 @@ export const GET_DISEASE_SUMMARIES = gql`
 
 // Bubble Chart — Disease × Product Type view
 export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
-  query BubbleChartDiseaseProductType($candidateTypes: [String!]) {
-    diseaseProductTypeSummaries(candidate_types: $candidateTypes) {
+  query BubbleChartDiseaseProductType(
+    $candidateTypes: [String!]
+    $globalHealthAreas: [String!]
+    $primaryDiseaseNames: [String!]
+    $secondaryDiseaseNames: [String!]
+    $productNames: [String!]
+    $phaseNames: [String!]
+  ) {
+    diseaseProductTypeSummaries(
+      candidate_types: $candidateTypes
+      global_health_areas: $globalHealthAreas
+      primary_disease_names: $primaryDiseaseNames
+      secondary_disease_names: $secondaryDiseaseNames
+      product_names: $productNames
+      phase_names: $phaseNames
+    ) {
       disease_group_name
       global_health_area
       product_type
@@ -63,8 +121,8 @@ export const GET_DISEASE_PRODUCT_TYPE_SUMMARIES = gql`
 
 // Candidate Type Distribution - Portfolio by Health Area (Stacked Bar)
 export const GET_CANDIDATE_TYPE_DISTRIBUTION = gql`
-  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!]) {
-    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames) {
+  query CandidateTypeDistribution($productKeys: [Int!], $phaseNames: [String!], $globalHealthAreas: [String!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!]) {
+    candidateTypeDistribution(product_keys: $productKeys, phase_names: $phaseNames, global_health_areas: $globalHealthAreas, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames) {
       global_health_area
       candidate_type
       candidateCount
@@ -86,8 +144,8 @@ export const GET_GEOGRAPHIC_DISTRIBUTION = gql`
 
 // Temporal Snapshots - Cross-pipeline Analytics
 export const GET_TEMPORAL_SNAPSHOTS = gql`
-  query TemporalAnalysis($years: [Int!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!]) {
-    temporalSnapshots(years: $years, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys) {
+  query TemporalAnalysis($years: [Int!], $primaryDiseaseNames: [String!], $secondaryDiseaseNames: [String!], $globalHealthAreas: [String!], $productKeys: [Int!], $phaseNames: [String!]) {
+    temporalSnapshots(years: $years, primary_disease_names: $primaryDiseaseNames, secondary_disease_names: $secondaryDiseaseNames, global_health_areas: $globalHealthAreas, product_keys: $productKeys, phase_names: $phaseNames) {
       year
       phase_name
       sort_order
@@ -246,6 +304,19 @@ export const GET_CLINICAL_TRIAL_STATS = gql`
       ageGroupDistribution {
         age_group_name
         candidateCount
+      }
+      diseaseDistribution {
+        disease_name
+        global_health_area
+        trialCount
+      }
+      productTypeDistribution {
+        product_name
+        trialCount
+      }
+      ghaDistribution {
+        global_health_area
+        trialCount
       }
     }
   }
@@ -451,20 +522,22 @@ export const GET_PHASES = gql`
 // =========================================================
 // Single consolidated payload powering both the Home section's
 // cards/donuts and the WHO page's Priorities overview section.
-// The four filter args mirror the standard filter convention used by
+// The five filter args mirror the standard filter convention used by
 // `portfolioKPIs`, `productDistribution`, etc.
 export const GET_PRIORITY_ALIGNMENT_OVERVIEW = gql`
   query PriorityAlignmentOverview(
     $globalHealthAreas: [String!],
     $primaryDiseaseNames: [String!],
     $secondaryDiseaseNames: [String!],
-    $productNames: [String!]
+    $productNames: [String!],
+    $phaseNames: [String!]
   ) {
     priorityAlignmentOverview(
       global_health_areas: $globalHealthAreas,
       primary_disease_names: $primaryDiseaseNames,
       secondary_disease_names: $secondaryDiseaseNames,
       product_names: $productNames,
+      phase_names: $phaseNames,
     ) {
       totalPriorities
       byArea {
@@ -507,6 +580,7 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
     $primaryDiseaseNames: [String!]
     $secondaryDiseaseNames: [String!]
     $productNames: [String!]
+    $phaseNames: [String!]
   ) {
     individualPriorityAnalysis(
       priority_key: $priorityKey
@@ -514,9 +588,9 @@ export const GET_INDIVIDUAL_PRIORITY_ANALYSIS = gql`
       primary_disease_names: $primaryDiseaseNames
       secondary_disease_names: $secondaryDiseaseNames
       product_names: $productNames
+      phase_names: $phaseNames
     ) {
       candidatesCount
-      approvedProductsCount
       targetPopulation
       pipelineBuildUp {
         product_name

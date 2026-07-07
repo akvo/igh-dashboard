@@ -3,6 +3,7 @@ import {
   arraySerializer,
   numberSerializer,
   stringSerializer,
+  booleanSerializer,
 } from '@/lib/url-serializers';
 
 // =========================================================
@@ -172,6 +173,36 @@ describe('stringSerializer', () => {
     it('empty string round-trips to null (caller provides default)', () => {
       const serialized = stringSerializer.serialize('');
       expect(stringSerializer.deserialize(serialized)).toBe(null);
+    });
+  });
+});
+
+// =========================================================
+// booleanSerializer
+// =========================================================
+
+describe('booleanSerializer', () => {
+  describe('serialize', () => {
+    it('serializes true to "1"', () => {
+      expect(booleanSerializer.serialize(true)).toBe('1');
+    });
+
+    it('serializes false to null (absent from the URL)', () => {
+      expect(booleanSerializer.serialize(false)).toBe(null);
+    });
+  });
+
+  describe('deserialize', () => {
+    it('deserializes "1" to true', () => {
+      expect(booleanSerializer.deserialize('1')).toBe(true);
+    });
+
+    it('deserializes "0" to false', () => {
+      expect(booleanSerializer.deserialize('0')).toBe(false);
+    });
+
+    it('deserializes the empty string to false', () => {
+      expect(booleanSerializer.deserialize('')).toBe(false);
     });
   });
 });

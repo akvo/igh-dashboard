@@ -109,24 +109,54 @@ export const resolvers = {
       }),
 
     // Bubble chart — four views share the same candidate_types filter shape
-    globalHealthAreaSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getGlobalHealthAreaSummaries({ candidate_types: args.candidate_types }),
+    globalHealthAreaSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        phase_names?: string[];
+        product_names?: string[];
+      },
+    ) => getGlobalHealthAreaSummaries(args),
 
-    ghaProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getGhaProductTypeSummaries({ candidate_types: args.candidate_types }),
+    ghaProductTypeSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getGhaProductTypeSummaries(args),
 
     diseaseSummaries: (
       _: unknown,
-      args: { candidate_types?: string[]; product_names?: string[]; technology_types?: string[] },
-    ) =>
-      getDiseaseSummaries({
-        candidate_types: args.candidate_types,
-        product_names: args.product_names,
-        technology_types: args.technology_types,
-      }),
+      args: {
+        candidate_types?: string[];
+        product_names?: string[];
+        technology_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getDiseaseSummaries(args),
 
-    diseaseProductTypeSummaries: (_: unknown, args: { candidate_types?: string[] }) =>
-      getDiseaseProductTypeSummaries({ candidate_types: args.candidate_types }),
+    diseaseProductTypeSummaries: (
+      _: unknown,
+      args: {
+        candidate_types?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+        product_names?: string[];
+        phase_names?: string[];
+      },
+    ) => getDiseaseProductTypeSummaries(args),
 
     // Stacked bar chart
     phaseDistribution: (
@@ -142,11 +172,20 @@ export const resolvers = {
     // Portfolio overview - candidate type distribution
     candidateTypeDistribution: (
       _: unknown,
-      args: { product_keys?: number[]; phase_names?: string[] },
+      args: {
+        product_keys?: number[];
+        phase_names?: string[];
+        global_health_areas?: string[];
+        primary_disease_names?: string[];
+        secondary_disease_names?: string[];
+      },
     ) =>
       getCandidateTypeDistribution({
         product_keys: args.product_keys,
         phase_names: args.phase_names,
+        global_health_areas: args.global_health_areas,
+        primary_disease_names: args.primary_disease_names,
+        secondary_disease_names: args.secondary_disease_names,
       }),
 
     // Map
@@ -180,6 +219,7 @@ export const resolvers = {
         global_health_areas?: string[];
         product_keys?: number[];
         candidate_type?: string;
+        phase_names?: string[];
       },
     ) =>
       getTemporalSnapshots({
@@ -189,6 +229,7 @@ export const resolvers = {
         global_health_areas: args.global_health_areas,
         product_keys: args.product_keys,
         candidate_type: args.candidate_type,
+        phase_names: args.phase_names,
       }),
 
     // Pipeline filter pairs (disease×product) for cross-filtering
@@ -339,6 +380,7 @@ export const resolvers = {
         primary_disease_names?: string[] | null;
         secondary_disease_names?: string[] | null;
         product_names?: string[] | null;
+        phase_names?: string[] | null;
       },
     ) =>
       getPriorityAlignmentOverview({
@@ -346,6 +388,7 @@ export const resolvers = {
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,
         product_names: args.product_names ?? null,
+        phase_names: args.phase_names ?? null,
       }),
 
     // WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
@@ -357,6 +400,7 @@ export const resolvers = {
         primary_disease_names?: string[] | null;
         secondary_disease_names?: string[] | null;
         product_names?: string[] | null;
+        phase_names?: string[] | null;
       },
     ) =>
       getIndividualPriorityAnalysis({
@@ -365,6 +409,7 @@ export const resolvers = {
         primary_disease_names: args.primary_disease_names ?? null,
         secondary_disease_names: args.secondary_disease_names ?? null,
         product_names: args.product_names ?? null,
+        phase_names: args.phase_names ?? null,
       }),
 
     // Portfolio analysis - product distribution (donut chart)
@@ -527,11 +572,14 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
+        // The headline label the slide-in prints. Falls back to the
+        // primary group for the niche rows with no computed label.
+        label: d?.disease_label || shortDiseaseName(d),
       };
     },
     ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>
@@ -574,11 +622,14 @@ export const resolvers = {
       const snapshot = await ctx.loaders.snapshotByCandidateLoader.load(
         parent.candidate.candidate_key,
       );
-      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null };
+      if (!snapshot?.disease_key) return { primary: "Unknown", secondary: null, label: "Unknown" };
       const d = await ctx.loaders.diseaseLoader.load(snapshot.disease_key);
       return {
         primary: shortDiseaseName(d),
         secondary: d?.secondary_disease_name || null,
+        // The headline label the slide-in prints. Falls back to the
+        // primary group for the niche rows with no computed label.
+        label: d?.disease_label || shortDiseaseName(d),
       };
     },
     ageGroups: (parent: { candidate: DimCandidateCore }, _: unknown, ctx: Context) =>

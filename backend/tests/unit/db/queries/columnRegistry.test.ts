@@ -56,3 +56,14 @@ describe("columnRegistry", () => {
     expect(resolveColumn("CLINICAL_TRIALS", "last_updated")?.filterKind).toBe("DATE");
   });
 });
+
+describe("disease_name aligns filter/sort with the displayed specific disease", () => {
+  it("is a flat CATEGORY column whose expression is the canonical disease_label", () => {
+    expect(resolveColumn("PORTFOLIO_CANDIDATES", "disease_name")).toEqual({
+      sqlExpr: "d.disease_label",
+      sortable: true,
+      filterKind: "CATEGORY",
+      isAggregated: false,
+    });
+  });
+});

@@ -1,9 +1,14 @@
 import { getDatabase } from "../connection.js";
 import type { GlobalHealthAreaSummary } from "../types.js";
-import { PIPELINE_FILTER } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface GlobalHealthAreaFilters {
   candidate_types?: string[];
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
+  phase_names?: string[];
+  product_names?: string[];
 }
 
 /**
@@ -29,6 +34,19 @@ export function getGlobalHealthAreaSummaries(
     params.push(...filters.candidate_types);
   }
 
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
+  const phaseCtx = { joins, join: "JOIN dim_phase p ON f.phase_key = p.phase_key" };
+  addArrayCondition(filters?.phase_names, "p.phase_name", conditions, params, phaseCtx);
+  const productCtx = { joins, join: "JOIN dim_product pr ON f.product_key = pr.product_key" };
+  addArrayCondition(filters?.product_names, "pr.product_name", conditions, params, productCtx);
+
   // `diseaseCount` counts distinct hierarchy leaves per GHA -- the
   // sub-disease name when one exists, otherwise the primary name.
   // See `kpis.ts` for the full leaf-semantic explanation.
@@ -42,7 +60,9 @@ export function getGlobalHealthAreaSummaries(
     ${joins.join("\n    ")}
     WHERE ${conditions.join("\n      AND ")}
     GROUP BY d.global_health_area
-    ORDER BY candidateCount DESC
+    -- Sort by combined count so the highest-count GHA comes first regardless
+    -- of candidate_type filter (the irrelevant count is always 0).
+    ORDER BY (candidateCount + productCount) DESC
   `;
 
   return db.prepare(sql).all(...params) as GlobalHealthAreaSummary[];

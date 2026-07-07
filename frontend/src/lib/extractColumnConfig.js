@@ -18,8 +18,8 @@
  * re-arrange via drag-reorder if they want a different one frozen.
  */
 
-import { normalizeProductName } from './filterGroups';
 import { displayHealthArea } from './transformations/constants';
+import { specificDiseaseLabel } from './exploreColumnConfig';
 
 // =========================================================
 // Available (toggleable) columns per tab
@@ -44,8 +44,8 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'type', label: 'Type', accessor: 'candidate_type', filter: { kind: 'category' } },
     { id: 'altNames', label: 'Alternative names', accessor: 'alternative_names', type: 'line-clamp', filter: { kind: 'text' } },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v), filter: { kind: 'category' } },
-    { id: 'primaryDisease', label: 'Primary disease', accessor: 'disease_name', filter: { kind: 'category' } },
-    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v), filter: { kind: 'category' } },
+    { id: 'primaryDisease', label: 'Disease', accessor: 'disease_name', render: (_v, row) => specificDiseaseLabel(row), csvAccessor: (row) => specificDiseaseLabel(row), filter: { kind: 'category' } },
+    { id: 'product', label: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { id: 'subProduct', label: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     { id: 'indication', label: 'Indication', accessor: 'indication', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
     { id: 'target', label: 'Target', accessor: 'target', filter: { kind: 'text' }, sortable: false },
@@ -75,7 +75,7 @@ export const EXTRACT_TAB_COLUMNS = {
     },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use', filter: { kind: 'text' }, sortable: false },
     { id: 'disease', label: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
-    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v), filter: { kind: 'category' } },
+    { id: 'product', label: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v), filter: { kind: 'category' } },
     { id: 'author', label: 'Author', accessor: 'author', filter: { kind: 'text' } },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date', filter: { kind: 'text' } },
@@ -111,6 +111,7 @@ export const EXTRACT_TAB_COLUMNS = {
     { id: 'studyType', label: 'Study type', accessor: 'study_type', filter: { kind: 'category' } },
     { id: 'ctEnrollment', label: 'CT enrollment', accessor: 'enrollment_count', type: 'number', filter: { kind: 'number' } },
     { id: 'rdPhase', label: 'R&D phase', accessor: 'trial_phase', filter: { kind: 'category' } },
+    { id: 'ctStatus', label: 'CT status', accessor: 'status', filter: { kind: 'category' } },
     { id: 'ctResultsStatus', label: 'CT results status', accessor: 'ct_results_status', filter: { kind: 'category' } },
     { id: 'ctResultType', label: 'CT result type', accessor: 'ct_results_type', filter: { kind: 'category' } },
     { id: 'ctTerminatedReason', label: 'CT terminated reason', accessor: 'ct_terminated_reason', type: 'line-clamp', filter: { kind: 'text' }, sortable: false },
@@ -132,7 +133,7 @@ export const EXTRACT_TAB_COLUMNS = {
     },
     { id: 'tppPpc', label: 'TPP/PPC', accessor: 'intended_use', filter: { kind: 'text' }, sortable: false },
     { id: 'disease', label: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
-    { id: 'product', label: 'Product', accessor: 'product_name', csvAccessor: (row) => normalizeProductName(row.product_name), render: (v) => normalizeProductName(v), filter: { kind: 'category' } },
+    { id: 'product', label: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { id: 'gha', label: 'Global health area', accessor: 'global_health_area', csvAccessor: (row) => displayHealthArea(row.global_health_area), render: (v) => displayHealthArea(v), filter: { kind: 'category' } },
     { id: 'author', label: 'Author', accessor: 'author', filter: { kind: 'text' } },
     { id: 'pubData', label: 'Publication data', accessor: 'publication_date', filter: { kind: 'text' } },

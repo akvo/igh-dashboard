@@ -19,6 +19,7 @@ export const typeDefs = `#graphql
     disease_type: String
     disease_filter: String
     secondary_disease_name: String
+    disease_label: String
   }
 
   type DimPhase {
@@ -244,10 +245,29 @@ export const typeDefs = `#graphql
     candidateCount: Int!
   }
 
+  type ClinicalTrialDiseaseRow {
+    disease_name: String!
+    global_health_area: String!
+    trialCount: Int!
+  }
+
+  type ClinicalTrialProductTypeRow {
+    product_name: String!
+    trialCount: Int!
+  }
+
+  type ClinicalTrialGhaRow {
+    global_health_area: String!
+    trialCount: Int!
+  }
+
   type ClinicalTrialStats {
     totalTrials: Int!
     statusDistribution: [ClinicalTrialStatusRow!]!
     ageGroupDistribution: [AgeGroupDistributionRow!]!
+    diseaseDistribution: [ClinicalTrialDiseaseRow!]!
+    productTypeDistribution: [ClinicalTrialProductTypeRow!]!
+    ghaDistribution: [ClinicalTrialGhaRow!]!
   }
 
   type ApprovalStatusRow {
@@ -532,6 +552,7 @@ export const typeDefs = `#graphql
     phase_names: [String!]
     priority_keys: [Int!]
     column_filters: [ColumnFilter!]
+    new_include_in_pipeline_2025: Boolean
   }
 
   input ClinicalTrialFilter {
@@ -628,7 +649,6 @@ export const typeDefs = `#graphql
 
   type IndividualPriorityAnalysis {
     candidatesCount: Int!
-    approvedProductsCount: Int!
     targetPopulation: String
     pipelineBuildUp: [PipelineBuildUpRow!]!
   }
@@ -656,6 +676,7 @@ export const typeDefs = `#graphql
   type DiseaseSummaryPair {
     primary: String!
     secondary: String
+    label: String
   }
 
   type FactPublication {
@@ -710,22 +731,22 @@ export const typeDefs = `#graphql
     portfolioKPIs(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): PortfolioKPIs!
 
     # Bubble chart — four views
-    globalHealthAreaSummaries(candidate_types: [String!]): [GlobalHealthAreaSummary!]!
-    ghaProductTypeSummaries(candidate_types: [String!]): [GhaProductTypeSummary!]!
-    diseaseSummaries(candidate_types: [String!], product_names: [String!], technology_types: [String!]): [DiseaseSummary!]!
-    diseaseProductTypeSummaries(candidate_types: [String!]): [DiseaseProductTypeSummary!]!
+    globalHealthAreaSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], phase_names: [String!], product_names: [String!]): [GlobalHealthAreaSummary!]!
+    ghaProductTypeSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GhaProductTypeSummary!]!
+    diseaseSummaries(candidate_types: [String!], product_names: [String!], technology_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], phase_names: [String!]): [DiseaseSummary!]!
+    diseaseProductTypeSummaries(candidate_types: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [DiseaseProductTypeSummary!]!
 
     # Stacked bar chart
     phaseDistribution(global_health_area: String, product_keys: [Int!], candidate_type: String): [PhaseDistributionRow!]!
 
     # Portfolio overview - candidate type distribution
-    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!]): [CandidateTypeDistributionRow!]!
+    candidateTypeDistribution(product_keys: [Int!], phase_names: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!]): [CandidateTypeDistributionRow!]!
 
     # Map
     geographicDistribution(location_scope: String!, statuses: [String!], global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): [GeographicDistributionRow!]!
 
     # Cross-pipeline temporal
-    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String): [TemporalSnapshotRow!]!
+    temporalSnapshots(years: [Int!], primary_disease_names: [String!], secondary_disease_names: [String!], global_health_areas: [String!], product_keys: [Int!], candidate_type: String, phase_names: [String!]): [TemporalSnapshotRow!]!
 
     # Pipeline filter pairs (disease×product) for cross-filtering
     pipelineFilterPairs: [PipelineFilterPair!]!
@@ -771,6 +792,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): PriorityAlignmentOverview!
 
     # WHO Priority alignment — single-priority drill-down (Individual priority analysis section).
@@ -780,6 +802,7 @@ export const typeDefs = `#graphql
       primary_disease_names: [String!],
       secondary_disease_names: [String!],
       product_names: [String!],
+      phase_names: [String!],
     ): IndividualPriorityAnalysis!
 
     # Portfolio analysis - product distribution (donut chart)

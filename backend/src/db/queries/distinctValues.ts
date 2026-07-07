@@ -33,6 +33,7 @@ const PORTFOLIO_CANDIDATES_FROM = `
 
 const CLINICAL_TRIALS_FROM = `
   fact_clinical_trial_event t
+  JOIN fact_pipeline_snapshot fps ON t.candidate_key = fps.candidate_key AND fps.is_active_flag = 1 AND fps.include_in_pipeline = 1
   LEFT JOIN dim_candidate_core c ON t.candidate_key = c.candidate_key
   LEFT JOIN dim_disease d ON t.disease_key = d.disease_key
   LEFT JOIN dim_product pr ON t.product_key = pr.product_key

@@ -123,3 +123,35 @@ describe('HierarchicalProductFilter — interactions', () => {
     expect(onChange).toHaveBeenCalledWith(['35', '58']);
   });
 });
+
+describe('HierarchicalProductFilter — auto-scroll on expand', () => {
+  it('scrolls the expanded sub-options into view', () => {
+    // jsdom does not implement scrollIntoView; install a spy and restore it.
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      renderOpen({ selected: [] });
+      fireEvent.click(screen.getByLabelText('Expand Vector control products'));
+      expect(spy).toHaveBeenCalledWith({ block: 'nearest', behavior: 'smooth' });
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it('does not scroll when the group collapses', () => {
+    const original = Element.prototype.scrollIntoView;
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    try {
+      renderOpen({ selected: [] });
+      const toggle = screen.getByLabelText('Expand Vector control products');
+      fireEvent.click(toggle); // expand → scrolls
+      spy.mockClear();
+      fireEvent.click(toggle); // collapse → must not scroll
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+});

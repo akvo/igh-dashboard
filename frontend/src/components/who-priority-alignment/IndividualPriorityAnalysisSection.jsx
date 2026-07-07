@@ -20,7 +20,7 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useApolloClient } from '@apollo/client/react';
-import { Dropdown, StatCard, Chip, DataTable, ChartMenu } from '@/components/ui';
+import { Dropdown, StatCard, DataTable, ChartMenu } from '@/components/ui';
 import { StackedBarChart, ChartEmptyState } from '@/components/charts';
 import { InfoIcon, RefreshIcon, CloudDownloadIcon } from '@/components/icons';
 import {
@@ -36,13 +36,7 @@ import {
   toCSVColumns,
 } from '@/lib/exploreColumnConfig';
 import { CandidateSlideIn } from '@/components/slideins/CandidateSlideIn';
-import {
-  encodeFilters,
-  decodeFilters,
-  hydrateFiltersFromUrl,
-  encodeSort,
-  decodeSort,
-} from '@/lib/dataTableUrl';
+import { sortSerializer, makeFilterSerializer } from '@/lib/dataTableUrl';
 import { toColumnFilters, toColumnSort } from '@/lib/dataTableGraphQL';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
@@ -56,6 +50,8 @@ import {
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
+
+const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
 
 // Page size for the candidates table — kept module-scope so the
 // hook fetch size and the DataTable pagination UI never drift.
@@ -91,9 +87,8 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
       <div className="flex items-start justify-between gap-2 mb-1">
         <div>
           <h4 className="text-base font-bold text-black">Pipeline build up</h4>
-          {/* Q11: chart subtitle copy pending designer. */}
           <p className="text-sm text-gray-500">
-            This visual shows the build up of the pipeline for this priority.
+            How the pipeline for the selected priority builds up across R&D stages. Each bar shows a product type, segmented by the candidates at each stage; click items in the legend to toggle stages on or off, or use the ··· menu to export the chart or its data.
           </p>
         </div>
         <ChartMenu
@@ -114,18 +109,18 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
       </div>
       <div className="flex-1 mt-2">
         {loading ? (
-          <div className="h-[280px] flex items-center justify-center">
+          <div className="h-[220px] flex items-center justify-center">
             <div className="animate-pulse text-gray-400">Loading chart...</div>
           </div>
         ) : chartData.length === 0 ? (
-          <ChartEmptyState variant="bar" height={280} />
+          <ChartEmptyState variant="bar" height={220} />
         ) : (
           <StackedBarChart
             data={chartData}
             phases={phases}
             categoryKey="category"
             layout="vertical"
-            height={Math.max(220, chartData.length * 60)}
+            height={Math.max(180, chartData.length * 48)}
             xAxisLabel="Amount"
             barRadius={0}
           />
@@ -155,25 +150,30 @@ function CandidatesTable({
 }) {
   return (
     <div className="border border-gray-200">
-      <div className="flex items-center justify-between p-4 pb-0 mb-4">
-        <div className="flex items-center gap-3">
-          <h4 className="text-xl font-bold text-black leading-none">
-            Candidates linked to priority
-          </h4>
-          <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-            {totalCount} Candidates
-          </span>
+      <div className="p-4 pb-0 mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h4 className="text-xl font-bold text-black leading-none">
+              Candidates linked to priority
+            </h4>
+            <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
+              {totalCount} Candidates
+            </span>
+          </div>
+          <div className="flex items-center gap-3 h-[36px]">
+            <button
+              onClick={onDownloadCSV}
+              disabled={downloading || totalCount === 0}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <CloudDownloadIcon className="w-4 h-4" />
+              {downloading ? 'Downloading...' : 'Download CSV'}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3 h-[36px]">
-          <button
-            onClick={onDownloadCSV}
-            disabled={downloading || totalCount === 0}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
-            <CloudDownloadIcon className="w-4 h-4" />
-            {downloading ? 'Downloading...' : 'Download CSV'}
-          </button>
-        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          A matrix of the candidates linked to the selected priority, with per-column filters beneath each header to narrow further. Sort by any column, use the Columns button to show, hide or reorder columns, follow the Explore → link on any row to open that candidate&apos;s full record, or export the matching rows to .csv.
+        </p>
       </div>
       <DataTable
         tableId="who-priority-candidates"
@@ -248,12 +248,6 @@ function ActiveBody({
           <StatCard
             title="Number of candidates linked to selected priority"
             value={analysis.counts.candidatesCount}
-            variant="number"
-            loading={analysis.loading}
-          />
-          <StatCard
-            title="Number of approved products linked to selected priority"
-            value={analysis.counts.approvedProductsCount}
             variant="number"
             loading={analysis.loading}
           />
@@ -348,6 +342,7 @@ export default function IndividualPriorityAnalysisSection() {
     page.primary.length > 0 ? page.primary : null,
     page.secondary.length > 0 ? page.secondary : null,
     page.expandedProduct.length > 0 ? page.expandedProduct : null,
+    page.rdPhase.length > 0 ? page.rdPhase : null,
   );
 
   const dropdownOptions = priorities.map((p) => ({
@@ -407,24 +402,12 @@ export default function IndividualPriorityAnalysisSection() {
     primaryDiseaseNames: page.primary,
     secondaryDiseaseNames: page.secondary,
     productNames: page.expandedProduct,
+    phaseNames: page.rdPhase,
   });
 
-  // Table state — mirrors AggregatedSection's `f.candidates`/`s.candidates`/
-  // `cols.candidates`/`cPage` pattern but with a `who-priority` namespace
-  // so we don't collide with Portfolio Analysis's keys.
-  const candidatesFilterSerializer = useMemo(
-    () => ({
-      serialize: encodeFilters,
-      deserialize: (s) => hydrateFiltersFromUrl(decodeFilters(s), CANDIDATE_COLUMNS),
-      debounceMs: 500,
-    }),
-    [],
-  );
-  const sortSerializer = useMemo(
-    () => ({ serialize: encodeSort, deserialize: decodeSort }),
-    [],
-  );
-
+  // Table state — mirrors the shared DataTable `f.<tab>`/`s.<tab>`/
+  // `cols.<tab>`/`<tab>-page` URL-state pattern but with a `who-priority`
+  // namespace so we don't collide with other pages' keys.
   const [candidatesFilters, setCandidatesFilters] = useUrlState(
     'f.who-priority',
     {},
@@ -463,6 +446,7 @@ export default function IndividualPriorityAnalysisSection() {
       primary_disease_names: page.primary?.length > 0 ? page.primary : undefined,
       secondary_disease_names: page.secondary?.length > 0 ? page.secondary : undefined,
       product_names: page.expandedProduct?.length > 0 ? page.expandedProduct : undefined,
+      phase_names: page.rdPhase?.length > 0 ? page.rdPhase : undefined,
       candidate_type: 'Candidate',
       priority_keys:
         state.committedPriority != null ? [state.committedPriority] : undefined,
@@ -473,6 +457,7 @@ export default function IndividualPriorityAnalysisSection() {
       page.primary,
       page.secondary,
       page.expandedProduct,
+      page.rdPhase,
       state.committedPriority,
       candidatesColumnFilters,
     ],
@@ -484,7 +469,9 @@ export default function IndividualPriorityAnalysisSection() {
       primaryDiseaseNames: page.primary,
       secondaryDiseaseNames: page.secondary,
       productNames: page.expandedProduct,
+      phaseNames: page.rdPhase,
       candidateType: 'Candidate',
+      newIncludeInPipeline2025: true,
       priorityKeys:
         state.committedPriority != null ? [state.committedPriority] : null,
       columnFilters: candidatesColumnFilters,
@@ -498,7 +485,7 @@ export default function IndividualPriorityAnalysisSection() {
   );
 
   // CSV download: fetches all rows via the paginating `fetchAllCandidates`
-  // helper (same pattern as AggregatedSection) so the export isn't
+  // helper (the shared batched-CSV export pattern) so the export isn't
   // capped at the visible page.
   const [candidatesDownloading, setCandidatesDownloading] = useState(false);
   const handleCandidatesDownloadCSV = useCallback(async () => {
@@ -510,6 +497,7 @@ export default function IndividualPriorityAnalysisSection() {
         secondaryDiseaseNames: page.secondary,
         productNames: page.expandedProduct,
         candidateType: 'Candidate',
+        newIncludeInPipeline2025: true,
         priorityKeys:
           state.committedPriority != null ? [state.committedPriority] : null,
         columnFilters: candidatesColumnFilters,
@@ -538,9 +526,8 @@ export default function IndividualPriorityAnalysisSection() {
         <h3 className="text-base sm:text-lg font-bold text-black">
           Individual priority analysis
         </h3>
-        {/* Q10: section description copy pending designer. */}
         <p className="text-sm text-gray-500">
-          Pending designer copy — section description to be defined.
+          Focus on a single WHO priority. Select a priority to see the pipeline mapped to it — the candidates working towards that priority, its target population, and how that pipeline builds up by R&D stage. Click Explore selected priority to open its full detail, including a link to the source.
         </p>
       </div>
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />

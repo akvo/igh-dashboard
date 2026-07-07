@@ -446,6 +446,39 @@ describe("Pipeline filter pairs (cross-filtering)", () => {
   });
 });
 
+describe("phase_names filter", () => {
+  async function totalFor(variables: Record<string, unknown>): Promise<number> {
+    const { data } = await query<{
+      temporalSnapshots: { phase_name: string; candidateCount: number }[];
+    }>(
+      `query ($phaseNames: [String!]) {
+         temporalSnapshots(phase_names: $phaseNames) { phase_name candidateCount }
+       }`,
+      variables,
+    );
+    return data.temporalSnapshots.reduce((s, r) => s + r.candidateCount, 0);
+  }
+
+  it("restricts returned rows to the selected phase", async () => {
+    const { data } = await query<{ temporalSnapshots: { phase_name: string }[] }>(
+      `query ($phaseNames: [String!]) {
+         temporalSnapshots(phase_names: $phaseNames) { phase_name }
+       }`,
+      { phaseNames: ["Phase I"] },
+    );
+    expect(data.temporalSnapshots.length).toBeGreaterThan(0);
+    for (const r of data.temporalSnapshots) {
+      expect(r.phase_name).toBe("Phase I");
+    }
+  });
+
+  it("a single-phase total is <= the unfiltered total", async () => {
+    const filtered = await totalFor({ phaseNames: ["Phase I"] });
+    const all = await totalFor({});
+    expect(filtered).toBeLessThanOrEqual(all);
+  });
+});
+
 describe("Active pipeline filter pairs (active-only cross-filtering)", () => {
   it("returns the same row shape as pipelineFilterPairs", async () => {
     const { data } = await query<{

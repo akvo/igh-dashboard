@@ -18,8 +18,16 @@
  *   defaultHidden — start hidden in the visible-columns popover (default false)
  */
 
-import { normalizeProductName } from './filterGroups';
 import { displayHealthArea } from './transformations/constants';
+
+// The Disease column shows the canonical disease label, which the ETL
+// computes once (secondary, else primary group, with Malaria strains
+// prefixed) and the backend returns as `disease_name`. The column's flat
+// category filter is aligned to the same value via the backend registry.
+// Kept as a named helper so the table configs read intent, not a field.
+export function specificDiseaseLabel(row) {
+  return row?.disease_name || '';
+}
 
 // =========================================================
 // Candidates (Explore → Aggregated portfolio → Candidates)
@@ -58,14 +66,14 @@ export function buildCandidateColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
     {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     // Aggregated string column — TEXT-only per the backend column registry.
@@ -124,14 +132,14 @@ export function buildApprovedProductColumns({ onExplore } = {}) {
       render: (v) => displayHealthArea(v),
       filter: { kind: 'category' },
     },
-    { header: 'Disease', accessor: 'disease_name', filter: { kind: 'category' } },
     {
-      header: 'Product',
-      accessor: 'product_name',
-      csvAccessor: (row) => normalizeProductName(row.product_name),
-      render: (v) => normalizeProductName(v),
+      header: 'Disease',
+      accessor: 'disease_name',
+      render: (_v, row) => specificDiseaseLabel(row),
+      csvAccessor: (row) => specificDiseaseLabel(row),
       filter: { kind: 'category' },
     },
+    { header: 'Product', accessor: 'product_name', filter: { kind: 'category' } },
     { header: 'R&D stage', accessor: 'current_rd_stage', filter: { kind: 'category' } },
     { header: 'Sub product', accessor: 'sub_product_name', filter: { kind: 'category' } },
     { header: 'Developers', accessor: 'developers_agg', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
@@ -199,7 +207,7 @@ export function buildClinicalTrialColumns({ onExplore } = {}) {
     { header: 'Last updated', accessor: 'last_updated', filter: { kind: 'date' } },
     { header: 'Sponsor', accessor: 'sponsor', filter: { kind: 'text' } },
     { header: 'Collaborator', accessor: 'collaborator', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
-    { header: 'Source', accessor: 'source_text', type: 'line-clamp', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
+    { header: 'Source', accessor: 'source_text', type: 'link', maxWidth: '200px', filter: { kind: 'text' }, sortable: false },
   ];
 }
 

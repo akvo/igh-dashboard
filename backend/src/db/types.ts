@@ -33,6 +33,10 @@ export interface DimDisease {
   // has no secondary -- the "No secondary disease" sentinel and
   // empty strings are normalized to NULL in bronze-to-silver.
   secondary_disease_name: string | null;
+  // Canonical display label computed in the ETL: the secondary, else
+  // the primary group, with Malaria strains prefixed ("Malaria – P.
+  // falciparum"). The one string tables and slide-ins print.
+  disease_label: string | null;
 }
 
 export interface DimPhase {
@@ -322,10 +326,29 @@ export interface AgeGroupDistributionRow {
   candidateCount: number;
 }
 
+export interface ClinicalTrialDiseaseRow {
+  disease_name: string;
+  global_health_area: string;
+  trialCount: number;
+}
+
+export interface ClinicalTrialProductTypeRow {
+  product_name: string;
+  trialCount: number;
+}
+
+export interface ClinicalTrialGhaRow {
+  global_health_area: string;
+  trialCount: number;
+}
+
 export interface ClinicalTrialStats {
   totalTrials: number;
   statusDistribution: ClinicalTrialStatusRow[];
   ageGroupDistribution: AgeGroupDistributionRow[];
+  diseaseDistribution: ClinicalTrialDiseaseRow[];
+  productTypeDistribution: ClinicalTrialProductTypeRow[];
+  ghaDistribution: ClinicalTrialGhaRow[];
 }
 
 export interface ClinicalTrialNode {
@@ -437,6 +460,7 @@ export interface PortfolioCandidateFilter {
   phase_names?: string[];
   priority_keys?: number[];
   column_filters?: ColumnFilterInput[];
+  new_include_in_pipeline_2025?: boolean;
 }
 
 export interface PortfolioCandidateConnection {
@@ -585,6 +609,7 @@ export interface PriorityAlignmentInput {
   primary_disease_names?: string[] | null;
   secondary_disease_names?: string[] | null;
   product_names?: string[] | null;
+  phase_names?: string[] | null;
 }
 
 // =============================================================================
@@ -597,6 +622,7 @@ export interface IndividualPriorityAnalysisInput {
   primary_disease_names?: string[] | null;
   secondary_disease_names?: string[] | null;
   product_names?: string[] | null;
+  phase_names?: string[] | null;
 }
 
 export interface PipelineBuildUpRow {
@@ -608,7 +634,6 @@ export interface PipelineBuildUpRow {
 
 export interface IndividualPriorityAnalysis {
   candidatesCount: number;
-  approvedProductsCount: number;
   targetPopulation: string | null;
   pipelineBuildUp: PipelineBuildUpRow[];
 }

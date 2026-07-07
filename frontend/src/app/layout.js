@@ -5,7 +5,7 @@ import Header from '@/components/ui/Header';
 import { ApolloProvider } from '@/lib/apollo-provider';
 import Analytics from '@/components/Analytics';
 import { ResponsiveGate } from '@/components/layout';
-import { GlobalFiltersProvider } from '@/components/portfolio-analysis/useGlobalFilters';
+import { GlobalFiltersProvider } from '@/components/global-filters';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',

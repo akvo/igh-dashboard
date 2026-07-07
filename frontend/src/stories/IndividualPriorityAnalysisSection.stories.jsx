@@ -27,28 +27,24 @@ function ActiveStub() {
       <h4 className="text-base font-bold text-black">
         Pipeline for priority: TPP: For next generation drug-susceptibility testing
       </h4>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <StatCard
-          title="Number of candidates linked to selected priority"
-          value="—"
-          description="Pending data confirmation"
-          variant="number"
-        />
-        <StatCard
-          title="Number of approved products linked to selected priority"
-          value="—"
-          description="Pending data confirmation"
-          variant="number"
-        />
-        <StatCard
-          title="Target population"
-          value="Pending data confirmation."
-          variant="text"
-        />
-      </div>
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <h4 className="text-base font-bold text-black mb-2">Pipeline build up</h4>
-        <ChartEmptyState variant="bar" height={240} />
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+        <div className="flex flex-col gap-4">
+          <StatCard
+            title="Number of candidates linked to selected priority"
+            value="—"
+            description="Pending data confirmation"
+            variant="number"
+          />
+          <StatCard
+            title="Target population"
+            value="Pending data confirmation."
+            variant="text"
+          />
+        </div>
+        <div className="bg-white border border-gray-200 rounded-xl p-4">
+          <h4 className="text-base font-bold text-black mb-2">Pipeline build up</h4>
+          <ChartEmptyState variant="bar" height={220} />
+        </div>
       </div>
     </div>
   );

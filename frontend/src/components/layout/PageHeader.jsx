@@ -21,11 +21,21 @@ export default function PageHeader({ title, description }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Accept either a single string (most pages) or an array of strings
+  // to render as separate paragraphs. Normalising to an array keeps the
+  // single-string callers unchanged while letting longer intros break
+  // into multiple <p> blocks.
+  const paragraphs = Array.isArray(description) ? description : [description];
+
   return (
     <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
       <div className="flex-1">
         <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">{title}</h1>
-        <p className="text-sm text-gray-500">{description}</p>
+        <div className="space-y-3 text-sm text-gray-500">
+          {paragraphs.map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+        </div>
       </div>
       <button
         data-tour="share-button"

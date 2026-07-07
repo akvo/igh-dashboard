@@ -11,6 +11,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import { StatCard, Dropdown, TabSwitcher, TabNav, ChartMenu, DataTable, DiseaseListPanel, PriorityShareCard, PriorityTotalCard } from '@/components/ui';
 import HierarchicalDiseaseFilter from '@/components/filters/HierarchicalDiseaseFilter';
 import HierarchicalProductFilter from '@/components/filters/HierarchicalProductFilter';
+import { VECTOR_CONTROL_PRODUCT_NAMES } from '@/lib/filterGroups';
 import ReportsAndInsights from '@/components/ReportsAndInsights';
 import {
   BubbleChart,
@@ -39,16 +40,11 @@ import {
   useAvailableYears,
   useLastSyncDate,
   usePhases,
-  useDiseases,
-  useSecondaryDiseases,
   useDiseaseHierarchy,
-  usePipelineFilterPairs,
-  useActivePipelineFilterPairs,
 } from '@/graphql/hooks';
-import { SIMPLIFIED_PHASE_NAMES, displayHealthArea } from '@/lib/transformations/constants';
-import { vcpMemberKeys } from '@/lib/filterGroups';
-import { useCrossFilteredOptions } from '@/lib/useCrossFilteredOptions';
-import { useGlobalFilters } from '@/components/portfolio-analysis';
+import { displayHealthArea } from '@/lib/transformations/constants';
+import { useGlobalFilters } from '@/components/global-filters';
+import { useFilterPreservingHref } from '@/lib/useFilterPreservingHref';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -113,15 +109,12 @@ const WHO_W_OR_C_COLORS = {
 export default function Home() {
   // Global filters from sidebar filter box (shared across all pages).
   const globalFilters = useGlobalFilters();
+  const buildHref = useFilterPreservingHref();
 
-  const [product, setProduct] = useUrlState('hProduct', [], arraySerializer);
-  const [rdStage, setRdStage] = useUrlState('hRdStage', [], arraySerializer);
   const [bubbleCandidateTypes, setBubbleCandidateTypes] = useUrlState('bubbleType', ['Candidate', 'Product'], arraySerializer);
   const [bubbleView, setBubbleView] = useUrlState('bubbleView', 'gha', stringSerializer);
   const [mapTab, setMapTab] = useUrlState('mapTab', 'trials', { ...stringSerializer, historyMode: 'push' });
   const [chartViewTab, setChartViewTab] = useUrlState('chartView', 'visual', stringSerializer);
-  const [crossGlobalHealthArea, setCrossGlobalHealthArea] = useUrlState('crossGha', [], arraySerializer);
-  const [crossProduct, setCrossProduct] = useUrlState('crossProduct', [], arraySerializer);
   // Hidden phase keys for the two StackedBarCharts. Storing hidden
   // (not visible) keeps the URL short when most phases are shown.
   const [portfolioHiddenPhases, setPortfolioHiddenPhases] = useUrlState('phide', [], arraySerializer);
@@ -151,24 +144,56 @@ export default function Home() {
   const womenChildrenChartRef = useRef(null);
 
   const { lastSyncDate, loading: syncDateLoading } = useLastSyncDate();
-  const { kpis, loading: kpisLoading } = usePortfolioKPIs();
+  // Normalise global filter arrays → null when empty so hooks treat them as
+  // "no filter" rather than "empty array = match nothing".
+  const ghaArg = globalFilters.healthArea.length > 0 ? globalFilters.healthArea : null;
+  const primaryArg = globalFilters.primary.length > 0 ? globalFilters.primary : null;
+  const secondaryArg = globalFilters.secondary.length > 0 ? globalFilters.secondary : null;
+  const productArg = globalFilters.product.length > 0 ? globalFilters.product : null;
+  const rdPhaseArg = globalFilters.rdPhase.length > 0 ? globalFilters.rdPhase : null;
+
+  const { kpis, loading: kpisLoading } = usePortfolioKPIs(ghaArg, primaryArg, secondaryArg, productArg, rdPhaseArg);
   // The GHA-only summary feeds both the bubble chart (gha view) and the
   // cross-pipeline dropdown down-page, so it always fetches. The three
   // expanded views only fetch when their tab is active.
   const bubbleCandidateArg =
     bubbleCandidateTypes.length === candidateTypeOptions.length ? null : bubbleCandidateTypes;
-  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(bubbleCandidateArg);
+  const { bubbleData: gqlBubbleData, loading: bubbleLoading } = useGlobalHealthAreaSummaries(
+    bubbleCandidateArg,
+    { globalHealthAreas: ghaArg, primaryDiseaseNames: primaryArg, secondaryDiseaseNames: secondaryArg, phaseNames: rdPhaseArg, productNames: productArg },
+  );
   const { bubbleData: ghaTypeBubbleData, loading: ghaTypeLoading } = useGhaProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'ghaType' },
+    {
+      skip: bubbleView !== 'ghaType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
   const { bubbleData: diseaseBubbleData, loading: diseaseBubbleLoading } = useDiseaseSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'disease' },
+    {
+      skip: bubbleView !== 'disease',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
   const { bubbleData: diseaseTypeBubbleData, loading: diseaseTypeLoading } = useDiseaseProductTypeSummaries(
     bubbleCandidateArg,
-    { skip: bubbleView !== 'diseaseType' },
+    {
+      skip: bubbleView !== 'diseaseType',
+      globalHealthAreas: ghaArg,
+      primaryDiseaseNames: primaryArg,
+      secondaryDiseaseNames: secondaryArg,
+      productNames: productArg,
+      phaseNames: rdPhaseArg,
+    },
   );
 
   // Active-view data + loading switch. Each view owns its column set and
@@ -289,24 +314,35 @@ export default function Home() {
   }, [activeBubbleData]);
   const { products, loading: productsLoading } = useProducts();
   const { phases, loading: phasesLoading } = usePhases();
-  const { raw: diseasesRaw, loading: diseasesLoading } = useDiseases();
-  const { raw: secondaryDiseasesRaw } = useSecondaryDiseases();
   const { hierarchy: diseaseHierarchy } = useDiseaseHierarchy();
-  // Two pair sources, one per section: Portfolio Overview pulls from the
-  // active-only set so its dropdowns never offer empty-chart combinations;
-  // Cross-pipeline keeps the broader set because its temporal chart
-  // legitimately spans retired snapshots.
-  const { pairs: activePairs, loading: activePairsLoading } = useActivePipelineFilterPairs();
-  const { pairs, loading: pairsLoading } = usePipelineFilterPairs();
   const { years: availableYears, loading: yearsLoading } = useAvailableYears();
   const { mapData: gqlMapData, distributionList: gqlMapDistribution, loading: mapLoading } = useGeographicDistribution(
-    mapTab === 'trials' ? 'Trial Location' : 'Developer Location'
+    mapTab === 'trials' ? 'Trial Location' : 'Developer Location',
+    null, // statuses
+    ghaArg,
+    primaryArg,
+    secondaryArg,
+    productArg,
+    rdPhaseArg,
   );
-  const expandedCrossProduct = crossProduct;
+  // Convert global product names → product keys for hooks that need int keys.
+  const nameToKeyMap = useMemo(() => {
+    const map = new Map();
+    (products || []).forEach((p) => map.set(p.product_name, p.product_key));
+    return map;
+  }, [products]);
+  const globalProductKeys = useMemo(() => {
+    if (globalFilters.product.length === 0) return null;
+    const keys = globalFilters.product.map((n) => nameToKeyMap.get(n)).filter((k) => k != null);
+    return keys.length > 0 ? keys : null;
+  }, [globalFilters.product, nameToKeyMap]);
+
   const { chartData: temporalChartData, phases: temporalPhases, loading: temporalLoading } = useTemporalSnapshots(
     availableYears,
-    crossGlobalHealthArea.length > 0 ? crossGlobalHealthArea : null,
-    expandedCrossProduct.length > 0 ? expandedCrossProduct.map(v => parseInt(v, 10)) : null,
+    ghaArg,
+    globalProductKeys,
+    primaryArg,
+    secondaryArg,
   );
 
   // WHO Priority Alignment data — single consolidated query feeds the
@@ -322,134 +358,21 @@ export default function Home() {
     womenOrChildrenChartData: whoWomenChildrenChartData,
     loading: whoLoading,
   } = usePriorityAlignment(
-    globalFilters.healthArea,
-    globalFilters.primary,
-    globalFilters.secondary,
+    ghaArg,
+    primaryArg,
+    secondaryArg,
     globalFilters.expandedProduct,
+    rdPhaseArg,
   );
 
-  // Build the /who-priority-alignment link with the four shared URL
-  // keys so navigation preserves the active selection. A plain
-  // <a href="/who-priority-alignment"> drops the query string, which
-  // is why the destination page used to boot unfiltered. The WHO
-  // page's useWhoPageFilters reads `gha`, `primary`, `secondary`,
-  // `product` — same encoding (comma-joined arrays via
-  // arraySerializer) — so we encode each non-empty axis below and
-  // skip empties to keep the URL short.
-  const exploreHref = useMemo(() => {
-    const params = new URLSearchParams();
-    if (globalFilters.healthArea.length > 0) params.set('gha', globalFilters.healthArea.join(','));
-    if (globalFilters.primary.length > 0) params.set('primary', globalFilters.primary.join(','));
-    if (globalFilters.secondary.length > 0) params.set('secondary', globalFilters.secondary.join(','));
-    if (globalFilters.product.length > 0) params.set('product', globalFilters.product.join(','));
-    const qs = params.toString();
-    return qs ? `/who-priority-alignment?${qs}` : '/who-priority-alignment';
-  }, [
-    globalFilters.healthArea,
-    globalFilters.primary,
-    globalFilters.secondary,
-    globalFilters.product,
-  ]);
-
-  // Candidate type distribution with filters
-  // Product keys are strings in state (URL-safe), convert to integers for the API.
-  const expandedProduct = product;
+  // Candidate type distribution — driven by global product, R&D phase, GHA, and disease filters.
   const { chartData: portfolioChartData, segments: portfolioSegments, loading: portfolioLoading } = useCandidateTypeDistribution(
-    expandedProduct.length > 0 ? expandedProduct.map(v => parseInt(v, 10)) : expandedProduct,
-    rdStage.length > 0 ? rdStage : null,
+    globalProductKeys,
+    rdPhaseArg,
+    ghaArg,
+    primaryArg,
+    secondaryArg,
   );
-
-  // Product options for dropdown (from API).
-  // Values are strings to stay consistent with URL serialization.
-  const allProductOptions = useMemo(
-    () => products.map((p) => ({ label: p.product_name, value: String(p.product_key) })),
-    [products],
-  );
-
-  // VCP child option values (product keys) for the hierarchical filter.
-  const productGroupMembers = useMemo(() => vcpMemberKeys(products), [products]);
-
-  // Phase options shaped to feed `useCrossFilteredOptions`.
-  // Values are the canonical phase names (matching what the URL stores in
-  // `rdStage`); labels apply the simplified-name override when present.
-  const allPhaseOptions = useMemo(
-    () => phases.map(p => ({
-      label: SIMPLIFIED_PHASE_NAMES[p.name] || p.name,
-      value: p.name,
-    })),
-    [phases]
-  );
-
-  // Portfolio section: cross-filter Product type ↔ R&D stage via the hook.
-  // No GHA/disease filters are exposed here — pass empty arrays. Pruning of
-  // stale selections is handled inside the hook.
-  const {
-    productOptions,
-    rdPhaseOptions: rdStageOptions,
-  } = useCrossFilteredOptions({
-    data: {
-      healthAreas: [],
-      diseasesRaw,
-      pairs: activePairs,
-      allProductOptions,
-      allPhaseOptions,
-    },
-    selections: {
-      healthArea: [],
-      disease: [],
-      product,
-      rdPhase: rdStage,
-    },
-    setters: {},
-    loading: {
-      healthAreas: false,
-      diseases: diseasesLoading,
-      products: productsLoading,
-      pairs: activePairsLoading,
-    },
-    mode: 'by-key',
-  });
-
-  // Cross-pipeline section: cross-filter GHA ↔ product via the hook
-  const {
-    healthAreaOptions: crossHealthAreaOptions,
-    productOptions: crossProductFilteredOptions,
-  } = useCrossFilteredOptions({
-    data: { healthAreas: gqlBubbleData, diseasesRaw, pairs, allProductOptions },
-    selections: { healthArea: crossGlobalHealthArea, disease: [], product: crossProduct },
-    setters: {},
-    loading: { healthAreas: bubbleLoading, diseases: diseasesLoading, products: productsLoading, pairs: pairsLoading },
-    mode: 'by-key',
-  });
-
-  // Local pruning: clear stale homepage-local selections when options narrow.
-  useEffect(() => {
-    if (product.length === 0 || productOptions.length === 0) return;
-    const validValues = new Set(productOptions.map((o) => o.value));
-    const valid = product.filter((v) => validValues.has(v));
-    if (valid.length !== product.length) setProduct(valid);
-  }, [productOptions, product, setProduct]);
-
-  useEffect(() => {
-    if (rdStage.length === 0 || rdStageOptions.length === 0) return;
-    const validValues = new Set(rdStageOptions.map((o) => o.value));
-    const valid = rdStage.filter((v) => validValues.has(v));
-    if (valid.length !== rdStage.length) setRdStage(valid);
-  }, [rdStageOptions, rdStage, setRdStage]);
-
-  useEffect(() => {
-    if (crossGlobalHealthArea.length === 0 || crossHealthAreaOptions.length === 0) return;
-    const validValues = new Set(crossHealthAreaOptions.map((o) => o.value));
-    const valid = crossGlobalHealthArea.filter((v) => validValues.has(v));
-    if (valid.length !== crossGlobalHealthArea.length) setCrossGlobalHealthArea(valid);
-  }, [crossHealthAreaOptions, crossGlobalHealthArea, setCrossGlobalHealthArea]);
-
-  useEffect(() => {
-    if (crossProduct.length === 0 || crossProductFilteredOptions.length === 0) return;
-    const validValues = new Set(crossProductFilteredOptions.map((o) => o.value));
-    const valid = crossProduct.filter((v) => validValues.has(v));
-    if (valid.length !== crossProduct.length) setCrossProduct(valid);
-  }, [crossProductFilteredOptions, crossProduct, setCrossProduct]);
 
   // Convert hidden-phase arrays to { key: boolean } maps for StackedBarChart.
   const portfolioVisiblePhases = useMemo(() =>
@@ -468,7 +391,7 @@ export default function Home() {
   }, [setCrossHiddenPhases]);
 
   return (
-    <div className="flex min-h-[calc(100vh-74px)] bg-cream-200">
+    <div className="flex min-h-[calc(100vh-90px)] bg-cream-200">
       {/* Sidebar */}
       <Sidebar activeId="home" />
 
@@ -525,7 +448,7 @@ export default function Home() {
                   value={kpi.value}
                   description={kpi.description}
                   buttonText={kpi.buttonText}
-                  buttonHref={kpi.buttonHref}
+                  buttonHref={kpi.buttonHref ? buildHref(kpi.buttonHref) : undefined}
                   onButtonClick={kpi.id === 'diseases' ? () => setDiseasePanelOpen(true) : undefined}
                   tooltip={kpi.tooltip}
                 />
@@ -681,7 +604,7 @@ export default function Home() {
                 Portfolio overview by global health area
               </h3>
               <a
-                href="/portfolio-analysis"
+                href={buildHref('/pipeline-overview')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Explore portfolio analysis
@@ -692,25 +615,25 @@ export default function Home() {
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-            {/* Filters */}
+            {/* Filters — bound to global filter state so selections sync across pages */}
             <div className="flex flex-wrap items-end gap-4 mb-4">
               <div className="w-[280px]">
                 <HierarchicalProductFilter
                   label="Product type"
-                  selected={product}
-                  onChange={setProduct}
+                  selected={globalFilters.product}
+                  onChange={globalFilters.setProduct}
                   placeholder="All"
-                  options={productOptions}
-                  groupMembers={productGroupMembers}
+                  options={globalFilters.productOptions}
+                  groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
                 />
               </div>
               <div className="w-[280px]">
                 <Dropdown
                   label="Select R&D stage"
-                  value={rdStage}
-                  onChange={setRdStage}
+                  value={globalFilters.rdPhase}
+                  onChange={globalFilters.setRdPhase}
                   placeholder="All"
-                  options={rdStageOptions}
+                  options={globalFilters.rdPhaseOptions}
                   multiSelect={true}
                   showSearch={true}
                   showClearText={true}
@@ -719,12 +642,12 @@ export default function Home() {
               <div className="flex-1" />
               <button
                 onClick={() => {
-                  setProduct([]);
-                  setRdStage([]);
+                  globalFilters.setProduct([]);
+                  globalFilters.setRdPhase([]);
                 }}
-                disabled={product.length === 0 && rdStage.length === 0}
+                disabled={globalFilters.product.length === 0 && globalFilters.rdPhase.length === 0}
                 className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
-                  product.length > 0 || rdStage.length > 0
+                  globalFilters.product.length > 0 || globalFilters.rdPhase.length > 0
                     ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
                     : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
                 }`}
@@ -756,14 +679,14 @@ export default function Home() {
             )}
           </div>
 
-          {/* Cross-pipeline Analytics */}
+          {/* Pipeline trends */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Cross-pipeline analytics
+                Pipeline trends
               </h3>
               <a
-                href="/cross-pipeline-analytics"
+                href={buildHref('/pipeline-trends')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
                 Make custom comparison
@@ -774,39 +697,39 @@ export default function Home() {
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
-            {/* Filters */}
+            {/* Filters — bound to global filter state so selections sync across pages */}
             <div className="flex flex-wrap items-end gap-4 mb-4">
               <div className="w-[280px]">
                 <Dropdown
                   label="Global health area"
-                  value={crossGlobalHealthArea}
-                  onChange={setCrossGlobalHealthArea}
+                  value={globalFilters.healthArea}
+                  onChange={globalFilters.setHealthArea}
                   placeholder="All"
-                  options={crossHealthAreaOptions}
+                  options={globalFilters.healthAreaOptions}
                   multiSelect={true}
                   showClearText={true}
-                  loading={bubbleLoading}
+                  loading={globalFilters.loading.gha}
                 />
               </div>
               <div className="w-[280px]">
                 <HierarchicalProductFilter
                   label="Product type"
-                  selected={crossProduct}
-                  onChange={setCrossProduct}
+                  selected={globalFilters.product}
+                  onChange={globalFilters.setProduct}
                   placeholder="All"
-                  options={crossProductFilteredOptions}
-                  groupMembers={productGroupMembers}
+                  options={globalFilters.productOptions}
+                  groupMembers={VECTOR_CONTROL_PRODUCT_NAMES}
                 />
               </div>
               <div className="flex-1" />
               <button
                 onClick={() => {
-                  setCrossGlobalHealthArea([]);
-                  setCrossProduct([]);
+                  globalFilters.setHealthArea([]);
+                  globalFilters.setProduct([]);
                 }}
-                disabled={crossGlobalHealthArea.length === 0 && crossProduct.length === 0}
+                disabled={globalFilters.healthArea.length === 0 && globalFilters.product.length === 0}
                 className={`px-5 py-2.5 text-sm whitespace-nowrap font-medium border ${
-                  crossGlobalHealthArea.length > 0 || crossProduct.length > 0
+                  globalFilters.healthArea.length > 0 || globalFilters.product.length > 0
                     ? 'text-[#262626] bg-gray-200 border-gray-300 hover:bg-gray-300 cursor-pointer'
                     : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
                 }`}
@@ -845,16 +768,6 @@ export default function Home() {
                   Compare WHO priorities with pipeline
                 </p>
               </div>
-              {/* In-section disease dropdown is bound to the same
-                  primary/secondary URL params as the sidebar's Disease
-                  filter, so picking a disease here updates the sidebar
-                  too (and vice versa). The neighbouring button flips
-                  from white/border "View all" to the orange "Explore
-                  selected" CTA as soon as any global filter axis is
-                  active — pairing them visually so the state change
-                  is obvious without making users hunt for the sidebar.
-                  Destination page reads the same URL keys via
-                  `useWhoPageFilters`, so the selection carries over. */}
               <div className="flex items-center gap-2">
                 <div className="w-[240px]">
                   <HierarchicalDiseaseFilter
@@ -870,14 +783,14 @@ export default function Home() {
                 </div>
                 {globalFilters.hasFilters ? (
                   <a
-                    href={exploreHref}
+                    href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
                   >
                     Explore selected
                   </a>
                 ) : (
                   <a
-                    href={exploreHref}
+                    href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
                   >
                     View all

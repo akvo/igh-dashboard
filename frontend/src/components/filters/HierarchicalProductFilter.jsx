@@ -65,12 +65,14 @@ export default function HierarchicalProductFilter({
   placeholder = 'All',
   className = '',
   variant = 'outlined',
+  compact = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
+  const expandedChildrenRef = useRef(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 0 });
 
   // Normalize options to {value,label} so callers may pass strings.
@@ -199,6 +201,19 @@ export default function HierarchicalProductFilter({
     setExpanded((v) => !v);
   }
 
+  // When the group expands, scroll its newly revealed children into the
+  // visible part of the fixed-height dropdown so the interaction is
+  // obvious. Optional chaining keeps this a no-op under jsdom (no scroll
+  // implementation); real browsers scroll smoothly.
+  useEffect(() => {
+    if (expanded && expandedChildrenRef.current) {
+      expandedChildrenRef.current.scrollIntoView?.({
+        block: 'nearest',
+        behavior: 'smooth',
+      });
+    }
+  }, [expanded]);
+
   function clearAll(e) {
     e.stopPropagation();
     emit([]);
@@ -300,7 +315,7 @@ export default function HierarchicalProductFilter({
                       </button>
                     </div>
                     {expanded && (
-                      <div className="pl-7 pb-1 bg-gray-50/50">
+                      <div ref={expandedChildrenRef} className="pl-7 pb-1 bg-gray-50/50">
                         {children.map((c) => {
                           const childChecked = selected.includes(c.value);
                           return (
@@ -341,7 +356,7 @@ export default function HierarchicalProductFilter({
           if (!isOpen) setSearchQuery('');
         }}
         className={`flex items-center justify-between text-sm font-normal text-black cursor-pointer text-left transition-colors
-          w-full px-4 py-2.5 h-[44px]
+          ${compact ? 'gap-2 px-3 h-9 w-[180px] max-w-full' : 'w-full px-4 py-2.5 h-[44px]'}
           ${
             variant === 'outlined'
               ? `border ${isOpen ? 'bg-white border-orange-500' : 'bg-white border-black-24'}`

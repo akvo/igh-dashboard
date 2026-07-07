@@ -3,6 +3,8 @@
 import { useMemo, useState, useCallback } from 'react';
 import { CloseIcon } from '../icons';
 import { displayHealthArea } from '@/lib/transformations/constants';
+import { useQueryParams } from '@/lib/useQueryParams';
+import { buildHrefWithFilters } from '@/lib/filterPreservingHref';
 
 /**
  * Build a hierarchical structure from flat disease hierarchy rows.
@@ -126,6 +128,26 @@ function ParentDiseaseItem({ name, subDiseases, onExplore, globalHealthArea }) {
   );
 }
 
+// Build the /pipeline-overview drill-down URL for a disease panel click.
+// Preserves the user's active global filters (product, rdPhase, …) and
+// imposes the clicked disease's global-health-area + primary (+ secondary).
+// A primary click clears any stale secondary. With no kind/name ("Find out
+// more"), it just preserves the active filters. Exported for unit testing.
+export function diseaseExploreHref(kind, name, primaryParent, globalHealthArea, params) {
+  if (!kind || !name) {
+    return buildHrefWithFilters('/pipeline-overview', { params });
+  }
+  const set = { gha: globalHealthArea, primary: name };
+  const remove = [];
+  if (kind === 'secondary') {
+    set.primary = primaryParent;
+    set.secondary = name;
+  } else {
+    remove.push('secondary');
+  }
+  return buildHrefWithFilters('/pipeline-overview', { params, set, remove });
+}
+
 export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
   const tree = useMemo(() => buildHierarchy(hierarchy), [hierarchy]);
 
@@ -133,6 +155,8 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
     () => Object.keys(tree).sort((a, b) => a.localeCompare(b)),
     [tree],
   );
+
+  const [params] = useQueryParams();
 
   // Click handler dispatches to the correct URL parameters depending
   // on which row was clicked:
@@ -142,28 +166,18 @@ export default function DiseaseListPanel({ isOpen, onClose, hierarchy = [] }) {
   //                                              semantic on the
   //                                              destination page)
   //   kind === 'secondary' -> ?primary=<parent>&secondary=<child>
-  //   kind === '' (no name) -> /portfolio-analysis (Find out more)
+  //   kind === '' (no name) -> /pipeline-overview (Find out more)
   //
   // `globalHealthArea` is always preserved on `?gha=` so the
   // destination page hydrates the GHA filter as the user expects.
+  // Active global filters (product, rdPhase, …) are preserved via
+  // diseaseExploreHref so the user's selections survive the navigation.
   const handleExplore = useCallback(
     (kind, name, primaryParent, globalHealthArea) => {
       onClose();
-      if (!kind || !name) {
-        window.location.href = '/portfolio-analysis';
-        return;
-      }
-      const params = new URLSearchParams();
-      if (globalHealthArea) params.set('gha', globalHealthArea);
-      if (kind === 'primary') {
-        params.set('primary', name);
-      } else if (kind === 'secondary') {
-        if (primaryParent) params.set('primary', primaryParent);
-        params.set('secondary', name);
-      }
-      window.location.href = `/portfolio-analysis?${params.toString()}`;
+      window.location.href = diseaseExploreHref(kind, name, primaryParent, globalHealthArea, params);
     },
-    [onClose],
+    [onClose, params],
   );
 
   return (

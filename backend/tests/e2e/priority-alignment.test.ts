@@ -156,9 +156,10 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (66)", () => {
+  it("totalPriorities matches snapshot (65)", () => {
     // All non-stub priorities from dim_priority are counted (no pipeline gate).
-    expect(baseline.totalPriorities).toBe(66);
+    // Test_TO is excluded as a test/stub priority.
+    expect(baseline.totalPriorities).toBe(67);
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -168,11 +169,9 @@ describe("priorityAlignmentOverview — unfiltered", () => {
 
   it("byArea snapshot values match tracked DB", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
-    // ND total drifted 1778 → 1777 after the gold DB was regenerated
-    // 2026-05-14; the analyst's original reading reported 1778. Verified
-    // by independent SQL probe before re-pinning.
-    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(183);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1777);
+    // ND total updated 1777 → 1882 after DB update (2026-06-10).
+    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(234);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1890);
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
     expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
@@ -203,14 +202,14 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     const byKey = Object.fromEntries(
       baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
     );
-    expect(byKey["Vaccines"]).toBe(75);
-    expect(byKey["Drugs"]).toBe(68);
-    expect(byKey["Diagnostics"]).toBe(41);
+    expect(byKey["Vaccines"]).toBe(69);
+    expect(byKey["Drugs"]).toBe(61);
+    expect(byKey["Diagnostics"]).toBe(105);
     expect(byKey["Biologics"]).toBe(19);
   });
 
-  it("diseaseOptions returns priority-bearing diseases (count = 19), sorted by name", () => {
-    expect(baseline.diseaseOptions).toHaveLength(19);
+  it("diseaseOptions returns priority-bearing diseases (count = 35), sorted by name", () => {
+    expect(baseline.diseaseOptions).toHaveLength(35);
     const names = baseline.diseaseOptions.map((o) => o.disease_name);
     // Plain `.sort()` uses UTF-16 code-unit order — same collation SQLite's
     // default ORDER BY uses. `localeCompare` would put `Helminth` before
@@ -221,9 +220,8 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     for (const opt of baseline.diseaseOptions) {
       expect(opt.disease_key).toBeGreaterThan(0);
       expect(opt.disease_name.length).toBeGreaterThan(0);
-      // global_health_area is intentionally nullable: 7 of the 19
-      // priority-bearing diseases (e.g. HIV/AIDS, Tuberculosis, Scabies)
-      // are not categorised into the three WHO areas in dim_disease.
+      // global_health_area is intentionally nullable — some priority-bearing
+      // diseases are not categorised into the three WHO areas in dim_disease.
       // They still appear in the dropdown; the section's per-GHA share cards
       // simply won't reflect them.
     }
@@ -234,12 +232,12 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 1 unknown)", () => {
+  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 0 unknown)", () => {
     // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
-    // The sum equals totalPriorities.
+    // The sum equals totalPriorities. Test_TO was the sole unknown entry.
     expect(baseline.womenOrChildrenShare.yes).toBe(34);
-    expect(baseline.womenOrChildrenShare.no).toBe(31);
-    expect(baseline.womenOrChildrenShare.unknown).toBe(1);
+    expect(baseline.womenOrChildrenShare.no).toBe(33);
+    expect(baseline.womenOrChildrenShare.unknown).toBe(0);
     const sum =
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +
@@ -277,7 +275,7 @@ describe("priorityAlignmentOverview — filtered by primary_disease_names", () =
     }
   });
 
-  it("diseaseOptions does NOT narrow under the filter (still 19)", async () => {
+  it("diseaseOptions does NOT narrow under the filter (still 35)", async () => {
     const filtered = await fetchOverview({ primary_disease_names: [filterTarget.disease_name] });
     expect(filtered.diseaseOptions).toHaveLength(baseline.diseaseOptions.length);
   });
@@ -461,7 +459,43 @@ describe("priorityAlignmentOverview — applicableDiseases / applicableProductNa
 });
 
 // ---------------------------------------------------------------------------
-// 4. priority_keys filter on rdPriorities
+// 4. phase_names filter on priorityAlignmentOverview
+// ---------------------------------------------------------------------------
+
+describe("phase_names filter", () => {
+  const ask = (phaseNames?: string[]) =>
+    query<{
+      priorityAlignmentOverview: {
+        totalPriorities: number;
+        byArea: { totalCandidates: number }[];
+        productTypeBreakdown: { candidateCount: number }[];
+      };
+    }>(
+      `query ($phaseNames: [String!]) {
+         priorityAlignmentOverview(phase_names: $phaseNames) {
+           totalPriorities
+           byArea { totalCandidates }
+           productTypeBreakdown { candidateCount }
+         }
+       }`,
+      { phaseNames },
+    );
+
+  it("Phase I never increases byArea candidate totals vs unfiltered", async () => {
+    const all = (await ask()).data.priorityAlignmentOverview;
+    const p1 = (await ask(["Phase I"])).data.priorityAlignmentOverview;
+
+    const sumCandidates = (o: typeof all) => o.byArea.reduce((s, a) => s + a.totalCandidates, 0);
+    expect(sumCandidates(p1)).toBeLessThanOrEqual(sumCandidates(all));
+
+    const sumProduct = (o: typeof all) =>
+      o.productTypeBreakdown.reduce((s, r) => s + r.candidateCount, 0);
+    expect(sumProduct(p1)).toBeLessThanOrEqual(sumProduct(all));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. priority_keys filter on rdPriorities
 // ---------------------------------------------------------------------------
 
 describe("rdPriorities — priority_keys filter", () => {

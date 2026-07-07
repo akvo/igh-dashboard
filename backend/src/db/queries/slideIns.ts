@@ -68,7 +68,7 @@ export function getDiseaseForSlideIn(disease_key: number): DimDisease | null {
       `
       SELECT disease_key, diseaseid, disease_name, disease_group_name,
              global_health_area, disease_type, disease_filter,
-             secondary_disease_name
+             secondary_disease_name, disease_label
       FROM dim_disease
       WHERE disease_key = ?
     `,

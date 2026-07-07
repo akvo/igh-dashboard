@@ -1,10 +1,13 @@
 import { getDatabase } from "../connection.js";
 import type { CandidateTypeDistributionRow } from "../types.js";
-import { PIPELINE_FILTER } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface CandidateTypeDistributionFilters {
   product_keys?: number[];
   phase_names?: string[];
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
 }
 
 /**
@@ -34,6 +37,15 @@ export function getCandidateTypeDistribution(
     conditions.push(`f.product_key IN (${placeholders})`);
     params.push(...filters.product_keys);
   }
+
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
 
   if (filters?.phase_names && filters.phase_names.length > 0) {
     joins.push("JOIN dim_phase p ON f.phase_key = p.phase_key");

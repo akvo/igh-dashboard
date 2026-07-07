@@ -1,9 +1,14 @@
 import { getDatabase } from "../connection.js";
 import type { GhaProductTypeSummary } from "../types.js";
-import { PIPELINE_FILTER } from "./filterUtils.js";
+import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
 
 interface GhaProductTypeFilters {
   candidate_types?: string[];
+  global_health_areas?: string[];
+  primary_disease_names?: string[];
+  secondary_disease_names?: string[];
+  product_names?: string[];
+  phase_names?: string[];
 }
 
 /**
@@ -35,6 +40,21 @@ export function getGhaProductTypeSummaries(
     conditions.push(`c.candidate_type IN (${placeholders})`);
     params.push(...filters.candidate_types);
   }
+
+  // Global page filters. dim_disease (d) and dim_product (p) are already
+  // joined for grouping, so only the phase axis adds a join — aliased `ph`
+  // because `p` is taken by dim_product here.
+  addArrayCondition(filters?.global_health_areas, "d.global_health_area", conditions, params);
+  addArrayCondition(filters?.primary_disease_names, "d.disease_filter", conditions, params);
+  addArrayCondition(
+    filters?.secondary_disease_names,
+    "d.secondary_disease_name",
+    conditions,
+    params,
+  );
+  addArrayCondition(filters?.product_names, "p.product_name", conditions, params);
+  const phaseCtx = { joins, join: "JOIN dim_phase ph ON f.phase_key = ph.phase_key" };
+  addArrayCondition(filters?.phase_names, "ph.phase_name", conditions, params, phaseCtx);
 
   const sql = `
     SELECT
