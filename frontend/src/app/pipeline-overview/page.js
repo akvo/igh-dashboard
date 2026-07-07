@@ -18,7 +18,7 @@ import PageHeader from '@/components/layout/PageHeader';
 import PipelineOverviewSection from '@/components/pipeline-overview/PipelineOverviewSection';
 
 const INTRO =
-  'An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Filters apply across the whole portal — any filter you set stays active as you move between pages and remains until you clear it, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved.';
+  'An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Page-level filters scope every chart here. Use Share this view to copy a link with your filters preserved.';
 
 export default function PipelineOverviewPage() {
   const globalFilters = useGlobalFilters();

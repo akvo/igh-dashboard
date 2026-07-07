@@ -26,14 +26,14 @@ import { GlobalFilterBar, useGlobalFilters } from '@/components/global-filters';
 // separate <p> blocks.
 const VISUAL_INSIGHTS_INTRO = [
   'Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv.',
-  'Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.',
+  'Page-level filters stay applied as you move across the tabs or to the table builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.',
 ];
 
 // Table Builder intro: the custom-table builder framing, reusing the
 // same cross-portal filtering sentence as Visual Insights — filters now
 // persist across every page, so both views describe them identically.
 const TABLE_BUILDER_INTRO = [
-  'Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns.',
+  'Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Page-level filters stay applied across the Visual Insights view and Table Builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns.',
 ];
 
 export default function PipelineExplorerLayout({ children }) {
