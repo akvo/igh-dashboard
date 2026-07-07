@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { usePathname } from 'next/navigation';
-import { globalSteps, pageSteps } from './tourConfig';
+import { usePathname, useRouter } from 'next/navigation';
+import tourSteps from './tourConfig';
 
 /* ------------------------------------------------------------------ */
 /*  Confirmation dialog                                               */
@@ -144,6 +144,35 @@ function Spotlight({ rect }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Progress bar                                                      */
+/* ------------------------------------------------------------------ */
+function ProgressBar({ current, total }) {
+  const pct = ((current + 1) / total) * 100;
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: 4,
+        background: '#eee',
+        borderRadius: 2,
+        marginBottom: 8,
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          width: `${pct}%`,
+          height: '100%',
+          background: '#fe7449',
+          borderRadius: 2,
+          transition: 'width 0.3s ease',
+        }}
+      />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Step tooltip                                                      */
 /* ------------------------------------------------------------------ */
 function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose }) {
@@ -202,7 +231,9 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
         background: '#fff',
         borderRadius: 10,
         padding: '20px 22px 18px',
-        width: 300,
+        width: 320,
+        maxHeight: '80vh',
+        overflowY: 'auto',
         boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
       }}
     >
@@ -211,10 +242,10 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 6,
+          marginBottom: 4,
         }}
       >
-        <span style={{ fontSize: 12, color: '#fe7449', fontWeight: 600 }}>
+        <span style={{ fontSize: 12, color: '#999', fontWeight: 500 }}>
           Step {stepIndex + 1} of {totalSteps}
         </span>
         <button
@@ -233,6 +264,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           &times;
         </button>
       </div>
+      <ProgressBar current={stepIndex} total={totalSteps} />
       <h4
         style={{
           fontSize: 15,
@@ -249,6 +281,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           color: '#555',
           lineHeight: 1.5,
           margin: '0 0 16px',
+          whiteSpace: 'pre-line',
         }}
       >
         {step.description}
@@ -282,60 +315,123 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
 /* ------------------------------------------------------------------ */
 export default function GuidedTour({ active, onClose }) {
   const pathname = usePathname();
-  const [phase, setPhase] = useState('confirm');
-  const [currentStep, setCurrentStep] = useState(0);
-  const [targetRect, setTargetRect] = useState(null);
-
-  // Merge global + page-specific steps, filtering to only those
-  // whose target element actually exists on the current page.
-  const steps = useMemo(() => {
-    if (!active) return [];
-    const page = pageSteps[pathname] || [];
-    const all = [...globalSteps, ...page];
-    if (typeof document === 'undefined') return all;
-    return all.filter((s) => document.querySelector(s.target));
-  }, [pathname, active, phase]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Reset when tour is re-opened
-  useEffect(() => {
-    if (active) {
-      setPhase('confirm');
-      setCurrentStep(0);
-      setTargetRect(null);
+  const router = useRouter();
+  // Restore tour state from sessionStorage so cross-page navigation
+  // doesn't lose progress.
+  const [phase, setPhase] = useState(() => {
+    if (typeof window !== 'undefined' && active) {
+      const saved = sessionStorage.getItem('guidedTourStep');
+      if (saved != null) return 'touring';
     }
+    return 'confirm';
+  });
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (typeof window !== 'undefined' && active) {
+      const saved = sessionStorage.getItem('guidedTourStep');
+      return saved != null ? Number(saved) : 0;
+    }
+    return 0;
+  });
+  const [targetRect, setTargetRect] = useState(null);
+  // Track whether we're waiting for a page navigation to complete
+  const [navigating, setNavigating] = useState(false);
+  const totalSteps = tourSteps.length;
+
+  // Persist current step to sessionStorage
+  useEffect(() => {
+    if (phase === 'touring') {
+      sessionStorage.setItem('guidedTourStep', String(currentStep));
+    }
+  }, [phase, currentStep]);
+
+  // Reset only when tour is freshly activated (not on page navigations).
+  // We use a ref to detect the actual false→true transition.
+  const prevActive = useRef(active);
+  useEffect(() => {
+    if (active && !prevActive.current) {
+      // Fresh activation — check if we're resuming from sessionStorage
+      const saved = sessionStorage.getItem('guidedTourStep');
+      if (saved != null) {
+        setPhase('touring');
+        setCurrentStep(Number(saved));
+      } else {
+        setPhase('confirm');
+        setCurrentStep(0);
+      }
+      setTargetRect(null);
+      setNavigating(false);
+    }
+    prevActive.current = active;
   }, [active]);
 
+  // When pathname changes and we were navigating, stop navigating —
+  // the new page is loaded and we can show the step.
+  useEffect(() => {
+    if (navigating && phase === 'touring') {
+      const step = tourSteps[currentStep];
+      if (step && step.route === pathname) {
+        // Give the page a moment to render, then measure
+        const timer = setTimeout(() => setNavigating(false), 400);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [pathname, navigating, currentStep, phase]);
+
   const measureTarget = useCallback(() => {
-    if (!steps[currentStep]) return;
-    const el = document.querySelector(steps[currentStep].target);
+    const step = tourSteps[currentStep];
+    if (!step) return;
+    const el = document.querySelector(step.target);
     if (el) {
-      setTargetRect(el.getBoundingClientRect());
+      // Scroll element into view if needed
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Measure after a small delay to account for scroll
+      setTimeout(() => {
+        const rect = el.getBoundingClientRect();
+        setTargetRect(rect);
+      }, 100);
     } else {
       setTargetRect(null);
     }
-  }, [currentStep, steps]);
+  }, [currentStep]);
 
   useEffect(() => {
-    if (phase !== 'touring') return;
-    measureTarget();
+    if (phase !== 'touring' || navigating) return;
+    // Small delay to let the page render before measuring
+    const timer = setTimeout(measureTarget, 200);
     window.addEventListener('resize', measureTarget);
     window.addEventListener('scroll', measureTarget, true);
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('resize', measureTarget);
       window.removeEventListener('scroll', measureTarget, true);
     };
-  }, [phase, measureTarget]);
+  }, [phase, navigating, measureTarget]);
 
   const handleConfirm = () => {
     setPhase('touring');
     setCurrentStep(0);
+    // If not already on the first step's route, navigate
+    const firstStep = tourSteps[0];
+    if (firstStep.route && firstStep.route !== pathname) {
+      setNavigating(true);
+      router.push(firstStep.route);
+    }
   };
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep((s) => s + 1);
-    } else {
+    if (currentStep >= totalSteps - 1) {
       onClose();
+      return;
+    }
+    const nextIdx = currentStep + 1;
+    const nextStep = tourSteps[nextIdx];
+    setCurrentStep(nextIdx);
+    setTargetRect(null);
+
+    // If the next step is on a different page, navigate there
+    if (nextStep.route && nextStep.route !== pathname) {
+      setNavigating(true);
+      router.push(nextStep.route);
     }
   };
 
@@ -352,29 +448,58 @@ export default function GuidedTour({ active, onClose }) {
   if (!active) return null;
   if (typeof window === 'undefined') return null;
 
+  const step = tourSteps[currentStep];
+
   return createPortal(
     <>
       {phase === 'confirm' && (
         <ConfirmDialog onConfirm={handleConfirm} onCancel={handleClose} />
       )}
 
-      {phase === 'touring' && (
+      {phase === 'touring' && !navigating && (
         <>
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 9997 }}
           />
           <Spotlight rect={targetRect} />
-          {steps[currentStep] && (
+          {step && (
             <StepTooltip
-              step={steps[currentStep]}
+              step={step}
               stepIndex={currentStep}
-              totalSteps={steps.length}
+              totalSteps={totalSteps}
               targetRect={targetRect}
               onNext={handleNext}
               onClose={handleClose}
             />
           )}
         </>
+      )}
+
+      {phase === 'touring' && navigating && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.4)',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 10,
+              padding: '24px 32px',
+              fontSize: 14,
+              color: '#555',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+            }}
+          >
+            Navigating to next page...
+          </div>
+        </div>
       )}
     </>,
     document.body,

@@ -6,7 +6,10 @@ import { render, screen, cleanup } from '@testing-library/react';
 // Sidebar depends on the live route + a few hooks; stub them so we can
 // render it in isolation. SidebarFilterBox pulls in the global-filters
 // context, which we don't need here, so stub it to nothing.
-vi.mock('next/navigation', () => ({ usePathname: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  usePathname: vi.fn(),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
+}));
 vi.mock('@/lib/useFilterPreservingHref', () => ({
   useFilterPreservingHref: () => (href) => href,
 }));

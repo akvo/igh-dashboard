@@ -148,7 +148,7 @@ export default function PrioritiesOverviewSection() {
   const showListCard = filterMode === 'narrow';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <div data-tour="wpa-overview" className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div>
           <h3 className="text-base sm:text-lg font-bold text-black">Priorities overview</h3>

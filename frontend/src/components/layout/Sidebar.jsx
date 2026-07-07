@@ -50,7 +50,21 @@ export default function Sidebar({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpPopup, setShowHelpPopup] = useState(false);
-  const [showTour, setShowTour] = useState(false);
+  const [showTour, setShowTour] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('guidedTourActive') === 'true';
+    }
+    return false;
+  });
+  const handleStartTour = () => {
+    sessionStorage.setItem('guidedTourActive', 'true');
+    setShowTour(true);
+  };
+  const handleCloseTour = () => {
+    sessionStorage.removeItem('guidedTourActive');
+    sessionStorage.removeItem('guidedTourStep');
+    setShowTour(false);
+  };
   const helpRef = useRef(null);
 
   useEffect(() => {
@@ -256,7 +270,7 @@ export default function Sidebar({
                         <button
                           onClick={() => {
                             setShowHelpPopup(false);
-                            setShowTour(true);
+                            handleStartTour();
                           }}
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
@@ -351,7 +365,7 @@ export default function Sidebar({
                         <button
                           onClick={() => {
                             setShowHelpPopup(false);
-                            setShowTour(true);
+                            handleStartTour();
                           }}
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
@@ -374,7 +388,7 @@ export default function Sidebar({
           )}
         </div>
       </div>
-      <GuidedTour active={showTour} onClose={() => setShowTour(false)} />
+      <GuidedTour active={showTour} onClose={handleCloseTour} />
     </aside>
   );
 }

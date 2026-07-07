@@ -234,6 +234,7 @@ function ActiveBody({
         </h4>
         <button
           type="button"
+          data-tour="wpa-explore"
           onClick={onExplore}
           className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors cursor-pointer"
         >
@@ -521,7 +522,7 @@ export default function IndividualPriorityAnalysisSection() {
   ]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+    <div data-tour="wpa-individual" className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       <div className="mb-2">
         <h3 className="text-base sm:text-lg font-bold text-black">
           Individual priority analysis

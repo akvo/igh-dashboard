@@ -38,7 +38,7 @@ export default function ViewToggle() {
       : 'visual';
 
   return (
-    <div className="inline-flex self-start items-center bg-[#F2F2F4] h-9 p-0.5 gap-0.5">
+    <div data-tour="pe-view-toggle" className="inline-flex self-start items-center bg-[#F2F2F4] h-9 p-0.5 gap-0.5">
       {VIEWS.map((view) => {
         const Icon = view.icon;
         const isActive = view.value === activeValue;

@@ -429,7 +429,7 @@ export default function Home() {
           </div>
 
           {/* Stat Cards - Connected to GraphQL */}
-          <div data-tour="home-kpi" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             {kpisLoading ? (
               <>
                 {[1, 2, 3].map((i) => (
@@ -558,18 +558,20 @@ export default function Home() {
                     A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based.
                   </p>
                 </div>
-                <ChartMenu
-                  onDownloadCSV={() => {
-                    const columns = [
-                      { label: 'Country', accessor: 'country_name' },
-                      { label: 'ISO code', accessor: 'iso_code' },
-                      { label: 'Count', accessor: 'candidateCount' },
-                    ];
-                    const csv = buildCSV(columns, gqlMapDistribution);
-                    downloadCSVFile(csv, 'geographic-distribution');
-                  }}
-                  onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
-                />
+                <span data-tour="home-kpi">
+                  <ChartMenu
+                    onDownloadCSV={() => {
+                      const columns = [
+                        { label: 'Country', accessor: 'country_name' },
+                        { label: 'ISO code', accessor: 'iso_code' },
+                        { label: 'Count', accessor: 'candidateCount' },
+                      ];
+                      const csv = buildCSV(columns, gqlMapDistribution);
+                      downloadCSVFile(csv, 'geographic-distribution');
+                    }}
+                    onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
+                  />
+                </span>
               </div>
               <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
               <div ref={worldMapRef} className="flex-1">
