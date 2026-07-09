@@ -609,6 +609,30 @@ describe('DataTable', () => {
     expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
   });
 
+  it('reorders columns when a header cell is dragged in the sticky clone', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // Once the real header scrolls out of view the user drags the
+    // aria-hidden page-sticky clone (StickyTableHeader). Its zero-height
+    // container carries the distinctive `sticky h-0` classes, so scope the
+    // query there to grab the clone's header cells rather than the real ones.
+    const clone = within(
+      document.querySelector('div.sticky.h-0[aria-hidden="true"]'),
+    );
+    const nameTh = clone.getByText('Name').closest('th');
+    const typeTh = clone.getByText('Type').closest('th');
+
+    fireEvent.dragStart(typeTh);
+    fireEvent.dragOver(nameTh);
+
+    // The clone must emit the same reorder as the real header.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+  });
+
   it('client-side DATE filter narrows the visible rows and total count (after debounce)', async () => {
     const COLS = [
       { header: 'Name', accessor: 'name' },

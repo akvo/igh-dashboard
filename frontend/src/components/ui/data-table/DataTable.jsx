@@ -368,6 +368,7 @@ export default function DataTable({
         filters={filters}
         onSort={onSort}
         onHideColumn={onHideColumn}
+        onReorder={onVisibleColumnsChange}
         onFilterChange={onFilterChange}
         graphqlTable={graphqlTable}
         filterContext={filterContext}

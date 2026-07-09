@@ -49,6 +49,7 @@ export default function StickyTableHeader({
   filters,
   onSort,
   onHideColumn,
+  onReorder,
   onFilterChange,
   graphqlTable,
   filterContext,
@@ -189,6 +190,7 @@ export default function StickyTableHeader({
               filters={filters}
               onSort={onSort}
               onHideColumn={onHideColumn}
+              onReorder={onReorder}
               scrollableRef={scrollableRef}
             />
             {hasFilters && (
