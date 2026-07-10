@@ -90,12 +90,12 @@ pipeline_explorer:
     trials_total: "The number of clinical trials linked to the pipeline that match the current filters."
     trials_womens_health: "The number of those trials addressing women's health conditions."
   page:
-    table_builder_intro: "Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns."
+    table_builder_intro: "Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Page-level filters stay applied across the Visual Insights view and Table Builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns."
     title: "Pipeline Explorer"
     visual_insights_intro: |
       Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv.
 
-      Filters apply across the whole portal — they stay active as you move between pages, tabs and the table builder, and remain until you clear them, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.
+      Page-level filters stay applied as you move across the tabs or to the table builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.
   tabs:
     approved_products: "Approved Products"
     candidates: "Candidates"
@@ -159,7 +159,7 @@ pipeline_overview:
     trials_title: "Linked clinical trials"
     trials_tooltip: "Number of clinical trials currently in progress"
   page:
-    intro: "An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Filters apply across the whole portal — any filter you set stays active as you move between pages and remains until you clear it, from the global filter menu at the top or the active-filter box at the lower left. Use Share this view to copy a link with your filters preserved."
+    intro: "An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Page-level filters scope every chart here. Use Share this view to copy a link with your filters preserved."
     title: "Pipeline overview"
   product_types:
     description: "A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both. Use the ··· menu to export the chart as an image or the underlying data as .csv."
@@ -263,7 +263,7 @@ who_priority:
     women_children_description: "How priorities split between those dedicated to women or children (Yes), those that are not (No), and those still awaiting classification (NA). Use the ··· menu to export the chart or its data."
     women_children_title: "Share of priorities dedicated to women or children"
   page:
-    intro: "The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Filters apply across the whole portal — use them to scope by global health area, disease or product type; your selection stays active as you move between pages and remains until you clear it, from the global filter menu at the top or the active-filter box at the lower left."
+    intro: "The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Use the filters to scope the page by global health area, disease or product type."
     title: "WHO Priority alignment"
   panel:
     close: "Close"
