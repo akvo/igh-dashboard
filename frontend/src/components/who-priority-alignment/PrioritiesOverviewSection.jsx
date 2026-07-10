@@ -29,6 +29,7 @@ import { chartColors, colors } from '@/lib/theme';
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { usePriorityAlignment } from '@/graphql/hooks';
 import { useWhoPageFilters } from './useWhoPageFilters';
+import { t } from '@/content';
 
 // =========================================================
 // Palette tokens lifted from `app/page.js` — both pages now consume
@@ -151,9 +152,9 @@ export default function PrioritiesOverviewSection() {
     <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
         <div>
-          <h3 className="text-base sm:text-lg font-bold text-black">Priorities overview</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('who_priority.overview.title')}</h3>
           <p className="text-sm text-gray-500">
-            An overview of the WHO priorities across the whole portfolio — how many are in scope, how the pipeline addressing them is distributed across product types, and the share of priorities dedicated to neglected diseases, emerging infectious diseases and women&apos;s or children&apos;s health.
+            {t('who_priority.overview.description')}
           </p>
         </div>
       </div>
@@ -177,7 +178,7 @@ export default function PrioritiesOverviewSection() {
                 <PriorityShareCard
                   key={area.global_health_area}
                   title={buildCardTitle(area, hasDiseaseFilter, hasProductFilter)}
-                  description="Share with dedicated priority."
+                  description={t('who_priority.overview.share_with_dedicated')}
                   candidatesWithPriority={area.candidatesWithPriority}
                   totalCandidates={area.totalCandidates}
                   accentColor={WHO_RING_COLORS[area.global_health_area]}
@@ -199,7 +200,7 @@ export default function PrioritiesOverviewSection() {
           className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col"
         >
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h4 className="text-base font-bold text-black">Product types</h4>
+            <h4 className="text-base font-bold text-black">{t('who_priority.overview.product_types_title')}</h4>
             <ChartMenu
               onDownloadCSV={() => {
                 const csv = buildCSV(
@@ -214,11 +215,11 @@ export default function PrioritiesOverviewSection() {
               onDownloadPNG={() => downloadPNG(productTypesChartRef, 'who-priority-product-types')}
             />
           </div>
-          <p className="text-sm text-gray-500 mb-3">A snapshot of how the R&D pipeline is distributed across product types. Use the ··· menu to export the chart as an image or the underlying data as .csv.</p>
+          <p className="text-sm text-gray-500 mb-3">{t('who_priority.overview.product_types_description')}</p>
           <div className="flex-1 flex items-center justify-center">
             {loading ? (
               <div className="h-[280px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart...</div>
+                <div className="animate-pulse text-gray-400">{t('who_priority.overview.loading_chart')}</div>
               </div>
             ) : productTypeChartData.length === 0 || candidatesWithPriorityTotal === 0 ? (
               <ChartEmptyState variant="donut" height={280} />
@@ -244,7 +245,7 @@ export default function PrioritiesOverviewSection() {
         >
           <div className="flex items-start justify-between gap-2 mb-1">
             <h4 className="text-base font-bold text-black">
-              Share of priorities dedicated to women or children
+              {t('who_priority.overview.women_children_title')}
             </h4>
             <ChartMenu
               onDownloadCSV={() => {
@@ -261,12 +262,12 @@ export default function PrioritiesOverviewSection() {
             />
           </div>
           <p className="text-sm text-gray-500 mb-3">
-            How priorities split between those dedicated to women or children (Yes), those that are not (No), and those still awaiting classification (NA). Use the ··· menu to export the chart or its data.
+            {t('who_priority.overview.women_children_description')}
           </p>
           <div className="flex-1 flex items-center justify-center">
             {loading ? (
               <div className="h-[280px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart...</div>
+                <div className="animate-pulse text-gray-400">{t('who_priority.overview.loading_chart')}</div>
               </div>
             ) : womenOrChildrenChartData.length === 0 || candidatesWithPriorityTotal === 0 ? (
               <ChartEmptyState variant="donut" height={280} />

@@ -45,6 +45,7 @@ import {
 import { displayHealthArea } from '@/lib/transformations/constants';
 import { useGlobalFilters } from '@/components/global-filters';
 import { useFilterPreservingHref } from '@/lib/useFilterPreservingHref';
+import { t } from '@/content';
 
 // Candidate type options for bubble chart filter
 const candidateTypeOptions = [
@@ -402,10 +403,10 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
-                From discovery to approval: mapping the global health R&D pipeline
+                {t('home.hero.title')}
               </h1>
               <p className="text-sm text-gray-500">
-                An end-to-end interactive view of the global health R&D pipeline, from investigational candidates to approved products reaching people in need.
+                {t('home.hero.subtitle')}
               </p>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 rounded-lg">
@@ -464,7 +465,7 @@ export default function Home() {
                   beneath both so it can't push the controls to a new row. */}
               <div className="flex items-start justify-between gap-3 mb-1">
                 <h3 className="text-base sm:text-lg font-bold text-black min-w-0">
-                  Scale of R&D by global health area
+                  {t('home.bubble_chart.title')}
                 </h3>
                 <div className="flex items-center gap-2 shrink-0">
                   <Dropdown
@@ -497,7 +498,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm text-gray-500 mb-3">
-                Switch between candidates in development and approved products through the dropdown above.
+                {t('home.bubble_chart.description')}
               </p>
               <TabNav
                 tabs={bubbleViewTabs}
@@ -508,7 +509,7 @@ export default function Home() {
               <div ref={bubbleChartRef} className="flex-1">
               {activeBubbleLoading ? (
                 <div className="h-[320px] flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">Loading chart...</div>
+                  <div className="animate-pulse text-gray-400">{t('home.bubble_chart.loading')}</div>
                 </div>
               ) : !activeBubbleData || activeBubbleData.length === 0 ? (
                 <ChartEmptyState variant="bubble" height={320} />
@@ -543,7 +544,7 @@ export default function Home() {
               )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                This bubble chart shows the relative scale of the product development landscape across global health areas. Each bubble represents a global health area, with its size indicating the number of products in scope. Use the toggle to switch between candidates in development and approved products to compare where R&D activity and market-ready solutions are most concentrated.
+                {t('home.bubble_chart.footnote')}
               </p>
             </div>
 
@@ -552,10 +553,10 @@ export default function Home() {
               <div className="flex items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-base sm:text-lg font-bold text-black mb-1">
-                    Geographic distribution of clinical trials and developers
+                    {t('home.map.title')}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based.
+                    {t('home.map.description')}
                   </p>
                 </div>
                 <ChartMenu
@@ -578,21 +579,21 @@ export default function Home() {
                     activeTab={mapTab}
                     onChange={setMapTab}
                     tabs={[
-                      { label: 'Location of clinical trials', value: 'trials' },
-                      { label: 'Location of developers', value: 'development' },
+                      { label: t('home.map.tab_trials'), value: 'trials' },
+                      { label: t('home.map.tab_developers'), value: 'development' },
                     ]}
                   />
                 </div>
                 {mapLoading ? (
                   <div className="h-[280px] flex items-center justify-center">
-                    <div className="animate-pulse text-gray-400">Loading map...</div>
+                    <div className="animate-pulse text-gray-400">{t('home.map.loading')}</div>
                   </div>
                 ) : (
                   <WorldMap data={gqlMapData} height={280} showLegend={false} />
                 )}
               </div>
               <p className="text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
-                This global heat map illustrates where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
+                {t('home.map.footnote')}
               </p>
             </div>
           </div>
@@ -601,17 +602,17 @@ export default function Home() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Portfolio overview by global health area
+                {t('home.portfolio.title')}
               </h3>
               <a
                 href={buildHref('/pipeline-overview')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
-                Explore portfolio analysis
+                {t('home.portfolio.cta')}
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-                A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
+                {t('home.portfolio.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -652,14 +653,14 @@ export default function Home() {
                     : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
                 }`}
               >
-                Reset filters
+                {t('home.filters.reset')}
               </button>
             </div>
 
             {/* Chart */}
             {portfolioLoading || productsLoading || phasesLoading ? (
               <div className="h-[250px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart...</div>
+                <div className="animate-pulse text-gray-400">{t('home.portfolio.loading')}</div>
               </div>
             ) : (
               <StackedBarChart
@@ -683,17 +684,17 @@ export default function Home() {
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <h3 className="text-base sm:text-lg font-bold text-black">
-                Pipeline trends
+                {t('home.trends.title')}
               </h3>
               <a
                 href={buildHref('/pipeline-trends')}
                 className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
               >
-                Make custom comparison
+                {t('home.trends.cta')}
               </a>
             </div>
             <p className="text-xs text-gray-500 mb-5 max-w-4xl">
-            A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
+            {t('home.trends.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -734,13 +735,13 @@ export default function Home() {
                     : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
                 }`}
               >
-                Reset filters
+                {t('home.filters.reset')}
               </button>
             </div>
 
             {temporalLoading || yearsLoading ? (
               <div className="h-[220px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart...</div>
+                <div className="animate-pulse text-gray-400">{t('home.trends.loading')}</div>
               </div>
             ) : (
               <StackedBarChart
@@ -762,10 +763,10 @@ export default function Home() {
             <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-black">
-                  Priority Alignment
+                  {t('home.priority.title')}
                 </h3>
                 <p className="text-sm text-gray-500">
-                  Compare WHO priorities with pipeline
+                  {t('home.priority.subtitle')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -786,14 +787,14 @@ export default function Home() {
                     href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-orange-500 text-black px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-black hover:text-white transition-colors"
                   >
-                    Explore selected
+                    {t('home.priority.cta_selected')}
                   </a>
                 ) : (
                   <a
                     href={buildHref('/who-priority-alignment')}
                     className="inline-flex items-center bg-white text-black border border-gray-300 px-4 py-2.5 text-sm font-medium no-underline cursor-pointer hover:bg-gray-50 transition-colors"
                   >
-                    View all
+                    {t('home.priority.cta_all')}
                   </a>
                 )}
               </div>
@@ -817,7 +818,7 @@ export default function Home() {
                       <PriorityShareCard
                         key={area.global_health_area}
                         title={displayHealthArea(area.global_health_area)}
-                        description="Pipeline aligned with a WHO priority."
+                        description={t('home.priority.area_description')}
                         candidatesWithPriority={area.candidatesWithPriority}
                         totalCandidates={area.totalCandidates}
                         accentColor={WHO_RING_COLORS[area.global_health_area]}
@@ -830,7 +831,7 @@ export default function Home() {
               {/* Column 2: Product types donut */}
               <div ref={productTypesChartRef} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <h4 className="text-base font-bold text-black">Product types</h4>
+                  <h4 className="text-base font-bold text-black">{t('home.priority.product_types.title')}</h4>
                   <ChartMenu
                     onDownloadCSV={() => {
                       const csv = buildCSV(
@@ -846,12 +847,12 @@ export default function Home() {
                   />
                 </div>
                 <p className="text-sm text-gray-500 mb-3">
-                  Distribution of R&D pipeline across product types.
+                  {t('home.priority.product_types.description')}
                 </p>
                 <div className="flex-1 flex items-center justify-center">
                   {whoLoading ? (
                     <div className="h-[280px] flex items-center justify-center">
-                      <div className="animate-pulse text-gray-400">Loading chart...</div>
+                      <div className="animate-pulse text-gray-400">{t('home.priority.product_types.loading')}</div>
                     </div>
                   ) : whoProductTypeChartData.length === 0 || whoCandidatesWithPriority === 0 ? (
                     <ChartEmptyState variant="donut" height={280} />
@@ -877,7 +878,7 @@ export default function Home() {
               <div ref={womenChildrenChartRef} className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h4 className="text-base font-bold text-black">
-                    Share of priorities dedicated to women or children
+                    {t('home.priority.women_children.title')}
                   </h4>
                   <ChartMenu
                     onDownloadCSV={() => {
@@ -894,12 +895,12 @@ export default function Home() {
                   />
                 </div>
                 <p className="text-sm text-gray-500 mb-3">
-                  Yes / No split with priorities still awaiting classification shown as NA.
+                  {t('home.priority.women_children.description')}
                 </p>
                 <div className="flex-1 flex items-center justify-center">
                   {whoLoading ? (
                     <div className="h-[280px] flex items-center justify-center">
-                      <div className="animate-pulse text-gray-400">Loading chart...</div>
+                      <div className="animate-pulse text-gray-400">{t('home.priority.women_children.loading')}</div>
                     </div>
                   ) : whoWomenChildrenChartData.length === 0 || whoCandidatesWithPriority === 0 ? (
                     <ChartEmptyState variant="donut" height={280} />

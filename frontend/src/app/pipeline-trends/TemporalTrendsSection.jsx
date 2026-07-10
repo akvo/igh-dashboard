@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { t } from '@/content';
 import { Dropdown, ChartMenu, TabNav, DataTable } from '@/components/ui';
 import { RefreshIcon } from '@/components/icons';
 import { StackedBarChart, GroupedBarChart, ChartEmptyState, ChartLegend } from '@/components/charts';
@@ -107,8 +108,8 @@ const STAGE_SERIES = [
 ];
 
 const tabs = [
-  { value: 'single', label: 'Compare a single portfolio over time' },
-  { value: 'compare', label: 'Compare different portfolios' },
+  { value: 'single', label: t('pipeline_trends.temporal.tab.single') },
+  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare') },
 ];
 
 export function ComparePortfoliosTab({
@@ -473,7 +474,7 @@ export function ComparePortfoliosTab({
   return (
     <div>
       <p className="text-sm text-gray-500 mb-4">
-        Compare up to four portfolios&mdash;each defined by a specific combination of disease and product. Examine how their R&amp;D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&amp;D stages to identify contrasts in growth and progression.
+        {t('pipeline_trends.temporal.compare.intro')}
       </p>
 
       {/* Portfolio selectors — sticky filter bar */}
@@ -530,7 +531,7 @@ export function ComparePortfoliosTab({
             onClick={handleAddPortfolio}
             className="flex items-center justify-center w-11 h-11 rounded-full text-gray-400 bg-gray-100 hover:bg-gray-200 cursor-pointer shrink-0 transition-colors"
             style={{ border: '1px solid #d1d5db' }}
-            title="Add portfolio"
+            title={t('pipeline_trends.filter.add_portfolio')}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 2V14M2 8H14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
@@ -578,14 +579,14 @@ export function ComparePortfoliosTab({
               : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
           }`}
         >
-          Clear
+          {t('pipeline_trends.filter.clear')}
           <RefreshIcon className="w-4 h-4" />
         </button>
         <button
           onClick={handleCompareApply}
           className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] shrink-0 transition-colors"
         >
-          Apply
+          {t('pipeline_trends.filter.apply')}
         </button>
       </div>
       </div>
@@ -594,7 +595,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
-            Portfolio comparison by R&amp;D stage in selected year
+            {t('pipeline_trends.temporal.compare.portfolio_comparison.title')}
           </h4>
           <ChartMenu onDownloadCSV={() => {
               const visiblePhases = apiPhases.filter((p) => comparePhases.includes(p.key));
@@ -607,8 +608,8 @@ export function ComparePortfoliosTab({
             }} onDownloadPNG={() => downloadPNG(portfolioCompareRef, `portfolio-comparison-rd-stage-${targetYear}`)} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression.
-    </p>
+          {t('pipeline_trends.temporal.compare.portfolio_comparison.description')}
+        </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
         {/* Phase checkboxes */}
@@ -625,7 +626,7 @@ export function ComparePortfoliosTab({
         <div ref={portfolioCompareRef} className="mt-4">
           {loading ? (
             <div className="h-[220px] flex items-center justify-center">
-              <div className="animate-pulse text-gray-400">Loading chart data...</div>
+              <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
             </div>
           ) : compareChartData.length > 0 ? (
             <StackedBarChart
@@ -633,8 +634,8 @@ export function ComparePortfoliosTab({
               phases={apiPhases}
               layout="vertical"
               height={Math.max(220, compareChartData.length * 80)}
-              xAxisLabel="Number of candidates / approved products"
-              yAxisLabel="Portfolio"
+              xAxisLabel={t('pipeline_trends.axis.x')}
+              yAxisLabel={t('pipeline_trends.axis.y_portfolio')}
               showFilters={false}
               yAxisWidth={280}
               maxTickChars={45}
@@ -642,7 +643,7 @@ export function ComparePortfoliosTab({
             />
           ) : (
             <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
-              Select portfolios and click Apply to see comparison data.
+              {t('pipeline_trends.temporal.compare.empty_portfolios_chart')}
             </div>
           )}
         </div>
@@ -652,7 +653,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm text-gray-500">
-            Explore the underlying data for the selected portfolios by aggregated R&amp;D stage in the chosen year, enabling detailed comparison of portfolio compositions.
+            {t('pipeline_trends.temporal.compare.comparison_table.description')}
           </p>
           <ChartMenu onDownloadCSV={() => {
             const csvColumns = [
@@ -672,7 +673,7 @@ export function ComparePortfoliosTab({
 
         {loading ? (
           <div className="h-[120px] flex items-center justify-center">
-            <div className="animate-pulse text-gray-400">Loading table data...</div>
+            <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.table')}</div>
           </div>
         ) : (
           <DataTable
@@ -687,8 +688,8 @@ export function ComparePortfoliosTab({
             onVisibleColumnsChange={setCompareVisibleColumns}
             className="compare-table-bordered"
             emptyState={{
-              title: 'No data available',
-              description: 'Select portfolios and apply to see comparison data.',
+              title: t('pipeline_trends.temporal.compare.empty_portfolios_table_title'),
+              description: t('pipeline_trends.temporal.compare.empty_portfolios_table_description'),
             }}
           />
         )}
@@ -698,7 +699,7 @@ export function ComparePortfoliosTab({
       <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-base font-semibold text-black">
-            Temporal trends in aggregated R&amp;D stages across portfolios
+            {t('pipeline_trends.temporal.compare.aggregated_trends.title')}
           </h4>
           <ChartMenu onDownloadCSV={() => {
               const visibleStages = STAGE_SERIES.filter((s) => acrossStages.includes(s.key));
@@ -712,7 +713,7 @@ export function ComparePortfoliosTab({
             }} onDownloadPNG={() => downloadPNG(acrossPortfoliosRef, 'temporal-trends-aggregated-rd-stages-across-portfolios')} />
         </div>
         <p className="text-sm text-gray-400 mb-4">
-          Explore the temporal trends for each selected portfolio with R&amp;D stages aggregated into early development, late development, and approved products across IGH review years.
+          {t('pipeline_trends.temporal.compare.aggregated_trends.description')}
         </p>
         <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -729,7 +730,7 @@ export function ComparePortfoliosTab({
         <div ref={acrossPortfoliosRef} className="mt-4 flex gap-0">
           {loading ? (
             <div className="w-full h-[300px] flex items-center justify-center">
-              <div className="animate-pulse text-gray-400">Loading chart data...</div>
+              <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
             </div>
           ) : acrossGroups.length > 0 ? (
             acrossGroups.map(([group, items]) => (
@@ -740,7 +741,7 @@ export function ComparePortfoliosTab({
                   layout="horizontal"
                   height={300}
                   xAxisLabel={group}
-                  yAxisLabel={acrossGroups[0][0] === group ? 'Number of candidates / approved products' : ''}
+                  yAxisLabel={acrossGroups[0][0] === group ? t('pipeline_trends.axis.x') : ''}
                   showFilters={false}
                   yAxisWidth={acrossGroups[0][0] === group ? 50 : 30}
                   visiblePhases={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
@@ -749,7 +750,7 @@ export function ComparePortfoliosTab({
             ))
           ) : (
             <div className="w-full h-[300px] flex items-center justify-center text-gray-400 text-sm">
-              Select portfolios and click Apply to see temporal trends.
+              {t('pipeline_trends.temporal.compare.empty_portfolios_trends')}
             </div>
           )}
         </div>
@@ -1043,11 +1044,11 @@ export default function TemporalTrendsSection({
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-xl font-bold text-black">
-          Temporal trends &amp; portfolio comparison
+          {t('pipeline_trends.temporal.section.title')}
         </h3>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-       Explore how selected portfolios evolve over time in the global health R&amp;D pipeline. Analyse the temporal progression of a single portfolio, by one or more diseases and products, or compare up to four portfolios side by side to identify differences in stage distribution and trajectory.
+        {t('pipeline_trends.temporal.section.description')}
       </p>
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1107,14 +1108,14 @@ export default function TemporalTrendsSection({
                     : 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
                 }`}
               >
-                Clear
+                {t('pipeline_trends.filter.clear')}
                 <RefreshIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={handleApply}
                 className="flex items-center gap-2 text-sm font-medium text-black bg-orange-500 px-6 hover:bg-black hover:text-white h-[44px] transition-colors"
               >
-                Apply
+                {t('pipeline_trends.filter.apply')}
               </button>
             </div>
           </div>
@@ -1125,7 +1126,7 @@ export default function TemporalTrendsSection({
           <div className="mt-4 mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
-                Temporal trends in portfolio composition across R&amp;D stages
+                {t('pipeline_trends.temporal.single.granular_stages.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                 const columns = [
@@ -1137,7 +1138,7 @@ export default function TemporalTrendsSection({
               }} onDownloadPNG={() => downloadPNG(portfolioCompositionRef, 'temporal-trends-portfolio-composition')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              Explore the temporal trends in a single portfolio, showing how distributions across R&amp;D stages change over time. Filter by disease and product, and use the R&amp;D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis.
+              {t('pipeline_trends.temporal.single.granular_stages.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -1154,18 +1155,18 @@ export default function TemporalTrendsSection({
             <div ref={portfolioCompositionRef} className="mt-4">
               {loading ? (
                 <div className="h-[280px] flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
                 </div>
               ) : !chartData || chartData.length === 0 ? (
-                <ChartEmptyState variant="stackedBar" height={280} description="No data available for the selected filters." />
+                <ChartEmptyState variant="stackedBar" height={280} description={t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description')} />
               ) : (
                 <StackedBarChart
                   data={chartData}
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel="Number of candidates / approved products"
-                  yAxisLabel="Years"
+                  xAxisLabel={t('pipeline_trends.axis.x')}
+                  yAxisLabel={t('pipeline_trends.axis.y')}
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
                 />
@@ -1177,7 +1178,7 @@ export default function TemporalTrendsSection({
           <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-base font-semibold text-black">
-                Temporal trends in aggregated R&amp;D stages
+                {t('pipeline_trends.temporal.single.aggregated_stages.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                   const columns = [
@@ -1189,17 +1190,17 @@ export default function TemporalTrendsSection({
                 }} onDownloadPNG={() => downloadPNG(aggregatedStagesRef, 'temporal-trends-aggregated-rd-stages')} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              Explore the temporal trends in a single portfolio with R&amp;D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&amp;D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above.
+              {t('pipeline_trends.temporal.single.aggregated_stages.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             <div ref={aggregatedStagesRef} className="mt-4">
               {loading ? (
                 <div className="h-[350px] flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
                 </div>
               ) : !groupedChartData || groupedChartData.length === 0 ? (
-                <ChartEmptyState variant="bar" height={380} description="No data available for the selected filters." />
+                <ChartEmptyState variant="bar" height={380} description={t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description')} />
               ) : (
                 <GroupedBarChart
                   data={groupedChartData}
@@ -1210,8 +1211,8 @@ export default function TemporalTrendsSection({
                   onClearAll={handleYearClearAll}
                   categoryKey="category"
                   height={380}
-                  xAxisLabel="R&D stage"
-                  yAxisLabel="Number of candidates / approved products"
+                  xAxisLabel={t('pipeline_trends.axis.x_rd_stage')}
+                  yAxisLabel={t('pipeline_trends.axis.x')}
                   showFilters={true}
                   showBarLabels={true}
                 />
@@ -1223,7 +1224,7 @@ export default function TemporalTrendsSection({
           <div className="mb-4 p-4" style={{ border: '1px solid #26262617' }}>
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-lg font-bold text-black">
-                Temporal trends in aggregated R&amp;D stages &ndash; table view
+                {t('pipeline_trends.temporal.single.aggregated_stages_table.title')}
               </h4>
               <ChartMenu onDownloadCSV={() => {
                 const years = growthTable.years;
@@ -1249,13 +1250,13 @@ export default function TemporalTrendsSection({
               }} />
             </div>
             <p className="text-sm text-gray-400 mb-4">
-              Explore the underlying data for aggregated R&amp;D stages, including year-on-year changes and total growth in portfolio composition over time.
+              {t('pipeline_trends.temporal.single.aggregated_stages_table.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
             {loading ? (
               <div className="h-[120px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading table data...</div>
+                <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.table')}</div>
               </div>
             ) : (
               <DataTable
@@ -1269,8 +1270,8 @@ export default function TemporalTrendsSection({
                 visibleColumns={growthVisibleColumns}
                 onVisibleColumnsChange={setGrowthVisibleColumns}
                 emptyState={{
-                  title: 'No data available',
-                  description: 'No data available for the selected filters.',
+                  title: t('pipeline_trends.temporal.single.aggregated_stages_table.empty_title'),
+                  description: t('pipeline_trends.temporal.single.aggregated_stages_table.empty_description'),
                 }}
               />
             )}

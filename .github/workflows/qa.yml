@@ -63,6 +63,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate static content
+        run: npm run content:check
+
       - name: Build
         run: npm run build
 

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { CloseIcon } from '@/components/icons';
+import { t } from '@/content';
 
 // =========================================================
 // PriorityKeyInfoPanel — Key information WHO priority slide-in.
@@ -80,7 +81,7 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <p className="text-xs uppercase tracking-wide text-gray-500">
-            Key information WHO priority
+            {t('who_priority.panel.heading')}
           </p>
           <button
             onClick={onClose}
@@ -101,7 +102,7 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
               <div className="h-20 w-full bg-gray-100 rounded animate-pulse" />
             </>
           ) : !priority ? (
-            <p className="text-sm text-gray-500">No priority loaded.</p>
+            <p className="text-sm text-gray-500">{t('who_priority.panel.no_priority_loaded')}</p>
           ) : (
             <>
               <span
@@ -122,10 +123,10 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
                 <p className="text-xs text-gray-500">Published {publishedLine}</p>
               )}
 
-              <Section label="Intended use" body={priority.intended_use} />
-              <Section label="Target population" body={priority.target_population} />
-              <Section label="Efficacy" body={priority.efficacy} />
-              <Section label="Safety" body={priority.safety} />
+              <Section label={t('who_priority.panel.section_intended_use')} body={priority.intended_use} />
+              <Section label={t('who_priority.panel.section_target_population')} body={priority.target_population} />
+              <Section label={t('who_priority.panel.section_efficacy')} body={priority.efficacy} />
+              <Section label={t('who_priority.panel.section_safety')} body={priority.safety} />
             </>
           )}
         </div>
@@ -138,7 +139,7 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 no-underline transition-colors"
             >
-              Read more
+              {t('who_priority.panel.read_more')}
             </a>
           ) : (
             <span />
@@ -147,7 +148,7 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
             onClick={onClose}
             className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-black bg-white border border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
           >
-            Close
+            {t('who_priority.panel.close')}
           </button>
         </div>
       </div>
