@@ -7,6 +7,8 @@ import Sidebar from '@/components/layout/Sidebar';
 import { Dropdown, ChartMenu } from '@/components/ui';
 import { UploadIcon, RefreshIcon } from '@/components/icons';
 import { StackedBarChart, ChartLegend } from '@/components/charts';
+import { t } from '@/content';
+import { Markdown } from '@/content/Markdown';
 import { buildCSV, downloadCSV } from '@/lib/csv';
 import { downloadPNG } from '@/lib/png';
 import {
@@ -165,10 +167,10 @@ export default function PipelineTrends() {
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-black mb-2">
-                  Pipeline trends
+                  {t('pipeline_trends.page.title')}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Explore how the global health R&D pipeline evolves over time across global health areas, diseases and product types. Track changes by R&D stage across specific IGH review years, and build custom comparisons by selecting one or more portfolios for deeper temporal analysis. Filters apply across the whole portal — any filter you set stays active here and on every other page until you clear it, from the global filter menu at the top or the active-filter box at the lower left.
+                  {t('pipeline_trends.page.intro')}
                 </p>
               </div>
               <button
@@ -179,7 +181,7 @@ export default function PipelineTrends() {
                   setTimeout(() => setShareCopied(false), 2000);
                 }}
               >
-                {shareCopied ? 'Copied!' : 'Share this view'}
+                {shareCopied ? t('pipeline_trends.page.share_copied') : t('pipeline_trends.page.share')}
                 <UploadIcon className="w-4 h-4" />
               </button>
             </div>
@@ -189,7 +191,7 @@ export default function PipelineTrends() {
           <div data-tour="cpa-welcome" className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xl font-bold text-black">Pipeline trends</h3>
+              <h3 className="text-xl font-bold text-black">{t('pipeline_trends.section.title')}</h3>
               <div className="flex items-center gap-3">
                 <ChartMenu onDownloadCSV={() => {
                   const visiblePhases = phases.filter((p) => isPhaseVisible(p.key));
@@ -203,7 +205,7 @@ export default function PipelineTrends() {
               </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              Explore the temporal trends in the global health R&D pipeline, tracking how distributions across R&D stages shift over time by global health area, disease, and product, with filters and legend controls to refine the analysis.
+              {t('pipeline_trends.section.description')}
             </p>
             <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
@@ -289,7 +291,7 @@ export default function PipelineTrends() {
             <div ref={crossPipelineChartRef} className="mt-4">
               {isLoading ? (
                 <div className="h-[280px] flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                  <div className="animate-pulse text-gray-400">{t('pipeline_trends.loading.chart')}</div>
                 </div>
               ) : (
                 <StackedBarChart
@@ -297,8 +299,8 @@ export default function PipelineTrends() {
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel="Number of candidates / approved products"
-                  yAxisLabel="Years"
+                  xAxisLabel={t('pipeline_trends.axis.x')}
+                  yAxisLabel={t('pipeline_trends.axis.y')}
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
                 />
@@ -328,7 +330,7 @@ export default function PipelineTrends() {
               {/* Heading overlaid on top-left of image */}
               <div className="absolute top-0 left-0 p-8 md:p-12">
                 <h2 className="text-3xl md:text-4xl font-bold m-0" style={{ fontFamily: 'var(--font-align), serif', color: '#fff', maxWidth: 450 }}>
-                  Tracking global health investments: discover G-FINDER&apos;s impact
+                  {t('pipeline_trends.gfinder.heading')}
                 </h2>
               </div>
             </div>
@@ -337,15 +339,10 @@ export default function PipelineTrends() {
             <div style={{ padding: '32px 48px 40px' }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6">
                 <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
-                  G-FINDER is the gold-standard tracker of R&amp;D funding for new products and technologies for global health. Updated annually, this is the evidence base informing all global health advocacy, investment and policy change.
+                  {t('pipeline_trends.gfinder.body_left')}
                 </p>
                 <div className="flex flex-col" style={{ gap: 16 }}>
-                  <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
-                    <strong>The case for change:</strong> Explore funding trends over time, where there is innovation and where there are gaps.
-                  </p>
-                  <p className="m-0 text-white" style={{ fontSize: '1.0625rem', lineHeight: 1.6 }}>
-                    <strong>Drivers of impact:</strong> Understand which initiatives are gaining strength and where there are weaknesses in global health R&amp;D impact.
-                  </p>
+                  <Markdown path="pipeline_trends.gfinder.body_right" />
                   <a
                     href="https://gfinderdata.impactglobalhealth.org/"
                     target="_blank"
@@ -353,7 +350,7 @@ export default function PipelineTrends() {
                     className="inline-flex items-center gap-2 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white transition-colors mt-4"
                     style={{ padding: '12px 24px', width: 'fit-content' }}
                   >
-                    Explore G-Finder data
+                    {t('pipeline_trends.gfinder.cta')}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
                   </a>
                 </div>

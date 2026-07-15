@@ -6,6 +6,7 @@ import { ApolloProvider } from '@/lib/apollo-provider';
 import Analytics from '@/components/Analytics';
 import { ResponsiveGate } from '@/components/layout';
 import { GlobalFiltersProvider } from '@/components/global-filters';
+import { t } from '@/content';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
@@ -29,75 +30,75 @@ const align = localFont({
 });
 
 export const metadata = {
-  title: 'IGH Dashboard',
-  description: 'Innovation in Global Health Dashboard',
+  title: t('layout.metadata.title'),
+  description: t('layout.metadata.description'),
 };
 
 const navItems = [
   {
-    label: 'Data',
+    label: t('layout.header.nav_data'),
     hasDropdown: true,
-    description: 'Here are the gold-standard databases and data visualizations of R&D funding, approved products and candidates in the pipeline for neglected diseases, emerging infectious diseases and maternal health.',
+    description: t('layout.header.data.description'),
     featured: {
-      title: 'Our data portals',
+      title: t('layout.header.data.featured_title'),
       showIcon: false,
       items: [
-        { label: 'G-FINDER R&D funding portal', href: 'https://gfinderdata.impactglobalhealth.org/', description: 'Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.' },
-        { label: 'Product pipeline portal', href: 'https://pipeline.impactglobalhealth.org/', description: 'Our product pipeline portal provides an overview of health products approved or in development across global health areas.' },
+        { label: t('layout.header.data.item_gfinder_label'), href: 'https://gfinderdata.impactglobalhealth.org/', description: t('layout.header.data.item_gfinder_description') },
+        { label: t('layout.header.data.item_pipeline_label'), href: 'https://pipeline.impactglobalhealth.org/', description: t('layout.header.data.item_pipeline_description') },
       ],
     },
     items: [
-      { label: 'Innovation Spillover Tracker', href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: 'A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.' },
+      { label: t('layout.header.data.item_spillover_label'), href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: t('layout.header.data.item_spillover_description') },
     ],
   },
   {
-    label: 'Insights',
+    label: t('layout.header.nav_insights'),
     hasDropdown: true,
-    description: "Here you will find the analysis and insights to support decisions - whether you're funding research, setting policies, developing products or advocating for change.",
+    description: t('layout.header.insights.description'),
     featured: {
-      title: 'Explore our hubs',
+      title: t('layout.header.insights.featured_title'),
       items: [
-        { label: 'The Investment Landscape Hub', href: 'https://www.impactglobalhealth.org/insights/hubs/the-investment-landscape-hub', description: 'A unique source of data and analysis tracking the funding of global health R&D and the pipeline of products in development. Powered by G-FINDER.' },
-        { label: 'The Impact of Global Health R&D Hub', href: 'https://www.impactglobalhealth.org/insights/hubs/the-impact-of-global-health-rd-hub', description: 'Global, UK and EU analyses of the health and economic impact of the last two decades of investment in global health R&D.' },
-        { label: "Women's Health Hub", href: 'https://www.impactglobalhealth.org/insights/hubs/womens-health-hub', description: "This resource hub provides a suite of data, insights and tools to accelerate progress in women's health R&D." },
+        { label: t('layout.header.insights.item_hub_investment_label'), href: 'https://www.impactglobalhealth.org/insights/hubs/the-investment-landscape-hub', description: t('layout.header.insights.item_hub_investment_description') },
+        { label: t('layout.header.insights.item_hub_impact_label'), href: 'https://www.impactglobalhealth.org/insights/hubs/the-impact-of-global-health-rd-hub', description: t('layout.header.insights.item_hub_impact_description') },
+        { label: t('layout.header.insights.item_womens_hub_label'), href: 'https://www.impactglobalhealth.org/insights/hubs/womens-health-hub', description: t('layout.header.insights.item_womens_hub_description') },
       ],
     },
     items: [
-      { label: 'Report Library', href: 'https://www.impactglobalhealth.org/insights/report-library', description: 'Our reports deliver critical insights using the evidence collected through G-FINDER and over two decades of independent analysis.' },
-      { label: 'Health areas', href: 'https://www.impactglobalhealth.org/insights/health-areas', description: "This quick reference guide gives you a snapshot analysis of the R&D needs and the state of innovation to tackle each disease or condition we cover. It's a handy quick overview of what's needed to impact global health in these areas." },
-      { label: 'Hubs', href: 'https://www.impactglobalhealth.org/insights/hubs', description: 'Themed collections of all the data, analysis and tools you need to understand the landscape and make smart decisions on global health R&D.' },
-      { label: 'Impact Global Health Dialogues', href: 'https://www.impactglobalhealth.org/insights/dialogues', description: 'A series of dialogues with global health leaders to co-create an R&D investment roadmap that is fit for the future.' },
+      { label: t('layout.header.insights.item_reports_label'), href: 'https://www.impactglobalhealth.org/insights/report-library', description: t('layout.header.insights.item_reports_description') },
+      { label: t('layout.header.insights.item_health_areas_label'), href: 'https://www.impactglobalhealth.org/insights/health-areas', description: t('layout.header.insights.item_health_areas_description') },
+      { label: t('layout.header.insights.item_hubs_label'), href: 'https://www.impactglobalhealth.org/insights/hubs', description: t('layout.header.insights.item_hubs_description') },
+      { label: t('layout.header.insights.item_dialogues_label'), href: 'https://www.impactglobalhealth.org/insights/dialogues', description: t('layout.header.insights.item_dialogues_description') },
     ],
   },
   {
-    label: 'Tools',
+    label: t('layout.header.nav_tools'),
     hasDropdown: true,
-    description: "We've created some practical frameworks and tools you can use to assess and increase impact in global health.",
+    description: t('layout.header.tools.description'),
     featured: {
-      title: 'Advocacy Kits',
+      title: t('layout.header.tools.featured_title'),
       href: 'https://www.impactglobalhealth.org/tools/communications--press-kits',
       showIcon: true,
-      description: 'Join us in creating global health impact with our advocacy and press kits',
+      description: t('layout.header.tools.featured_description'),
     },
     items: [
-      { label: 'Impact Framework', href: 'https://www.impactglobalhealth.org/tools/impact-framework', description: 'A global network of experts collaborated for two years to develop this comprehensive set of metrics that create an impact assessment framework for global health R&D.' },
-      { label: '100 Days Mission Scorecard', href: 'https://www.impactglobalhealth.org/tools/100-days-mission-scorecard', description: 'Is the world ready to deploy a new product to tackle an epidemic within 100 days of an outbreak?' },
+      { label: t('layout.header.tools.item_framework_label'), href: 'https://www.impactglobalhealth.org/tools/impact-framework', description: t('layout.header.tools.item_framework_description') },
+      { label: t('layout.header.tools.item_100days_label'), href: 'https://www.impactglobalhealth.org/tools/100-days-mission-scorecard', description: t('layout.header.tools.item_100days_description') },
     ],
   },
   {
-    label: 'About Us',
+    label: t('layout.header.nav_about'),
     hasDropdown: true,
-    description: 'Meet the team working to create a more equitable future through global health innovation and impact.',
+    description: t('layout.header.about.description'),
     items: [
-      { label: 'Our Team', href: 'https://www.impactglobalhealth.org/about-us/our-team', description: 'Meet our diverse international team of experts, who collate and analyse data on global health funding and the innovation pipeline.' },
-      { label: 'Our Global Advisory Council', href: 'https://www.impactglobalhealth.org/about-us/our-global-advisory-council', description: 'Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.' },
-      { label: 'Join Us', href: 'https://www.impactglobalhealth.org/about-us/join-us', description: 'We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.' },
-      { label: 'Contact Us', href: 'https://www.impactglobalhealth.org/about-us/contact-us', description: 'Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.' },
-      { label: 'Advocacy Kits', href: 'https://www.impactglobalhealth.org/tools/communications--press-kits', description: 'Join us in creating global health impact with our advocacy and press kits.' },
+      { label: t('layout.header.about.item_team_label'), href: 'https://www.impactglobalhealth.org/about-us/our-team', description: t('layout.header.about.item_team_description') },
+      { label: t('layout.header.about.item_council_label'), href: 'https://www.impactglobalhealth.org/about-us/our-global-advisory-council', description: t('layout.header.about.item_council_description') },
+      { label: t('layout.header.about.item_join_label'), href: 'https://www.impactglobalhealth.org/about-us/join-us', description: t('layout.header.about.item_join_description') },
+      { label: t('layout.header.about.item_contact_label'), href: 'https://www.impactglobalhealth.org/about-us/contact-us', description: t('layout.header.about.item_contact_description') },
+      { label: t('layout.header.about.item_advocacy_label'), href: 'https://www.impactglobalhealth.org/tools/communications--press-kits', description: t('layout.header.about.item_advocacy_description') },
     ],
   },
   {
-    label: 'News',
+    label: t('layout.header.nav_news'),
     hasDropdown: false,
     href: 'https://www.impactglobalhealth.org/news',
   },

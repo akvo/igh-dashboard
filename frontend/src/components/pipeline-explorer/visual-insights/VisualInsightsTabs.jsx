@@ -24,6 +24,7 @@ import {
   ProductSlideIn,
   TrialSlideIn,
 } from '@/components/slideins';
+import { t } from '@/content';
 
 import CandidatesTab from './CandidatesTab';
 import ApprovedProductsTab from './ApprovedProductsTab';
@@ -31,10 +32,10 @@ import ClinicalTrialsTab from './ClinicalTrialsTab';
 import TechnologyTypesTab from './TechnologyTypesTab';
 
 const TABS = [
-  { label: 'Candidates', value: 'candidates' },
-  { label: 'Approved Products', value: 'approved' },
-  { label: 'Clinical Trials', value: 'trials' },
-  { label: 'Technology types', value: 'technology' },
+  { label: t('pipeline_explorer.tabs.candidates'), value: 'candidates' },
+  { label: t('pipeline_explorer.tabs.approved_products'), value: 'approved' },
+  { label: t('pipeline_explorer.tabs.clinical_trials'), value: 'trials' },
+  { label: t('pipeline_explorer.tabs.technology_types'), value: 'technology' },
 ];
 
 export default function VisualInsightsTabs() {

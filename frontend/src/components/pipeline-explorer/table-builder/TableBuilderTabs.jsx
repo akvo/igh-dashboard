@@ -45,6 +45,7 @@ import {
   EXTRACT_ROW_KEY,
 } from '@/lib/extractColumnConfig';
 import { useGlobalFilters } from '@/components/global-filters';
+import { t } from '@/content';
 
 const ext1FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['candidates-approved'] || []);
 const ext2FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['rd-priorities'] || []);
@@ -55,24 +56,20 @@ const ext4FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['rd-only']
 // the single generic description the standalone Extract page used.
 const TAB_META = {
   'candidates-approved': {
-    title: 'Candidates & approved products',
-    description:
-      'Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand.',
+    title: t('table_builder.candidates_approved.title'),
+    description: t('table_builder.candidates_approved.description'),
   },
   'rd-priorities': {
-    title: 'R&D priorities & candidates',
-    description:
-      'R&D priorities joined to the candidates that address them — useful for seeing which priorities are well covered and which remain open. Filter by global health area or disease, then choose columns to compare priority detail against candidate progress.',
+    title: t('table_builder.rd_priorities.title'),
+    description: t('table_builder.rd_priorities.description'),
   },
   'clinical-trials': {
-    title: 'Clinical trials & candidates',
-    description:
-      'Clinical trials joined to the candidates they study — useful for tracing trial activity back to specific assets in the pipeline. Filter by global health area, disease or product type, then choose columns for trial-level detail.',
+    title: t('table_builder.clinical_trials.title'),
+    description: t('table_builder.clinical_trials.description'),
   },
   'rd-only': {
-    title: 'R&D priorities',
-    description:
-      'R&D priorities on their own, no candidate join — useful for understanding the priority landscape itself: author, publication date, target population, efficacy and safety expectations, source. Filter by global health area or disease, then choose columns to focus on what matters.',
+    title: t('table_builder.rd_only.title'),
+    description: t('table_builder.rd_only.description'),
   },
 };
 
@@ -394,10 +391,10 @@ export default function TableBuilderTabs() {
       >
         <TabNav
           tabs={[
-            { value: 'candidates-approved', label: 'Candidates & approved products' },
-            { value: 'rd-priorities', label: 'R&D priorities & candidates' },
-            { value: 'clinical-trials', label: 'Clinical trials & candidates' },
-            { value: 'rd-only', label: 'R&D priorities' },
+            { value: 'candidates-approved', label: t('table_builder.tabs.candidates_approved') },
+            { value: 'rd-priorities', label: t('table_builder.tabs.rd_priorities') },
+            { value: 'clinical-trials', label: t('table_builder.tabs.clinical_trials') },
+            { value: 'rd-only', label: t('table_builder.tabs.rd_only') },
           ]}
           activeTab={extractTab}
           onChange={setExtractTab}
@@ -430,7 +427,7 @@ export default function TableBuilderTabs() {
                 onClick={handleExtractDownloadCSV}
               >
                 <CloudDownloadIcon className="w-4 h-4" />
-                {extractDownloading ? 'Downloading...' : 'Download CSV'}
+                {extractDownloading ? t('table_builder.downloading') : t('table_builder.download_csv')}
               </button>
             </div>
           </div>
@@ -448,7 +445,7 @@ export default function TableBuilderTabs() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="min-w-[180px]">
               <Dropdown
-                label="Global health area"
+                label={t('layout.filters.global_health_area')}
                 value={healthArea}
                 onChange={(v) => { setHealthArea(v); setExtractPage(1); }}
                 placeholder="All"
@@ -460,7 +457,7 @@ export default function TableBuilderTabs() {
             </div>
             <div className="min-w-[180px]">
               <HierarchicalDiseaseFilter
-                label="Disease"
+                label={t('layout.filters.disease')}
                 hierarchy={narrowedHierarchy}
                 primarySelected={primary}
                 secondarySelected={secondary}
@@ -477,7 +474,7 @@ export default function TableBuilderTabs() {
             {(extractTab === 'candidates-approved' || extractTab === 'clinical-trials') && (
               <div className="min-w-[180px]">
                 <HierarchicalProductFilter
-                  label="Product type"
+                  label={t('layout.filters.product_type')}
                   selected={product}
                   onChange={(v) => { setProduct(v); setExtractPage(1); }}
                   placeholder="All"
@@ -491,7 +488,7 @@ export default function TableBuilderTabs() {
             {extractTab === 'candidates-approved' && (
               <div className="min-w-[180px]">
                 <Dropdown
-                  label="R&D stage"
+                  label={t('layout.filters.rd_stage')}
                   value={rdPhase}
                   onChange={(v) => { setRdPhase(v); setExtractPage(1); }}
                   placeholder="All"
@@ -513,7 +510,7 @@ export default function TableBuilderTabs() {
                   : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
               }`}
             >
-              Reset filters
+              {t('table_builder.reset_filters')}
               <RefreshIcon className="w-4 h-4" />
             </button>
           </div>
@@ -685,10 +682,10 @@ function ExtractDataTable({
       emptyState={
         Object.keys(filters).length > 0
           ? {
-              title: 'No results found',
-              description: 'No rows match the active filters. Clear them to see more.',
+              title: t('table_builder.empty_state.no_results_title'),
+              description: t('table_builder.empty_state.no_results_description'),
             }
-          : { title: 'No results available' }
+          : { title: t('table_builder.empty_state.no_data_title') }
       }
     />
   );

@@ -589,6 +589,50 @@ describe('DataTable', () => {
     await waitFor(() => expect(countBodyRows()).toBe(3), { timeout: 1000 });
   });
 
+  it('reorders columns when a header cell is dragged onto another', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // Grab the two header cells via their text, then walk up to the <th>.
+    // Scope to the real table: the aria-hidden sticky clone renders a second
+    // copy of every header, so an unscoped getByText would match two nodes.
+    const nameTh = realTable().getByText('Name').closest('th');
+    const typeTh = realTable().getByText('Type').closest('th');
+
+    // Drag "Type" onto "Name": Type should move to index 0.
+    fireEvent.dragStart(typeTh);
+    fireEvent.dragOver(nameTh);
+
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+  });
+
+  it('reorders columns when a header cell is dragged in the sticky clone', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // Once the real header scrolls out of view the user drags the
+    // aria-hidden page-sticky clone (StickyTableHeader). Its zero-height
+    // container carries the distinctive `sticky h-0` classes, so scope the
+    // query there to grab the clone's header cells rather than the real ones.
+    const clone = within(
+      document.querySelector('div.sticky.h-0[aria-hidden="true"]'),
+    );
+    const nameTh = clone.getByText('Name').closest('th');
+    const typeTh = clone.getByText('Type').closest('th');
+
+    fireEvent.dragStart(typeTh);
+    fireEvent.dragOver(nameTh);
+
+    // The clone must emit the same reorder as the real header.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+  });
+
   it('client-side DATE filter narrows the visible rows and total count (after debounce)', async () => {
     const COLS = [
       { header: 'Name', accessor: 'name' },
@@ -636,5 +680,121 @@ describe('DataTable', () => {
     fireEvent.change(dateInput, { target: { value: '2024-12-31' } });
 
     await waitFor(() => expect(countBodyRows()).toBe(1), { timeout: 1000 });
+  });
+
+  it('does not reorder when a drag starts on the column kebab', () => {
+    const onVisibleColumnsChange = vi.fn();
+    renderTable({
+      visibleColumns: ['name', 'type'],
+      onVisibleColumnsChange,
+    });
+
+    // The wrapper span around the kebab is the button's parent element.
+    // Scope to the real table so the sticky clone's duplicate kebabs and
+    // header cells don't get picked up.
+    const kebabButton = realTable().getAllByLabelText('Column actions')[1];
+    const kebabWrapper = kebabButton.parentElement;
+    const nameTh = realTable().getByText('Name').closest('th');
+
+    // Start the drag on the kebab wrapper, then drag over another header.
+    fireEvent.dragStart(kebabWrapper);
+    fireEvent.dragOver(nameTh);
+
+    // The wrapper cancels the drag, so no reorder is emitted.
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+  });
+
+  it('re-freezes a column dragged into first place', () => {
+    const onVisibleColumnsChange = vi.fn();
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="freeze"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    // Drag "Charlie" (index 2) onto "Alpha" (index 0). Scope to the real
+    // table so the aria-hidden sticky clone's copies aren't matched.
+    const alphaTh = realTable().getByText('Alpha').closest('th');
+    const charlieTh = realTable().getByText('Charlie').closest('th');
+    fireEvent.dragStart(charlieTh);
+    fireEvent.dragOver(alphaTh);
+
+    // Charlie becomes the new frozen column at index 0.
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['c', 'a', 'b']);
+  });
+
+  it('keeps the dragged header following the cursor across multiple dragOver hops', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onChangeSpy = vi.fn();
+
+    // A stateful wrapper is required here rather than a plain vi.fn() spy.
+    // handleDragOver reads the live `columns` prop on every event, so if
+    // onVisibleColumnsChange does not feed back into state, the second
+    // dragOver would see the original order and compute the wrong result.
+    // The Page wrapper closes the loop: each emission updates visibleColumns,
+    // which re-renders DataTable with the new order before the next event.
+    const Page = () => {
+      const [visibleColumns, setVisibleColumns] = useState(['a', 'b', 'c']);
+      return (
+        <MockedProvider mocks={[]} addTypename={false}>
+          <DataTable
+            tableId="multihop"
+            graphqlTable="PORTFOLIO_CANDIDATES"
+            columns={COLUMNS_3}
+            data={[{ a: '1', b: '2', c: '3' }]}
+            totalCount={1}
+            rowKey="a"
+            visibleColumns={visibleColumns}
+            onVisibleColumnsChange={(next) => {
+              onChangeSpy(next);
+              setVisibleColumns(next);
+            }}
+          />
+        </MockedProvider>
+      );
+    };
+
+    render(<Page />);
+
+    // Scope to the real table: the sticky clone renders a duplicate header.
+    const th = (label) => realTable().getByText(label).closest('th');
+
+    // Drag "Alpha" rightward: first onto Bravo, then onto Charlie.
+    // Hop 1: order [a,b,c] → remove a → [b,c] → insert at index of b (0) → [b,a,c]
+    // Hop 2: order [b,a,c] → remove a → [b,c] → insert at index of c (2) → [b,c,a]
+    fireEvent.dragStart(th('Alpha'));
+    fireEvent.dragOver(th('Bravo'));
+    fireEvent.dragOver(th('Charlie'));
+
+    expect(onChangeSpy).toHaveBeenNthCalledWith(1, ['b', 'a', 'c']);
+    expect(onChangeSpy).toHaveBeenLastCalledWith(['b', 'c', 'a']);
+
+    // The rendered header order reflects the final live-preview state.
+    // Each th may contain extra text from the kebab button's accessible
+    // label, so we pull out only the leading word from each cell's text.
+    const headerOrder = Array.from(
+      document.querySelectorAll('.overflow-x-auto thead tr:first-child th'),
+    ).map((cell) => cell.textContent.trim().split(/\s+/)[0]);
+    expect(headerOrder[0]).toBe('Bravo');
+    expect(headerOrder[1]).toBe('Charlie');
+    expect(headerOrder[2]).toBe('Alpha');
   });
 });

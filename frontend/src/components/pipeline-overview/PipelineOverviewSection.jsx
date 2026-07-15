@@ -13,6 +13,7 @@
 // own data hooks. Reads the shared filter context via
 // useGlobalFilters().
 
+import { t } from '@/content';
 import { useMemo, useRef, useState } from 'react';
 import { useUrlState } from '@/lib/useUrlState';
 import { arraySerializer } from '@/lib/url-serializers';
@@ -131,22 +132,22 @@ export default function PipelineOverviewSection() {
         ) : (
           <>
             <StatCard
-              title="Candidates in development"
+              title={t('pipeline_overview.kpi.candidates_title')}
               value={activeCandidates}
-              description="Active candidates"
-              tooltip="Number of candidates currently in active development"
+              description={t('pipeline_overview.kpi.candidates_description')}
+              tooltip={t('pipeline_overview.kpi.candidates_tooltip')}
             />
             <StatCard
-              title="Linked clinical trials"
+              title={t('pipeline_overview.kpi.trials_title')}
               value={ongoingTrials}
-              description="Ongoing clinical trials"
-              tooltip="Number of clinical trials currently in progress"
+              description={t('pipeline_overview.kpi.trials_description')}
+              tooltip={t('pipeline_overview.kpi.trials_tooltip')}
             />
             <StatCard
-              title="Approved health products"
+              title={t('pipeline_overview.kpi.approved_title')}
               value={approvedProducts}
-              description="Approved products"
-              tooltip="Number of products that have received approval"
+              description={t('pipeline_overview.kpi.approved_description')}
+              tooltip={t('pipeline_overview.kpi.approved_tooltip')}
             />
           </>
         )}
@@ -157,24 +158,25 @@ export default function PipelineOverviewSection() {
         {/* Global pipeline overview — 2 columns */}
         <div data-tour="po-legend" className="lg:col-span-2 bg-white border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-black">Global pipeline overview</h3>
+            <h3 className="text-lg font-bold text-black">{t('pipeline_overview.chart.title')}</h3>
             <button
               onClick={handleExportPNG}
               disabled={exportingPNG}
               title="Export Visual"
               className="inline-flex items-center justify-center border-none bg-[#F2F2F4] cursor-pointer w-9 h-9 min-w-[36px] min-h-[36px] shrink-0 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              {exportingPNG ? t('pipeline_overview.chart.exporting') : t('pipeline_overview.chart.export')}
               <DownloadIcon className="w-4 h-4" />
             </button>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Each horizontal bar shows a product type, with colour-coded segments for how many candidates and approved products sit at each R&D stage. Use the page-level filters to narrow the view, click items in the legend to toggle stages on or off, or use Export Visual to save the chart as an image.
+            {t('pipeline_overview.chart.description')}
           </p>
           <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
           <div ref={globalPipelineChartRef}>
             {pipelineLoading ? (
               <div className="h-[500px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                <div className="animate-pulse text-gray-400">{t('pipeline_overview.chart.loading')}</div>
               </div>
             ) : (
               <StackedBarChart
@@ -184,8 +186,8 @@ export default function PipelineOverviewSection() {
                 height={500}
                 yAxisWidth={100}
                 maxTickChars={15}
-                xAxisLabel="Number of candidates / approved products"
-                yAxisLabel="Product type"
+                xAxisLabel={t('pipeline_overview.chart.x_axis')}
+                yAxisLabel={t('pipeline_overview.chart.y_axis')}
                 showFilters={true}
                 visiblePhases={pipelineVisiblePhases}
                 onVisiblePhasesChange={handlePipelineVisiblePhasesChange}
@@ -197,12 +199,12 @@ export default function PipelineOverviewSection() {
         {/* Product types — 1 column */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-black">Product types</h3>
+            <h3 className="text-lg font-bold text-black">{t('pipeline_overview.product_types.title')}</h3>
             <div className="flex items-center gap-2">
               <Dropdown
                 value={productTypeFilter}
                 onChange={setProductTypeFilter}
-                placeholder="All"
+                placeholder={t('pipeline_overview.product_types.dropdown_all')}
                 options={[
                   { label: 'Candidates', value: 'Candidate' },
                   { label: 'Approved products', value: 'Product' },
@@ -226,13 +228,13 @@ export default function PipelineOverviewSection() {
             </div>
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            A snapshot of how the R&D pipeline is distributed across product types. Click on the drop-down to toggle between candidates, approved products or both. Use the ··· menu to export the chart as an image or the underlying data as .csv.
+            {t('pipeline_overview.product_types.description')}
           </p>
           <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
           <div ref={productTypesChartRef}>
             {productTypesLoading ? (
               <div className="h-[500px] flex items-center justify-center">
-                <div className="animate-pulse text-gray-400">Loading chart data...</div>
+                <div className="animate-pulse text-gray-400">{t('pipeline_overview.product_types.loading')}</div>
               </div>
             ) : (
               <DonutChart

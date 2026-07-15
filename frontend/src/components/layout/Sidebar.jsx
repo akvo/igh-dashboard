@@ -17,24 +17,25 @@ import {
 import SidebarFilterBox from './SidebarFilterBox';
 import GuidedTour from '../guided-tour/GuidedTour';
 import { matchesItemHref } from './menuActive';
+import { t } from '@/content';
 
 const defaultMenuItems = [
   {
-    section: 'GENERAL',
+    section: t('layout.sidebar.section_general'),
     items: [
-      { id: 'home', label: 'Home', icon: HomeIcon, href: '/' },
-      { id: 'pipeline-overview', label: 'Pipeline Overview', icon: GridIcon, href: '/pipeline-overview' },
+      { id: 'home', label: t('layout.sidebar.nav_home'), icon: HomeIcon, href: '/' },
+      { id: 'pipeline-overview', label: t('layout.sidebar.nav_pipeline_overview'), icon: GridIcon, href: '/pipeline-overview' },
       {
         id: 'pipeline-explorer',
-        label: 'Pipeline Explorer',
+        label: t('layout.sidebar.nav_pipeline_explorer'),
         icon: SearchIcon,
         href: '/pipeline-explorer',
         // Single entry that stays highlighted across both child routes
         // (/pipeline-explorer and /pipeline-explorer/table-builder).
         match: 'prefix',
       },
-      { id: 'pipeline-trends', label: 'Pipeline trends', icon: RefreshIcon, href: '/pipeline-trends' },
-      { id: 'who-priority-alignment', label: 'WHO Priority alignment', icon: ListIcon, href: '/who-priority-alignment' },
+      { id: 'pipeline-trends', label: t('layout.sidebar.nav_pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
+      { id: 'who-priority-alignment', label: t('layout.sidebar.nav_who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
     ],
   },
 ];
@@ -207,7 +208,7 @@ export default function Sidebar({
                     className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
                   >
                     <HelpIcon className="w-5 h-5 text-sidebar-icon group-hover:text-orange-500 transition-colors" strokeWidth={2.5} />
-                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">Help</span>
+                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">{t('layout.sidebar.help_button')}</span>
                   </button>
                   {showHelpPopup && (
                     <div

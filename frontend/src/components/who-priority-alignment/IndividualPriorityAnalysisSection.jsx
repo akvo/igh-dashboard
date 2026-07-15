@@ -50,6 +50,7 @@ import {
 import { useWhoPageFilters } from './useWhoPageFilters';
 import { useIndividualPriorityState } from './useIndividualPriorityState';
 import PriorityKeyInfoPanel from './PriorityKeyInfoPanel';
+import { t } from '@/content';
 
 const candidatesFilterSerializer = makeFilterSerializer(CANDIDATE_COLUMNS);
 
@@ -63,9 +64,9 @@ function EmptyState() {
       <div className="w-12 h-12 flex items-center justify-center rounded-md bg-orange-100 mb-4">
         <InfoIcon className="w-6 h-6 text-orange-500" />
       </div>
-      <h4 className="text-lg font-bold text-black mb-1">Nothing selected</h4>
+      <h4 className="text-lg font-bold text-black mb-1">{t('who_priority.individual.empty_title')}</h4>
       <p className="text-sm text-gray-500 max-w-xs text-center">
-        Please select filters you&apos;d like to include in the overview
+        {t('who_priority.individual.empty_description')}
       </p>
     </div>
   );
@@ -86,9 +87,9 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
     >
       <div className="flex items-start justify-between gap-2 mb-1">
         <div>
-          <h4 className="text-base font-bold text-black">Pipeline build up</h4>
+          <h4 className="text-base font-bold text-black">{t('who_priority.individual.pipeline_chart_title')}</h4>
           <p className="text-sm text-gray-500">
-            How the pipeline for the selected priority builds up across R&D stages. Each bar shows a product type, segmented by the candidates at each stage; click items in the legend to toggle stages on or off, or use the ··· menu to export the chart or its data.
+            {t('who_priority.individual.pipeline_chart_description')}
           </p>
         </div>
         <ChartMenu
@@ -110,7 +111,7 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
       <div className="flex-1 mt-2">
         {loading ? (
           <div className="h-[220px] flex items-center justify-center">
-            <div className="animate-pulse text-gray-400">Loading chart...</div>
+            <div className="animate-pulse text-gray-400">{t('who_priority.overview.loading_chart')}</div>
           </div>
         ) : chartData.length === 0 ? (
           <ChartEmptyState variant="bar" height={220} />
@@ -121,7 +122,7 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
             categoryKey="category"
             layout="vertical"
             height={Math.max(180, chartData.length * 48)}
-            xAxisLabel="Amount"
+            xAxisLabel={t('who_priority.individual.amount_axis')}
             barRadius={0}
           />
         )}
@@ -154,10 +155,10 @@ function CandidatesTable({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h4 className="text-xl font-bold text-black leading-none">
-              Candidates linked to priority
+              {t('who_priority.individual.candidates_title')}
             </h4>
             <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-              {totalCount} Candidates
+              {totalCount} {t('who_priority.individual.candidates_count_label')}
             </span>
           </div>
           <div className="flex items-center gap-3 h-[36px]">
@@ -167,12 +168,12 @@ function CandidatesTable({
               className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               <CloudDownloadIcon className="w-4 h-4" />
-              {downloading ? 'Downloading...' : 'Download CSV'}
+              {downloading ? t('who_priority.individual.downloading') : t('who_priority.individual.download_csv')}
             </button>
           </div>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          A matrix of the candidates linked to the selected priority, with per-column filters beneath each header to narrow further. Sort by any column, use the Columns button to show, hide or reorder columns, follow the Explore → link on any row to open that candidate&apos;s full record, or export the matching rows to .csv.
+          {t('who_priority.individual.candidates_description')}
         </p>
       </div>
       <DataTable
@@ -197,10 +198,10 @@ function CandidatesTable({
         emptyState={
           Object.keys(filters || {}).length > 0
             ? {
-                title: 'No candidates found',
-                description: 'No rows match the active filters. Clear them to see more.',
+                title: t('who_priority.individual.table_empty_filtered_title'),
+                description: t('who_priority.individual.table_empty_filtered_description'),
               }
-            : { title: 'No candidates linked to this priority' }
+            : { title: t('who_priority.individual.table_empty_no_linked') }
         }
       />
     </div>
@@ -230,7 +231,7 @@ function ActiveBody({
       {/* Row A — Pipeline header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h4 className="text-base sm:text-lg font-bold text-black">
-          Pipeline for priority: {selectedPriorityName ?? '—'}
+          {t('who_priority.individual.pipeline_heading')} {selectedPriorityName ?? '—'}
         </h4>
         <button
           type="button"
@@ -238,7 +239,7 @@ function ActiveBody({
           onClick={onExplore}
           className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-black bg-orange-500 hover:bg-black hover:text-white whitespace-nowrap transition-colors cursor-pointer"
         >
-          Explore selected priority
+          {t('who_priority.individual.explore_button')}
         </button>
       </div>
 
@@ -247,17 +248,17 @@ function ActiveBody({
         {/* Column 1 — stacked stat cards bound to the analysis hook */}
         <div className="flex flex-col gap-4">
           <StatCard
-            title="Number of candidates linked to selected priority"
+            title={t('who_priority.individual.stat_candidates_title')}
             value={analysis.counts.candidatesCount}
             variant="number"
             loading={analysis.loading}
           />
           <StatCard
-            title="Target population"
+            title={t('who_priority.panel.section_target_population')}
             value={
               analysis.targetPopulation && analysis.targetPopulation.length > 0
                 ? analysis.targetPopulation
-                : 'Not specified for this priority.'
+                : t('who_priority.individual.not_specified')
             }
             variant="text"
             loading={analysis.loading}
@@ -525,10 +526,10 @@ export default function IndividualPriorityAnalysisSection() {
     <div data-tour="wpa-individual" className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
       <div className="mb-2">
         <h3 className="text-base sm:text-lg font-bold text-black">
-          Individual priority analysis
+          {t('who_priority.individual.title')}
         </h3>
         <p className="text-sm text-gray-500">
-          Focus on a single WHO priority. Select a priority to see the pipeline mapped to it — the candidates working towards that priority, its target population, and how that pipeline builds up by R&D stage. Click Explore selected priority to open its full detail, including a link to the source.
+          {t('who_priority.individual.description')}
         </p>
       </div>
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
@@ -540,11 +541,11 @@ export default function IndividualPriorityAnalysisSection() {
           {...(dropdownDisabled ? { inert: '' } : {})}
         >
           <Dropdown
-            label="Select WHO Priority"
+            label={t('who_priority.individual.dropdown_label')}
             value={state.pendingPriority != null ? String(state.pendingPriority) : ''}
             placeholder={
               staleCommitLabel ||
-              (dropdownOptions.length === 0 ? 'No priorities match the current filters' : 'All')
+              (dropdownOptions.length === 0 ? t('who_priority.individual.dropdown_no_priorities') : 'All')
             }
             options={dropdownOptions}
             multiSelect={false}
@@ -563,7 +564,7 @@ export default function IndividualPriorityAnalysisSection() {
               : 'text-black bg-white border-gray-300 hover:bg-gray-50 cursor-pointer'
           }`}
         >
-          Clear
+          {t('who_priority.individual.clear')}
           <RefreshIcon className="w-4 h-4" />
         </button>
         <button
@@ -576,7 +577,7 @@ export default function IndividualPriorityAnalysisSection() {
               : 'text-black bg-orange-500 hover:bg-black hover:text-white cursor-pointer'
           }`}
         >
-          Apply
+          {t('who_priority.individual.apply')}
         </button>
       </div>
 

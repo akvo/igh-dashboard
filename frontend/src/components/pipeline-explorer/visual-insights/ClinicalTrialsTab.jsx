@@ -42,6 +42,7 @@ import {
   BarTooltip,
   DonutTooltip,
 } from './shared/primitives';
+import { t } from '@/content';
 
 // =========================================================
 // Clinical Trials tab — Visual Insights
@@ -204,7 +205,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
   return (
     <>
       <p className="text-sm text-gray-500 mb-6">
-        The clinical-trial layer of the pipeline — who is being studied, where, and at what stage. Two charts, a map and a searchable table cover age group, status, geography and trial-level detail.
+        {t('pipeline_explorer.trials.intro')}
       </p>
 
       <KpiStatCards cards={statCards} />
@@ -235,7 +236,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
         {/* Age groups */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">Age groups in clinical trials</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.age_groups_title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -248,7 +249,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
+            {t('pipeline_explorer.trials.age_groups_description')}
           </p>
           <div ref={ageGroupsRef}>
             {trialsStatsLoading ? (
@@ -281,7 +282,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
         {/* Trial status */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">Clinical trial status</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.trial_status_title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -294,7 +295,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            Number of studies at each stage across the portfolio, from ongoing to completed.
+            {t('pipeline_explorer.trials.trial_status_description')}
           </p>
           <div ref={trialStatusRef}>
             {trialsStatsLoading ? (
@@ -331,7 +332,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
       {/* Geographic distribution */}
       <div className="bg-white border border-gray-200 p-4 mb-6">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="text-base sm:text-lg font-bold text-black">Geographic distribution of clinical trials</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.geo_title')}</h3>
           <div className="flex-1" />
           <div className="min-w-[160px]">
             <Dropdown
@@ -357,7 +358,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           />
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
+          {t('pipeline_explorer.trials.geo_description')}
         </p>
         <div ref={geoMapRef}>
           {geoLoading ? (
@@ -366,16 +367,16 @@ export default function ClinicalTrialsTab({ onExplore }) {
             <WorldMap data={clinicalTrialsMapData || []} height={320} showLegend={false} />
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-3">Source: World Bank Official Boundaries</p>
+        <p className="text-xs text-gray-500 mt-3">{t('pipeline_explorer.trials.geo_source')}</p>
       </div>
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">Selected clinical trials</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.table_title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
+          {t('pipeline_explorer.trials.table_description')}
         </p>
         <DataTable
           tableId="vi-trials"
@@ -396,7 +397,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           onSortChange={(next) => { setTrialsSort(next); setTrialsPage(1); }}
           visibleColumns={trialsVisibleCols}
           onVisibleColumnsChange={setTrialsVisibleCols}
-          emptyState={{ title: 'No clinical trials found' }}
+          emptyState={{ title: t('pipeline_explorer.trials.table_empty') }}
         />
       </div>
     </>

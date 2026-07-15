@@ -1,28 +1,24 @@
 import { TextLink } from '@/components/ui/Button';
+import { t } from '@/content';
 
 const reports = [
   {
-    title: 'Funding for global health R&D in 2024',
-    description: 'An overview of key takeaways from the G-FINDER survey',
-    image:
-      'https://cdn.impactglobalhealth.org/media/2025%20G-FINDER%20cover-404x341.webp',
-    url: 'https://www.impactglobalhealth.org/insights/report-library/funding-for-global-health-rd-in-2024',
+    title: t('home.reports.card_1_title'),
+    description: t('home.reports.card_1_description'),
+    image: t('home.reports.card_1_image'),
+    url: t('home.reports.card_1_url'),
   },
   {
-    title: 'The Ripple Effect 2.0: from global health to domestic value',
-    description:
-      'Executive briefing presenting findings from three case studies demonstrating how selected global health innovations enhance health outcomes and provide economic value across the US, UK, Japan, and Europe.',
-    image:
-      'https://cdn.impactglobalhealth.org/media/Ripple%20effect%202.0%20image.jpg',
-    url: 'https://www.impactglobalhealth.org/insights/report-library/ripple-effect-2',
+    title: t('home.reports.card_2_title'),
+    description: t('home.reports.card_2_description'),
+    image: t('home.reports.card_2_image'),
+    url: t('home.reports.card_2_url'),
   },
   {
-    title: '100 Days Mission: 5th Implementation Report and Scorecard',
-    description:
-      "The 100 Days Mission's 5th Implementation Report and Scorecard highlight limited progress has been made in an R&D ecosystem that remains reactive and reliant on US funding.",
-    image:
-      'https://cdn.impactglobalhealth.org/media/Untitled%20design%20(7)-404x404.webp',
-    url: 'https://www.impactglobalhealth.org/insights/report-library/ipps-report-2026',
+    title: t('home.reports.card_3_title'),
+    description: t('home.reports.card_3_description'),
+    image: t('home.reports.card_3_image'),
+    url: t('home.reports.card_3_url'),
   },
 ];
 
@@ -47,7 +43,7 @@ function HorizontalCard({ report }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Read more
+          {t('home.reports.read_more')}
         </TextLink>
       </div>
     </div>
@@ -75,7 +71,7 @@ function FeaturedCard({ report }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Read more
+          {t('home.reports.read_more')}
         </TextLink>
       </div>
     </div>
@@ -90,7 +86,7 @@ export default function ReportsAndInsights() {
     >
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-xl sm:text-2xl font-bold text-white">
-          Reports and insights
+          {t('home.reports.title')}
         </h2>
         <a
           href="https://www.impactglobalhealth.org/insights/report-library"
@@ -98,12 +94,11 @@ export default function ReportsAndInsights() {
           rel="noopener noreferrer"
           className="px-5 py-2 text-sm font-medium text-white bg-transparent border border-white cursor-pointer hover:bg-white hover:text-black transition-colors"
         >
-          View all insights
+          {t('home.reports.cta_all')}
         </a>
       </div>
       <p className="text-sm text-white/60 mb-6">
-        Discover the insights that two decades of global health data have given
-        us.
+        {t('home.reports.subtitle')}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2 gap-6">
