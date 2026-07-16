@@ -109,7 +109,7 @@ const STAGE_SERIES = [
 
 const tabs = [
   { value: 'single', label: t('pipeline_trends.temporal.tab.single') },
-  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare') },
+  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare'), dataTour: 'cpa-compare-tab' },
 ];
 
 export function ComparePortfoliosTab({

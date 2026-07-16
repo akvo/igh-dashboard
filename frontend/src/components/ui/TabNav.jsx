@@ -11,6 +11,7 @@ const TabNav = ({
       {tabs.map((tab) => {
         const tabValue = typeof tab === 'object' ? tab.value : tab;
         const tabLabel = typeof tab === 'object' ? tab.label : tab;
+        const tabDataTour = typeof tab === 'object' ? tab.dataTour : undefined;
         const isActive = tabValue === activeTab;
 
         return (
@@ -18,6 +19,7 @@ const TabNav = ({
             key={tabValue}
             type="button"
             onClick={() => onChange && onChange(tabValue)}
+            {...(tabDataTour ? { 'data-tour': tabDataTour } : {})}
             className={`relative pb-3 text-sm font-medium border-none bg-transparent cursor-pointer whitespace-nowrap transition-colors
               ${isActive ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
           >

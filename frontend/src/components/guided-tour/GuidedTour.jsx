@@ -2,8 +2,26 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import tourSteps from './tourConfig';
+import { t } from '@/content';
+
+/** Extract the pathname part of a route (strip query string). */
+const routePathname = (route) => (route ? route.split('?')[0] : route);
+
+/**
+ * Find the nearest scrollable ancestor of an element.
+ * Falls back to documentElement.
+ */
+function getScrollParent(el) {
+  let node = el.parentElement;
+  while (node) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY === 'auto' || overflowY === 'scroll') return node;
+    node = node.parentElement;
+  }
+  return document.documentElement;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Confirmation dialog                                               */
@@ -59,7 +77,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
             paddingRight: 24,
           }}
         >
-          Do you want to take a guided tour through the platform?
+          {t('guided_tour.confirm_prompt')}
         </p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button
@@ -76,7 +94,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
               color: '#111',
             }}
           >
-            No
+            {t('guided_tour.confirm_no')}
           </button>
           <button
             onClick={onConfirm}
@@ -92,7 +110,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
               color: '#111',
             }}
           >
-            Start tour
+            {t('guided_tour.confirm_start')}
           </button>
         </div>
       </div>
@@ -235,6 +253,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
         maxHeight: '80vh',
         overflowY: 'auto',
         boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
+        transition: 'top 0.3s ease, left 0.3s ease',
       }}
     >
       <div
@@ -246,7 +265,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
         }}
       >
         <span style={{ fontSize: 12, color: '#999', fontWeight: 500 }}>
-          Step {stepIndex + 1} of {totalSteps}
+          Step {stepIndex + 1} {t('guided_tour.step_of')} {totalSteps}
         </span>
         <button
           onClick={onClose}
@@ -273,7 +292,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           margin: '0 0 6px',
         }}
       >
-        {step.title}
+        {t(step.titleKey)}
       </h4>
       <p
         style={{
@@ -284,7 +303,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           whiteSpace: 'pre-line',
         }}
       >
-        {step.description}
+        {t(step.descKey)}
       </p>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
@@ -303,10 +322,47 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
             gap: 4,
           }}
         >
-          {isLast ? 'Finish' : 'Next'} &rarr;
+          {isLast ? t('guided_tour.finish') : t('guided_tour.next')} &rarr;
         </button>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Click-blocking overlay that still allows scrolling                */
+/* ------------------------------------------------------------------ */
+function ClickBlocker() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Block clicks/taps but forward wheel events to the correct
+    // scroll container so the user can still scroll during the tour.
+    // Some pages scroll inside <main overflow-y-auto>, others scroll
+    // at the document level — detect which one is scrollable.
+    const handleWheel = (e) => {
+      e.preventDefault();
+      const main = document.querySelector('main');
+      if (main) {
+        const { overflowY } = getComputedStyle(main);
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+          main.scrollBy({ top: e.deltaY, left: e.deltaX });
+          return;
+        }
+      }
+      window.scrollBy({ top: e.deltaY, left: e.deltaX });
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ position: 'fixed', inset: 0, zIndex: 9997 }}
+    />
   );
 }
 
@@ -315,7 +371,11 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
 /* ------------------------------------------------------------------ */
 export default function GuidedTour({ active, onClose }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  // Build the current full path (pathname + query) for route comparison
+  const currentSearch = searchParams.toString();
+  const currentFullPath = currentSearch ? `${pathname}?${currentSearch}` : pathname;
   // Restore tour state from sessionStorage so cross-page navigation
   // doesn't lose progress.
   const [phase, setPhase] = useState(() => {
@@ -364,57 +424,148 @@ export default function GuidedTour({ active, onClose }) {
     prevActive.current = active;
   }, [active]);
 
-  // When pathname changes and we were navigating, stop navigating —
-  // the new page is loaded and we can show the step.
+  // When navigating, wait for the page to be ready then clear the flag.
+  // For cross-page navigations, pathname changes trigger this.
+  // For same-page query changes, currentStep changing + navigating flag
+  // triggers this immediately (the pushState already happened synchronously).
   useEffect(() => {
     if (navigating && phase === 'touring') {
       const step = tourSteps[currentStep];
-      if (step && step.route === pathname) {
-        // Give the page a moment to render, then measure
-        const timer = setTimeout(() => setNavigating(false), 400);
+      if (step && routePathname(step.route) === pathname) {
+        // Give the page time to render before showing the step
+        const timer = setTimeout(() => setNavigating(false), 500);
         return () => clearTimeout(timer);
       }
     }
   }, [pathname, navigating, currentStep, phase]);
 
-  const measureTarget = useCallback(() => {
+  // Re-measure the target rect without scrolling (used on resize)
+  const remeasure = useCallback(() => {
     const step = tourSteps[currentStep];
     if (!step) return;
     const el = document.querySelector(step.target);
     if (el) {
-      // Scroll element into view if needed
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      // Measure after a small delay to account for scroll
-      setTimeout(() => {
-        const rect = el.getBoundingClientRect();
-        setTargetRect(rect);
-      }, 100);
-    } else {
-      setTargetRect(null);
+      setTargetRect(el.getBoundingClientRect());
     }
+  }, [currentStep]);
+
+  // Scroll to target and measure — called once per step change.
+  // Retries if the element hasn't rendered yet (async data loads).
+  const scrollAndMeasure = useCallback(() => {
+    const step = tourSteps[currentStep];
+    if (!step) return;
+
+    let attempts = 0;
+    const maxAttempts = 15;
+    let cancelled = false;
+
+    const tryFind = () => {
+      if (cancelled) return;
+      const el = document.querySelector(step.target);
+      if (el) {
+        // Check if element is outside the visible viewport area.
+        // Account for the sticky header (~90px) and leave room for
+        // the tooltip. Works regardless of whether the page scrolls
+        // inside <main> or at the document level.
+        const elRect = el.getBoundingClientRect();
+        const headerHeight = 90;
+        const margin = 60;
+        const isVisible =
+          elRect.top >= headerHeight &&
+          elRect.bottom <= window.innerHeight - margin;
+        if (!isVisible) {
+          const startTop = elRect.top;
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Wait for scroll to begin, then poll until position stabilizes.
+          // The initial 100ms delay prevents false "stable" readings
+          // before the smooth scroll animation kicks in.
+          setTimeout(() => {
+            if (cancelled) return;
+            let lastTop = el.getBoundingClientRect().top;
+            let stableCount = 0;
+            const pollScroll = () => {
+              if (cancelled) return;
+              const r = el.getBoundingClientRect();
+              if (Math.abs(r.top - lastTop) < 2) {
+                stableCount++;
+                if (stableCount >= 3) {
+                  setTargetRect(r);
+                  return;
+                }
+              } else {
+                stableCount = 0;
+              }
+              lastTop = r.top;
+              requestAnimationFrame(pollScroll);
+            };
+            // If position already changed from start, begin polling.
+            // Otherwise wait a bit more for scroll to start.
+            if (Math.abs(el.getBoundingClientRect().top - startTop) > 5) {
+              requestAnimationFrame(pollScroll);
+            } else {
+              setTimeout(() => {
+                if (cancelled) return;
+                // Scroll might not have started — measure anyway
+                setTargetRect(el.getBoundingClientRect());
+              }, 400);
+            }
+          }, 100);
+        } else {
+          setTargetRect(el.getBoundingClientRect());
+        }
+      } else if (attempts < maxAttempts) {
+        // Element not rendered yet — retry
+        attempts++;
+        setTimeout(tryFind, 300);
+      } else {
+        setTargetRect(null);
+      }
+    };
+
+    tryFind();
+
+    // Return cancellation function
+    return () => { cancelled = true; };
   }, [currentStep]);
 
   useEffect(() => {
     if (phase !== 'touring' || navigating) return;
-    // Small delay to let the page render before measuring
-    const timer = setTimeout(measureTarget, 200);
-    window.addEventListener('resize', measureTarget);
-    window.addEventListener('scroll', measureTarget, true);
+    // Scroll to the target once when the step changes
+    const timer = setTimeout(() => {
+      scrollAndMeasure();
+    }, 150);
+    // Re-measure on resize only
+    window.addEventListener('resize', remeasure);
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', measureTarget);
-      window.removeEventListener('scroll', measureTarget, true);
+      window.removeEventListener('resize', remeasure);
     };
-  }, [phase, navigating, measureTarget]);
+  }, [phase, navigating, scrollAndMeasure, remeasure]);
+
+  // Navigate to a tour step's route.
+  // For same-page query-param changes, we update the URL directly
+  // via pushState + popstate dispatch so useQueryParams (which
+  // powers useUrlState) picks up the change immediately.
+  // For cross-page navigation, we use router.push.
+  const navigateToRoute = useCallback((route) => {
+    const targetPathname = routePathname(route);
+    if (targetPathname === pathname) {
+      // Same page — update query params directly
+      window.history.pushState(null, '', route);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    } else {
+      // Different page
+      router.push(route);
+    }
+  }, [pathname, router]);
 
   const handleConfirm = () => {
     setPhase('touring');
     setCurrentStep(0);
-    // If not already on the first step's route, navigate
     const firstStep = tourSteps[0];
-    if (firstStep.route && firstStep.route !== pathname) {
+    if (firstStep.route && firstStep.route !== currentFullPath) {
       setNavigating(true);
-      router.push(firstStep.route);
+      navigateToRoute(firstStep.route);
     }
   };
 
@@ -428,22 +579,14 @@ export default function GuidedTour({ active, onClose }) {
     setCurrentStep(nextIdx);
     setTargetRect(null);
 
-    // If the next step is on a different page, navigate there
-    if (nextStep.route && nextStep.route !== pathname) {
+    // Navigate if the next step targets a different page or query params
+    if (nextStep.route && nextStep.route !== currentFullPath) {
       setNavigating(true);
-      router.push(nextStep.route);
+      navigateToRoute(nextStep.route);
     }
   };
 
   const handleClose = () => onClose();
-
-  useEffect(() => {
-    if (!active) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [active]);
 
   if (!active) return null;
   if (typeof window === 'undefined') return null;
@@ -458,9 +601,7 @@ export default function GuidedTour({ active, onClose }) {
 
       {phase === 'touring' && !navigating && (
         <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 9997 }}
-          />
+          <ClickBlocker />
           <Spotlight rect={targetRect} />
           {step && (
             <StepTooltip
@@ -497,7 +638,7 @@ export default function GuidedTour({ active, onClose }) {
               boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
             }}
           >
-            Navigating to next page...
+            {t('guided_tour.navigating')}
           </div>
         </div>
       )}

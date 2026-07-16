@@ -235,17 +235,17 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-1">Need help?</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
                       <p className="text-sm text-gray-500 m-0 mb-4">
-                        Choose how you&apos;d like to get started or get support.
+                        {t('layout.sidebar.help_intro')}
                       </p>
 
                       <div className="mb-3">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>Take the guided tour</strong>{' '}
+                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            New to the platform? Let us walk you through the key features step by step.
+                            {t('layout.sidebar.help_tour_description')}
                           </span>
                         </p>
                       </div>
@@ -253,9 +253,9 @@ export default function Sidebar({
                       <div className="mb-4">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>Contact IGH</strong>{' '}
+                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            Have a question or need further support? Reach out to the Impact Global Health team directly.
+                            {t('layout.sidebar.help_contact_description')}
                           </span>
                         </p>
                       </div>
@@ -266,7 +266,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
                           style={{ flex: 1 }}
                         >
-                          Send e-mail
+                          {t('layout.sidebar.help_send_email')}
                         </a>
                         <button
                           onClick={() => {
@@ -276,7 +276,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
-                          Start guided tour
+                          {t('layout.sidebar.help_start_tour')}
                         </button>
                       </div>
                     </div>
@@ -330,17 +330,17 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-1">Need help?</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
                       <p className="text-sm text-gray-500 m-0 mb-4">
-                        Choose how you&apos;d like to get started or get support.
+                        {t('layout.sidebar.help_intro')}
                       </p>
 
                       <div className="mb-3">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>Take the guided tour</strong>{' '}
+                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            New to the platform? Let us walk you through the key features step by step.
+                            {t('layout.sidebar.help_tour_description')}
                           </span>
                         </p>
                       </div>
@@ -348,9 +348,9 @@ export default function Sidebar({
                       <div className="mb-4">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>Contact IGH</strong>{' '}
+                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            Have a question or need further support? Reach out to the Impact Global Health team directly.
+                            {t('layout.sidebar.help_contact_description')}
                           </span>
                         </p>
                       </div>
@@ -361,7 +361,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
                           style={{ flex: 1 }}
                         >
-                          Send e-mail
+                          {t('layout.sidebar.help_send_email')}
                         </a>
                         <button
                           onClick={() => {
@@ -371,7 +371,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
-                          Start guided tour
+                          {t('layout.sidebar.help_start_tour')}
                         </button>
                       </div>
                     </div>
