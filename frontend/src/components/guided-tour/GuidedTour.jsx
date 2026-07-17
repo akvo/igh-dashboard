@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { usePathname, useSearchParams, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import tourSteps from './tourConfig';
 import { t } from '@/content';
 
@@ -371,11 +371,12 @@ function ClickBlocker() {
 /* ------------------------------------------------------------------ */
 export default function GuidedTour({ active, onClose }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  // Build the current full path (pathname + query) for route comparison
-  const currentSearch = searchParams.toString();
-  const currentFullPath = currentSearch ? `${pathname}?${currentSearch}` : pathname;
+  // Build the current full path (pathname + query) for route comparison.
+  // Read search directly from window.location to avoid useSearchParams()
+  // which requires a Suspense boundary during SSR/prerendering.
+  const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
+  const currentFullPath = currentSearch ? `${pathname}${currentSearch}` : pathname;
   // Restore tour state from sessionStorage so cross-page navigation
   // doesn't lose progress.
   const [phase, setPhase] = useState(() => {
