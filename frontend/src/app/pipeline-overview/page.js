@@ -32,7 +32,9 @@ export default function PipelineOverviewPage() {
             <PageHeader title={t('pipeline_overview.page.title')} description={t('pipeline_overview.page.intro')} />
           </div>
 
-          <GlobalFilterBar filters={globalFilters} />
+          <div data-tour="po-filters">
+            <GlobalFilterBar filters={globalFilters} />
+          </div>
 
           <PipelineOverviewSection />
         </div>

@@ -188,7 +188,7 @@ export default function PipelineTrends() {
           </div>
 
           {/* Pipeline trends section */}
-          <div className="bg-white border border-gray-200 p-4 mb-6">
+          <div data-tour="cpa-welcome" className="bg-white border border-gray-200 p-4 mb-6">
             {/* Header */}
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xl font-bold text-black">{t('pipeline_trends.section.title')}</h3>

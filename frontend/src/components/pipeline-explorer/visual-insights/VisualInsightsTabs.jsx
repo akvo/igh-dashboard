@@ -84,6 +84,7 @@ export default function VisualInsightsTabs() {
     <div>
       <div
         ref={tabRef}
+        data-tour="pe-tabs"
         className="sticky z-[19] bg-cream-200 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-2"
         style={{ top: filterBarHeight }}
       >

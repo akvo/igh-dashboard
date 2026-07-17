@@ -400,7 +400,7 @@ export default function Home() {
       <main className="flex-1 min-w-0 overflow-x-hidden">
         <div className="p-4 sm:p-6 lg:p-8">
           {/* Page Header */}
-          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
+          <div data-tour="home-welcome" className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-8 bg-white p-4 sm:p-6 lg:px-8 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 border-b border-gray-200">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-black mb-1">
                 {t('home.hero.title')}
@@ -559,18 +559,20 @@ export default function Home() {
                     {t('home.map.description')}
                   </p>
                 </div>
-                <ChartMenu
-                  onDownloadCSV={() => {
-                    const columns = [
-                      { label: 'Country', accessor: 'country_name' },
-                      { label: 'ISO code', accessor: 'iso_code' },
-                      { label: 'Count', accessor: 'candidateCount' },
-                    ];
-                    const csv = buildCSV(columns, gqlMapDistribution);
-                    downloadCSVFile(csv, 'geographic-distribution');
-                  }}
-                  onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
-                />
+                <span data-tour="home-kpi">
+                  <ChartMenu
+                    onDownloadCSV={() => {
+                      const columns = [
+                        { label: 'Country', accessor: 'country_name' },
+                        { label: 'ISO code', accessor: 'iso_code' },
+                        { label: 'Count', accessor: 'candidateCount' },
+                      ];
+                      const csv = buildCSV(columns, gqlMapDistribution);
+                      downloadCSVFile(csv, 'geographic-distribution');
+                    }}
+                    onDownloadPNG={() => downloadPNG(worldMapRef, 'geographic-distribution')}
+                  />
+                </span>
               </div>
               <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
               <div ref={worldMapRef} className="flex-1">

@@ -109,7 +109,7 @@ const STAGE_SERIES = [
 
 const tabs = [
   { value: 'single', label: t('pipeline_trends.temporal.tab.single') },
-  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare') },
+  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare'), dataTour: 'cpa-compare-tab' },
 ];
 
 export function ComparePortfoliosTab({
@@ -1053,15 +1053,17 @@ export default function TemporalTrendsSection({
       <div className="mb-4" style={{ borderBottom: '1px solid #26262617' }} />
 
       {/* Tabs */}
-      <TabNav
-        tabs={tabs}
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        className="mb-4"
-      />
+      <div data-tour="cpa-mode">
+        <TabNav
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          className="mb-4"
+        />
+      </div>
 
       {activeTab === 'single' ? (
-        <div>
+        <div data-tour="cpa-portfolio">
           {/* Sticky filters */}
           <div className="sticky z-40 bg-white pt-4" style={{ top: 58 }}>
             <div className="flex items-end gap-4 pb-4 border-b border-gray-200">
@@ -1279,13 +1281,15 @@ export default function TemporalTrendsSection({
         </div>
       ) : (
         /* Tab 2: Compare different portfolios */
-        <ComparePortfoliosTab
-          narrowedHierarchy={narrowedHierarchy}
-          productOptions={productOptions}
-          productGroupMembers={productGroupMembers}
-          yearOptions={yearOptions}
-          filterPairs={pairs}
-        />
+        <div data-tour="cpa-compare">
+          <ComparePortfoliosTab
+            narrowedHierarchy={narrowedHierarchy}
+            productOptions={productOptions}
+            productGroupMembers={productGroupMembers}
+            yearOptions={yearOptions}
+            filterPairs={pairs}
+          />
+        </div>
       )}
     </div>
   );

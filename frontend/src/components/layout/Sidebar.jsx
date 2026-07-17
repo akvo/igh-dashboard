@@ -15,6 +15,7 @@ import {
   ChevronsRightIcon,
 } from '../icons';
 import SidebarFilterBox from './SidebarFilterBox';
+import GuidedTour from '../guided-tour/GuidedTour';
 import { matchesItemHref } from './menuActive';
 import { t } from '@/content';
 
@@ -50,6 +51,21 @@ export default function Sidebar({
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [searchQuery, setSearchQuery] = useState('');
   const [showHelpPopup, setShowHelpPopup] = useState(false);
+  const [showTour, setShowTour] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('guidedTourActive') === 'true';
+    }
+    return false;
+  });
+  const handleStartTour = () => {
+    sessionStorage.setItem('guidedTourActive', 'true');
+    setShowTour(true);
+  };
+  const handleCloseTour = () => {
+    sessionStorage.removeItem('guidedTourActive');
+    sessionStorage.removeItem('guidedTourStep');
+    setShowTour(false);
+  };
   const helpRef = useRef(null);
 
   useEffect(() => {
@@ -121,7 +137,7 @@ export default function Sidebar({
  */}
 
       {/* Menu */}
-      <nav className="flex-1 overflow-y-auto px-3 py-2">
+      <nav data-tour="sidebar-nav" className="flex-1 overflow-y-auto px-3 py-2">
         {menuItems.map((section, sectionIndex) => (
           <div key={section.section} className={sectionIndex > 0 ? 'mt-6' : ''}>
             {isExpanded && (
@@ -173,7 +189,9 @@ export default function Sidebar({
       </nav>
 
       {/* Global filter box */}
-      <SidebarFilterBox isExpanded={isExpanded} />
+      <div data-tour="filter-box">
+        <SidebarFilterBox isExpanded={isExpanded} />
+      </div>
 
       {/* Footer */}
       <div className="p-3 border-t border-black-12">
@@ -194,12 +212,12 @@ export default function Sidebar({
                   </button>
                   {showHelpPopup && (
                     <div
-                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      className="absolute bg-white rounded-lg shadow-lg z-[1100]"
                       style={{
                         bottom: '100%',
                         left: 0,
                         marginBottom: 12,
-                        width: 280,
+                        width: 320,
                         padding: '20px',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
                       }}
@@ -217,26 +235,56 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">{t('layout.sidebar.help_contact_heading')}</h4>
-                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        {t('layout.sidebar.help_contact_body_intro')}{' '}
-                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
+                      <p className="text-sm text-gray-500 m-0 mb-4">
+                        {t('layout.sidebar.help_intro')}
                       </p>
-                      <a
-                        href="mailto:info@impactgh.org"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="4" width="20" height="16" rx="2" />
-                          <path d="M22 4L12 13L2 4" />
-                        </svg>
-                        {t('layout.sidebar.help_send_email')}
-                      </a>
+
+                      <div className="mb-3">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
+                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
+                          <span className="text-gray-500">
+                            {t('layout.sidebar.help_tour_description')}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x2709;</span>
+                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
+                          <span className="text-gray-500">
+                            {t('layout.sidebar.help_contact_description')}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <a
+                          href="mailto:info@impactgh.org"
+                          className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                          style={{ flex: 1 }}
+                        >
+                          {t('layout.sidebar.help_send_email')}
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowHelpPopup(false);
+                            handleStartTour();
+                          }}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
+                          style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
+                        >
+                          {t('layout.sidebar.help_start_tour')}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
               <button
+                data-tour="sidebar-collapse"
                 onClick={() => setIsExpanded(false)}
                 className="p-2 rounded-lg text-sidebar-icon hover:bg-sidebar-hover hover:text-black transition-colors"
                 title="Collapse sidebar"
@@ -260,12 +308,12 @@ export default function Sidebar({
                   </button>
                   {showHelpPopup && (
                     <div
-                      className="absolute bg-white rounded-lg shadow-lg z-50"
+                      className="absolute bg-white rounded-lg shadow-lg z-[1100]"
                       style={{
                         bottom: '100%',
                         left: 0,
                         marginBottom: 12,
-                        width: 280,
+                        width: 320,
                         padding: '20px',
                         boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
                       }}
@@ -282,21 +330,50 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-2">{t('layout.sidebar.help_contact_heading')}</h4>
-                      <p className="text-[0.9375rem] leading-relaxed text-gray-600 m-0 mb-4">
-                        {t('layout.sidebar.help_contact_body_intro')}{' '}
-                        <a href="mailto:info@impactgh.org" className="underline text-gray-600">info@impactgh.org</a>.
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
+                      <p className="text-sm text-gray-500 m-0 mb-4">
+                        {t('layout.sidebar.help_intro')}
                       </p>
-                      <a
-                        href="mailto:info@impactgh.org"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="2" y="4" width="20" height="16" rx="2" />
-                          <path d="M22 4L12 13L2 4" />
-                        </svg>
-                        {t('layout.sidebar.help_send_email')}
-                      </a>
+
+                      <div className="mb-3">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
+                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
+                          <span className="text-gray-500">
+                            {t('layout.sidebar.help_tour_description')}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="mb-4">
+                        <p className="text-sm m-0 mb-1">
+                          <span style={{ marginRight: 6 }}>&#x2709;</span>
+                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
+                          <span className="text-gray-500">
+                            {t('layout.sidebar.help_contact_description')}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <a
+                          href="mailto:info@impactgh.org"
+                          className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
+                          style={{ flex: 1 }}
+                        >
+                          {t('layout.sidebar.help_send_email')}
+                        </a>
+                        <button
+                          onClick={() => {
+                            setShowHelpPopup(false);
+                            handleStartTour();
+                          }}
+                          className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
+                          style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
+                        >
+                          {t('layout.sidebar.help_start_tour')}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -312,6 +389,7 @@ export default function Sidebar({
           )}
         </div>
       </div>
+      <GuidedTour active={showTour} onClose={handleCloseTour} />
     </aside>
   );
 }

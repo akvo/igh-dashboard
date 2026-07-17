@@ -156,13 +156,14 @@ export default function PipelineOverviewSection() {
       {/* Charts grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Global pipeline overview — 2 columns */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 p-4">
+        <div data-tour="po-legend" className="lg:col-span-2 bg-white border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-black">{t('pipeline_overview.chart.title')}</h3>
             <button
               onClick={handleExportPNG}
               disabled={exportingPNG}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export Visual"
+              className="inline-flex items-center justify-center border-none bg-[#F2F2F4] cursor-pointer w-9 h-9 min-w-[36px] min-h-[36px] shrink-0 hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {exportingPNG ? t('pipeline_overview.chart.exporting') : t('pipeline_overview.chart.export')}
               <DownloadIcon className="w-4 h-4" />
