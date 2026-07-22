@@ -153,6 +153,61 @@ describe('DataTable', () => {
     expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'b']);
   });
 
+  it('locks the first row in the Columns popover against drag-reorder', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onVisibleColumnsChange = vi.fn();
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="poplock"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+
+    // Each popover row is the div carrying the draggable attribute; find it
+    // from the row's checkbox. The frozen row's checkbox announces the lock.
+    const rowFor = (label) =>
+      screen.getByLabelText(label).closest('div[draggable]');
+    const alphaRow = rowFor('Alpha (locked first column)');
+    const bravoRow = rowFor('Bravo');
+    const charlieRow = rowFor('Charlie');
+
+    // Row 0 is not a drag source; other visible rows still are.
+    expect(alphaRow.getAttribute('draggable')).toBe('false');
+    expect(bravoRow.getAttribute('draggable')).toBe('true');
+
+    // Dropping onto the locked row is ignored…
+    fireEvent.dragStart(charlieRow);
+    fireEvent.dragOver(alphaRow);
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+
+    // …and a drag that somehow starts on it reorders nothing (jsdom does
+    // not enforce draggable="false", so prove the handler side too).
+    fireEvent.dragEnd(charlieRow);
+    fireEvent.dragStart(alphaRow);
+    fireEvent.dragOver(bravoRow);
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+
+    // Reorder among non-first rows still works: Charlie onto Bravo.
+    fireEvent.dragEnd(alphaRow);
+    fireEvent.dragStart(charlieRow);
+    fireEvent.dragOver(bravoRow);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'c', 'b']);
+  });
+
   it('Select all is disabled when every column is already visible', () => {
     const COLUMNS_3 = [
       { header: 'Alpha', accessor: 'a', sortable: true },

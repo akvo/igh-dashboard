@@ -11,11 +11,11 @@ import { Columns as ColumnsIcon, GripVertical as GripVerticalIcon } from 'lucide
 // Each row has a checkbox (visibility) and a drag handle (reorder).
 //
 // Position-based freeze: the first row in `visibleColumns` IS the frozen
-// column. Its visibility checkbox is rendered checked + disabled — to hide
-// it the user must first drag a different column above it. Drag handles
-// are always enabled (otherwise the user couldn't change which column is
-// frozen). Columns flagged `hideable: false` also render their checkbox
-// disabled, regardless of position.
+// column, and it is LOCKED (client requirement): its row is not draggable,
+// drops targeting index 0 are ignored, and its visibility checkbox is
+// rendered checked + disabled — so the frozen column is permanently first
+// and permanently visible. Columns flagged `hideable: false` also render
+// their checkbox disabled, regardless of position.
 //
 // Output `visibleColumns` is the ordered array of accessor strings reflecting
 // the user's choices. The orchestrator reconciles this with the static
@@ -66,9 +66,12 @@ export default function ColumnsPopover({
     const draggedId = draggedRef.current;
     if (!draggedId || draggedId === targetAccessor) return;
     if (!visibleSet.has(draggedId) || !visibleSet.has(targetAccessor)) return;
-    setDragOverId(targetAccessor);
     const fromIndex = visibleColumns.indexOf(draggedId);
     const toIndex = visibleColumns.indexOf(targetAccessor);
+    // Locked first column: dropping into index 0 would displace the frozen
+    // column, so drops targeting it are ignored (no highlight either).
+    if (toIndex === 0) return;
+    setDragOverId(targetAccessor);
     if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
     const next = [...visibleColumns];
     next.splice(fromIndex, 1);
@@ -164,25 +167,27 @@ export default function ColumnsPopover({
             if (!col) return null;
             const isVisible = visibleSet.has(accessor);
             // Position-based freeze: the row at visible-order index 0 is
-            // the frozen column. Its visibility cannot be toggled until
-            // the user drags a different column into first place.
+            // the frozen column. It is locked: it cannot be dragged and its
+            // visibility checkbox stays disabled, so it is permanently
+            // first and permanently visible.
             const isFrozen = isVisible && index === 0;
+            const isDraggable = isVisible && index !== 0;
             const isCheckboxLocked = isFrozen || col.hideable === false;
             const isDragOver = dragOverId === accessor;
             return (
               <div
                 key={accessor}
-                draggable={isVisible}
-                onDragStart={() => handleDragStart(accessor)}
+                draggable={isDraggable}
+                onDragStart={isDraggable ? () => handleDragStart(accessor) : undefined}
                 onDragOver={(e) => handleDragOver(e, accessor)}
                 onDragEnd={handleDragEnd}
                 className={`flex items-center gap-2 px-3 py-1.5 text-xs border-b border-gray-100 last:border-b-0 hover:bg-gray-50 ${
                   isDragOver ? 'bg-orange-50 outline outline-1 outline-orange-300' : ''
-                } ${isVisible ? 'cursor-grab' : ''}`}
+                } ${isDraggable ? 'cursor-grab' : ''}`}
                 aria-grabbed={draggedRef.current === accessor || undefined}
               >
                 <GripVerticalIcon
-                  className={`w-3 h-3 ${isVisible ? 'text-gray-400' : 'text-gray-200'}`}
+                  className={`w-3 h-3 ${isDraggable ? 'text-gray-400' : 'text-gray-200'}`}
                   aria-hidden="true"
                 />
                 <input
@@ -192,9 +197,7 @@ export default function ColumnsPopover({
                   disabled={isCheckboxLocked}
                   className="accent-orange-500"
                   aria-label={
-                    isFrozen
-                      ? `${col.header} (frozen — drag a different column to first place to hide)`
-                      : col.header
+                    isFrozen ? `${col.header} (locked first column)` : col.header
                   }
                 />
                 <span
