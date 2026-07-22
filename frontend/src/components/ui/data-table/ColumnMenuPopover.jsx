@@ -11,8 +11,8 @@ import { usePortalPopover } from './usePortalPopover';
 //
 // Anchored to the kebab button in the column header. Single-column sort:
 // clicking a Sort entry replaces any prior sort, never adds. Hide is
-// disabled on the index-0 column (the frozen one — drag another column
-// into first place to free this one) and on columns flagged
+// disabled on the index-0 column (the frozen one — locked,
+// permanently first) and on columns flagged
 // `hideable: false` in their config.
 //
 // The popover content is portalled to document.body and positioned via
