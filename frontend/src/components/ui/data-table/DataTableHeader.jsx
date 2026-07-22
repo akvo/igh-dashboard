@@ -48,9 +48,10 @@ export default function DataTableHeader({
   // Mirrors the ColumnsPopover pattern: on dragOver we splice the dragged
   // accessor into the target's slot and emit the new *visible* order via
   // onReorder (wired to onVisibleColumnsChange upstream). The order updates
-  // live during the drag, so columns shift under the cursor. Index 0 is the
-  // frozen column and participates fully — dropping a column first re-freezes
-  // it, matching the popover exactly.
+  // live during the drag, so columns shift under the cursor. The column at
+  // index 0 is the frozen column and is LOCKED (client requirement): it is
+  // not a drag source (draggable={false}, no onDragStart) and handleDragOver
+  // ignores drops targeting it, so no drag can ever displace it.
   const draggedRef = useRef(null);
   const [draggingId, setDraggingId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -64,8 +65,11 @@ export default function DataTableHeader({
     e.preventDefault(); // required to allow a drop
     const draggedId = draggedRef.current;
     if (!draggedId || draggedId === targetAccessor) return;
-    setDragOverId(targetAccessor);
     const order = columns.map((c) => c.accessor);
+    // Locked first column: dropping into index 0 would displace the frozen
+    // column, so drops targeting it are ignored (no highlight either).
+    if (targetAccessor === order[0]) return;
+    setDragOverId(targetAccessor);
     const fromIndex = order.indexOf(draggedId);
     const toIndex = order.indexOf(targetAccessor);
     if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
@@ -113,12 +117,14 @@ export default function DataTableHeader({
         return (
           <th
             key={column.accessor}
-            draggable
-            onDragStart={() => handleDragStart(column.accessor)}
+            draggable={!isFrozen}
+            onDragStart={isFrozen ? undefined : () => handleDragStart(column.accessor)}
             onDragOver={(e) => handleDragOver(e, column.accessor)}
             onDragEnd={handleDragEnd}
             aria-grabbed={draggingId === column.accessor || undefined}
-            className={`px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap sticky top-0 z-10 cursor-grab select-none ${
+            className={`px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap sticky top-0 z-10 ${
+              isFrozen ? '' : 'cursor-grab select-none'
+            } ${
               dragOverId === column.accessor
                 ? 'bg-orange-50 outline outline-1 outline-orange-300'
                 : 'bg-[#FEF8EE]'

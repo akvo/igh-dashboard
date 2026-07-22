@@ -153,6 +153,61 @@ describe('DataTable', () => {
     expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'b']);
   });
 
+  it('locks the first row in the Columns popover against drag-reorder', () => {
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    const onVisibleColumnsChange = vi.fn();
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="poplock"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /columns/i }));
+
+    // Each popover row is the div carrying the draggable attribute; find it
+    // from the row's checkbox. The frozen row's checkbox announces the lock.
+    const rowFor = (label) =>
+      screen.getByLabelText(label).closest('div[draggable]');
+    const alphaRow = rowFor('Alpha (locked first column)');
+    const bravoRow = rowFor('Bravo');
+    const charlieRow = rowFor('Charlie');
+
+    // Row 0 is not a drag source; other visible rows still are.
+    expect(alphaRow.getAttribute('draggable')).toBe('false');
+    expect(bravoRow.getAttribute('draggable')).toBe('true');
+
+    // Dropping onto the locked row is ignored…
+    fireEvent.dragStart(charlieRow);
+    fireEvent.dragOver(alphaRow);
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+
+    // …and a drag that somehow starts on it reorders nothing (jsdom does
+    // not enforce draggable="false", so prove the handler side too).
+    fireEvent.dragEnd(charlieRow);
+    fireEvent.dragStart(alphaRow);
+    fireEvent.dragOver(bravoRow);
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+
+    // Reorder among non-first rows still works: Charlie onto Bravo.
+    fireEvent.dragEnd(alphaRow);
+    fireEvent.dragStart(charlieRow);
+    fireEvent.dragOver(bravoRow);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'c', 'b']);
+  });
+
   it('Select all is disabled when every column is already visible', () => {
     const COLUMNS_3 = [
       { header: 'Alpha', accessor: 'a', sortable: true },
@@ -589,30 +644,49 @@ describe('DataTable', () => {
     await waitFor(() => expect(countBodyRows()).toBe(3), { timeout: 1000 });
   });
 
-  it('reorders columns when a header cell is dragged onto another', () => {
+  it('reorders columns when a header cell is dragged onto another (non-first)', () => {
     const onVisibleColumnsChange = vi.fn();
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
     renderTable({
-      visibleColumns: ['name', 'type'],
+      columns: COLUMNS_3,
+      data: [{ a: '1', b: '2', c: '3' }],
+      totalCount: 1,
+      rowKey: 'a',
+      visibleColumns: ['a', 'b', 'c'],
       onVisibleColumnsChange,
     });
 
-    // Grab the two header cells via their text, then walk up to the <th>.
+    // Grab header cells via their text, then walk up to the <th>.
     // Scope to the real table: the aria-hidden sticky clone renders a second
     // copy of every header, so an unscoped getByText would match two nodes.
-    const nameTh = realTable().getByText('Name').closest('th');
-    const typeTh = realTable().getByText('Type').closest('th');
+    const bravoTh = realTable().getByText('Bravo').closest('th');
+    const charlieTh = realTable().getByText('Charlie').closest('th');
 
-    // Drag "Type" onto "Name": Type should move to index 0.
-    fireEvent.dragStart(typeTh);
-    fireEvent.dragOver(nameTh);
+    // Drag "Charlie" onto "Bravo": Charlie moves to index 1. Index 0 is
+    // locked, so reorder coverage lives entirely among non-first columns.
+    fireEvent.dragStart(charlieTh);
+    fireEvent.dragOver(bravoTh);
 
-    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'c', 'b']);
   });
 
   it('reorders columns when a header cell is dragged in the sticky clone', () => {
     const onVisibleColumnsChange = vi.fn();
+    const COLUMNS_3 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
     renderTable({
-      visibleColumns: ['name', 'type'],
+      columns: COLUMNS_3,
+      data: [{ a: '1', b: '2', c: '3' }],
+      totalCount: 1,
+      rowKey: 'a',
+      visibleColumns: ['a', 'b', 'c'],
       onVisibleColumnsChange,
     });
 
@@ -623,14 +697,14 @@ describe('DataTable', () => {
     const clone = within(
       document.querySelector('div.sticky.h-0[aria-hidden="true"]'),
     );
-    const nameTh = clone.getByText('Name').closest('th');
-    const typeTh = clone.getByText('Type').closest('th');
+    const bravoTh = clone.getByText('Bravo').closest('th');
+    const charlieTh = clone.getByText('Charlie').closest('th');
 
-    fireEvent.dragStart(typeTh);
-    fireEvent.dragOver(nameTh);
+    fireEvent.dragStart(charlieTh);
+    fireEvent.dragOver(bravoTh);
 
     // The clone must emit the same reorder as the real header.
-    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['type', 'name']);
+    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['a', 'c', 'b']);
   });
 
   it('client-side DATE filter narrows the visible rows and total count (after debounce)', async () => {
@@ -704,7 +778,7 @@ describe('DataTable', () => {
     expect(onVisibleColumnsChange).not.toHaveBeenCalled();
   });
 
-  it('re-freezes a column dragged into first place', () => {
+  it('ignores a drop onto the locked first header', () => {
     const onVisibleColumnsChange = vi.fn();
     const COLUMNS_3 = [
       { header: 'Alpha', accessor: 'a', sortable: true },
@@ -733,15 +807,59 @@ describe('DataTable', () => {
     fireEvent.dragStart(charlieTh);
     fireEvent.dragOver(alphaTh);
 
-    // Charlie becomes the new frozen column at index 0.
-    expect(onVisibleColumnsChange).toHaveBeenCalledWith(['c', 'a', 'b']);
+    // The first column is locked: no reorder is emitted, Alpha stays frozen.
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
   });
 
-  it('keeps the dragged header following the cursor across multiple dragOver hops', () => {
+  it('renders the locked first header as not draggable, in the table and the clone', () => {
+    const onVisibleColumnsChange = vi.fn();
     const COLUMNS_3 = [
       { header: 'Alpha', accessor: 'a', sortable: true },
       { header: 'Bravo', accessor: 'b', sortable: true },
       { header: 'Charlie', accessor: 'c', sortable: true },
+    ];
+    render(
+      <MockedProvider mocks={[]} addTypename={false}>
+        <DataTable
+          tableId="freeze2"
+          graphqlTable="PORTFOLIO_CANDIDATES"
+          columns={COLUMNS_3}
+          data={[{ a: '1', b: '2', c: '3' }]}
+          totalCount={1}
+          rowKey="a"
+          visibleColumns={['a', 'b', 'c']}
+          onVisibleColumnsChange={onVisibleColumnsChange}
+        />
+      </MockedProvider>,
+    );
+
+    // The <th> at index 0 must not be a drag source; the others stay
+    // draggable. React renders the boolean as draggable="false"/"true".
+    const alphaTh = realTable().getByText('Alpha').closest('th');
+    const bravoTh = realTable().getByText('Bravo').closest('th');
+    expect(alphaTh.getAttribute('draggable')).toBe('false');
+    expect(bravoTh.getAttribute('draggable')).toBe('true');
+
+    // Same contract in the sticky clone (it reuses DataTableHeader).
+    const clone = within(
+      document.querySelector('div.sticky.h-0[aria-hidden="true"]'),
+    );
+    expect(clone.getByText('Alpha').closest('th').getAttribute('draggable')).toBe('false');
+
+    // jsdom does not enforce draggable="false", so also prove the handler
+    // side: a drag that somehow starts on the locked header must not
+    // reorder when dragged over a neighbour.
+    fireEvent.dragStart(alphaTh);
+    fireEvent.dragOver(bravoTh);
+    expect(onVisibleColumnsChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dragged header following the cursor across multiple dragOver hops', () => {
+    const COLUMNS_4 = [
+      { header: 'Alpha', accessor: 'a', sortable: true },
+      { header: 'Bravo', accessor: 'b', sortable: true },
+      { header: 'Charlie', accessor: 'c', sortable: true },
+      { header: 'Delta', accessor: 'd', sortable: true },
     ];
     const onChangeSpy = vi.fn();
 
@@ -752,14 +870,14 @@ describe('DataTable', () => {
     // The Page wrapper closes the loop: each emission updates visibleColumns,
     // which re-renders DataTable with the new order before the next event.
     const Page = () => {
-      const [visibleColumns, setVisibleColumns] = useState(['a', 'b', 'c']);
+      const [visibleColumns, setVisibleColumns] = useState(['a', 'b', 'c', 'd']);
       return (
         <MockedProvider mocks={[]} addTypename={false}>
           <DataTable
             tableId="multihop"
             graphqlTable="PORTFOLIO_CANDIDATES"
-            columns={COLUMNS_3}
-            data={[{ a: '1', b: '2', c: '3' }]}
+            columns={COLUMNS_4}
+            data={[{ a: '1', b: '2', c: '3', d: '4' }]}
             totalCount={1}
             rowKey="a"
             visibleColumns={visibleColumns}
@@ -777,15 +895,16 @@ describe('DataTable', () => {
     // Scope to the real table: the sticky clone renders a duplicate header.
     const th = (label) => realTable().getByText(label).closest('th');
 
-    // Drag "Alpha" rightward: first onto Bravo, then onto Charlie.
-    // Hop 1: order [a,b,c] → remove a → [b,c] → insert at index of b (0) → [b,a,c]
-    // Hop 2: order [b,a,c] → remove a → [b,c] → insert at index of c (2) → [b,c,a]
-    fireEvent.dragStart(th('Alpha'));
-    fireEvent.dragOver(th('Bravo'));
+    // Drag "Bravo" rightward: first onto Charlie, then onto Delta. (Alpha
+    // is the locked first column and can be neither source nor target.)
+    // Hop 1: [a,b,c,d] → remove b → [a,c,d] → insert at index of c (1) → [a,c,b,d]
+    // Hop 2: [a,c,b,d] → remove b → [a,c,d] → insert at index of d (2) → [a,c,d,b]
+    fireEvent.dragStart(th('Bravo'));
     fireEvent.dragOver(th('Charlie'));
+    fireEvent.dragOver(th('Delta'));
 
-    expect(onChangeSpy).toHaveBeenNthCalledWith(1, ['b', 'a', 'c']);
-    expect(onChangeSpy).toHaveBeenLastCalledWith(['b', 'c', 'a']);
+    expect(onChangeSpy).toHaveBeenNthCalledWith(1, ['a', 'c', 'b', 'd']);
+    expect(onChangeSpy).toHaveBeenLastCalledWith(['a', 'c', 'd', 'b']);
 
     // The rendered header order reflects the final live-preview state.
     // Each th may contain extra text from the kebab button's accessible
@@ -793,8 +912,9 @@ describe('DataTable', () => {
     const headerOrder = Array.from(
       document.querySelectorAll('.overflow-x-auto thead tr:first-child th'),
     ).map((cell) => cell.textContent.trim().split(/\s+/)[0]);
-    expect(headerOrder[0]).toBe('Bravo');
+    expect(headerOrder[0]).toBe('Alpha');
     expect(headerOrder[1]).toBe('Charlie');
-    expect(headerOrder[2]).toBe('Alpha');
+    expect(headerOrder[2]).toBe('Delta');
+    expect(headerOrder[3]).toBe('Bravo');
   });
 });
