@@ -251,18 +251,22 @@ function applyFiltersAndSort(rows, filters, sort) {
       });
     }
   }
-  if (sort?.column && sort?.direction) {
-    const dir = sort.direction === 'desc' ? -1 : 1;
+  if (sort?.length) {
     out = [...out].sort((a, b) => {
-      const av = a[sort.column];
-      const bv = b[sort.column];
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      if (typeof av === 'number' && typeof bv === 'number') {
-        return (av - bv) * dir;
+      for (const { column, direction } of sort) {
+        const av = a[column];
+        const bv = b[column];
+        if (av == null && bv == null) continue;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const dir = direction === 'desc' ? -1 : 1;
+        const cmp =
+          typeof av === 'number' && typeof bv === 'number'
+            ? (av - bv) * dir
+            : String(av).localeCompare(String(bv)) * dir;
+        if (cmp !== 0) return cmp;
       }
-      return String(av).localeCompare(String(bv)) * dir;
+      return 0;
     });
   }
   return out;

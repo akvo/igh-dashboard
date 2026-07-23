@@ -24,6 +24,10 @@ import { loadWidths, saveWidths } from '@/lib/dataTableWidths';
 // each to its own useUrlState hook). Column widths are managed internally
 // via loadWidths/saveWidths.
 //
+// `sort` is an ordered array of levels [{ column, direction }] — index 0
+// is the highest priority — or null for "unsorted". See dataTableSort.js
+// for the click / shift+click gesture semantics that produce it.
+//
 // In addition to the controlled mode, callers can pass `serverSide={false}`
 // to get a fully client-paginated/filtered/sorted experience — used by the
 // Technology Types table and the home-page bubble drill-down where data is
@@ -64,6 +68,10 @@ export default function DataTable({
   className = '',
   serverSide = true,
 }) {
+  // Sort is an ordered array [{ column, direction }] (index 0 = highest
+  // priority). Callers may pass null for "unsorted" — normalize once.
+  const sortLevels = sort ?? [];
+
   // -----------------------------------------------------------------
   // Visible columns reconciliation
   // -----------------------------------------------------------------
@@ -128,11 +136,6 @@ export default function DataTable({
     if (entry == null) delete next[accessor];
     else next[accessor] = entry;
     onFiltersChange(next);
-  };
-
-  const onSort = (column, direction) => {
-    if (direction == null) onSortChange(null);
-    else onSortChange({ column, direction });
   };
 
   const onHideColumn = (col) => {
@@ -260,21 +263,26 @@ export default function DataTable({
         });
       }
     }
-    if (sort) {
-      const { column, direction } = sort;
-      const dir = direction === 'desc' ? -1 : 1;
+    if (sortLevels.length > 0) {
       rows = [...rows].sort((a, b) => {
-        const av = a[column];
-        const bv = b[column];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-        return String(av).localeCompare(String(bv)) * dir;
+        for (const { column, direction } of sortLevels) {
+          const av = a[column];
+          const bv = b[column];
+          if (av == null && bv == null) continue; // tie at this level
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          const dir = direction === 'desc' ? -1 : 1;
+          const cmp =
+            typeof av === 'number' && typeof bv === 'number'
+              ? (av - bv) * dir
+              : String(av).localeCompare(String(bv)) * dir;
+          if (cmp !== 0) return cmp;
+        }
+        return 0;
       });
     }
     return rows;
-  }, [serverSide, data, filters, sort]);
+  }, [serverSide, data, filters, sortLevels]);
 
   const visibleRows = useMemo(() => {
     if (serverSide) return data;
@@ -313,8 +321,8 @@ export default function DataTable({
             <thead>
               <DataTableHeader
                 columns={orderedColumns}
-                activeSort={sort}
-                onSort={onSort}
+                sort={sortLevels}
+                onSortChange={onSortChange}
                 onHideColumn={onHideColumn}
                 onReorder={onVisibleColumnsChange}
                 scrollableRef={scrollableRef}
@@ -345,28 +353,33 @@ export default function DataTable({
 
   return (
     <div className={`bg-white border border-gray-200 ${className}`}>
-      <div className="flex items-center justify-end gap-3 px-4 py-2 border-b border-gray-200">
-        {hasActiveFilter && (
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="text-xs text-orange-500 hover:underline"
-          >
-            Clear all filters
-          </button>
-        )}
-        <ColumnsPopover
-          columns={columns}
-          visibleColumns={orderedColumns.map((c) => c.accessor)}
-          onChange={onVisibleColumnsChange}
-        />
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-gray-200">
+        <span className="text-xs text-gray-400">
+          Shift+click a header to add a sort level
+        </span>
+        <div className="flex items-center gap-3">
+          {hasActiveFilter && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-xs text-orange-500 hover:underline"
+            >
+              Clear all filters
+            </button>
+          )}
+          <ColumnsPopover
+            columns={columns}
+            visibleColumns={orderedColumns.map((c) => c.accessor)}
+            onChange={onVisibleColumnsChange}
+          />
+        </div>
       </div>
 
       <StickyTableHeader
         columns={orderedColumns}
-        activeSort={sort}
+        sort={sortLevels}
         filters={filters}
-        onSort={onSort}
+        onSortChange={onSortChange}
         onHideColumn={onHideColumn}
         onReorder={onVisibleColumnsChange}
         onFilterChange={onFilterChange}
@@ -401,9 +414,9 @@ export default function DataTable({
           <thead>
             <DataTableHeader
               columns={orderedColumns}
-              activeSort={sort}
+              sort={sortLevels}
               filters={filters}
-              onSort={onSort}
+              onSortChange={onSortChange}
               onHideColumn={onHideColumn}
               onReorder={onVisibleColumnsChange}
               scrollableRef={scrollableRef}

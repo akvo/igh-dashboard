@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from '../../icons';
 import ColumnMenuPopover from './ColumnMenuPopover';
+import { clickSort, shiftClickSort } from '@/lib/dataTableSort';
 
 // =========================================================
 // DataTableHeader
@@ -24,17 +25,17 @@ import ColumnMenuPopover from './ColumnMenuPopover';
 //
 // Props:
 //   columns       — visible columns in display order
-//   activeSort    — { column, direction } | null
+//   sort          — ordered sort levels [{ column, direction }], index 0 = priority 1
 //   filters       — controlled filter state, keyed by accessor
-//   onSort        — (column, direction|null) => void
+//   onSortChange  — (nextSortArray) => void
 //   onHideColumn  — (column) => void
 //   onReorder     — (newColumns) => void; called after a drag-to-reorder
 //   scrollableRef — ref to the overflow container (for shadow detection)
 export default function DataTableHeader({
   columns,
-  activeSort,
+  sort = [],
   filters,
-  onSort,
+  onSortChange,
   onHideColumn,
   onReorder = () => {},
   scrollableRef,
@@ -79,10 +80,35 @@ export default function DataTableHeader({
     onReorder(next);
   };
 
+  // A drag that actually started must not double as a sort click: some
+  // browsers fire a click after dragend on the same element. Suppress
+  // exactly the click that immediately follows a drag; the timeout
+  // clears the flag before any later, unrelated click.
+  const suppressClickRef = useRef(false);
+
   const handleDragEnd = () => {
+    if (draggedRef.current) {
+      suppressClickRef.current = true;
+      setTimeout(() => {
+        suppressClickRef.current = false;
+      }, 0);
+    }
     draggedRef.current = null;
     setDraggingId(null);
     setDragOverId(null);
+  };
+
+  const handleHeaderClick = (e, column) => {
+    if (column.sortable === false) return;
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    onSortChange(
+      e.shiftKey
+        ? shiftClickSort(sort, column.accessor)
+        : clickSort(sort, column.accessor),
+    );
   };
 
   useEffect(() => {
@@ -102,7 +128,10 @@ export default function DataTableHeader({
     <tr ref={headerRowRef}>
       {columns.map((column, index) => {
         const isFrozen = index === 0;
-        const isSorted = activeSort?.column === column.accessor;
+        const sortIndex = sort.findIndex((s) => s.column === column.accessor);
+        const isSorted = sortIndex !== -1;
+        const sortDirection = isSorted ? sort[sortIndex].direction : null;
+        const sortable = column.sortable !== false;
         const isFiltered = Boolean(filters?.[column.accessor]);
         const isAccented = isSorted || isFiltered;
         const stickyStyle = isFrozen
@@ -121,9 +150,10 @@ export default function DataTableHeader({
             onDragStart={isFrozen ? undefined : () => handleDragStart(column.accessor)}
             onDragOver={(e) => handleDragOver(e, column.accessor)}
             onDragEnd={handleDragEnd}
+            onClick={(e) => handleHeaderClick(e, column)}
             aria-grabbed={draggingId === column.accessor || undefined}
             className={`px-4 py-3 text-left text-sm font-medium text-gray-700 border-b border-gray-200 whitespace-nowrap sticky top-0 z-10 ${
-              isFrozen ? '' : 'cursor-grab select-none'
+              isFrozen ? (sortable ? 'cursor-pointer select-none' : '') : 'cursor-grab select-none'
             } ${
               dragOverId === column.accessor
                 ? 'bg-orange-50 outline outline-1 outline-orange-300'
@@ -133,18 +163,25 @@ export default function DataTableHeader({
           >
             <div className="flex items-center gap-1">
               <span className={isAccented ? 'text-orange-500' : ''}>{column.header}</span>
-              {/* Sort-direction indicator beside the kebab. Only renders
-                  when this column drives the active sort, so users can
-                  see the order at a glance without opening the menu.
-                  Active filter is signalled solely by the orange header
-                  text plus the input's own active-state ring — no icon. */}
-              {isSorted && activeSort?.direction === 'asc' && (
+              {/* Priority badge + direction chevron. The badge number is
+                  the 1-based sort level (index 0 = primary), shown for
+                  any active sort so multi-sort priorities read at a
+                  glance; the chevron gives the direction. */}
+              {isSorted && (
+                <span
+                  aria-label={`Sort priority ${sortIndex + 1}`}
+                  className="w-4 h-4 rounded-full bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0"
+                >
+                  {sortIndex + 1}
+                </span>
+              )}
+              {isSorted && sortDirection === 'asc' && (
                 <ChevronUpIcon
                   className="w-3 h-3 text-orange-500 shrink-0"
                   aria-label="Sorted ascending"
                 />
               )}
-              {isSorted && activeSort?.direction === 'desc' && (
+              {isSorted && sortDirection === 'desc' && (
                 <ChevronDownIcon
                   className="w-3 h-3 text-orange-500 shrink-0"
                   aria-label="Sorted descending"
@@ -154,18 +191,21 @@ export default function DataTableHeader({
                   on the kebab must not reorder the column. This span is the
                   nearest draggable ancestor when the gesture starts here, so
                   cancelling its dragstart (and stopping propagation to the
-                  <th>) keeps the menu fully clickable while blocking drags. */}
+                  <th>) keeps the menu fully clickable while blocking drags.
+                  It also stops click propagation so opening the menu never
+                  triggers a header sort. */}
               <span
                 draggable
                 onDragStart={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <ColumnMenuPopover
                   column={column}
-                  activeSort={activeSort}
-                  onSort={(direction) => onSort(column.accessor, direction)}
+                  sort={sort}
+                  onApplySort={onSortChange}
                   onHide={() => onHideColumn(column)}
                   isFrozen={isFrozen}
                 />

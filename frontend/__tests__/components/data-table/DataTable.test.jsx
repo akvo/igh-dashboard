@@ -69,10 +69,9 @@ describe('DataTable', () => {
     fireEvent.click(screen.getAllByLabelText('Column actions')[0]);
     fireEvent.click(screen.getByText('Sort ascending'));
 
-    expect(onSortChange).toHaveBeenCalledWith({
-      column: 'name',
-      direction: 'asc',
-    });
+    expect(onSortChange).toHaveBeenCalledWith([
+      { column: 'name', direction: 'asc' },
+    ]);
   });
 
   it('hides a column when "Hide column" is selected', () => {
@@ -916,5 +915,99 @@ describe('DataTable', () => {
     expect(headerOrder[1]).toBe('Charlie');
     expect(headerOrder[2]).toBe('Delta');
     expect(headerOrder[3]).toBe('Bravo');
+  });
+
+  describe('multi-sort', () => {
+    const SORT_NAME_ASC = [{ column: 'name', direction: 'asc' }];
+    const SORT_MULTI = [
+      { column: 'name', direction: 'asc' },
+      { column: 'type', direction: 'desc' },
+    ];
+
+    it('plain header click starts an ascending sort', () => {
+      const onSortChange = vi.fn();
+      renderTable({ onSortChange });
+      fireEvent.click(realTable().getByText('Name'));
+      expect(onSortChange).toHaveBeenCalledWith(SORT_NAME_ASC);
+    });
+
+    it('plain click on the sole sorted column flips direction', () => {
+      const onSortChange = vi.fn();
+      renderTable({ sort: SORT_NAME_ASC, onSortChange });
+      fireEvent.click(realTable().getByText('Name'));
+      expect(onSortChange).toHaveBeenCalledWith([
+        { column: 'name', direction: 'desc' },
+      ]);
+    });
+
+    it('shift+click appends a new ascending level', () => {
+      const onSortChange = vi.fn();
+      renderTable({ sort: SORT_NAME_ASC, onSortChange });
+      fireEvent.click(realTable().getByText('Type'), { shiftKey: true });
+      expect(onSortChange).toHaveBeenCalledWith([
+        { column: 'name', direction: 'asc' },
+        { column: 'type', direction: 'asc' },
+      ]);
+    });
+
+    it('shows numbered priority badges on sorted headers', () => {
+      renderTable({ sort: SORT_MULTI });
+      const one = realTable().getByLabelText('Sort priority 1');
+      const two = realTable().getByLabelText('Sort priority 2');
+      expect(one.textContent).toBe('1');
+      expect(two.textContent).toBe('2');
+      // Badge 1 lives in the Name header, badge 2 in the Type header.
+      expect(one.closest('th').textContent).toContain('Name');
+      expect(two.closest('th').textContent).toContain('Type');
+    });
+
+    it('kebab shows next-state entries for a desc level of a multi-sort', () => {
+      const onSortChange = vi.fn();
+      renderTable({ sort: SORT_MULTI, onSortChange });
+      // Second column menu = Type (a desc level of the multi-sort).
+      fireEvent.click(screen.getAllByLabelText('Column actions')[1]);
+      expect(screen.getByText('Sort ascending only')).toBeTruthy();
+      fireEvent.click(screen.getByText('Remove sort level'));
+      expect(onSortChange).toHaveBeenCalledWith(SORT_NAME_ASC);
+    });
+
+    it('kebab on the sole sorted column collapses to the cycle entry', () => {
+      const onSortChange = vi.fn();
+      renderTable({ sort: SORT_NAME_ASC, onSortChange });
+      fireEvent.click(screen.getAllByLabelText('Column actions')[0]);
+      expect(screen.queryByText('Sort ascending')).toBeNull();
+      expect(screen.queryByText('Add sort level')).toBeNull();
+      fireEvent.click(screen.getByText('Sort descending'));
+      expect(onSortChange).toHaveBeenCalledWith([
+        { column: 'name', direction: 'desc' },
+      ]);
+    });
+
+    it('renders the shift+click hint in the toolbar', () => {
+      renderTable();
+      expect(
+        screen.getByText('Shift+click a header to add a sort level'),
+      ).toBeTruthy();
+    });
+
+    it('client-side mode applies levels in priority order', () => {
+      renderTable({
+        serverSide: false,
+        data: [
+          { name: 'Bravo', type: 'A' },
+          { name: 'Alpha', type: 'B' },
+          { name: 'Charlie', type: 'A' },
+        ],
+        totalCount: 3,
+        sort: [
+          { column: 'type', direction: 'asc' },
+          { column: 'name', direction: 'desc' },
+        ],
+      });
+      const cells = [
+        ...document.querySelectorAll('.overflow-x-auto tbody tr td:first-child'),
+      ].map((td) => td.textContent);
+      expect(cells).toEqual(['Charlie', 'Bravo', 'Alpha']);
+    });
   });
 });
