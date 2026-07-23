@@ -990,6 +990,25 @@ describe('DataTable', () => {
       ).toBeTruthy();
     });
 
+    it('suppresses the click that immediately follows a header drag', () => {
+      const onSortChange = vi.fn();
+      renderTable({ onSortChange });
+      const nameTh = realTable().getByText('Name').closest('th');
+      const typeTh = realTable().getByText('Type').closest('th');
+
+      // Name is index 0 (the locked frozen column) and isn't a drag
+      // source, so the drag has to originate on Type. A real drag:
+      // dragStart on Type, dragOver Name, dragEnd on Type. Some browsers
+      // then fire a click on the same element — that click must be
+      // swallowed, not treated as a sort gesture.
+      fireEvent.dragStart(typeTh);
+      fireEvent.dragOver(nameTh);
+      fireEvent.dragEnd(typeTh);
+      fireEvent.click(typeTh);
+
+      expect(onSortChange).not.toHaveBeenCalled();
+    });
+
     it('client-side mode applies levels in priority order', () => {
       renderTable({
         serverSide: false,

@@ -43,6 +43,11 @@ const DEFAULT_EMPTY_STATE = {
   description: 'Try clearing filters or selecting a different page.',
 };
 
+// Stable empty-array identity for the `sort ?? EMPTY_SORT` normalization
+// below — a fresh `[]` literal on every render would change identity each
+// time `sort` is null, destabilizing the filteredSortedRows useMemo deps.
+const EMPTY_SORT = [];
+
 export default function DataTable({
   tableId,
   graphqlTable,            // DataTable enum value (PORTFOLIO_CANDIDATES, etc.)
@@ -70,7 +75,7 @@ export default function DataTable({
 }) {
   // Sort is an ordered array [{ column, direction }] (index 0 = highest
   // priority). Callers may pass null for "unsorted" — normalize once.
-  const sortLevels = sort ?? [];
+  const sortLevels = sort ?? EMPTY_SORT;
 
   // -----------------------------------------------------------------
   // Visible columns reconciliation
