@@ -198,41 +198,44 @@ describe("buildColumnFilterClauses", () => {
 describe("buildOrderBy", () => {
   it("returns null for no sort", () => {
     expect(buildOrderBy("PORTFOLIO_CANDIDATES", null)).toBeNull();
+    expect(buildOrderBy("PORTFOLIO_CANDIDATES", [])).toBeNull();
   });
 
-  it("emits ORDER BY for a sortable column ASC", () => {
+  it("emits ORDER BY for a single sortable column ASC", () => {
     expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", {
-        column: "candidate_name",
-        direction: "ASC",
-      }),
+      buildOrderBy("PORTFOLIO_CANDIDATES", [
+        { column: "candidate_name", direction: "ASC" },
+      ]),
     ).toBe("ORDER BY c.candidate_name ASC NULLS LAST");
   });
 
-  it("emits ORDER BY DESC", () => {
+  it("emits multi-term ORDER BY preserving priority order", () => {
     expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", {
-        column: "current_rd_stage",
-        direction: "DESC",
-      }),
-    ).toBe("ORDER BY c.current_rd_stage DESC NULLS LAST");
+      buildOrderBy("PORTFOLIO_CANDIDATES", [
+        { column: "current_rd_stage", direction: "DESC" },
+        { column: "candidate_name", direction: "ASC" },
+      ]),
+    ).toBe(
+      "ORDER BY c.current_rd_stage DESC NULLS LAST, c.candidate_name ASC NULLS LAST",
+    );
   });
 
-  it("returns null for an unsortable column (silently)", () => {
+  it("skips unsortable / unknown columns, keeps valid ones", () => {
     expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", {
-        column: "indication",
-        direction: "ASC",
-      }),
-    ).toBeNull();
+      buildOrderBy("PORTFOLIO_CANDIDATES", [
+        { column: "indication", direction: "ASC" }, // unsortable
+        { column: "ghost_col", direction: "ASC" }, // unknown
+        { column: "candidate_name", direction: "DESC" },
+      ]),
+    ).toBe("ORDER BY c.candidate_name DESC NULLS LAST");
   });
 
-  it("returns null for an unknown column (silently)", () => {
+  it("returns null when no valid column remains (silently)", () => {
     expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", {
-        column: "ghost_col",
-        direction: "ASC",
-      }),
+      buildOrderBy("PORTFOLIO_CANDIDATES", [
+        { column: "indication", direction: "ASC" },
+        { column: "ghost_col", direction: "ASC" },
+      ]),
     ).toBeNull();
   });
 });

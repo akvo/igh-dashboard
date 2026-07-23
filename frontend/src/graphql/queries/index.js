@@ -198,7 +198,7 @@ export const GET_LAST_SYNC_DATE = gql`
 `;
 // Portfolio Candidates - Portfolio Analysis (Candidates/Approved/Extract tabs, paginated)
 export const GET_PORTFOLIO_CANDIDATES = gql`
-  query PortfolioCandidates($filter: PortfolioCandidateFilter, $sort: ColumnSort, $limit: Int, $offset: Int) {
+  query PortfolioCandidates($filter: PortfolioCandidateFilter, $sort: [ColumnSort!], $limit: Int, $offset: Int) {
     portfolioCandidates(filter: $filter, sort: $sort, limit: $limit, offset: $offset) {
       nodes {
         candidate_key
@@ -254,7 +254,7 @@ export const GET_PORTFOLIO_CANDIDATES = gql`
 
 // Clinical Trials List - Portfolio Analysis (Trials tab, paginated)
 export const GET_CLINICAL_TRIALS = gql`
-  query ClinicalTrials($filter: ClinicalTrialFilter, $sort: ColumnSort, $limit: Int, $offset: Int) {
+  query ClinicalTrials($filter: ClinicalTrialFilter, $sort: [ColumnSort!], $limit: Int, $offset: Int) {
     clinicalTrials(filter: $filter, sort: $sort, limit: $limit, offset: $offset) {
       nodes {
         trial_id
@@ -381,7 +381,7 @@ export const GET_TECHNOLOGY_TYPE_DISTRIBUTION = gql`
 
 // R&D Priorities with Candidates - Extract tab (Tab 2, paginated)
 export const GET_RD_PRIORITIES_WITH_CANDIDATES = gql`
-  query RdPrioritiesWithCandidates($filter: RdPriorityFilter, $sort: ColumnSort, $limit: Int, $offset: Int) {
+  query RdPrioritiesWithCandidates($filter: RdPriorityFilter, $sort: [ColumnSort!], $limit: Int, $offset: Int) {
     rdPrioritiesWithCandidates(filter: $filter, sort: $sort, limit: $limit, offset: $offset) {
       nodes {
         priority_key
@@ -409,7 +409,7 @@ export const GET_RD_PRIORITIES_WITH_CANDIDATES = gql`
 
 // R&D Priorities only - Extract tab (Tab 4, paginated)
 export const GET_RD_PRIORITIES = gql`
-  query RdPriorities($filter: RdPriorityFilter, $sort: ColumnSort, $limit: Int, $offset: Int) {
+  query RdPriorities($filter: RdPriorityFilter, $sort: [ColumnSort!], $limit: Int, $offset: Int) {
     rdPriorities(filter: $filter, sort: $sort, limit: $limit, offset: $offset) {
       nodes {
         priority_key

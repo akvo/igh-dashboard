@@ -46,7 +46,7 @@ function buildWhere(filter?: ClinicalTrialFilter) {
  */
 export function getClinicalTrials(
   filter?: ClinicalTrialFilter,
-  sort: ColumnSortInput | null = null,
+  sort: ColumnSortInput[] | null = null,
   limit = 20,
   offset = 0,
 ): ClinicalTrialConnection {

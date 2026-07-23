@@ -763,16 +763,16 @@ export const typeDefs = `#graphql
     candidate(candidate_key: Int!): DimCandidateCore
 
     # Portfolio analysis - candidates list (paginated with flattened dimensions)
-    portfolioCandidates(filter: PortfolioCandidateFilter, sort: ColumnSort, limit: Int, offset: Int): PortfolioCandidateConnection!
+    portfolioCandidates(filter: PortfolioCandidateFilter, sort: [ColumnSort!], limit: Int, offset: Int): PortfolioCandidateConnection!
 
     # Portfolio analysis - clinical trials list (paginated)
-    clinicalTrials(filter: ClinicalTrialFilter, sort: ColumnSort, limit: Int, offset: Int): ClinicalTrialConnection!
+    clinicalTrials(filter: ClinicalTrialFilter, sort: [ColumnSort!], limit: Int, offset: Int): ClinicalTrialConnection!
 
     # Extract tab - R&D priorities with linked candidates (paginated)
-    rdPrioritiesWithCandidates(filter: RdPriorityFilter, sort: ColumnSort, limit: Int, offset: Int): RdPriorityConnection!
+    rdPrioritiesWithCandidates(filter: RdPriorityFilter, sort: [ColumnSort!], limit: Int, offset: Int): RdPriorityConnection!
 
     # Extract tab - R&D priorities only (paginated)
-    rdPriorities(filter: RdPriorityFilter, sort: ColumnSort, limit: Int, offset: Int): RdPriorityConnection!
+    rdPriorities(filter: RdPriorityFilter, sort: [ColumnSort!], limit: Int, offset: Int): RdPriorityConnection!
 
     # DataTable distinct-values lookup for category-filter dropdowns.
     # The filter argument should mirror the list-query filter EXCLUDING

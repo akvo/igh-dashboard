@@ -201,11 +201,19 @@ export function buildColumnFilterClauses(
 
 export function buildOrderBy(
   table: DataTableId,
-  sort: ColumnSortInput | null | undefined,
+  sorts: ColumnSortInput[] | null | undefined,
 ): string | null {
-  if (!sort) return null;
-  const def = resolveColumn(table, sort.column);
-  if (!def || !def.sortable) return null;
-  const dir = sort.direction === "DESC" ? "DESC" : "ASC";
-  return `ORDER BY ${def.sqlExpr} ${dir} NULLS LAST`;
+  if (!sorts || sorts.length === 0) return null;
+  // One term per valid level, in priority order. Unknown / unsortable
+  // columns are skipped silently (forward-compat with stale URLs), and
+  // an all-invalid list degrades to null so callers fall back to their
+  // per-table default ORDER BY.
+  const terms: string[] = [];
+  for (const sort of sorts) {
+    const def = resolveColumn(table, sort.column);
+    if (!def || !def.sortable) continue;
+    const dir = sort.direction === "DESC" ? "DESC" : "ASC";
+    terms.push(`${def.sqlExpr} ${dir} NULLS LAST`);
+  }
+  return terms.length === 0 ? null : `ORDER BY ${terms.join(", ")}`;
 }

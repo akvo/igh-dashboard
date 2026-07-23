@@ -47,7 +47,7 @@ function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITI
  */
 export function getRdPrioritiesWithCandidates(
   filter?: RdPriorityFilter,
-  sort: ColumnSortInput | null = null,
+  sort: ColumnSortInput[] | null = null,
   limit = 20,
   offset = 0,
 ): RdPriorityConnection {
@@ -116,7 +116,7 @@ export function getRdPrioritiesWithCandidates(
  */
 export function getRdPriorities(
   filter?: RdPriorityFilter,
-  sort: ColumnSortInput | null = null,
+  sort: ColumnSortInput[] | null = null,
   limit = 20,
   offset = 0,
 ): RdPriorityConnection {
