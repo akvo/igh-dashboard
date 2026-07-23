@@ -203,9 +203,7 @@ describe("buildOrderBy", () => {
 
   it("emits ORDER BY for a single sortable column ASC", () => {
     expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", [
-        { column: "candidate_name", direction: "ASC" },
-      ]),
+      buildOrderBy("PORTFOLIO_CANDIDATES", [{ column: "candidate_name", direction: "ASC" }]),
     ).toBe("ORDER BY c.candidate_name ASC NULLS LAST");
   });
 
@@ -215,9 +213,7 @@ describe("buildOrderBy", () => {
         { column: "current_rd_stage", direction: "DESC" },
         { column: "candidate_name", direction: "ASC" },
       ]),
-    ).toBe(
-      "ORDER BY c.current_rd_stage DESC NULLS LAST, c.candidate_name ASC NULLS LAST",
-    );
+    ).toBe("ORDER BY c.current_rd_stage DESC NULLS LAST, c.candidate_name ASC NULLS LAST");
   });
 
   it("skips unsortable / unknown columns, keeps valid ones", () => {
