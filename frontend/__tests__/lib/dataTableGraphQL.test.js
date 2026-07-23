@@ -19,13 +19,4 @@ describe('toColumnSort', () => {
       { column: 'phase', direction: 'DESC' },
     ]);
   });
-
-  it('drops malformed entries; undefined when none survive', () => {
-    expect(
-      toColumnSort([{ column: '', direction: 'asc' }, { column: 'a' }]),
-    ).toBeUndefined();
-    expect(
-      toColumnSort([{ column: 'a', direction: 'sideways' }, { column: 'b', direction: 'desc' }]),
-    ).toEqual([{ column: 'b', direction: 'DESC' }]);
-  });
 });

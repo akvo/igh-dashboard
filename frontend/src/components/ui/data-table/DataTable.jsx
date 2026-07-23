@@ -11,6 +11,7 @@ import DataTableFilterRow from './DataTableFilterRow';
 import ColumnsPopover from './ColumnsPopover';
 import Pagination from './Pagination';
 import { loadWidths, saveWidths } from '@/lib/dataTableWidths';
+import { compareBySortLevels } from '@/lib/dataTableSort';
 
 // =============================================================================
 // DataTable — unified server-paginated table component
@@ -269,22 +270,7 @@ export default function DataTable({
       }
     }
     if (sortLevels.length > 0) {
-      rows = [...rows].sort((a, b) => {
-        for (const { column, direction } of sortLevels) {
-          const av = a[column];
-          const bv = b[column];
-          if (av == null && bv == null) continue; // tie at this level
-          if (av == null) return 1;
-          if (bv == null) return -1;
-          const dir = direction === 'desc' ? -1 : 1;
-          const cmp =
-            typeof av === 'number' && typeof bv === 'number'
-              ? (av - bv) * dir
-              : String(av).localeCompare(String(bv)) * dir;
-          if (cmp !== 0) return cmp;
-        }
-        return 0;
-      });
+      rows = [...rows].sort(compareBySortLevels(sortLevels));
     }
     return rows;
   }, [serverSide, data, filters, sortLevels]);

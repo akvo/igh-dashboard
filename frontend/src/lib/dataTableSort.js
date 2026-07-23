@@ -66,3 +66,26 @@ export function kebabSortEntries(sort, column) {
   }
   return entries;
 }
+
+// Multi-level row comparator for client-side sorting: levels compared in
+// priority order, nulls always last regardless of direction (mirrors the
+// backend's NULLS LAST). Shared by DataTable's serverSide={false} path
+// and the ServerSide story's backend mock.
+export function compareBySortLevels(sortLevels) {
+  return (a, b) => {
+    for (const { column, direction } of sortLevels) {
+      const av = a[column];
+      const bv = b[column];
+      if (av == null && bv == null) continue; // tie at this level
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      const dir = direction === 'desc' ? -1 : 1;
+      const cmp =
+        typeof av === 'number' && typeof bv === 'number'
+          ? (av - bv) * dir
+          : String(av).localeCompare(String(bv)) * dir;
+      if (cmp !== 0) return cmp;
+    }
+    return 0;
+  };
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MockedProvider } from '@apollo/client/testing/react';
 import DataTable from '../../components/ui/data-table/DataTable';
+import { compareBySortLevels } from '../../lib/dataTableSort';
 import { GET_DISTINCT_VALUES } from '../../graphql/queries/distinctValues';
 import page1 from '../../components/ui/data-table/__fixtures__/clinicalTrials.page1.json';
 import page2 from '../../components/ui/data-table/__fixtures__/clinicalTrials.page2.json';
@@ -252,22 +253,7 @@ function applyFiltersAndSort(rows, filters, sort) {
     }
   }
   if (sort?.length) {
-    out = [...out].sort((a, b) => {
-      for (const { column, direction } of sort) {
-        const av = a[column];
-        const bv = b[column];
-        if (av == null && bv == null) continue;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        const dir = direction === 'desc' ? -1 : 1;
-        const cmp =
-          typeof av === 'number' && typeof bv === 'number'
-            ? (av - bv) * dir
-            : String(av).localeCompare(String(bv)) * dir;
-        if (cmp !== 0) return cmp;
-      }
-      return 0;
-    });
+    out = [...out].sort(compareBySortLevels(sort));
   }
   return out;
 }

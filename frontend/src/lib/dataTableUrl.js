@@ -166,15 +166,11 @@ export function decodeFilters(encoded) {
   return out;
 }
 
+// Sort state is produced only by the gesture helpers (or decodeSort), so
+// entries are valid by construction — encode is a pure formatter.
 export function encodeSort(sort) {
   if (!sort || sort.length === 0) return null;
-  const parts = [];
-  for (const s of sort) {
-    if (!s || !s.column) continue;
-    if (s.direction !== 'asc' && s.direction !== 'desc') continue;
-    parts.push(`${encVal(s.column)}:${s.direction}`);
-  }
-  return parts.length === 0 ? null : parts.join(',');
+  return sort.map((s) => `${encVal(s.column)}:${s.direction}`).join(',');
 }
 
 export function decodeSort(encoded) {

@@ -996,7 +996,7 @@ describe('DataTable', () => {
       ).toBeTruthy();
     });
 
-    it('suppresses the click that immediately follows a header drag', () => {
+    it('suppresses the click after a drag, then sorts normally on the next', () => {
       const onSortChange = vi.fn();
       renderTable({ onSortChange });
       const nameTh = realTable().getByText('Name').closest('th');
@@ -1011,27 +1011,11 @@ describe('DataTable', () => {
       fireEvent.dragOver(nameTh);
       fireEvent.dragEnd(typeTh);
       fireEvent.click(typeTh);
-
-      expect(onSortChange).not.toHaveBeenCalled();
-    });
-
-    it('sorts normally on the click after a drag-suppressed click', () => {
-      const onSortChange = vi.fn();
-      renderTable({ onSortChange });
-      const nameTh = realTable().getByText('Name').closest('th');
-      const typeTh = realTable().getByText('Type').closest('th');
-
-      // Same drag-then-click sequence as the suppression test: the first
-      // click is swallowed. The suppression flag is consumed and reset by
-      // that very click (see handleHeaderClick), so no timer wait is
-      // needed before the next click — it's a normal, un-suppressed sort
-      // gesture.
-      fireEvent.dragStart(typeTh);
-      fireEvent.dragOver(nameTh);
-      fireEvent.dragEnd(typeTh);
-      fireEvent.click(typeTh);
       expect(onSortChange).not.toHaveBeenCalled();
 
+      // The suppression flag is consumed and reset by the swallowed click
+      // (see handleHeaderClick), so the very next click is a normal,
+      // un-suppressed sort gesture — no timer wait needed.
       fireEvent.click(typeTh);
       expect(onSortChange).toHaveBeenCalledWith([
         { column: 'type', direction: 'asc' },
