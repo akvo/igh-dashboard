@@ -14,7 +14,7 @@
 //             - text filters never use "|"; we read everything past ":" as
 //               the literal text and run decodeURIComponent on it.
 //
-//   sort   → "col:asc"  or  "col:desc"
+//   sort   → "col:asc,col2:desc"  (ordered sort levels, index 0 = priority 1)
 //
 // Empty objects / null sort serialize to null so useUrlState elides the
 // param from the URL entirely.
@@ -167,20 +167,30 @@ export function decodeFilters(encoded) {
 }
 
 export function encodeSort(sort) {
-  if (!sort || !sort.column || !sort.direction) return null;
-  if (sort.direction !== 'asc' && sort.direction !== 'desc') return null;
-  return `${encVal(sort.column)}:${sort.direction}`;
+  if (!sort || sort.length === 0) return null;
+  const parts = [];
+  for (const s of sort) {
+    if (!s || !s.column) continue;
+    if (s.direction !== 'asc' && s.direction !== 'desc') continue;
+    parts.push(`${encVal(s.column)}:${s.direction}`);
+  }
+  return parts.length === 0 ? null : parts.join(',');
 }
 
 export function decodeSort(encoded) {
   if (encoded == null || encoded === '') return null;
-  const colonIdx = encoded.indexOf(':');
-  if (colonIdx === -1) return null;
-  const column = decVal(encoded.slice(0, colonIdx));
-  const direction = encoded.slice(colonIdx + 1);
-  if (direction !== 'asc' && direction !== 'desc') return null;
-  if (!column) return null;
-  return { column, direction };
+  const out = [];
+  for (const part of encoded.split(',')) {
+    const colonIdx = part.indexOf(':');
+    if (colonIdx === -1) continue;
+    const column = decVal(part.slice(0, colonIdx));
+    const direction = part.slice(colonIdx + 1);
+    if (!column) continue;
+    if (direction !== 'asc' && direction !== 'desc') continue;
+    if (out.some((s) => s.column === column)) continue; // dedup: first wins
+    out.push({ column, direction });
+  }
+  return out.length === 0 ? null : out;
 }
 
 // Reconciles a decoded filter object against the column config so that

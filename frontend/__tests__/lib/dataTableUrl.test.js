@@ -162,30 +162,47 @@ describe('encodeFilters / decodeFilters', () => {
 });
 
 describe('encodeSort / decodeSort', () => {
-  it('encodes null as null', () => {
+  it('returns null for null / empty sort', () => {
     expect(encodeSort(null)).toBeNull();
+    expect(encodeSort([])).toBeNull();
   });
 
-  it('round-trips ASC', () => {
-    const sort = { column: 'candidate_name', direction: 'asc' };
+  it('round-trips a single-level sort', () => {
+    const sort = [{ column: 'candidate_name', direction: 'asc' }];
     const encoded = encodeSort(sort);
     expect(encoded).toBe('candidate_name:asc');
     expect(decodeSort(encoded)).toEqual(sort);
   });
 
-  it('round-trips DESC', () => {
-    const sort = { column: 'start_date', direction: 'desc' };
+  it('round-trips a multi-level sort preserving priority order', () => {
+    const sort = [
+      { column: 'disease', direction: 'asc' },
+      { column: 'phase', direction: 'desc' },
+      { column: 'year', direction: 'asc' },
+    ];
+    expect(encodeSort(sort)).toBe('disease:asc,phase:desc,year:asc');
     expect(decodeSort(encodeSort(sort))).toEqual(sort);
   });
 
-  it('decodes null/empty/undefined as null', () => {
+  it('returns null on empty input', () => {
     expect(decodeSort(null)).toBeNull();
     expect(decodeSort('')).toBeNull();
     expect(decodeSort(undefined)).toBeNull();
   });
 
-  it('returns null on malformed sort string', () => {
+  it('drops malformed entries, keeps valid ones', () => {
     expect(decodeSort('candidate_name')).toBeNull();
     expect(decodeSort('candidate_name:bogus')).toBeNull();
+    expect(decodeSort('a:asc,b,c:desc,d:sideways')).toEqual([
+      { column: 'a', direction: 'asc' },
+      { column: 'c', direction: 'desc' },
+    ]);
+  });
+
+  it('drops duplicate columns, first occurrence wins', () => {
+    expect(decodeSort('a:asc,a:desc,b:desc')).toEqual([
+      { column: 'a', direction: 'asc' },
+      { column: 'b', direction: 'desc' },
+    ]);
   });
 });
