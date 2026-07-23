@@ -162,11 +162,12 @@ export default function DataTableHeader({
             style={{ width: column.width, minWidth: column.minWidth, ...stickyStyle }}
           >
             <div className="flex items-center gap-1">
-              <span className={isAccented ? 'text-orange-500' : ''}>{column.header}</span>
               {/* Priority badge + direction chevron. The badge number is
                   the 1-based sort level (index 0 = primary), shown for
                   any active sort so multi-sort priorities read at a
-                  glance; the chevron gives the direction. */}
+                  glance; the chevron gives the direction. The badge leads
+                  the label (mockup order) so priorities line up in a
+                  scannable column down the header row. */}
               {isSorted && (
                 <span
                   aria-label={`Sort priority ${sortIndex + 1}`}
@@ -175,6 +176,7 @@ export default function DataTableHeader({
                   {sortIndex + 1}
                 </span>
               )}
+              <span className={isAccented ? 'text-orange-500' : ''}>{column.header}</span>
               {isSorted && sortDirection === 'asc' && (
                 <ChevronUpIcon
                   className="w-3 h-3 text-orange-500 shrink-0"
