@@ -969,6 +969,12 @@ describe('DataTable', () => {
       expect(screen.getByText('Sort ascending only')).toBeTruthy();
       fireEvent.click(screen.getByText('Remove sort level'));
       expect(onSortChange).toHaveBeenCalledWith(SORT_NAME_ASC);
+      // The portal menu is a React child of the header <th>, so its click
+      // bubbles through the React tree even though it's rendered outside
+      // the DOM subtree. Pin that the drag-shield's stopPropagation keeps
+      // this a single onSortChange call — a regression here would mean a
+      // menu click also fires the header's own click-to-sort handler.
+      expect(onSortChange).toHaveBeenCalledTimes(1);
     });
 
     it('kebab on the sole sorted column collapses to the cycle entry', () => {
@@ -1007,6 +1013,29 @@ describe('DataTable', () => {
       fireEvent.click(typeTh);
 
       expect(onSortChange).not.toHaveBeenCalled();
+    });
+
+    it('sorts normally on the click after a drag-suppressed click', () => {
+      const onSortChange = vi.fn();
+      renderTable({ onSortChange });
+      const nameTh = realTable().getByText('Name').closest('th');
+      const typeTh = realTable().getByText('Type').closest('th');
+
+      // Same drag-then-click sequence as the suppression test: the first
+      // click is swallowed. The suppression flag is consumed and reset by
+      // that very click (see handleHeaderClick), so no timer wait is
+      // needed before the next click — it's a normal, un-suppressed sort
+      // gesture.
+      fireEvent.dragStart(typeTh);
+      fireEvent.dragOver(nameTh);
+      fireEvent.dragEnd(typeTh);
+      fireEvent.click(typeTh);
+      expect(onSortChange).not.toHaveBeenCalled();
+
+      fireEvent.click(typeTh);
+      expect(onSortChange).toHaveBeenCalledWith([
+        { column: 'type', direction: 'asc' },
+      ]);
     });
 
     it('client-side mode applies levels in priority order', () => {
