@@ -65,12 +65,15 @@ export function toColumnFilters(filters) {
   return out.length === 0 ? undefined : out;
 }
 
-// DataTable's UI sort: { column, direction: 'asc'|'desc' } | null.
-// Backend's ColumnSort expects uppercase direction.
+// DataTable's UI sort: ordered [{ column, direction: 'asc'|'desc' }].
+// Backend's [ColumnSort!] expects uppercase directions; order carries
+// the priority (index 0 first in the SQL ORDER BY). Entries are valid by
+// construction (gesture helpers + decodeSort validate), so this is a
+// pure shape conversion.
 export function toColumnSort(sort) {
-  if (!sort || !sort.column || !sort.direction) return undefined;
-  return {
-    column: sort.column,
-    direction: sort.direction === 'desc' ? 'DESC' : 'ASC',
-  };
+  if (!sort || sort.length === 0) return undefined;
+  return sort.map((s) => ({
+    column: s.column,
+    direction: s.direction === 'desc' ? 'DESC' : 'ASC',
+  }));
 }

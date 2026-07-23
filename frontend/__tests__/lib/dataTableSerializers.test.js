@@ -8,9 +8,10 @@ const COLUMNS = [
 
 describe('sortSerializer', () => {
   it('round-trips a sort descriptor', () => {
-    const encoded = sortSerializer.serialize({ column: 'name', direction: 'asc' });
+    const sort = [{ column: 'name', direction: 'asc' }];
+    const encoded = sortSerializer.serialize(sort);
     expect(encoded).toBe('name:asc');
-    expect(sortSerializer.deserialize(encoded)).toEqual({ column: 'name', direction: 'asc' });
+    expect(sortSerializer.deserialize(encoded)).toEqual(sort);
   });
 
   it('serializes null sort to null (URL key elided)', () => {

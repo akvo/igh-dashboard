@@ -45,9 +45,9 @@ function getScrollParent(el) {
 
 export default function StickyTableHeader({
   columns,
-  activeSort,
+  sort,
   filters,
-  onSort,
+  onSortChange,
   onHideColumn,
   onReorder,
   onFilterChange,
@@ -186,9 +186,9 @@ export default function StickyTableHeader({
           <thead>
             <DataTableHeader
               columns={columns}
-              activeSort={activeSort}
+              sort={sort}
               filters={filters}
-              onSort={onSort}
+              onSortChange={onSortChange}
               onHideColumn={onHideColumn}
               onReorder={onReorder}
               scrollableRef={scrollableRef}

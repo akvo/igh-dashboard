@@ -260,7 +260,7 @@ export const resolvers = {
           priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
-        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput[] | null;
         limit?: number;
         offset?: number;
       },
@@ -277,7 +277,7 @@ export const resolvers = {
           priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
-        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput[] | null;
         limit?: number;
         offset?: number;
       },
@@ -300,7 +300,7 @@ export const resolvers = {
           priority_keys?: number[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
-        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput[] | null;
         limit?: number;
         offset?: number;
       },
@@ -328,7 +328,7 @@ export const resolvers = {
           statuses?: string[];
           column_filters?: import("../db/queries/columnFilters.js").ColumnFilterInput[];
         };
-        sort?: import("../db/queries/columnFilters.js").ColumnSortInput | null;
+        sort?: import("../db/queries/columnFilters.js").ColumnSortInput[] | null;
         limit?: number;
         offset?: number;
       },

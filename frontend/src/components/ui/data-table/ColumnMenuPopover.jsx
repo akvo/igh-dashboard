@@ -1,19 +1,21 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, X } from 'lucide-react';
 import { ChevronDownIcon, ChevronUpIcon, EyeOffIcon } from '../../icons';
 import { usePortalPopover } from './usePortalPopover';
+import { kebabSortEntries } from '@/lib/dataTableSort';
 
 // =========================================================
 // ColumnMenuPopover — per-column actions menu
 // =========================================================
 //
-// Anchored to the kebab button in the column header. Single-column sort:
-// clicking a Sort entry replaces any prior sort, never adds. Hide is
-// disabled on the index-0 column (the frozen one — locked,
-// permanently first) and on columns flagged
-// `hideable: false` in their config.
+// Anchored to the kebab button in the column header. The sort section is
+// a NEXT-STATE menu (see kebabSortEntries): it lists what the next plain
+// click and the next shift+click on this header would do, so the menu
+// doubles as documentation for both gestures. Hide is disabled on the
+// index-0 column (the frozen one — locked, permanently first) and on
+// columns flagged `hideable: false` in their config.
 //
 // The popover content is portalled to document.body and positioned via
 // fixed coordinates so it escapes the table's overflow-x-auto wrapper —
@@ -21,14 +23,20 @@ import { usePortalPopover } from './usePortalPopover';
 //
 // Props:
 //   column      — column config (used for sortable / hideable defaults)
-//   activeSort  — current sort { column, direction } | null
-//   onSort      — (direction: 'asc'|'desc'|null) => void
+//   sort        — ordered sort levels [{ column, direction }]
+//   onApplySort — (nextSortArray) => void
 //   onHide      — () => void
 //   isFrozen    — boolean: this column is at visible-order index 0
+const ENTRY_ICONS = {
+  asc: ChevronUpIcon,
+  desc: ChevronDownIcon,
+  remove: X,
+};
+
 export default function ColumnMenuPopover({
   column,
-  activeSort,
-  onSort,
+  sort = [],
+  onApplySort,
   onHide,
   isFrozen = false,
 }) {
@@ -36,13 +44,9 @@ export default function ColumnMenuPopover({
     popoverWidth: 180,
   });
 
-  const isAsc =
-    activeSort?.column === column.accessor && activeSort.direction === 'asc';
-  const isDesc =
-    activeSort?.column === column.accessor && activeSort.direction === 'desc';
-
   const sortable = column.sortable !== false;
   const hideable = column.hideable !== false && !isFrozen;
+  const entries = sortable ? kebabSortEntries(sort, column.accessor) : [];
 
   const handle = (action) => {
     setOpen(false);
@@ -67,31 +71,21 @@ export default function ColumnMenuPopover({
           style={{ position: 'fixed', top: coords.top, left: coords.left }}
           className="z-50 min-w-[160px] bg-white border border-gray-200 rounded shadow-lg py-1"
         >
-          {sortable && (
-            <>
+          {entries.map((entry) => {
+            const Icon = ENTRY_ICONS[entry.dir];
+            return (
               <button
+                key={entry.label}
                 type="button"
-                onClick={() => handle(() => onSort(isAsc ? null : 'asc'))}
-                className={`w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 hover:bg-gray-50 ${
-                  isAsc ? 'text-orange-500 font-medium' : 'text-black'
-                }`}
+                onClick={() => handle(() => onApplySort(entry.next))}
+                className="w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 hover:bg-gray-50 text-black"
               >
-                <ChevronUpIcon className="w-3 h-3" />
-                Sort ascending
+                <Icon className="w-3 h-3" />
+                {entry.label}
               </button>
-              <button
-                type="button"
-                onClick={() => handle(() => onSort(isDesc ? null : 'desc'))}
-                className={`w-full px-3 py-1.5 text-xs text-left flex items-center gap-2 hover:bg-gray-50 ${
-                  isDesc ? 'text-orange-500 font-medium' : 'text-black'
-                }`}
-              >
-                <ChevronDownIcon className="w-3 h-3" />
-                Sort descending
-              </button>
-              {hideable && <div className="my-1 border-t border-gray-100" />}
-            </>
-          )}
+            );
+          })}
+          {sortable && hideable && <div className="my-1 border-t border-gray-100" />}
           {hideable && (
             <button
               type="button"
