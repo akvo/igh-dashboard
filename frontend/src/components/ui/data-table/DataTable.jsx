@@ -11,6 +11,7 @@ import DataTableFilterRow from './DataTableFilterRow';
 import ColumnsPopover from './ColumnsPopover';
 import Pagination from './Pagination';
 import { loadWidths, saveWidths } from '@/lib/dataTableWidths';
+import { compareBySortLevels } from '@/lib/dataTableSort';
 
 // =============================================================================
 // DataTable — unified server-paginated table component
@@ -23,6 +24,10 @@ import { loadWidths, saveWidths } from '@/lib/dataTableWidths';
 // Filters, sort, page, visibleColumns are CONTROLLED PROPS (caller wires
 // each to its own useUrlState hook). Column widths are managed internally
 // via loadWidths/saveWidths.
+//
+// `sort` is an ordered array of levels [{ column, direction }] — index 0
+// is the highest priority — or null for "unsorted". See dataTableSort.js
+// for the click / shift+click gesture semantics that produce it.
 //
 // In addition to the controlled mode, callers can pass `serverSide={false}`
 // to get a fully client-paginated/filtered/sorted experience — used by the
@@ -38,6 +43,11 @@ const DEFAULT_EMPTY_STATE = {
   title: 'No data found',
   description: 'Try clearing filters or selecting a different page.',
 };
+
+// Stable empty-array identity for the `sort ?? EMPTY_SORT` normalization
+// below — a fresh `[]` literal on every render would change identity each
+// time `sort` is null, destabilizing the filteredSortedRows useMemo deps.
+const EMPTY_SORT = [];
 
 export default function DataTable({
   tableId,
@@ -64,6 +74,10 @@ export default function DataTable({
   className = '',
   serverSide = true,
 }) {
+  // Sort is an ordered array [{ column, direction }] (index 0 = highest
+  // priority). Callers may pass null for "unsorted" — normalize once.
+  const sortLevels = sort ?? EMPTY_SORT;
+
   // -----------------------------------------------------------------
   // Visible columns reconciliation
   // -----------------------------------------------------------------
@@ -128,11 +142,6 @@ export default function DataTable({
     if (entry == null) delete next[accessor];
     else next[accessor] = entry;
     onFiltersChange(next);
-  };
-
-  const onSort = (column, direction) => {
-    if (direction == null) onSortChange(null);
-    else onSortChange({ column, direction });
   };
 
   const onHideColumn = (col) => {
@@ -260,21 +269,11 @@ export default function DataTable({
         });
       }
     }
-    if (sort) {
-      const { column, direction } = sort;
-      const dir = direction === 'desc' ? -1 : 1;
-      rows = [...rows].sort((a, b) => {
-        const av = a[column];
-        const bv = b[column];
-        if (av == null && bv == null) return 0;
-        if (av == null) return 1;
-        if (bv == null) return -1;
-        if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
-        return String(av).localeCompare(String(bv)) * dir;
-      });
+    if (sortLevels.length > 0) {
+      rows = [...rows].sort(compareBySortLevels(sortLevels));
     }
     return rows;
-  }, [serverSide, data, filters, sort]);
+  }, [serverSide, data, filters, sortLevels]);
 
   const visibleRows = useMemo(() => {
     if (serverSide) return data;
@@ -313,8 +312,8 @@ export default function DataTable({
             <thead>
               <DataTableHeader
                 columns={orderedColumns}
-                activeSort={sort}
-                onSort={onSort}
+                sort={sortLevels}
+                onSortChange={onSortChange}
                 onHideColumn={onHideColumn}
                 onReorder={onVisibleColumnsChange}
                 scrollableRef={scrollableRef}
@@ -345,28 +344,33 @@ export default function DataTable({
 
   return (
     <div className={`bg-white border border-gray-200 ${className}`}>
-      <div className="flex items-center justify-end gap-3 px-4 py-2 border-b border-gray-200">
-        {hasActiveFilter && (
-          <button
-            type="button"
-            onClick={clearAllFilters}
-            className="text-xs text-orange-500 hover:underline"
-          >
-            Clear all filters
-          </button>
-        )}
-        <ColumnsPopover
-          columns={columns}
-          visibleColumns={orderedColumns.map((c) => c.accessor)}
-          onChange={onVisibleColumnsChange}
-        />
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-gray-200">
+        <span className="text-xs text-gray-400">
+          Shift+click a header to add a sort level
+        </span>
+        <div className="flex items-center gap-3">
+          {hasActiveFilter && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-xs text-orange-500 hover:underline"
+            >
+              Clear all filters
+            </button>
+          )}
+          <ColumnsPopover
+            columns={columns}
+            visibleColumns={orderedColumns.map((c) => c.accessor)}
+            onChange={onVisibleColumnsChange}
+          />
+        </div>
       </div>
 
       <StickyTableHeader
         columns={orderedColumns}
-        activeSort={sort}
+        sort={sortLevels}
         filters={filters}
-        onSort={onSort}
+        onSortChange={onSortChange}
         onHideColumn={onHideColumn}
         onReorder={onVisibleColumnsChange}
         onFilterChange={onFilterChange}
@@ -401,9 +405,9 @@ export default function DataTable({
           <thead>
             <DataTableHeader
               columns={orderedColumns}
-              activeSort={sort}
+              sort={sortLevels}
               filters={filters}
-              onSort={onSort}
+              onSortChange={onSortChange}
               onHideColumn={onHideColumn}
               onReorder={onVisibleColumnsChange}
               scrollableRef={scrollableRef}

@@ -94,7 +94,7 @@ const JOINS = `
 // eslint-disable-next-line max-lines-per-function -- single query builder with count + data
 export function getPortfolioCandidates(
   filter?: PortfolioCandidateFilter,
-  sort: ColumnSortInput | null = null,
+  sort: ColumnSortInput[] | null = null,
   limit = 20,
   offset = 0,
 ): PortfolioCandidateConnection {
