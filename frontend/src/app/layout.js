@@ -49,6 +49,7 @@ const navItems = [
     },
     items: [
       { label: t('layout.header.data.item_spillover_label'), href: 'https://www.impactglobalhealth.org/data/innovation-spillover-tracker', description: t('layout.header.data.item_spillover_description') },
+      { label: t('layout.header.data.item_snakebite_label'), href: 'https://www.impactglobalhealth.org/data/snakebite-envenoming-medicines-database', description: t('layout.header.data.item_snakebite_description') },
     ],
   },
   {
@@ -67,7 +68,7 @@ const navItems = [
       { label: t('layout.header.insights.item_reports_label'), href: 'https://www.impactglobalhealth.org/insights/report-library', description: t('layout.header.insights.item_reports_description') },
       { label: t('layout.header.insights.item_health_areas_label'), href: 'https://www.impactglobalhealth.org/insights/health-areas', description: t('layout.header.insights.item_health_areas_description') },
       { label: t('layout.header.insights.item_hubs_label'), href: 'https://www.impactglobalhealth.org/insights/hubs', description: t('layout.header.insights.item_hubs_description') },
-      { label: t('layout.header.insights.item_dialogues_label'), href: 'https://www.impactglobalhealth.org/insights/dialogues', description: t('layout.header.insights.item_dialogues_description') },
+      { label: t('layout.header.insights.item_blindspots_label'), href: 'https://www.impactglobalhealth.org/igh-path-partnership', description: t('layout.header.insights.item_blindspots_description') },
     ],
   },
   {

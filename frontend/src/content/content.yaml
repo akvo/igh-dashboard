@@ -362,6 +362,8 @@ layout:
       item_pipeline_label: Product pipeline portal
       item_spillover_description: A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.
       item_spillover_label: Innovation Spillover Tracker
+      item_snakebite_description: Database of all snakebite envenoming medicines with direct action on toxins.
+      item_snakebite_label: Snakebite Envenoming Medicines Database
     about:
       description: Meet the team working to create a more equitable future through global health innovation and impact.
       item_advocacy_description: Join us in creating global health impact with our advocacy and press kits.
@@ -377,8 +379,8 @@ layout:
     insights:
       description: Here you will find the analysis and insights to support decisions - whether you're funding research, setting policies, developing products or advocating for change.
       featured_title: Explore our hubs
-      item_dialogues_description: A series of dialogues with global health leaders to co-create an R&D investment roadmap that is fit for the future.
-      item_dialogues_label: Impact Global Health Dialogues
+      item_blindspots_description: A policy series on critical global health choices, with a focus on Africa.
+      item_blindspots_label: Impact Global Health and PATH R&D Blindspots Policy Series
       item_health_areas_description: This quick reference guide gives you a snapshot analysis of the R&D needs and the state of innovation to tackle each disease or condition we cover. It's a handy quick overview of what's needed to impact global health in these areas.
       item_health_areas_label: Health areas
       item_hub_impact_description: Global, UK and EU analyses of the health and economic impact of the last two decades of investment in global health R&D.
