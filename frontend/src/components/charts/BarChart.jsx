@@ -51,6 +51,7 @@ export default function BarChart({
   barRadius = 0,
   barSize,
   maxTickChars = 25,
+  tickAngle = 0,
   // Controlled mode: parent manages item visibility via URL state.
   // When omitted, the component manages its own internal state.
   visibleItems: controlledVisibleItems,
@@ -150,7 +151,7 @@ export default function BarChart({
                 top: 10,
                 right: 10,
                 left: isHorizontalBars ? 80 : 5,
-                bottom: hasLongLabels ? 10 : (xAxisLabel ? 40 : 20),
+                bottom: hasLongLabels ? 10 : (tickAngle ? 10 : (xAxisLabel ? 40 : 20)),
               }}
               barCategoryGap="20%"
             >
@@ -207,6 +208,20 @@ export default function BarChart({
                     tickLine={false}
                     tick={({ x, y, payload }) => {
                       const label = String(payload.value);
+                      if (tickAngle) {
+                        return (
+                          <text
+                            x={x}
+                            y={y + 10}
+                            textAnchor="end"
+                            fill="rgba(38, 38, 38, 0.88)"
+                            fontSize={11}
+                            transform={`rotate(${tickAngle}, ${x}, ${y + 10})`}
+                          >
+                            {label}
+                          </text>
+                        );
+                      }
                       const lines = wrapLabel(label, Math.min(maxTickChars, 15));
                       const lineHeight = 14;
                       return (
@@ -225,7 +240,7 @@ export default function BarChart({
                         </text>
                       );
                     }}
-                    height={80}
+                    height={tickAngle ? 120 : 80}
                     label={xAxisLabel ? { value: xAxisLabel, position: 'insideBottom', offset: -10, style: { fill: 'rgba(38, 38, 38, 0.64)', fontSize: 14 } } : undefined}
                   />
                   <YAxis

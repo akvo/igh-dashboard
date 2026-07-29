@@ -259,9 +259,10 @@ export default function ApprovedProductsTab({ onExplore }) {
             ) : (
               <ChartBarChart
                 data={approvalStatusData}
-                height={280}
+                height={340}
                 maxTickChars={999}
-                xAxisLabel="Approval status"
+                tickAngle={-40}
+                xAxisLabel=""
                 yAxisLabel="Number of products"
               />
             )}
