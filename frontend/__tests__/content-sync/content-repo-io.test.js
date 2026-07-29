@@ -111,4 +111,43 @@ describe("content-repo-io", () => {
     expect(deleted).toEqual([]);
     expect(existsSync(join(dir, "home", "nested", "deep.txt"))).toBe(true);
   });
+
+  it("deleteOrphanFiles never descends into a top-level dot-directory", () => {
+    const dir = setupRepo();
+    // The live content repo has an untracked .claude/ that isn't covered by
+    // its .gitignore. A file dropped there must survive the sweep — being
+    // untracked, it would be unrecoverable from git if deleted.
+    mkdirSync(join(dir, ".claude"), { recursive: true });
+    writeFileSync(join(dir, ".claude", "notes.md"), "not sync's to touch\n");
+
+    const deleted = deleteOrphanFiles(dir, SCHEMA);
+
+    expect(deleted).toEqual([]);
+    expect(existsSync(join(dir, ".claude", "notes.md"))).toBe(true);
+  });
+
+  it("deleteOrphanFiles leaves a bare .md file (no stem) alone", () => {
+    const dir = setupRepo();
+    // A filename of just ".md" has no stem, so it isn't content-shaped even
+    // though the old suffix-only regex would have matched it.
+    writeFileSync(join(dir, "home", ".md"), "not a content file\n");
+
+    const deleted = deleteOrphanFiles(dir, SCHEMA);
+
+    expect(deleted).toEqual([]);
+    expect(existsSync(join(dir, "home", ".md"))).toBe(true);
+  });
+
+  it("deleteOrphanFiles deletes an orphan with an uppercase extension", () => {
+    const dir = setupRepo();
+    // Creatable through the GitHub web UI; without case-insensitive matching
+    // this would survive every sweep as a permanent, un-clearable
+    // validate.mjs warning.
+    writeFileSync(join(dir, "layout", "STALE.TXT"), "leftover\n");
+
+    const deleted = deleteOrphanFiles(dir, SCHEMA);
+
+    expect(deleted).toEqual(["layout/STALE.TXT"]);
+    expect(existsSync(join(dir, "layout", "STALE.TXT"))).toBe(false);
+  });
 });

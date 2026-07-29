@@ -207,5 +207,26 @@ describe("orchestrator — content-repo materialisation", () => {
 
     // The orphan is gone.
     expect(existsSync(join(content, pageFolder, "gone.key.txt"))).toBe(false);
+
+    // Nothing else in the ~358 other seeded files was collateral damage from
+    // the sweep — this is the assertion that would catch a regression in
+    // known.has(rel) or pathForKey.
+    const missing = Object.keys(seed).filter((key) => {
+      const segs = key.split(".");
+      const keyExt = schema[key].type === "markdown" ? "md" : "txt";
+      const path = join(content, segs[0], `${segs.slice(1).join(".")}.${keyExt}`);
+      return !existsSync(path);
+    });
+    expect(missing).toEqual([]);
+  });
+});
+
+describe("orchestrator — schema guard", () => {
+  it("rejects when the schema has no keys", async () => {
+    const site = freshSite();
+    writeFileSync(join(site, "src/content/content.schema.json"), "{}\n");
+
+    await expect(runSync({ siteRoot: site, contentRepoPath: "/nonexistent" }))
+      .rejects.toThrow(/has no keys/);
   });
 });

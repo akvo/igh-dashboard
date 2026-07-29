@@ -175,6 +175,18 @@ overwrite changes to these:
 - \`package.json\`, \`package-lock.json\`
 - Anything under \`scripts/\`
 - Anything under \`.github/\`
+
+## Deleting or adding files
+
+Deleting a content file does not remove that piece of copy — the next
+sync just writes the file back with its last known text. If you want
+a piece of copy gone for good, ask a developer to remove its key from
+\`content.yaml\`.
+
+Adding a new \`.txt\` or \`.md\` file inside a page folder doesn't add
+new content either — since it isn't tied to any key, the next sync
+deletes it silently. If you need a new piece of copy, ask a developer
+to add the key first; sync will then create the file for you to edit.
 `;
 
 // ---------------------------------------------------------------

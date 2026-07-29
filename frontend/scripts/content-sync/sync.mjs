@@ -31,6 +31,13 @@ export async function runSync({ siteRoot, contentRepoPath }) {
   const schema = JSON.parse(readFileSync(SCHEMA_PATH, "utf8"));
   const schemaKeys = Object.keys(schema);
 
+  // The sweep trusts the schema completely. A truncated schema would
+  // delete every content file whose key vanished, so refuse to sweep
+  // against an empty one.
+  if (schemaKeys.length === 0) {
+    throw new Error(`Schema at ${SCHEMA_PATH} has no keys; refusing to sync.`);
+  }
+
   // Gate: if there are unresolved conflicts, halt cleanly.
   const conflictsBefore = readConflicts(CONFLICTS_PATH);
   if (hasActiveConflicts(conflictsBefore)) {
@@ -89,9 +96,13 @@ export async function runSync({ siteRoot, contentRepoPath }) {
     contentChanged = true;
   }
 
-  // Deletes follow writes so that a key renamed in one commit lands as a write
-  // of the new file plus a delete of the old one in a single content-repo
-  // commit — which is what a rename should look like in history.
+  // Writes then the sweep, grouped for readability — the order between them
+  // isn't load-bearing. There's exactly one content-repo commit per runSync
+  // regardless of internal ordering (see the git add/commit/push block
+  // below), and the two operations can't step on each other's paths: both
+  // are computed from `schema` through the same pathForKey, so every file
+  // the merge can write is, by construction, in the sweep's `known` set and
+  // therefore never touched by it.
   const orphans = deleteOrphanFiles(contentRepoPath, schema);
   if (orphans.length > 0) {
     log(`removed ${orphans.length} orphaned file(s): ${orphans.join(", ")}`);
