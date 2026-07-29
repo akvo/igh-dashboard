@@ -33,8 +33,7 @@ export function merge({ snapshot, contentRepo, yaml, schemaKeys }) {
     // The content repo is a projection of the schema: every key must have a
     // file. Absent is NOT "unchanged"; treating it as such is what let a
     // hand-edited snapshot silently skip writing four files and leave the
-    // content repo failing its own validation. Nothing exists to conflict
-    // with, so this can never raise a conflict.
+    // content repo failing its own validation.
     if (repo === undefined) {
       const value = ya ?? snap;
       if (value === undefined) continue;

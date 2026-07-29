@@ -54,11 +54,9 @@ export function writeContentRepoFiles(repoPath, schema, writes) {
   }
 }
 
-// Folders at the top of the content repo that hold tooling rather than
-// content. Everything else at that level is a page folder owned by sync.
-// `.git` and `.github` are already caught by the dot-directory check below;
-// they're kept here only as documentation of what's excluded and why.
-const INFRA_TOP = new Set([".git", ".github", "scripts", "node_modules"]);
+// Non-dot folders at the top of the content repo that hold tooling rather
+// than content. Everything else at that level is a page folder owned by sync.
+const INFRA_TOP = new Set(["scripts", "node_modules"]);
 
 /**
  * Delete content files whose schema key no longer exists — the leftovers of a
@@ -70,16 +68,9 @@ const INFRA_TOP = new Set([".git", ".github", "scripts", "node_modules"]);
  * when the snapshot is edited by hand — exactly the case that produced the
  * current stale files.
  *
- * This sweep is related to, but not equivalent to, the content repo's own
- * scripts/validate.mjs: validate.mjs recurses into nested directories, this
- * sweep is deliberately one level deep; validate.mjs warns on any unknown
- * file, this sweep only touches .txt/.md; and validate.mjs's ALLOWED_TOP list
- * (README.md, schema.json, package.json, package-lock.json, scripts, .github,
- * .git, .gitignore — a mix of files and directories, missing node_modules)
- * differs from INFRA_TOP above. Net effect: this sweep guarantees
- * validate.mjs's `ERROR Missing file` never fires and clears the
- * `WARN Unknown file` cases within its scope, but validate.mjs still warns on
- * a strictly larger set of files than this sweep touches.
+ * Narrower than the content repo's own scripts/validate.mjs: this clears the
+ * `ERROR Missing file` cases for good, but not every `WARN Unknown file` that
+ * one can raise, since it recurses and flags any extension.
  *
  * The cost of that choice: sync is authoritative over page folders, so a
  * scratch .txt parked next to real content will be deleted.

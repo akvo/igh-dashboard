@@ -96,13 +96,9 @@ export async function runSync({ siteRoot, contentRepoPath }) {
     contentChanged = true;
   }
 
-  // Writes then the sweep, grouped for readability — the order between them
-  // isn't load-bearing. There's exactly one content-repo commit per runSync
-  // regardless of internal ordering (see the git add/commit/push block
-  // below), and the two operations can't step on each other's paths: both
-  // are computed from `schema` through the same pathForKey, so every file
-  // the merge can write is, by construction, in the sweep's `known` set and
-  // therefore never touched by it.
+  // Order vs. the write above isn't load-bearing: one content-repo commit per
+  // runSync either way, and both derive paths from `schema` through the same
+  // pathForKey, so a written file is always in `known` and never swept.
   const orphans = deleteOrphanFiles(contentRepoPath, schema);
   if (orphans.length > 0) {
     log(`removed ${orphans.length} orphaned file(s): ${orphans.join(", ")}`);
