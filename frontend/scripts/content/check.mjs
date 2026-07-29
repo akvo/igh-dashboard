@@ -105,9 +105,12 @@ export function findMarkdownCallsiteKeys(src) {
 // indirection shape appears.
 //
 // The trade-off: this proves the key is mentioned in src/, not that it is
-// rendered. A key referenced only from dead code counts as used. That is
-// acceptable for deciding whether a key is dead — line comments are stripped
-// and tests live outside src/.
+// rendered. A key referenced only from dead code counts as used — as would
+// one mentioned only in a block comment (stripLineComments only strips `//`)
+// or only from a `*.stories.jsx` file (Storybook stories live under src/ and
+// are scanned like any other source file). All of that makes the check more
+// lenient, never stricter: it can miss a dead key, but it can never flag a
+// key that is genuinely used.
 export function findReferencedSchemaKeys(src, schemaKeys) {
   const stripped = stripLineComments(src);
   return schemaKeys.filter(
@@ -170,7 +173,9 @@ export function crossCheck({ schema, values, textKeys, markdownKeys, referencedK
       errors.push(
         `${key}: schema key has no reference in src/ — every schema key ` +
           `becomes an editable file in the content repo, so add the t() ` +
-          `callsite or remove the key from content.yaml`,
+          `callsite, remove the key from content.yaml, or if the key is ` +
+          `resolved dynamically write it as a quoted literal in src/ (see ` +
+          `tourConfig.js)`,
       );
     }
   }
@@ -205,6 +210,11 @@ async function main() {
   const markdownKeys = new Set();
   const referencedKeys = new Set();
   const schemaKeys = Object.keys(schema);
+  // This extension list now gates the "unreferenced key" check above, not
+  // just the callsite scan: a source file whose extension isn't listed here
+  // is invisible to findReferencedSchemaKeys, so a key used only in it would
+  // wrongly fail as unreferenced. Extend this list if src/ ever gains a new
+  // source extension (e.g. .ts, .tsx).
   for await (const f of walkFiles(resolve(FRONTEND_ROOT, 'src'), ['.js', '.jsx'])) {
     const src = await readFile(f, 'utf8');
     for (const k of findTextCallsiteKeys(src)) textKeys.add(k);

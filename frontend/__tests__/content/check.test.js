@@ -119,6 +119,17 @@ describe('findReferencedSchemaKeys', () => {
     expect(findReferencedSchemaKeys(`const x = 'unrelated.string';`, schemaKeys))
       .toEqual([]);
   });
+
+  it('does not match a strict-prefix key inside a longer literal', () => {
+    // The quote delimiters are load-bearing: without them, the literal
+    // 'home.hero.title' would also make the shorter key 'home.hero' read as
+    // referenced via a plain .includes(k) check.
+    const prefixSchemaKeys = ['home.hero', 'home.hero.title'];
+    const src = `const v = 'home.hero.title';`;
+    expect(findReferencedSchemaKeys(src, prefixSchemaKeys)).toEqual([
+      'home.hero.title',
+    ]);
+  });
 });
 
 describe('crossCheck', () => {
@@ -197,7 +208,9 @@ describe('crossCheck', () => {
       markdownKeys: ['home.bubble_chart.footer'],
       referencedKeys: ['home.hero.title', 'home.bubble_chart.footer'],
     });
-    expect(r.errors.join('\n')).toMatch(/home\.hero\.subtitle.*no reference/);
+    expect(r.errors.join('\n')).toMatch(
+      /home\.hero\.subtitle.*no reference in src\/.*quoted literal/,
+    );
   });
 
   it('does not error on a key referenced only indirectly', () => {

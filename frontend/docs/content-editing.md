@@ -62,8 +62,19 @@ npm run content:check
 
 `content:check` confirms every `t()` / `<Markdown>` callsite has a
 schema entry and a value, every value fits its `maxLength`, and
-markdown values are safe. It runs in CI and in `npm run check:all`, so
-a dangling key or typo fails the build. Adding a key is therefore a
+markdown values are safe. It also requires every schema key to be
+referenced somewhere in `src/` — since every schema key becomes an
+editable file in the content repo, a key nothing renders is a file an
+editor can change with no visible effect. In practice this means a key
+can't land in `content.schema.json` before its first use, and removing
+a component's last usage of a key must remove the key (and its
+`content.yaml` value) in the same PR. If a key is resolved dynamically
+(e.g. built by string interpolation, so no literal `t('...')` call
+exists) rather than from a literal callsite, write it as a quoted
+literal somewhere in `src/` instead — see `titleKey` in
+`src/components/guided-tour/tourConfig.js` for the pattern. This check
+runs in CI and in `npm run check:all`, so a dangling key, a typo, or a
+key with no reference fails the build. Adding a key is therefore a
 code change; editors only ever change *values*.
 
 Changing existing copy is just editing the value in `content.yaml`.
