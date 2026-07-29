@@ -418,9 +418,7 @@ layout:
     share_copied: Copied!
   sidebar:
     help_button: Help
-    help_contact_body_intro: For questions or help requests regarding the data and platform - reach out to the igh team via
     help_contact_description: Have a question or need further support? Reach out to the Impact Global Health team directly.
-    help_contact_heading: Contact information
     help_contact_title: Contact IGH
     help_intro: Choose how you'd like to get started or get support.
     help_send_email: Send email

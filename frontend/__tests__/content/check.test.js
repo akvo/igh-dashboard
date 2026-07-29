@@ -139,9 +139,9 @@ describe('crossCheck', () => {
       values,
       textKeys: ['home.hero.title', 'home.hero.subtitle'],
       markdownKeys: ['home.bubble_chart.footer'],
+      referencedKeys: Object.keys(schema),
     });
     expect(r.errors).toEqual([]);
-    expect(r.warnings).toEqual([]);
   });
 
   it('errors on a callsite key absent from the schema', () => {
@@ -150,6 +150,7 @@ describe('crossCheck', () => {
       values,
       textKeys: ['home.hero.title', 'home.missing'],
       markdownKeys: [],
+      referencedKeys: Object.keys(schema),
     });
     expect(r.errors.join('\n')).toMatch(/home\.missing/);
   });
@@ -160,6 +161,7 @@ describe('crossCheck', () => {
       values,
       textKeys: [],
       markdownKeys: ['home.hero.title'],
+      referencedKeys: Object.keys(schema),
     });
     expect(r.errors.join('\n')).toMatch(/home\.hero\.title.*markdown/i);
   });
@@ -170,6 +172,7 @@ describe('crossCheck', () => {
       values: { ...values, 'home.hero.title': 'x'.repeat(200) },
       textKeys: ['home.hero.title'],
       markdownKeys: ['home.bubble_chart.footer'],
+      referencedKeys: Object.keys(schema),
     });
     expect(r.errors.join('\n')).toMatch(/home\.hero\.title.*maxLength|length/i);
   });
@@ -181,18 +184,31 @@ describe('crossCheck', () => {
       values: partial,
       textKeys: ['home.hero.title', 'home.hero.subtitle'],
       markdownKeys: ['home.bubble_chart.footer'],
+      referencedKeys: Object.keys(schema),
     });
     expect(r.errors.join('\n')).toMatch(/home\.hero\.subtitle.*value/i);
   });
 
-  it('warns on a schema key with no callsite', () => {
+  it('errors on a schema key with no reference in src/', () => {
     const r = crossCheck({
       schema,
       values,
       textKeys: ['home.hero.title'],
       markdownKeys: ['home.bubble_chart.footer'],
+      referencedKeys: ['home.hero.title', 'home.bubble_chart.footer'],
     });
-    expect(r.warnings.join('\n')).toMatch(/home\.hero\.subtitle/);
+    expect(r.errors.join('\n')).toMatch(/home\.hero\.subtitle.*no reference/);
+  });
+
+  it('does not error on a key referenced only indirectly', () => {
+    // subtitle has no t() callsite, but tourConfig-style data holds the key.
+    const r = crossCheck({
+      schema,
+      values,
+      textKeys: ['home.hero.title'],
+      markdownKeys: ['home.bubble_chart.footer'],
+      referencedKeys: Object.keys(schema),
+    });
     expect(r.errors).toEqual([]);
   });
 });

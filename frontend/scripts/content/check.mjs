@@ -9,8 +9,9 @@
 //      (defense in depth for dev-edited yaml).
 //   4. Every callsite key exists in the schema (error if not).
 //   5. Every <Markdown> key is markdown-typed (error if not).
-//   6. Schema keys with no callsite are warnings (a key may land
-//      before its first use).
+//   6. Schema keys not referenced anywhere in src/ are errors — every
+//      schema key becomes an editable file in the content repo, so an
+//      unreferenced one is a file an editor can change with no effect.
 
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -117,12 +118,12 @@ export function findReferencedSchemaKeys(src, schemaKeys) {
   );
 }
 
-export function crossCheck({ schema, values, textKeys, markdownKeys }) {
+export function crossCheck({ schema, values, textKeys, markdownKeys, referencedKeys }) {
   const errors = [];
-  const warnings = [];
   const schemaKeys = Object.keys(schema);
   const schemaSet = new Set(schemaKeys);
   const allCallsites = new Set([...textKeys, ...markdownKeys]);
+  const referenced = new Set(referencedKeys);
 
   // Coverage + length + markdown safety.
   for (const key of schemaKeys) {
@@ -159,12 +160,22 @@ export function crossCheck({ schema, values, textKeys, markdownKeys }) {
     }
   }
 
-  // Schema keys with no callsite are warnings.
+  // Every schema key becomes an editable file in the content repo, so a key
+  // nothing references is a file an editor can change with no visible effect.
+  // `referenced` is deliberately looser than `allCallsites` — it includes keys
+  // held as data — but the two checks above stay bound to real callsites, so a
+  // typo'd t('bad.key') still fails.
   for (const key of schemaKeys) {
-    if (!allCallsites.has(key)) warnings.push(key);
+    if (!referenced.has(key)) {
+      errors.push(
+        `${key}: schema key has no reference in src/ — every schema key ` +
+          `becomes an editable file in the content repo, so add the t() ` +
+          `callsite or remove the key from content.yaml`,
+      );
+    }
   }
 
-  return { errors, warnings };
+  return { errors };
 }
 
 async function* walkFiles(dir, exts) {
@@ -192,22 +203,23 @@ async function main() {
 
   const textKeys = new Set();
   const markdownKeys = new Set();
+  const referencedKeys = new Set();
+  const schemaKeys = Object.keys(schema);
   for await (const f of walkFiles(resolve(FRONTEND_ROOT, 'src'), ['.js', '.jsx'])) {
     const src = await readFile(f, 'utf8');
     for (const k of findTextCallsiteKeys(src)) textKeys.add(k);
     for (const k of findMarkdownCallsiteKeys(src)) markdownKeys.add(k);
+    for (const k of findReferencedSchemaKeys(src, schemaKeys)) referencedKeys.add(k);
   }
 
-  const { errors, warnings } = crossCheck({
+  const { errors } = crossCheck({
     schema,
     values,
     textKeys: Array.from(textKeys),
     markdownKeys: Array.from(markdownKeys),
+    referencedKeys: Array.from(referencedKeys),
   });
 
-  for (const w of warnings) {
-    console.warn(`WARN schema key with no callsite: ${w}`);
-  }
   if (errors.length) {
     for (const e of errors) console.error(`ERROR ${e}`);
     process.exit(1);
