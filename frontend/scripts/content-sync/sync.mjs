@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { merge } from "./lib/merge.mjs";
 import { readSnapshot, writeSnapshot } from "./lib/snapshot.mjs";
 import { readConflicts, writeConflicts, hasActiveConflicts } from "./lib/conflicts.mjs";
-import { readContentRepo, writeContentRepoFiles } from "./lib/content-repo-io.mjs";
+import { readContentRepo, writeContentRepoFiles, deleteOrphanFiles } from "./lib/content-repo-io.mjs";
 import { readYamlFile, writeYamlFile, flatten, unflatten } from "./lib/yaml-io.mjs";
 import * as git from "./lib/git.mjs";
 import { exportSchema } from "./export-schema.mjs";
@@ -86,6 +86,15 @@ export async function runSync({ siteRoot, contentRepoPath }) {
 
   if (result.contentRepoWrites.length > 0) {
     writeContentRepoFiles(contentRepoPath, schema, result.contentRepoWrites);
+    contentChanged = true;
+  }
+
+  // Deletes follow writes so that a key renamed in one commit lands as a write
+  // of the new file plus a delete of the old one in a single content-repo
+  // commit — which is what a rename should look like in history.
+  const orphans = deleteOrphanFiles(contentRepoPath, schema);
+  if (orphans.length > 0) {
+    log(`removed ${orphans.length} orphaned file(s): ${orphans.join(", ")}`);
     contentChanged = true;
   }
 

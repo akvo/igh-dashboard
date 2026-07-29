@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -164,5 +164,48 @@ describe("orchestrator — conflict path", () => {
     );
     expect(conflicts.entries).toHaveLength(1);
     expect(readFileSync(join(site, "src/content/content.yaml"), "utf8")).toBe(yamlText);
+  });
+});
+
+describe("orchestrator — content-repo materialisation", () => {
+  it("creates files for schema keys the content repo lacks and deletes orphans", async () => {
+    const site = freshSite();
+    const initialYaml = readFileSync(join(FRONTEND_ROOT, "src/content/content.yaml"), "utf8");
+    writeFileSync(join(site, "src/content/content.yaml"), initialYaml);
+    const flat = flatten(parseYaml(initialYaml));
+    // Snapshot agrees with yaml on every key — the state a hand-edit produces.
+    writeFileSync(
+      join(site, "src/content/content.snapshot.json"),
+      JSON.stringify(flat, null, 2) + "\n",
+    );
+    gitInit(site);
+
+    // Seed every key EXCEPT one. With yaml === snapshot for that key and no
+    // file on disk, the old merge wrote nothing and the content repo was left
+    // holding a schema key with no file.
+    const missingKey = Object.keys(flat)[0];
+    const seed = { ...flat };
+    delete seed[missingKey];
+    const content = seedContentRepo(seed);
+
+    // A content-shaped file with no schema key, i.e. a renamed key's leftover.
+    const pageFolder = missingKey.split(".")[0];
+    mkdirSync(join(content, pageFolder), { recursive: true });
+    writeFileSync(join(content, pageFolder, "gone.key.txt"), "stale\n");
+
+    await runSync({ siteRoot: site, contentRepoPath: content });
+
+    // The absent file was materialised from the agreed value.
+    const schema = JSON.parse(
+      readFileSync(join(FRONTEND_ROOT, "src/content/content.schema.json"), "utf8"),
+    );
+    const segments = missingKey.split(".");
+    const ext = schema[missingKey].type === "markdown" ? "md" : "txt";
+    const materialised = join(content, segments[0], `${segments.slice(1).join(".")}.${ext}`);
+    expect(existsSync(materialised)).toBe(true);
+    expect(readFileSync(materialised, "utf8").trimEnd()).toBe(flat[missingKey].trimEnd());
+
+    // The orphan is gone.
+    expect(existsSync(join(content, pageFolder, "gone.key.txt"))).toBe(false);
   });
 });
