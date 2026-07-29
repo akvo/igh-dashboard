@@ -3,6 +3,7 @@ import {
   flattenYaml,
   findTextCallsiteKeys,
   findMarkdownCallsiteKeys,
+  findReferencedSchemaKeys,
   crossCheck,
 } from '@/../scripts/content/check.mjs';
 
@@ -72,6 +73,51 @@ describe('findMarkdownCallsiteKeys', () => {
 
   it('returns [] when no Markdown usages present', () => {
     expect(findMarkdownCallsiteKeys('const x = 1;')).toEqual([]);
+  });
+});
+
+describe('findReferencedSchemaKeys', () => {
+  const schemaKeys = [
+    'home.hero.title',
+    'home.hero.subtitle',
+    'guided_tour.steps.1.title',
+  ];
+
+  it('finds a key held as data, not just one inside a t() call', () => {
+    // tourConfig.js stores keys this way and resolves them with t(step.titleKey).
+    const src = `const tour = [{ titleKey: 'guided_tour.steps.1.title' }];`;
+    expect(findReferencedSchemaKeys(src, schemaKeys)).toEqual([
+      'guided_tour.steps.1.title',
+    ]);
+  });
+
+  it('finds keys in any quote style', () => {
+    const single = "a = 'home.hero.title'";
+    const double = 'b = "home.hero.subtitle"';
+    const backtick = 'c = `guided_tour.steps.1.title`';
+    const src = [single, double, backtick].join('\n');
+    expect(findReferencedSchemaKeys(src, schemaKeys).sort()).toEqual([
+      'guided_tour.steps.1.title',
+      'home.hero.subtitle',
+      'home.hero.title',
+    ]);
+  });
+
+  it('ignores a key that appears only in a line comment', () => {
+    const src = `// 'home.hero.title' used to be here\nconst v = t('home.hero.subtitle');`;
+    expect(findReferencedSchemaKeys(src, schemaKeys)).toEqual([
+      'home.hero.subtitle',
+    ]);
+  });
+
+  it('does not match a key that appears unquoted', () => {
+    const src = `const home = { hero: { title: 1 } };`;
+    expect(findReferencedSchemaKeys(src, schemaKeys)).toEqual([]);
+  });
+
+  it('returns [] when no schema key appears', () => {
+    expect(findReferencedSchemaKeys(`const x = 'unrelated.string';`, schemaKeys))
+      .toEqual([]);
   });
 });
 

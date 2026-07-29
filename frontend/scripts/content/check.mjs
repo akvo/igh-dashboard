@@ -93,6 +93,30 @@ export function findMarkdownCallsiteKeys(src) {
   return Array.from(keys);
 }
 
+// A key held as data — tourConfig.js's `titleKey: 'guided_tour.steps.1.title'`,
+// resolved later by t(step.titleKey) — is a real reference that T_RE cannot
+// see, because T_RE only matches a literal t('key') call.
+//
+// Rather than teaching the scanner each indirection shape (a key field, an
+// array of keys, a lookup map), treat any schema key that appears as a quoted
+// literal as referenced. We already know the full key set, so this is a
+// membership test rather than a parser, and it needs no maintenance when a new
+// indirection shape appears.
+//
+// The trade-off: this proves the key is mentioned in src/, not that it is
+// rendered. A key referenced only from dead code counts as used. That is
+// acceptable for deciding whether a key is dead — line comments are stripped
+// and tests live outside src/.
+export function findReferencedSchemaKeys(src, schemaKeys) {
+  const stripped = stripLineComments(src);
+  return schemaKeys.filter(
+    (k) =>
+      stripped.includes(`'${k}'`) ||
+      stripped.includes(`"${k}"`) ||
+      stripped.includes(`\`${k}\``),
+  );
+}
+
 export function crossCheck({ schema, values, textKeys, markdownKeys }) {
   const errors = [];
   const warnings = [];
