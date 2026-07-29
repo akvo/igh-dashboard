@@ -28,7 +28,24 @@ export function merge({ snapshot, contentRepo, yaml, schemaKeys }) {
     const repo = contentRepo[key];
     const ya = yamlFlat[key];
 
-    const repoChanged = repo !== undefined && repo !== snap;
+    // `readContentRepo` omits keys with no file on disk, so `undefined` here
+    // means "not yet materialised" — a new key, or a file a human deleted.
+    // The content repo is a projection of the schema: every key must have a
+    // file. Absent is NOT "unchanged"; treating it as such is what let a
+    // hand-edited snapshot silently skip writing four files and leave the
+    // content repo failing its own validation. Nothing exists to conflict
+    // with, so this can never raise a conflict.
+    if (repo === undefined) {
+      const value = ya ?? snap;
+      if (value === undefined) continue;
+      contentRepoWrites.push({ key, value });
+      newSnapshot[key] = value;
+      newYamlFlat[key] = value;
+      continue;
+    }
+
+    // `repo` is guaranteed defined past the branch above.
+    const repoChanged = repo !== snap;
     const yamlChanged = ya !== undefined && ya !== snap;
 
     if (!repoChanged && !yamlChanged) {

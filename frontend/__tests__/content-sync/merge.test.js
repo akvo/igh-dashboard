@@ -56,7 +56,7 @@ describe("merge — single-key outcomes", () => {
     expect(r.newYaml.home.hero.title).toBe("C");
   });
 
-  it("missing on content repo is treated as 'equal to snapshot'", () => {
+  it("absent content-repo file takes the yaml value", () => {
     const r = run({ snapshot: { [KEY]: "A" }, contentRepo: {}, yaml: "C" });
     expect(r.contentRepoWrites).toEqual([{ key: KEY, value: "C" }]);
     expect(r.conflicts).toEqual([]);
@@ -81,5 +81,31 @@ describe("merge — single-key outcomes", () => {
     expect(r.contentRepoWrites).toEqual([{ key: KEY, value: "A" }]);
     expect(r.conflicts).toEqual([]);
     expect(r.newSnapshot[KEY]).toBe("A");
+  });
+
+  // The outage regression. A hand-edited content.snapshot.json made four
+  // brand-new keys look already-agreed, so yaml === snapshot while no file
+  // existed yet. The old code read that as "unchanged" and wrote nothing.
+  it("absent content-repo file is written even when yaml matches the snapshot", () => {
+    const r = run({ snapshot: { [KEY]: "A" }, contentRepo: {}, yaml: "A" });
+    expect(r.contentRepoWrites).toEqual([{ key: KEY, value: "A" }]);
+    expect(r.conflicts).toEqual([]);
+    expect(r.newSnapshot[KEY]).toBe("A");
+    expect(r.newYaml.home.hero.title).toBe("A");
+  });
+
+  it("absent content-repo file is restored from the snapshot when yaml has no value", () => {
+    const r = run({ snapshot: { [KEY]: "A" }, contentRepo: {}, yaml: undefined });
+    expect(r.contentRepoWrites).toEqual([{ key: KEY, value: "A" }]);
+    expect(r.conflicts).toEqual([]);
+    expect(r.newSnapshot[KEY]).toBe("A");
+    expect(r.newYaml.home.hero.title).toBe("A");
+  });
+
+  it("absent everywhere with no snapshot value is skipped", () => {
+    const r = run({ snapshot: {}, contentRepo: {}, yaml: undefined });
+    expect(r.contentRepoWrites).toEqual([]);
+    expect(r.conflicts).toEqual([]);
+    expect(r.newSnapshot[KEY]).toBeUndefined();
   });
 });
