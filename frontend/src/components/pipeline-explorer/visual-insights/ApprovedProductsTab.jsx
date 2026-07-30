@@ -264,7 +264,6 @@ export default function ApprovedProductsTab({ onExplore }) {
                 height={340}
                 maxTickChars={999}
                 tickAngle={-40}
-                xAxisLabel=""
                 yAxisLabel={t('pipeline_explorer.visual_insights.approved.approval_status.y_axis')}
               />
             )}

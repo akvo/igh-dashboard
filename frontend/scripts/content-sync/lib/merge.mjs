@@ -18,16 +18,12 @@ import { unflatten } from "./yaml-io.mjs";
 export function merge({ snapshot, contentRepo, yaml, schemaKeys }) {
   const yamlFlat = flatten(yaml);
 
-  // Seeded from the schema, not from the whole previous snapshot: a key that
-  // leaves the schema (renamed, or its last callsite removed) must not keep a
-  // baseline entry forever. deleteOrphanFiles already sweeps its content-repo
-  // file, so a surviving snapshot entry would be a baseline for a key nothing
-  // can edit. A key that leaves and later returns re-bootstraps from yaml,
-  // which is what we want.
-  const newSnapshot = {};
-  for (const key of schemaKeys) {
-    if (snapshot[key] !== undefined) newSnapshot[key] = snapshot[key];
-  }
+  // Seeded from the schema, so a renamed or removed key drops its baseline
+  // instead of keeping one forever: deleteOrphanFiles already sweeps its
+  // content-repo file, and a key that returns re-bootstraps from yaml.
+  const newSnapshot = Object.fromEntries(
+    schemaKeys.filter((k) => k in snapshot).map((k) => [k, snapshot[k]]),
+  );
   const newYamlFlat = { ...yamlFlat };
   const contentRepoWrites = [];
   const conflicts = [];

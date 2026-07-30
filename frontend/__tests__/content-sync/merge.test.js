@@ -121,14 +121,4 @@ describe("merge — snapshot pruning", () => {
     expect(r.newSnapshot).toEqual({ "home.hero.title": "A" });
     expect("old.renamed.key" in r.newSnapshot).toBe(false);
   });
-
-  it("keeps a schema key whose snapshot entry is unchanged", () => {
-    const r = merge({
-      snapshot: { "home.hero.title": "A" },
-      contentRepo: { "home.hero.title": "A" },
-      yaml: { home: { hero: { title: "A" } } },
-      schemaKeys: ["home.hero.title"],
-    });
-    expect(r.newSnapshot).toEqual({ "home.hero.title": "A" });
-  });
 });
