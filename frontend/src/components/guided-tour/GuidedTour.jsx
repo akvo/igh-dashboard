@@ -77,7 +77,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
             paddingRight: 24,
           }}
         >
-          {t('guided_tour.confirm_prompt')}
+          {t('guided_tour.confirm.prompt')}
         </p>
         <div style={{ display: 'flex', gap: 12 }}>
           <button
@@ -94,7 +94,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
               color: '#111',
             }}
           >
-            {t('guided_tour.confirm_no')}
+            {t('guided_tour.confirm.no')}
           </button>
           <button
             onClick={onConfirm}
@@ -110,7 +110,7 @@ function ConfirmDialog({ onConfirm, onCancel }) {
               color: '#111',
             }}
           >
-            {t('guided_tour.confirm_start')}
+            {t('guided_tour.confirm.start')}
           </button>
         </div>
       </div>
@@ -265,7 +265,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
         }}
       >
         <span style={{ fontSize: 12, color: '#999', fontWeight: 500 }}>
-          Step {stepIndex + 1} {t('guided_tour.step_of')} {totalSteps}
+          Step {stepIndex + 1} {t('guided_tour.controls.step_of')} {totalSteps}
         </span>
         <button
           onClick={onClose}
@@ -322,7 +322,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
             gap: 4,
           }}
         >
-          {isLast ? t('guided_tour.finish') : t('guided_tour.next')} &rarr;
+          {isLast ? t('guided_tour.controls.finish') : t('guided_tour.controls.next')} &rarr;
         </button>
       </div>
     </div>
@@ -639,7 +639,7 @@ export default function GuidedTour({ active, onClose }) {
               boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
             }}
           >
-            {t('guided_tour.navigating')}
+            {t('guided_tour.controls.navigating')}
           </div>
         </div>
       )}

@@ -205,7 +205,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
   return (
     <>
       <p className="text-sm text-gray-500 mb-6">
-        {t('pipeline_explorer.trials.intro')}
+        {t('pipeline_explorer.visual_insights.trials.intro')}
       </p>
 
       <KpiStatCards cards={statCards} />
@@ -218,7 +218,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           loading={trialsStatsLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
-          axisLabel="Number of clinical trials"
+          axisLabel={t('pipeline_explorer.visual_insights.trials.top5_disease.x_axis')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
@@ -227,7 +227,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           loading={trialsStatsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
-          axisLabel="Number of clinical trials"
+          axisLabel={t('pipeline_explorer.visual_insights.trials.top5_product.x_axis')}
         />
       </div>
 
@@ -236,7 +236,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
         {/* Age groups */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.age_groups_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.trials.age_groups.title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -249,7 +249,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {t('pipeline_explorer.trials.age_groups_description')}
+            {t('pipeline_explorer.visual_insights.trials.age_groups.description')}
           </p>
           <div ref={ageGroupsRef}>
             {trialsStatsLoading ? (
@@ -282,7 +282,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
         {/* Trial status */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.trial_status_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.trials.trial_status.title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -295,7 +295,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {t('pipeline_explorer.trials.trial_status_description')}
+            {t('pipeline_explorer.visual_insights.trials.trial_status.description')}
           </p>
           <div ref={trialStatusRef}>
             {trialsStatsLoading ? (
@@ -332,7 +332,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
       {/* Geographic distribution */}
       <div className="bg-white border border-gray-200 p-4 mb-6">
         <div className="flex items-start justify-between mb-1">
-          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.geo_title')}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.trials.geo.title')}</h3>
           <div className="flex-1" />
           <div className="min-w-[160px]">
             <Dropdown
@@ -358,7 +358,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           />
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          {t('pipeline_explorer.trials.geo_description')}
+          {t('pipeline_explorer.visual_insights.trials.geo.description')}
         </p>
         <div ref={geoMapRef}>
           {geoLoading ? (
@@ -367,16 +367,16 @@ export default function ClinicalTrialsTab({ onExplore }) {
             <WorldMap data={clinicalTrialsMapData || []} height={320} showLegend={false} />
           )}
         </div>
-        <p className="text-xs text-gray-500 mt-3">{t('pipeline_explorer.trials.geo_source')}</p>
+        <p className="text-xs text-gray-500 mt-3">{t('pipeline_explorer.visual_insights.trials.geo.source')}</p>
       </div>
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.trials.table_title')}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.trials.table.title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{trialsTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          {t('pipeline_explorer.trials.table_description')}
+          {t('pipeline_explorer.visual_insights.trials.table.description')}
         </p>
         <DataTable
           tableId="vi-trials"
@@ -397,7 +397,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           onSortChange={(next) => { setTrialsSort(next); setTrialsPage(1); }}
           visibleColumns={trialsVisibleCols}
           onVisibleColumnsChange={setTrialsVisibleCols}
-          emptyState={{ title: t('pipeline_explorer.trials.table_empty') }}
+          emptyState={{ title: t('pipeline_explorer.visual_insights.trials.table.empty') }}
         />
       </div>
     </>

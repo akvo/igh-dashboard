@@ -18,7 +18,12 @@ import { unflatten } from "./yaml-io.mjs";
 export function merge({ snapshot, contentRepo, yaml, schemaKeys }) {
   const yamlFlat = flatten(yaml);
 
-  const newSnapshot = { ...snapshot };
+  // Seeded from the schema, so a renamed or removed key drops its baseline
+  // instead of keeping one forever: deleteOrphanFiles already sweeps its
+  // content-repo file, and a key that returns re-bootstraps from yaml.
+  const newSnapshot = Object.fromEntries(
+    schemaKeys.filter((k) => k in snapshot).map((k) => [k, snapshot[k]]),
+  );
   const newYamlFlat = { ...yamlFlat };
   const contentRepoWrites = [];
   const conflicts = [];

@@ -299,8 +299,8 @@ export default function PipelineTrends() {
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel={t('pipeline_trends.axis.x')}
-                  yAxisLabel={t('pipeline_trends.axis.y')}
+                  xAxisLabel={t('pipeline_trends.section.chart.x_axis')}
+                  yAxisLabel={t('pipeline_trends.section.chart.y_axis')}
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: isPhaseVisible(p.key) }), {})}
                 />

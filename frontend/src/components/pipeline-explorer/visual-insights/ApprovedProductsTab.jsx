@@ -207,7 +207,7 @@ export default function ApprovedProductsTab({ onExplore }) {
   return (
     <>
       <p className="text-sm text-gray-500 mb-6">
-        {t('pipeline_explorer.approved.intro')}
+        {t('pipeline_explorer.visual_insights.approved.intro')}
       </p>
 
       <KpiStatCards cards={statCards} />
@@ -220,6 +220,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
+          axisLabel={t('pipeline_explorer.visual_insights.approved.top5_disease.x_axis')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
@@ -228,6 +229,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
+          axisLabel={t('pipeline_explorer.visual_insights.approved.top5_product.x_axis')}
         />
       </div>
 
@@ -236,7 +238,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* Approval status */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.approval_status_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.approved.approval_status.title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -249,7 +251,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {t('pipeline_explorer.approved.approval_status_description')}
+            {t('pipeline_explorer.visual_insights.approved.approval_status.description')}
           </p>
           <div ref={approvalStatusRef}>
             {regulatoryLoading ? (
@@ -262,8 +264,7 @@ export default function ApprovedProductsTab({ onExplore }) {
                 height={340}
                 maxTickChars={999}
                 tickAngle={-40}
-                xAxisLabel=""
-                yAxisLabel="Number of products"
+                yAxisLabel={t('pipeline_explorer.visual_insights.approved.approval_status.y_axis')}
               />
             )}
           </div>
@@ -272,7 +273,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* Approving Authorities */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.approving_auth_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.approved.approving_auth.title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = stackedCSVColumns(
@@ -285,7 +286,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {t('pipeline_explorer.approved.approving_auth_description')}
+            {t('pipeline_explorer.visual_insights.approved.approving_auth.description')}
           </p>
           <div ref={authoritiesRef}>
             {regulatoryLoading ? (
@@ -300,8 +301,8 @@ export default function ApprovedProductsTab({ onExplore }) {
                 layout="horizontal"
                 height={280}
                 maxTickChars={999}
-                xAxisLabel="Authority type"
-                yAxisLabel="Number of products"
+                xAxisLabel={t('pipeline_explorer.visual_insights.approved.approving_auth.x_axis')}
+                yAxisLabel={t('pipeline_explorer.visual_insights.approved.approving_auth.y_axis')}
                 showFilters={true}
                 barRadius={0}
               />
@@ -312,7 +313,7 @@ export default function ApprovedProductsTab({ onExplore }) {
         {/* WHO prequalification */}
         <div className="bg-white border border-gray-200 p-4">
           <div className="flex items-start justify-between mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.who_prequal_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.approved.who_prequal.title')}</h3>
             <ChartMenu
               onDownloadCSV={() => {
                 const columns = [
@@ -325,7 +326,7 @@ export default function ApprovedProductsTab({ onExplore }) {
             />
           </div>
           <p className="text-sm text-gray-500 mb-4">
-            {t('pipeline_explorer.approved.who_prequal_description')}
+            {t('pipeline_explorer.visual_insights.approved.who_prequal.description')}
           </p>
           <div ref={whoPrequalRef}>
             {regulatoryLoading ? (
@@ -358,11 +359,11 @@ export default function ApprovedProductsTab({ onExplore }) {
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.approved.table_title')}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.approved.table.title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{approvedTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          {t('pipeline_explorer.approved.table_description')}
+          {t('pipeline_explorer.visual_insights.approved.table.description')}
         </p>
         <DataTable
           tableId="vi-approved"
@@ -383,7 +384,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           onSortChange={(next) => { setApprovedSort(next); setApprovedPage(1); }}
           visibleColumns={approvedVisibleCols}
           onVisibleColumnsChange={setApprovedVisibleCols}
-          emptyState={{ title: t('pipeline_explorer.approved.table_empty') }}
+          emptyState={{ title: t('pipeline_explorer.visual_insights.approved.table.empty') }}
         />
       </div>
     </>

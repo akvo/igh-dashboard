@@ -109,3 +109,16 @@ describe("merge — single-key outcomes", () => {
     expect(r.newSnapshot[KEY]).toBeUndefined();
   });
 });
+
+describe("merge — snapshot pruning", () => {
+  it("drops snapshot entries for keys no longer in the schema", () => {
+    const r = merge({
+      snapshot: { "home.hero.title": "A", "old.renamed.key": "B" },
+      contentRepo: { "home.hero.title": "A" },
+      yaml: { home: { hero: { title: "A" } } },
+      schemaKeys: ["home.hero.title"],
+    });
+    expect(r.newSnapshot).toEqual({ "home.hero.title": "A" });
+    expect("old.renamed.key" in r.newSnapshot).toBe(false);
+  });
+});

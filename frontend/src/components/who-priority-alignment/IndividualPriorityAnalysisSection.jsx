@@ -87,9 +87,9 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
     >
       <div className="flex items-start justify-between gap-2 mb-1">
         <div>
-          <h4 className="text-base font-bold text-black">{t('who_priority.individual.pipeline_chart_title')}</h4>
+          <h4 className="text-base font-bold text-black">{t('who_priority.individual.pipeline_chart.title')}</h4>
           <p className="text-sm text-gray-500">
-            {t('who_priority.individual.pipeline_chart_description')}
+            {t('who_priority.individual.pipeline_chart.description')}
           </p>
         </div>
         <ChartMenu
@@ -111,7 +111,7 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
       <div className="flex-1 mt-2">
         {loading ? (
           <div className="h-[220px] flex items-center justify-center">
-            <div className="animate-pulse text-gray-400">{t('who_priority.overview.loading_chart')}</div>
+            <div className="animate-pulse text-gray-400">{t('who_priority.overview.loading')}</div>
           </div>
         ) : chartData.length === 0 ? (
           <ChartEmptyState variant="bar" height={220} />
@@ -122,7 +122,7 @@ function PipelineBuildUpCard({ pipelineBuildUp, loading }) {
             categoryKey="category"
             layout="vertical"
             height={Math.max(180, chartData.length * 48)}
-            xAxisLabel={t('who_priority.individual.amount_axis')}
+            xAxisLabel={t('who_priority.individual.pipeline_chart.x_axis')}
             barRadius={0}
           />
         )}
@@ -155,10 +155,10 @@ function CandidatesTable({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h4 className="text-xl font-bold text-black leading-none">
-              {t('who_priority.individual.candidates_title')}
+              {t('who_priority.individual.candidates_table.title')}
             </h4>
             <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">
-              {totalCount} {t('who_priority.individual.candidates_count_label')}
+              {totalCount} {t('who_priority.individual.candidates_table.count_label')}
             </span>
           </div>
           <div className="flex items-center gap-3 h-[36px]">
@@ -168,12 +168,12 @@ function CandidatesTable({
               className="flex items-center gap-2 px-4 py-2 text-sm text-black bg-white border border-black-24 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               <CloudDownloadIcon className="w-4 h-4" />
-              {downloading ? t('who_priority.individual.downloading') : t('who_priority.individual.download_csv')}
+              {downloading ? t('who_priority.individual.candidates_table.downloading') : t('who_priority.individual.candidates_table.download_csv')}
             </button>
           </div>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          {t('who_priority.individual.candidates_description')}
+          {t('who_priority.individual.candidates_table.description')}
         </p>
       </div>
       <DataTable
@@ -198,10 +198,10 @@ function CandidatesTable({
         emptyState={
           Object.keys(filters || {}).length > 0
             ? {
-                title: t('who_priority.individual.table_empty_filtered_title'),
-                description: t('who_priority.individual.table_empty_filtered_description'),
+                title: t('who_priority.individual.candidates_table.empty_filtered_title'),
+                description: t('who_priority.individual.candidates_table.empty_filtered_description'),
               }
-            : { title: t('who_priority.individual.table_empty_no_linked') }
+            : { title: t('who_priority.individual.candidates_table.empty_no_linked') }
         }
       />
     </div>
@@ -248,13 +248,13 @@ function ActiveBody({
         {/* Column 1 — stacked stat cards bound to the analysis hook */}
         <div className="flex flex-col gap-4">
           <StatCard
-            title={t('who_priority.individual.stat_candidates_title')}
+            title={t('who_priority.individual.stat_candidates.title')}
             value={analysis.counts.candidatesCount}
             variant="number"
             loading={analysis.loading}
           />
           <StatCard
-            title={t('who_priority.panel.section_target_population')}
+            title={t('who_priority.panel.sections.target_population')}
             value={
               analysis.targetPopulation && analysis.targetPopulation.length > 0
                 ? analysis.targetPopulation

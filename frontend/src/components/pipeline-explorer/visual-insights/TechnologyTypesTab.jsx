@@ -346,11 +346,11 @@ export default function TechnologyTypesTab({ onExplore }) {
       <div className="bg-white border border-gray-200 p-4 mb-6">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
-            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.tech.section_title')}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.tech.section.title')}</h3>
           </div>
         </div>
         <p className="text-sm text-gray-500 mb-6">
-          {t('pipeline_explorer.tech.section_description')}
+          {t('pipeline_explorer.visual_insights.tech.section.description')}
         </p>
 
         {/* Product type cards */}
@@ -420,7 +420,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                   onDownloadPNG={() => downloadPNG(techChartRef, 'vcp-sub-categories')}
                 />
               </div>
-              <p className="text-sm text-gray-500 mb-4">{t('pipeline_explorer.tech.vcp_select_prompt')}</p>
+              <p className="text-sm text-gray-500 mb-4">{t('pipeline_explorer.visual_insights.tech.vcp_select_prompt')}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {vcpSubCategories.map((sub) => (
                   <div key={sub.name} className="border border-gray-200 p-4 flex flex-col">
@@ -479,7 +479,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                     }}
                     className="text-sm font-medium text-[#E76A42] hover:underline cursor-pointer"
                   >
-                    {t('pipeline_explorer.tech.back_to_vcp')}
+                    {t('pipeline_explorer.visual_insights.tech.back_to_vcp')}
                   </button>
                 )}
                 <ChartMenu
@@ -494,7 +494,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                 />
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                {t('pipeline_explorer.tech.chart_description')}
+                {t('pipeline_explorer.visual_insights.tech.chart.description')}
               </p>
 
               <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -513,7 +513,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                   <ResponsiveContainer width="100%" height={Math.max(300, (techChartData?.length || 3) * 36)}>
                     <BarChart data={techChartData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: 'Number of candidates and approved products', position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
+                      <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: t('pipeline_explorer.visual_insights.tech.chart.x_axis'), position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
                       <YAxis type="category" dataKey="technology_type" width={200} tick={{ fontSize: 11 }} />
                       <Tooltip content={<BarTooltip labelMap={techPhaseLabelMap} />} />
                       {techPhases.map((p) => (
@@ -552,7 +552,7 @@ export default function TechnologyTypesTab({ onExplore }) {
             className="w-full flex items-center justify-between px-6 py-5 transition-colors" style={{ backgroundColor: '#F9F9FA' }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-base font-bold text-black">{t('pipeline_explorer.tech.coverage_title')}</span>
+              <span className="text-base font-bold text-black">{t('pipeline_explorer.visual_insights.tech.coverage.title')}</span>
               {selectedTechType && <span className="text-sm font-medium text-[#E76A42]">{selectedTechType}</span>}
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${coverageOpen ? 'rotate-45' : ''}`}>
@@ -575,7 +575,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mb-4">
-                    {t('pipeline_explorer.tech.coverage_description')}
+                    {t('pipeline_explorer.visual_insights.tech.coverage.description')}
                   </p>
                   <ResponsiveContainer width="100%" height={Math.max(180, (diseaseCoverageData?.length || 3) * 44)}>
                     <BarChart data={diseaseCoverageData} layout="vertical" margin={{ left: 120, right: 20, top: 5, bottom: 5 }}>
@@ -611,7 +611,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                 </>
               ) : (
                 <div className="py-8 text-center text-gray-400">
-                  {t('pipeline_explorer.tech.coverage_empty')}
+                  {t('pipeline_explorer.visual_insights.tech.coverage.empty')}
                 </div>
               )}
             </div>
@@ -625,7 +625,7 @@ export default function TechnologyTypesTab({ onExplore }) {
             className="w-full flex items-center justify-between px-6 py-5 transition-colors" style={{ backgroundColor: '#F9F9FA' }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-base font-bold text-black">{t('pipeline_explorer.tech.candidates_title')}</span>
+              <span className="text-base font-bold text-black">{t('pipeline_explorer.visual_insights.tech.candidates.title')}</span>
               {selectedDisease && <span className="text-sm font-medium text-[#E76A42]">{selectedDisease}</span>}
             </div>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${candidatesAccordionOpen ? 'rotate-45' : ''}`}>
@@ -666,12 +666,12 @@ export default function TechnologyTypesTab({ onExplore }) {
                     onSortChange={(next) => { setTechAccSort(next); setTechAccPage(1); }}
                     visibleColumns={techAccVisibleCols}
                     onVisibleColumnsChange={setTechAccVisibleCols}
-                    emptyState={{ title: t('pipeline_explorer.tech.candidates_empty_row_title'), description: t('pipeline_explorer.tech.candidates_empty_row_description') }}
+                    emptyState={{ title: t('pipeline_explorer.visual_insights.tech.candidates.empty_row.title'), description: t('pipeline_explorer.visual_insights.tech.candidates.empty_row.description') }}
                   />
                 </>
               ) : (
                 <div className="py-8 text-center text-gray-400">
-                  {t('pipeline_explorer.tech.candidates_empty')}
+                  {t('pipeline_explorer.visual_insights.tech.candidates.empty')}
                 </div>
               )}
             </div>

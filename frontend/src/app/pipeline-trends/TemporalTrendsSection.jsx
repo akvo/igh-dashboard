@@ -108,8 +108,8 @@ const STAGE_SERIES = [
 ];
 
 const tabs = [
-  { value: 'single', label: t('pipeline_trends.temporal.tab.single') },
-  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare'), dataTour: 'cpa-compare-tab' },
+  { value: 'single', label: t('pipeline_trends.temporal.tabs.single') },
+  { value: 'compare', label: t('pipeline_trends.temporal.tabs.compare'), dataTour: 'cpa-compare-tab' },
 ];
 
 export function ComparePortfoliosTab({
@@ -634,8 +634,8 @@ export function ComparePortfoliosTab({
               phases={apiPhases}
               layout="vertical"
               height={Math.max(220, compareChartData.length * 80)}
-              xAxisLabel={t('pipeline_trends.axis.x')}
-              yAxisLabel={t('pipeline_trends.axis.y_portfolio')}
+              xAxisLabel={t('pipeline_trends.temporal.compare.portfolio_comparison.x_axis')}
+              yAxisLabel={t('pipeline_trends.temporal.compare.portfolio_comparison.y_axis')}
               showFilters={false}
               yAxisWidth={280}
               maxTickChars={45}
@@ -643,7 +643,7 @@ export function ComparePortfoliosTab({
             />
           ) : (
             <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
-              {t('pipeline_trends.temporal.compare.empty_portfolios_chart')}
+              {t('pipeline_trends.temporal.compare.portfolio_comparison.empty')}
             </div>
           )}
         </div>
@@ -688,8 +688,8 @@ export function ComparePortfoliosTab({
             onVisibleColumnsChange={setCompareVisibleColumns}
             className="compare-table-bordered"
             emptyState={{
-              title: t('pipeline_trends.temporal.compare.empty_portfolios_table_title'),
-              description: t('pipeline_trends.temporal.compare.empty_portfolios_table_description'),
+              title: t('pipeline_trends.temporal.compare.comparison_table.empty_title'),
+              description: t('pipeline_trends.temporal.compare.comparison_table.empty_description'),
             }}
           />
         )}
@@ -741,7 +741,7 @@ export function ComparePortfoliosTab({
                   layout="horizontal"
                   height={300}
                   xAxisLabel={group}
-                  yAxisLabel={acrossGroups[0][0] === group ? t('pipeline_trends.axis.x') : ''}
+                  yAxisLabel={acrossGroups[0][0] === group ? t('pipeline_trends.temporal.compare.aggregated_trends.y_axis') : ''}
                   showFilters={false}
                   yAxisWidth={acrossGroups[0][0] === group ? 50 : 30}
                   visiblePhases={STAGE_SERIES.reduce((acc, s) => ({ ...acc, [s.key]: acrossStages.includes(s.key) }), {})}
@@ -750,7 +750,7 @@ export function ComparePortfoliosTab({
             ))
           ) : (
             <div className="w-full h-[300px] flex items-center justify-center text-gray-400 text-sm">
-              {t('pipeline_trends.temporal.compare.empty_portfolios_trends')}
+              {t('pipeline_trends.temporal.compare.aggregated_trends.empty')}
             </div>
           )}
         </div>
@@ -1167,8 +1167,8 @@ export default function TemporalTrendsSection({
                   phases={phases}
                   layout="vertical"
                   height={280}
-                  xAxisLabel={t('pipeline_trends.axis.x')}
-                  yAxisLabel={t('pipeline_trends.axis.y')}
+                  xAxisLabel={t('pipeline_trends.temporal.single.granular_stages.x_axis')}
+                  yAxisLabel={t('pipeline_trends.temporal.single.granular_stages.y_axis')}
                   showFilters={false}
                   visiblePhases={phases.reduce((acc, p) => ({ ...acc, [p.key]: selectedPhases.includes(p.key) }), {})}
                 />
@@ -1213,8 +1213,8 @@ export default function TemporalTrendsSection({
                   onClearAll={handleYearClearAll}
                   categoryKey="category"
                   height={380}
-                  xAxisLabel={t('pipeline_trends.axis.x_rd_stage')}
-                  yAxisLabel={t('pipeline_trends.axis.x')}
+                  xAxisLabel={t('pipeline_trends.temporal.single.aggregated_stages.x_axis')}
+                  yAxisLabel={t('pipeline_trends.temporal.single.aggregated_stages.y_axis')}
                   showFilters={true}
                   showBarLabels={true}
                 />

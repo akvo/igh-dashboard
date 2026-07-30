@@ -24,7 +24,7 @@ import { BarTooltip, GHA_COLORS } from './primitives';
 // stays self-contained since it only needs the lib helpers and the `data`
 // prop. Bars are coloured by Global Health Area exactly as the source did.
 
-export function TopFiveDiseasesChart({ data, title, description, loading, chartRef, onDownloadPNG, axisLabel = 'Number of candidates' }) {
+export function TopFiveDiseasesChart({ data, title, description, loading, chartRef, onDownloadPNG, axisLabel }) {
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-start justify-between mb-1">

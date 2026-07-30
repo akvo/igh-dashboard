@@ -24,9 +24,9 @@ export const GHA_COLORS = {
 };
 
 export const TAB_LABELS = {
-  candidates: { disease: t('pipeline_explorer.top5.candidates_disease'), product: t('pipeline_explorer.top5.candidates_product') },
-  approved: { disease: t('pipeline_explorer.top5.approved_disease'), product: t('pipeline_explorer.top5.approved_product') },
-  trials: { disease: t('pipeline_explorer.top5.trials_disease'), product: t('pipeline_explorer.top5.trials_product') },
+  candidates: { disease: t('pipeline_explorer.visual_insights.candidates.top5_disease.title'), product: t('pipeline_explorer.visual_insights.candidates.top5_product.title') },
+  approved: { disease: t('pipeline_explorer.visual_insights.approved.top5_disease.title'), product: t('pipeline_explorer.visual_insights.approved.top5_product.title') },
+  trials: { disease: t('pipeline_explorer.visual_insights.trials.top5_disease.title'), product: t('pipeline_explorer.visual_insights.trials.top5_product.title') },
 };
 
 // Sub-title copy shown beneath each Top-5 chart title. Parallels TAB_LABELS so a
@@ -34,16 +34,16 @@ export const TAB_LABELS = {
 // `TAB_DESCRIPTIONS[scope].disease` for the description.
 export const TAB_DESCRIPTIONS = {
   candidates: {
-    disease: t('pipeline_explorer.top5.candidates_disease_description'),
-    product: t('pipeline_explorer.top5.candidates_product_description'),
+    disease: t('pipeline_explorer.visual_insights.candidates.top5_disease.description'),
+    product: t('pipeline_explorer.visual_insights.candidates.top5_product.description'),
   },
   approved: {
-    disease: t('pipeline_explorer.top5.approved_disease_description'),
-    product: t('pipeline_explorer.top5.approved_product_description'),
+    disease: t('pipeline_explorer.visual_insights.approved.top5_disease.description'),
+    product: t('pipeline_explorer.visual_insights.approved.top5_product.description'),
   },
   trials: {
-    disease: t('pipeline_explorer.top5.trials_disease_description'),
-    product: t('pipeline_explorer.top5.trials_product_description'),
+    disease: t('pipeline_explorer.visual_insights.trials.top5_disease.description'),
+    product: t('pipeline_explorer.visual_insights.trials.top5_product.description'),
   },
 };
 
@@ -52,22 +52,22 @@ export const TAB_DESCRIPTIONS = {
 // returns and what GHA_COLORS uses) and differ only by the tab's noun.
 export const KPI_TOOLTIPS = {
   candidates: {
-    total: t('pipeline_explorer.kpi.candidates_total'),
-    "Women's health": t('pipeline_explorer.kpi.candidates_womens_health'),
-    'Neglected diseases': t('pipeline_explorer.kpi.candidates_neglected_diseases'),
-    'Emerging infectious diseases': t('pipeline_explorer.kpi.candidates_emerging'),
+    total: t('pipeline_explorer.visual_insights.candidates.kpi.total'),
+    "Women's health": t('pipeline_explorer.visual_insights.candidates.kpi.womens_health'),
+    'Neglected diseases': t('pipeline_explorer.visual_insights.candidates.kpi.neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.visual_insights.candidates.kpi.emerging'),
   },
   approved: {
-    total: t('pipeline_explorer.kpi.approved_total'),
-    "Women's health": t('pipeline_explorer.kpi.approved_womens_health'),
-    'Neglected diseases': t('pipeline_explorer.kpi.approved_neglected_diseases'),
-    'Emerging infectious diseases': t('pipeline_explorer.kpi.approved_emerging'),
+    total: t('pipeline_explorer.visual_insights.approved.kpi.total'),
+    "Women's health": t('pipeline_explorer.visual_insights.approved.kpi.womens_health'),
+    'Neglected diseases': t('pipeline_explorer.visual_insights.approved.kpi.neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.visual_insights.approved.kpi.emerging'),
   },
   trials: {
-    total: t('pipeline_explorer.kpi.trials_total'),
-    "Women's health": t('pipeline_explorer.kpi.trials_womens_health'),
-    'Neglected diseases': t('pipeline_explorer.kpi.trials_neglected_diseases'),
-    'Emerging infectious diseases': t('pipeline_explorer.kpi.trials_emerging'),
+    total: t('pipeline_explorer.visual_insights.trials.kpi.total'),
+    "Women's health": t('pipeline_explorer.visual_insights.trials.kpi.womens_health'),
+    'Neglected diseases': t('pipeline_explorer.visual_insights.trials.kpi.neglected_diseases'),
+    'Emerging infectious diseases': t('pipeline_explorer.visual_insights.trials.kpi.emerging'),
   },
 };
 
