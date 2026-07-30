@@ -513,7 +513,7 @@ export default function TechnologyTypesTab({ onExplore }) {
                   <ResponsiveContainer width="100%" height={Math.max(300, (techChartData?.length || 3) * 36)}>
                     <BarChart data={techChartData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                      <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: 'Number of candidates and approved products', position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
+                      <XAxis type="number" tick={{ fontSize: 12 }} label={{ value: t('pipeline_explorer.visual_insights.tech.chart.x_axis'), position: 'insideBottom', offset: -10, fontSize: 12, fill: '#666' }} />
                       <YAxis type="category" dataKey="technology_type" width={200} tick={{ fontSize: 11 }} />
                       <Tooltip content={<BarTooltip labelMap={techPhaseLabelMap} />} />
                       {techPhases.map((p) => (

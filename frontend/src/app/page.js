@@ -670,8 +670,8 @@ export default function Home() {
                 phases={portfolioSegments}
                 layout="vertical"
                 height={250}
-                xAxisLabel="Number of candidates / approved products"
-                yAxisLabel="Global health area"
+                xAxisLabel={t('home.portfolio.x_axis')}
+                yAxisLabel={t('home.portfolio.y_axis')}
                 yAxisWidth={220}
                 maxTickChars={40}
                 showFilters={true}
@@ -751,7 +751,7 @@ export default function Home() {
                 phases={temporalPhases}
                 layout="vertical"
                 height={220}
-                xAxisLabel="Number of candidates / approved products"
+                xAxisLabel={t('home.trends.x_axis')}
                 showFilters={true}
                 hideXAxisTicks={true}
                 visiblePhases={crossVisiblePhases}

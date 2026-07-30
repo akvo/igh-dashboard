@@ -220,6 +220,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
+          axisLabel={t('pipeline_explorer.visual_insights.approved.top5_disease.x_axis')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
@@ -228,6 +229,7 @@ export default function ApprovedProductsTab({ onExplore }) {
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
+          axisLabel={t('pipeline_explorer.visual_insights.approved.top5_product.x_axis')}
         />
       </div>
 
@@ -263,7 +265,7 @@ export default function ApprovedProductsTab({ onExplore }) {
                 maxTickChars={999}
                 tickAngle={-40}
                 xAxisLabel=""
-                yAxisLabel="Number of products"
+                yAxisLabel={t('pipeline_explorer.visual_insights.approved.approval_status.y_axis')}
               />
             )}
           </div>
@@ -300,8 +302,8 @@ export default function ApprovedProductsTab({ onExplore }) {
                 layout="horizontal"
                 height={280}
                 maxTickChars={999}
-                xAxisLabel="Authority type"
-                yAxisLabel="Number of products"
+                xAxisLabel={t('pipeline_explorer.visual_insights.approved.approving_auth.x_axis')}
+                yAxisLabel={t('pipeline_explorer.visual_insights.approved.approving_auth.y_axis')}
                 showFilters={true}
                 barRadius={0}
               />

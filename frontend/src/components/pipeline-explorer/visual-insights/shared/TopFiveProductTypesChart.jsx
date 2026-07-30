@@ -23,7 +23,7 @@ import { wrapLabel } from '@/lib/chart-utils';
 // and the PNG-download handler arrive via props; the CSV export stays
 // self-contained since it only needs the lib helpers and the `data` prop.
 
-export function TopFiveProductTypesChart({ data, title, description, loading, chartRef, onDownloadPNG, axisLabel = 'Number of candidates' }) {
+export function TopFiveProductTypesChart({ data, title, description, loading, chartRef, onDownloadPNG, axisLabel }) {
   return (
     <div className="bg-white border border-gray-200 p-4">
       <div className="flex items-start justify-between mb-1">

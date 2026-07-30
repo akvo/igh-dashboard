@@ -171,6 +171,7 @@ export default function CandidatesTab({ onExplore }) {
           loading={diseasesLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
+          axisLabel={t('pipeline_explorer.visual_insights.candidates.top5_disease.x_axis')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
@@ -179,6 +180,7 @@ export default function CandidatesTab({ onExplore }) {
           loading={productsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
+          axisLabel={t('pipeline_explorer.visual_insights.candidates.top5_product.x_axis')}
         />
       </div>
 

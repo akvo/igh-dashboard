@@ -218,7 +218,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           loading={trialsStatsLoading}
           chartRef={diseasesChartRef}
           onDownloadPNG={() => downloadPNG(diseasesChartRef, 'top-5-diseases')}
-          axisLabel="Number of clinical trials"
+          axisLabel={t('pipeline_explorer.visual_insights.trials.top5_disease.x_axis')}
         />
         <TopFiveProductTypesChart
           data={top5Products}
@@ -227,7 +227,7 @@ export default function ClinicalTrialsTab({ onExplore }) {
           loading={trialsStatsLoading}
           chartRef={productsChartRef}
           onDownloadPNG={() => downloadPNG(productsChartRef, 'top-5-product-types')}
-          axisLabel="Number of clinical trials"
+          axisLabel={t('pipeline_explorer.visual_insights.trials.top5_product.x_axis')}
         />
       </div>
 

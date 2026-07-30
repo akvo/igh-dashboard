@@ -22,6 +22,8 @@ home:
     description: A cross-section of the R&D pipeline by global health area and development stage. Each horizontal bar represents a global health area, with colour-coded segments showing the number of candidates and approved products. Use the filters below to focus on specific product types or R&D stage. Click items in the legend to turn individual stages on or off to compare how pipelines are distributed across the development lifecycle.
     loading: Loading chart...
     title: Portfolio overview by global health area
+    x_axis: Number of candidates / approved products
+    y_axis: Global health area
   priority:
     area_description: Pipeline aligned with a WHO priority.
     cta_all: View all
@@ -62,15 +64,19 @@ home:
     description: A high-level view of how the global R&D pipeline evolves over time across development stages. This chart shows changes in the number of candidates in early development, late development and approved products across IGH review years. Use the filters to focus on a specific global health area or product type. Click on the legend to turn individual development stages on or off to compare how the pipelines are progressing through the R&D lifecycle over time.
     loading: Loading chart...
     title: Pipeline trends
+    x_axis: Number of candidates / approved products
 pipeline_explorer:
   visual_insights:
     approved:
       approval_status:
         description: This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
         title: Approval status
+        y_axis: Number of products
       approving_auth:
         description: The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
         title: Approving authorities
+        x_axis: Authority type
+        y_axis: Number of products
       intro: Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
       table:
         description: A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
@@ -87,9 +93,11 @@ pipeline_explorer:
       top5_disease:
         title: Top 5 diseases by approved product count
         description: Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters.
+        x_axis: Number of candidates
       top5_product:
         title: Top 5 product types by approved product count
         description: Ranks the five product types with the most approved products. Reflects the active filters.
+        x_axis: Number of candidates
     candidates:
       table:
         description: "A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more."
@@ -103,9 +111,11 @@ pipeline_explorer:
       top5_disease:
         title: Top 5 diseases by candidate count
         description: Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters.
+        x_axis: Number of candidates
       top5_product:
         title: Top 5 product types by candidate count
         description: Ranks the five product types with the most candidates. Reflects the active filters.
+        x_axis: Number of candidates
     trials:
       kpi:
         emerging: The number of those trials addressing emerging infectious diseases.
@@ -115,9 +125,11 @@ pipeline_explorer:
       top5_disease:
         title: Top 5 diseases by clinical trial count
         description: Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters.
+        x_axis: Number of clinical trials
       top5_product:
         title: Top 5 product types by clinical trial count
         description: Ranks the five product types with the most clinical trials. Reflects the active filters.
+        x_axis: Number of clinical trials
       age_groups:
         description: Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
         title: Age groups in clinical trials
@@ -152,6 +164,7 @@ pipeline_explorer:
         title: Candidates and approved products
       chart:
         description: Each bar shows a technology type within the selected product, split by R&D stage.
+        x_axis: Number of candidates and approved products
       coverage:
         description: How the selected technology type covers individual diseases, split by global health area. Select a bar to see the candidates and approved products for that disease.
         empty: Select a technology type from the bar chart above to see disease coverage.
