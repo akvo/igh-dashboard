@@ -71,12 +71,12 @@ pipeline_explorer:
       approval_status:
         description: This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
         title: Approval status
-        y_axis: Number of products
+        y_axis: Number of approved products
       approving_auth:
         description: The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
         title: Approving authorities
         x_axis: Authority type
-        y_axis: Number of products
+        y_axis: Number of approved products
       intro: Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
       table:
         description: A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
@@ -93,11 +93,11 @@ pipeline_explorer:
       top5_disease:
         title: Top 5 diseases by approved product count
         description: Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters.
-        x_axis: Number of candidates
+        x_axis: Number of approved products
       top5_product:
         title: Top 5 product types by approved product count
         description: Ranks the five product types with the most approved products. Reflects the active filters.
-        x_axis: Number of candidates
+        x_axis: Number of approved products
     candidates:
       table:
         description: "A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more."
@@ -301,7 +301,7 @@ pipeline_trends:
 who_priority:
   individual:
     pipeline_chart:
-      x_axis: Amount
+      x_axis: Number of candidates
       description: How the pipeline for the selected priority builds up across R&D stages. Each bar shows a product type, segmented by the candidates at each stage; click items in the legend to toggle stages on or off, or use the ··· menu to export the chart or its data.
       title: Pipeline build up
     apply: Apply
