@@ -232,11 +232,6 @@ pipeline_overview:
     loading: Loading chart data...
     title: Product types
 pipeline_trends:
-  axis:
-    x: Number of candidates / approved products
-    y: Years
-    y_portfolio: Portfolio
-    x_rd_stage: R&D stage
   filter:
     add_portfolio: Add portfolio
     apply: Apply
@@ -258,6 +253,9 @@ pipeline_trends:
     share_copied: Copied!
     title: Pipeline trends
   section:
+    chart:
+      x_axis: Number of candidates / approved products
+      y_axis: Years
     description: Explore the temporal trends in the global health R&D pipeline, tracking how distributions across R&D stages shift over time by global health area, disease, and product, with filters and legend controls to refine the analysis.
     title: Pipeline trends
   temporal:
@@ -265,6 +263,8 @@ pipeline_trends:
       portfolio_comparison:
         description: Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression.
         title: Portfolio comparison by R&D stage in selected year
+        x_axis: Number of candidates / approved products
+        y_axis: Portfolio
         empty: Select portfolios and click Apply to see comparison data.
       comparison_table:
         description: Explore the underlying data for the selected portfolios by aggregated R&D stage in the chosen year, enabling detailed comparison of portfolio compositions.
@@ -273,6 +273,7 @@ pipeline_trends:
       aggregated_trends:
         description: Explore the temporal trends for each selected portfolio with R&D stages aggregated into early development, late development, and approved products across IGH review years.
         title: Temporal trends in aggregated R&D stages across portfolios
+        y_axis: Number of candidates / approved products
         empty: Select portfolios and click Apply to see temporal trends.
       intro: Compare up to four portfolios—each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&D stages to identify contrasts in growth and progression.
     section:
@@ -282,9 +283,13 @@ pipeline_trends:
       granular_stages:
         description: Explore the temporal trends in a single portfolio, showing how distributions across R&D stages change over time. Filter by disease and product, and use the R&D stage legend and year controls to include or exclude specific stages and IGH review years for more focused analysis.
         title: Temporal trends in portfolio composition across R&D stages
+        x_axis: Number of candidates / approved products
+        y_axis: Years
       aggregated_stages:
         description: Explore the temporal trends in a single portfolio with R&D stages aggregated into early development, late development, and approved products. Each cluster represents an aggregated R&D stage across IGH review years, showing how the portfolio shifts over time at a higher level than the granular stage view above.
         title: Temporal trends in aggregated R&D stages
+        x_axis: R&D stage
+        y_axis: Number of candidates / approved products
       aggregated_stages_table:
         description: Explore the underlying data for aggregated R&D stages, including year-on-year changes and total growth in portfolio composition over time.
         empty_description: No data available for the selected filters.
