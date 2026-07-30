@@ -3,22 +3,22 @@ import { t } from '@/content';
 
 const reports = [
   {
-    title: t('home.reports.card_1_title'),
-    description: t('home.reports.card_1_description'),
-    image: t('home.reports.card_1_image'),
-    url: t('home.reports.card_1_url'),
+    title: t('home.reports.cards.1.title'),
+    description: t('home.reports.cards.1.description'),
+    image: t('home.reports.cards.1.image'),
+    url: t('home.reports.cards.1.url'),
   },
   {
-    title: t('home.reports.card_2_title'),
-    description: t('home.reports.card_2_description'),
-    image: t('home.reports.card_2_image'),
-    url: t('home.reports.card_2_url'),
+    title: t('home.reports.cards.2.title'),
+    description: t('home.reports.cards.2.description'),
+    image: t('home.reports.cards.2.image'),
+    url: t('home.reports.cards.2.url'),
   },
   {
-    title: t('home.reports.card_3_title'),
-    description: t('home.reports.card_3_description'),
-    image: t('home.reports.card_3_image'),
-    url: t('home.reports.card_3_url'),
+    title: t('home.reports.cards.3.title'),
+    description: t('home.reports.cards.3.description'),
+    image: t('home.reports.cards.3.image'),
+    url: t('home.reports.cards.3.url'),
   },
 ];
 

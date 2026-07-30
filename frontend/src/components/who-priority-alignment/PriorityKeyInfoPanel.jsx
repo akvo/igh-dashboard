@@ -123,10 +123,10 @@ export default function PriorityKeyInfoPanel({ isOpen, onClose, priority, loadin
                 <p className="text-xs text-gray-500">Published {publishedLine}</p>
               )}
 
-              <Section label={t('who_priority.panel.section_intended_use')} body={priority.intended_use} />
-              <Section label={t('who_priority.panel.section_target_population')} body={priority.target_population} />
-              <Section label={t('who_priority.panel.section_efficacy')} body={priority.efficacy} />
-              <Section label={t('who_priority.panel.section_safety')} body={priority.safety} />
+              <Section label={t('who_priority.panel.sections.intended_use')} body={priority.intended_use} />
+              <Section label={t('who_priority.panel.sections.target_population')} body={priority.target_population} />
+              <Section label={t('who_priority.panel.sections.efficacy')} body={priority.efficacy} />
+              <Section label={t('who_priority.panel.sections.safety')} body={priority.safety} />
             </>
           )}
         </div>

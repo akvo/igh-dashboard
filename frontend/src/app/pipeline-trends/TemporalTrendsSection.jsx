@@ -108,8 +108,8 @@ const STAGE_SERIES = [
 ];
 
 const tabs = [
-  { value: 'single', label: t('pipeline_trends.temporal.tab.single') },
-  { value: 'compare', label: t('pipeline_trends.temporal.tab.compare'), dataTour: 'cpa-compare-tab' },
+  { value: 'single', label: t('pipeline_trends.temporal.tabs.single') },
+  { value: 'compare', label: t('pipeline_trends.temporal.tabs.compare'), dataTour: 'cpa-compare-tab' },
 ];
 
 export function ComparePortfoliosTab({
@@ -643,7 +643,7 @@ export function ComparePortfoliosTab({
             />
           ) : (
             <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
-              {t('pipeline_trends.temporal.compare.empty_portfolios_chart')}
+              {t('pipeline_trends.temporal.compare.portfolio_comparison.empty')}
             </div>
           )}
         </div>
@@ -688,8 +688,8 @@ export function ComparePortfoliosTab({
             onVisibleColumnsChange={setCompareVisibleColumns}
             className="compare-table-bordered"
             emptyState={{
-              title: t('pipeline_trends.temporal.compare.empty_portfolios_table_title'),
-              description: t('pipeline_trends.temporal.compare.empty_portfolios_table_description'),
+              title: t('pipeline_trends.temporal.compare.comparison_table.empty_title'),
+              description: t('pipeline_trends.temporal.compare.comparison_table.empty_description'),
             }}
           />
         )}
@@ -750,7 +750,7 @@ export function ComparePortfoliosTab({
             ))
           ) : (
             <div className="w-full h-[300px] flex items-center justify-center text-gray-400 text-sm">
-              {t('pipeline_trends.temporal.compare.empty_portfolios_trends')}
+              {t('pipeline_trends.temporal.compare.aggregated_trends.empty')}
             </div>
           )}
         </div>

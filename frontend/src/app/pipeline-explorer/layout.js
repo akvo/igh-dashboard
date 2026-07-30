@@ -38,8 +38,8 @@ export default function PipelineExplorerLayout({ children }) {
   // Visual Insights intro is two paragraphs rendered as markdown; Table
   // Builder intro is a single paragraph rendered as plain text.
   const intro = isTableBuilder
-    ? t('pipeline_explorer.page.table_builder_intro')
-    : <Markdown path="pipeline_explorer.page.visual_insights_intro" className="space-y-3" />;
+    ? t('pipeline_explorer.table_builder.intro')
+    : <Markdown path="pipeline_explorer.visual_insights.intro" className="space-y-3" />;
 
   return (
     <div className="flex h-[calc(100vh-90px)] bg-cream-200">

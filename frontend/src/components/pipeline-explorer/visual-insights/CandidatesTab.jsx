@@ -184,11 +184,11 @@ export default function CandidatesTab({ onExplore }) {
 
       <div className="bg-white border border-gray-200 p-4">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.candidates.table_title')}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-black">{t('pipeline_explorer.visual_insights.candidates.table.title')}</h3>
           <span className="px-3 py-1 text-sm text-[#E76A42] bg-[#FE74491F]">{candidatesTotalCount.toLocaleString()}</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          {t('pipeline_explorer.candidates.table_description')}
+          {t('pipeline_explorer.visual_insights.candidates.table.description')}
         </p>
         <DataTable
           tableId="vi-candidates"
@@ -209,7 +209,7 @@ export default function CandidatesTab({ onExplore }) {
           onSortChange={(next) => { setCandidatesSort(next); setCandidatesPage(1); }}
           visibleColumns={candidatesVisibleCols}
           onVisibleColumnsChange={setCandidatesVisibleCols}
-          emptyState={{ title: t('pipeline_explorer.candidates.table_empty') }}
+          emptyState={{ title: t('pipeline_explorer.visual_insights.candidates.table.empty') }}
         />
       </div>
     </>

@@ -13,8 +13,9 @@ home:
     description: A global snapshot of R&D activity, highlighting where clinical trials are conducted and where product developers are based.
     footnote: This global heat map illustrates where R&D activity is concentrated across countries. Use the tabs to switch between the location of clinical trials and the location of developers. Darker shades indicate countries with a higher concentration of trials or developers, highlighting global research hubs as well as regions with limited R&D presence.
     loading: Loading map...
-    tab_developers: Location of developers
-    tab_trials: Location of clinical trials
+    tabs:
+      developers: Location of developers
+      trials: Location of clinical trials
     title: Geographic distribution of clinical trials and developers
   portfolio:
     cta: Explore portfolio analysis
@@ -36,18 +37,22 @@ home:
       loading: Loading chart...
       title: Share of priorities dedicated to women or children
   reports:
-    card_1_description: An overview of key takeaways from the G-FINDER survey
-    card_1_image: https://cdn.impactglobalhealth.org/media/2025%20G-FINDER%20cover-404x341.webp
-    card_1_title: Funding for global health R&D in 2024
-    card_1_url: https://www.impactglobalhealth.org/insights/report-library/funding-for-global-health-rd-in-2024
-    card_2_description: Executive briefing presenting findings from three case studies demonstrating how selected global health innovations enhance health outcomes and provide economic value across the US, UK, Japan, and Europe.
-    card_2_image: https://cdn.impactglobalhealth.org/media/Ripple%20effect%202.0%20image.jpg
-    card_2_title: "The Ripple Effect 2.0: from global health to domestic value"
-    card_2_url: https://www.impactglobalhealth.org/insights/report-library/ripple-effect-2
-    card_3_description: The 100 Days Mission's 5th Implementation Report and Scorecard highlight limited progress has been made in an R&D ecosystem that remains reactive and reliant on US funding.
-    card_3_image: https://cdn.impactglobalhealth.org/media/Untitled%20design%20(7)-404x404.webp
-    card_3_title: "100 Days Mission: 5th Implementation Report and Scorecard"
-    card_3_url: https://www.impactglobalhealth.org/insights/report-library/ipps-report-2026
+    cards:
+      "1":
+        description: An overview of key takeaways from the G-FINDER survey
+        image: https://cdn.impactglobalhealth.org/media/2025%20G-FINDER%20cover-404x341.webp
+        title: Funding for global health R&D in 2024
+        url: https://www.impactglobalhealth.org/insights/report-library/funding-for-global-health-rd-in-2024
+      "2":
+        description: Executive briefing presenting findings from three case studies demonstrating how selected global health innovations enhance health outcomes and provide economic value across the US, UK, Japan, and Europe.
+        image: https://cdn.impactglobalhealth.org/media/Ripple%20effect%202.0%20image.jpg
+        title: "The Ripple Effect 2.0: from global health to domestic value"
+        url: https://www.impactglobalhealth.org/insights/report-library/ripple-effect-2
+      "3":
+        description: The 100 Days Mission's 5th Implementation Report and Scorecard highlight limited progress has been made in an R&D ecosystem that remains reactive and reliant on US funding.
+        image: https://cdn.impactglobalhealth.org/media/Untitled%20design%20(7)-404x404.webp
+        title: "100 Days Mission: 5th Implementation Report and Scorecard"
+        url: https://www.impactglobalhealth.org/insights/report-library/ipps-report-2026
     cta_all: View all insights
     read_more: Read more
     subtitle: Discover the insights that two decades of global health data have given us.
@@ -58,84 +63,131 @@ home:
     loading: Loading chart...
     title: Pipeline trends
 pipeline_explorer:
-  approved:
-    approval_status_description: This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
-    approval_status_title: Approval status
-    approving_auth_description: The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
-    approving_auth_title: Approving authorities
-    intro: Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
-    table_description: A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
-    table_empty: No approved products found
-    table_title: Selected approved products
-    who_prequal_description: A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
-    who_prequal_title: WHO prequalification
-  candidates:
-    table_description: "A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more."
-    table_empty: No candidates found
-    table_title: Selected candidates
-  kpi:
-    approved_emerging: The number of those approved products addressing emerging infectious diseases.
-    approved_neglected_diseases: The number of those approved products addressing neglected diseases.
-    approved_total: The number of approved health products that match the current filters.
-    approved_womens_health: The number of those approved products addressing women's health conditions.
-    candidates_emerging: The number of those candidates addressing emerging infectious diseases.
-    candidates_neglected_diseases: The number of those candidates addressing neglected diseases.
-    candidates_total: The number of active candidates in development that match the current filters.
-    candidates_womens_health: The number of those candidates addressing women's health conditions.
-    trials_emerging: The number of those trials addressing emerging infectious diseases.
-    trials_neglected_diseases: The number of those trials addressing neglected diseases.
-    trials_total: The number of clinical trials linked to the pipeline that match the current filters.
-    trials_womens_health: The number of those trials addressing women's health conditions.
-  page:
-    table_builder_intro: Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Page-level filters stay applied across the Visual Insights view and Table Builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns.
-    title: Pipeline Explorer
-    visual_insights_intro: |-
+  visual_insights:
+    approved:
+      approval_status:
+        description: This chart shows the total number of approved products by approval status. Each bar represents a specific approval status, enabling quick comparison across statuses.
+        title: Approval status
+      approving_auth:
+        description: The chart compares the number of approved products by approving authorities, and the number of those products with WHO prequalification.
+        title: Approving authorities
+      intro: Three summary charts cover approval status, approving authorities and WHO prequalification. A searchable table below lists every approved product matching the page-level filters.
+      table:
+        description: A row-by-row view of every approved product matching the page-level filters. Use the per-column filters below each header to narrow further, then export the matching rows to .csv.
+        empty: No approved products found
+        title: Selected approved products
+      who_prequal:
+        description: A comparison of approved products that have a WHO prequalification. The WHO prequalification is a 'gold standard' for products intended for use in low- and middle-income countries.
+        title: WHO prequalification
+      kpi:
+        emerging: The number of those approved products addressing emerging infectious diseases.
+        neglected_diseases: The number of those approved products addressing neglected diseases.
+        total: The number of approved health products that match the current filters.
+        womens_health: The number of those approved products addressing women's health conditions.
+      top5_disease:
+        title: Top 5 diseases by approved product count
+        description: Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters.
+      top5_product:
+        title: Top 5 product types by approved product count
+        description: Ranks the five product types with the most approved products. Reflects the active filters.
+    candidates:
+      table:
+        description: "A matrix of candidates scoped by the page-level filters, with per-column filters below each header to narrow further. Each row gives candidate-level detail: name, R&D stage, developer, indication and more."
+        empty: No candidates found
+        title: Selected candidates
+      kpi:
+        emerging: The number of those candidates addressing emerging infectious diseases.
+        neglected_diseases: The number of those candidates addressing neglected diseases.
+        total: The number of active candidates in development that match the current filters.
+        womens_health: The number of those candidates addressing women's health conditions.
+      top5_disease:
+        title: Top 5 diseases by candidate count
+        description: Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters.
+      top5_product:
+        title: Top 5 product types by candidate count
+        description: Ranks the five product types with the most candidates. Reflects the active filters.
+    trials:
+      kpi:
+        emerging: The number of those trials addressing emerging infectious diseases.
+        neglected_diseases: The number of those trials addressing neglected diseases.
+        total: The number of clinical trials linked to the pipeline that match the current filters.
+        womens_health: The number of those trials addressing women's health conditions.
+      top5_disease:
+        title: Top 5 diseases by clinical trial count
+        description: Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters.
+      top5_product:
+        title: Top 5 product types by clinical trial count
+        description: Ranks the five product types with the most clinical trials. Reflects the active filters.
+      age_groups:
+        description: Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
+        title: Age groups in clinical trials
+      geo:
+        description: The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
+        source: "Source: World Bank Official Boundaries"
+        title: Geographic distribution of clinical trials
+      intro: The clinical-trial layer of the pipeline — who is being studied, where, and at what stage. Two charts, a map and a searchable table cover age group, status, geography and trial-level detail.
+      table:
+        description: The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
+        empty: No clinical trials found
+        title: Selected clinical trials
+      trial_status:
+        description: Number of studies at each stage across the portfolio, from ongoing to completed.
+        title: Clinical trial status
+    intro: |-
       Pipeline Explorer offers two complementary views of the pipeline. The visual insights view presents interactive charts across candidates, approved products, clinical trials and technology types; switch to the table builder view to assemble a custom dataset and export it as .csv.
 
       Page-level filters stay applied as you move across the tabs or to the table builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column, use the Columns button (top right) to show, hide or reorder columns, and follow the Explore → link on any row to open the full record for that entity.
-  tabs:
-    approved_products: Approved Products
-    candidates: Candidates
-    clinical_trials: Clinical Trials
-    technology_types: Technology types
-  tech:
-    back_to_vcp: Back to VCP
-    candidates_empty: Select a technology type from the bar chart above to see candidates and approved products.
-    candidates_empty_row_description: No rows match the selected filters.
-    candidates_empty_row_title: No candidates or approved products found
-    candidates_title: Candidates and approved products
-    chart_description: Each bar shows a technology type within the selected product, split by R&D stage.
-    coverage_description: How the selected technology type covers individual diseases, split by global health area. Select a bar to see the candidates and approved products for that disease.
-    coverage_empty: Select a technology type from the bar chart above to see disease coverage.
-    coverage_title: Coverage across diseases
-    section_description: Each card shows a product type with its total candidate count and technology count. Select a card to see how that product type breaks down by technology and R&D stage in the chart below.
-    section_title: Product types and their technologies
-    vcp_select_prompt: Select a category to explore its technology breakdown
-  top5:
-    approved_disease: Top 5 diseases by approved product count
-    approved_disease_description: Ranks the five diseases with the most approved products, with bars colour-coded by global health area. Reflects the active filters.
-    approved_product: Top 5 product types by approved product count
-    approved_product_description: Ranks the five product types with the most approved products. Reflects the active filters.
-    candidates_disease: Top 5 diseases by candidate count
-    candidates_disease_description: Ranks the five diseases with the most candidates, with bars colour-coded by global health area. Reflects the active filters.
-    candidates_product: Top 5 product types by candidate count
-    candidates_product_description: Ranks the five product types with the most candidates. Reflects the active filters.
-    trials_disease: Top 5 diseases by clinical trial count
-    trials_disease_description: Ranks the five diseases with the most clinical trials, with bars colour-coded by global health area. Reflects the active filters.
-    trials_product: Top 5 product types by clinical trial count
-    trials_product_description: Ranks the five product types with the most clinical trials. Reflects the active filters.
-  trials:
-    age_groups_description: Proportion of clinical trial participants in each age bracket, highlighting which age groups are most and least represented across the portfolio.
-    age_groups_title: Age groups in clinical trials
-    geo_description: The global heat map shows the country-level distribution of clinical trials, with darker shades indicating countries with higher numbers of studies, and can be filtered by clinical trial status.
-    geo_source: "Source: World Bank Official Boundaries"
-    geo_title: Geographic distribution of clinical trials
-    intro: The clinical-trial layer of the pipeline — who is being studied, where, and at what stage. Two charts, a map and a searchable table cover age group, status, geography and trial-level detail.
-    table_description: The clinical trial table is a matrix of individual studies, providing granular details such as title, clinical trial status, location, start date, URL and more. Use the per-column filters below each header to narrow results, then export the matching rows to .csv.
-    table_empty: No clinical trials found
-    table_title: Selected clinical trials
-    trial_status_description: Number of studies at each stage across the portfolio, from ongoing to completed.
-    trial_status_title: Clinical trial status
+    tabs:
+      approved_products: Approved Products
+      candidates: Candidates
+      clinical_trials: Clinical Trials
+      technology_types: Technology types
+    tech:
+      back_to_vcp: Back to VCP
+      candidates:
+        empty: Select a technology type from the bar chart above to see candidates and approved products.
+        empty_row:
+          description: No rows match the selected filters.
+          title: No candidates or approved products found
+        title: Candidates and approved products
+      chart:
+        description: Each bar shows a technology type within the selected product, split by R&D stage.
+      coverage:
+        description: How the selected technology type covers individual diseases, split by global health area. Select a bar to see the candidates and approved products for that disease.
+        empty: Select a technology type from the bar chart above to see disease coverage.
+        title: Coverage across diseases
+      section:
+        description: Each card shows a product type with its total candidate count and technology count. Select a card to see how that product type breaks down by technology and R&D stage in the chart below.
+        title: Product types and their technologies
+      vcp_select_prompt: Select a category to explore its technology breakdown
+  table_builder:
+    intro: Build custom tables of candidates, approved products, clinical trials and R&D priorities, then export as CSV. Page-level filters stay applied across the Visual Insights view and Table Builder. Use Share this view to copy a link with your filters preserved. On every table you can sort by any column and use the Columns button (top right) to show, hide or reorder columns.
+    candidates_approved:
+      description: Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand.
+      title: Candidates & approved products
+    clinical_trials:
+      description: Clinical trials joined to the candidates they study — useful for tracing trial activity back to specific assets in the pipeline. Filter by global health area, disease or product type, then choose columns for trial-level detail.
+      title: Clinical trials & candidates
+    download_csv: Download CSV
+    downloading: Downloading...
+    empty_state:
+      no_data_title: No results available
+      no_results_description: No rows match the active filters. Clear them to see more.
+      no_results_title: No results found
+    rd_only:
+      description: "R&D priorities on their own, no candidate join — useful for understanding the priority landscape itself: author, publication date, target population, efficacy and safety expectations, source. Filter by global health area or disease, then choose columns to focus on what matters."
+      title: R&D priorities
+    rd_priorities:
+      description: R&D priorities joined to the candidates that address them — useful for seeing which priorities are well covered and which remain open. Filter by global health area or disease, then choose columns to compare priority detail against candidate progress.
+      title: R&D priorities & candidates
+    reset_filters: Reset filters
+    tabs:
+      candidates_approved: Candidates & approved products
+      clinical_trials: Clinical trials & candidates
+      rd_only: R&D priorities
+      rd_priorities: R&D priorities & candidates
+  page:
+    title: Pipeline Explorer
 pipeline_overview:
   chart:
     description: Each horizontal bar shows a product type, with colour-coded segments for how many candidates and approved products sit at each R&D stage. Use the page-level filters to narrow the view, click items in the legend to toggle stages on or off, or use Export Visual to save the chart as an image.
@@ -146,15 +198,18 @@ pipeline_overview:
     x_axis: Number of candidates / approved products
     y_axis: Product type
   kpi:
-    approved_description: Approved products
-    approved_title: Approved health products
-    approved_tooltip: Number of products that have received approval
-    candidates_description: Active candidates
-    candidates_title: Candidates in development
-    candidates_tooltip: Number of candidates currently in active development
-    trials_description: Ongoing clinical trials
-    trials_title: Linked clinical trials
-    trials_tooltip: Number of clinical trials currently in progress
+    approved:
+      description: Approved products
+      title: Approved health products
+      tooltip: Number of products that have received approval
+    candidates:
+      description: Active candidates
+      title: Candidates in development
+      tooltip: Number of candidates currently in active development
+    trials:
+      description: Ongoing clinical trials
+      title: Linked clinical trials
+      tooltip: Number of clinical trials currently in progress
   page:
     intro: An interactive overview of the global health R&D pipeline by global health area, disease, product type and R&D stage. Page-level filters scope every chart here. Use Share this view to copy a link with your filters preserved.
     title: Pipeline overview
@@ -197,15 +252,15 @@ pipeline_trends:
       portfolio_comparison:
         description: Compare up to four portfolios, each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio. Use aggregated R&D stages to identify contrasts in growth and progression.
         title: Portfolio comparison by R&D stage in selected year
+        empty: Select portfolios and click Apply to see comparison data.
       comparison_table:
         description: Explore the underlying data for the selected portfolios by aggregated R&D stage in the chosen year, enabling detailed comparison of portfolio compositions.
+        empty_description: Select portfolios and apply to see comparison data.
+        empty_title: No data available
       aggregated_trends:
         description: Explore the temporal trends for each selected portfolio with R&D stages aggregated into early development, late development, and approved products across IGH review years.
         title: Temporal trends in aggregated R&D stages across portfolios
-      empty_portfolios_chart: Select portfolios and click Apply to see comparison data.
-      empty_portfolios_table_description: Select portfolios and apply to see comparison data.
-      empty_portfolios_table_title: No data available
-      empty_portfolios_trends: Select portfolios and click Apply to see temporal trends.
+        empty: Select portfolios and click Apply to see temporal trends.
       intro: Compare up to four portfolios—each defined by a specific combination of disease and product. Examine how their R&D stage distributions differ in a selected year, review the underlying data in table form, and explore temporal trends for each portfolio over time using aggregated R&D stages to identify contrasts in growth and progression.
     section:
       description: Explore how selected portfolios evolve over time in the global health R&D pipeline. Analyse the temporal progression of a single portfolio, by one or more diseases and products, or compare up to four portfolios side by side to identify differences in stage distribution and trajectory.
@@ -222,43 +277,49 @@ pipeline_trends:
         empty_description: No data available for the selected filters.
         empty_title: No data available
         title: Temporal trends in aggregated R&D stages – table view
-    tab:
+    tabs:
       compare: Compare different portfolios
       single: Compare a single portfolio over time
 who_priority:
   individual:
-    amount_axis: Amount
+    pipeline_chart:
+      x_axis: Amount
+      description: How the pipeline for the selected priority builds up across R&D stages. Each bar shows a product type, segmented by the candidates at each stage; click items in the legend to toggle stages on or off, or use the ··· menu to export the chart or its data.
+      title: Pipeline build up
     apply: Apply
-    candidates_count_label: Candidates
-    candidates_description: A matrix of the candidates linked to the selected priority, with per-column filters beneath each header to narrow further. Sort by any column, use the Columns button to show, hide or reorder columns, follow the Explore → link on any row to open that candidate's full record, or export the matching rows to .csv.
-    candidates_title: Candidates linked to priority
+    candidates_table:
+      count_label: Candidates
+      description: A matrix of the candidates linked to the selected priority, with per-column filters beneath each header to narrow further. Sort by any column, use the Columns button to show, hide or reorder columns, follow the Explore → link on any row to open that candidate's full record, or export the matching rows to .csv.
+      title: Candidates linked to priority
+      download_csv: Download CSV
+      downloading: Downloading...
+      empty_filtered_description: No rows match the active filters. Clear them to see more.
+      empty_filtered_title: No candidates found
+      empty_no_linked: No candidates linked to this priority
     clear: Clear
     description: Focus on a single WHO priority. Select a priority to see the pipeline mapped to it — the candidates working towards that priority, its target population, and how that pipeline builds up by R&D stage. Click Explore selected priority to open its full detail, including a link to the source.
-    download_csv: Download CSV
-    downloading: Downloading...
     dropdown_label: Select WHO Priority
     dropdown_no_priorities: No priorities match the current filters
     empty_description: Please select filters you'd like to include in the overview
     empty_title: Nothing selected
     explore_button: Explore selected priority
     not_specified: Not specified for this priority.
-    pipeline_chart_description: How the pipeline for the selected priority builds up across R&D stages. Each bar shows a product type, segmented by the candidates at each stage; click items in the legend to toggle stages on or off, or use the ··· menu to export the chart or its data.
-    pipeline_chart_title: Pipeline build up
     pipeline_heading: "Pipeline for priority:"
-    stat_candidates_title: Number of candidates linked to selected priority
-    table_empty_filtered_description: No rows match the active filters. Clear them to see more.
-    table_empty_filtered_title: No candidates found
-    table_empty_no_linked: No candidates linked to this priority
+    stat_candidates:
+      title: Number of candidates linked to selected priority
     title: Individual priority analysis
   overview:
     description: An overview of the WHO priorities across the whole portfolio — how many are in scope, how the pipeline addressing them is distributed across product types, and the share of priorities dedicated to neglected diseases, emerging infectious diseases and women's or children's health.
-    loading_chart: Loading chart...
-    product_types_description: A snapshot of how the R&D pipeline is distributed across product types. Use the ··· menu to export the chart as an image or the underlying data as .csv.
-    product_types_title: Product types
-    share_with_dedicated: Share with dedicated priority.
+    loading: Loading chart...
+    product_types:
+      description: A snapshot of how the R&D pipeline is distributed across product types. Use the ··· menu to export the chart as an image or the underlying data as .csv.
+      title: Product types
+    share_card:
+      description: Share with dedicated priority.
     title: Priorities overview
-    women_children_description: How priorities split between those dedicated to women or children (Yes), those that are not (No), and those still awaiting classification (NA). Use the ··· menu to export the chart or its data.
-    women_children_title: Share of priorities dedicated to women or children
+    women_children:
+      description: How priorities split between those dedicated to women or children (Yes), those that are not (No), and those still awaiting classification (NA). Use the ··· menu to export the chart or its data.
+      title: Share of priorities dedicated to women or children
   page:
     intro: The WHO product-development priorities for the diseases this portal covers, with the R&D pipeline mapped against each one. Use the filters to scope the page by global health area, disease or product type.
     title: WHO Priority alignment
@@ -267,18 +328,21 @@ who_priority:
     heading: Key information WHO priority
     no_priority_loaded: No priority loaded.
     read_more: Read more
-    section_efficacy: Efficacy
-    section_intended_use: Intended use
-    section_safety: Safety
-    section_target_population: Target population
+    sections:
+      efficacy: Efficacy
+      intended_use: Intended use
+      safety: Safety
+      target_population: Target population
 guided_tour:
-  confirm_prompt: Do you want to take a guided tour through the platform?
-  confirm_no: No
-  confirm_start: Start tour
-  navigating: Navigating to next page...
-  next: Next
-  finish: Finish
-  step_of: of
+  confirm:
+    prompt: Do you want to take a guided tour through the platform?
+    no: No
+    start: Start tour
+  controls:
+    navigating: Navigating to next page...
+    next: Next
+    finish: Finish
+    step_of: of
   steps:
     "1":
       title: Navigate the platform
@@ -356,56 +420,79 @@ layout:
     data:
       description: Here are the gold-standard databases and data visualizations of R&D funding, approved products and candidates in the pipeline for neglected diseases, emerging infectious diseases and maternal health.
       featured_title: Our data portals
-      item_gfinder_description: Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.
-      item_gfinder_label: G-FINDER R&D funding portal
-      item_pipeline_description: Our product pipeline portal provides an overview of health products approved or in development across global health areas.
-      item_pipeline_label: Product pipeline portal
-      item_spillover_description: A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.
-      item_spillover_label: Innovation Spillover Tracker
-      item_snakebite_description: Database of all snakebite envenoming medicines with direct action on toxins.
-      item_snakebite_label: Snakebite Envenoming Medicines Database
+      items:
+        gfinder:
+          description: Since 2007, the G-FINDER project tracks R&D funding for new products and technologies across global health areas.
+          label: G-FINDER R&D funding portal
+        pipeline:
+          description: Our product pipeline portal provides an overview of health products approved or in development across global health areas.
+          label: Product pipeline portal
+        spillover:
+          description: A tracker of health innovations developed for LMICs that have translated into new applications and benefits in HICs.
+          label: Innovation Spillover Tracker
+        snakebite:
+          description: Database of all snakebite envenoming medicines with direct action on toxins.
+          label: Snakebite Envenoming Medicines Database
     about:
       description: Meet the team working to create a more equitable future through global health innovation and impact.
-      item_advocacy_description: Join us in creating global health impact with our advocacy and press kits.
-      item_advocacy_label: Advocacy Kits
-      item_contact_description: Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.
-      item_contact_label: Contact Us
-      item_council_description: Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.
-      item_council_label: Our Global Advisory Council
-      item_join_description: We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.
-      item_join_label: Join Us
-      item_team_description: Meet our diverse international team of experts, who collate and analyse data on global health funding and the innovation pipeline.
-      item_team_label: Our Team
+      items:
+        advocacy:
+          description: Join us in creating global health impact with our advocacy and press kits.
+          label: Advocacy Kits
+        contact:
+          description: Please get in touch with any questions or feedback. Between us, we cover most time zones so one of us will get back to you quickly.
+          label: Contact Us
+        council:
+          description: Bringing together some of the leading and most influential figures in global health, our Council challenges our thinking, expands our foresight and helps us with horizon scanning.
+          label: Our Global Advisory Council
+        join:
+          description: We build bridges, partnerships and consensus across the complex ecosystem of global health R&D players. Find out how to partner with us, commission our expertise, and how to join our team when we have vacancies.
+          label: Join Us
+        team:
+          description: Meet our diverse international team of experts, who collate and analyse data on global health funding and the innovation pipeline.
+          label: Our Team
     insights:
       description: Here you will find the analysis and insights to support decisions - whether you're funding research, setting policies, developing products or advocating for change.
       featured_title: Explore our hubs
-      item_blindspots_description: PATH and Impact Global Health are joining forces to provide decision-makers with clarity and evidence on critical global health choices, with a focus on Africa.
-      item_blindspots_label: Impact Global Health and PATH R&D Blindspots Policy Series
-      item_health_areas_description: This quick reference guide gives you a snapshot analysis of the R&D needs and the state of innovation to tackle each disease or condition we cover. It's a handy quick overview of what's needed to impact global health in these areas.
-      item_health_areas_label: Health areas
-      item_hub_impact_description: Global, UK and EU analyses of the health and economic impact of the last two decades of investment in global health R&D.
-      item_hub_impact_label: The Impact of Global Health R&D Hub
-      item_hub_investment_description: A unique source of data and analysis tracking the funding of global health R&D and the pipeline of products in development. Powered by G-FINDER.
-      item_hub_investment_label: The Investment Landscape Hub
-      item_hubs_description: Themed collections of all the data, analysis and tools you need to understand the landscape and make smart decisions on global health R&D.
-      item_hubs_label: Hubs
-      item_reports_description: Our reports deliver critical insights using the evidence collected through G-FINDER and over two decades of independent analysis.
-      item_reports_label: Report Library
-      item_womens_hub_description: This resource hub provides a suite of data, insights and tools to accelerate progress in women's health R&D.
-      item_womens_hub_label: Women's Health Hub
+      items:
+        blindspots:
+          description: PATH and Impact Global Health are joining forces to provide decision-makers with clarity and evidence on critical global health choices, with a focus on Africa.
+          label: Impact Global Health and PATH R&D Blindspots Policy Series
+        health_areas:
+          description: This quick reference guide gives you a snapshot analysis of the R&D needs and the state of innovation to tackle each disease or condition we cover. It's a handy quick overview of what's needed to impact global health in these areas.
+          label: Health areas
+        hub_impact:
+          description: Global, UK and EU analyses of the health and economic impact of the last two decades of investment in global health R&D.
+          label: The Impact of Global Health R&D Hub
+        hub_investment:
+          description: A unique source of data and analysis tracking the funding of global health R&D and the pipeline of products in development. Powered by G-FINDER.
+          label: The Investment Landscape Hub
+        hubs:
+          description: Themed collections of all the data, analysis and tools you need to understand the landscape and make smart decisions on global health R&D.
+          label: Hubs
+        reports:
+          description: Our reports deliver critical insights using the evidence collected through G-FINDER and over two decades of independent analysis.
+          label: Report Library
+        womens_hub:
+          description: This resource hub provides a suite of data, insights and tools to accelerate progress in women's health R&D.
+          label: Women's Health Hub
     tools:
       description: We've created some practical frameworks and tools you can use to assess and increase impact in global health.
       featured_description: Join us in creating global health impact with our advocacy and press kits
       featured_title: Advocacy Kits
-      item_100days_description: Is the world ready to deploy a new product to tackle an epidemic within 100 days of an outbreak?
-      item_100days_label: 100 Days Mission Scorecard
-      item_framework_description: A global network of experts collaborated for two years to develop this comprehensive set of metrics that create an impact assessment framework for global health R&D.
-      item_framework_label: Impact Framework
-    nav_about: About Us
-    nav_data: Data
-    nav_insights: Insights
-    nav_news: News
-    nav_tools: Tools
+      items:
+        100days:
+          description: Is the world ready to deploy a new product to tackle an epidemic within 100 days of an outbreak?
+          label: 100 Days Mission Scorecard
+        framework:
+          description: A global network of experts collaborated for two years to develop this comprehensive set of metrics that create an impact assessment framework for global health R&D.
+          label: Impact Framework
+    nav:
+      about: About Us
+      data: Data
+      insights: Insights
+      news: News
+      tools: Tools
   metadata:
     description: Innovation in Global Health Dashboard
     title: IGH Dashboard
@@ -417,43 +504,20 @@ layout:
     share: Share this view
     share_copied: Copied!
   sidebar:
-    help_button: Help
-    help_contact_description: Have a question or need further support? Reach out to the Impact Global Health team directly.
-    help_contact_title: Contact IGH
-    help_intro: Choose how you'd like to get started or get support.
-    help_send_email: Send email
-    help_start_tour: Start guided tour
-    help_title: Need help?
-    help_tour_description: New to the platform? Let us walk you through the key features step by step.
-    help_tour_title: Take the guided tour
-    nav_home: Home
-    nav_pipeline_explorer: Pipeline Explorer
-    nav_pipeline_overview: Pipeline Overview
-    nav_pipeline_trends: Pipeline trends
-    nav_who_priority: WHO Priority alignment
-    section_general: GENERAL
-table_builder:
-  candidates_approved:
-    description: Candidates and approved products in a single table — useful for comparing the pipeline of in-development assets against what has already reached market. Filter by global health area, disease, product type or R&D stage, then sort and choose columns to fit the question at hand.
-    title: Candidates & approved products
-  clinical_trials:
-    description: Clinical trials joined to the candidates they study — useful for tracing trial activity back to specific assets in the pipeline. Filter by global health area, disease or product type, then choose columns for trial-level detail.
-    title: Clinical trials & candidates
-  download_csv: Download CSV
-  downloading: Downloading...
-  empty_state:
-    no_data_title: No results available
-    no_results_description: No rows match the active filters. Clear them to see more.
-    no_results_title: No results found
-  rd_only:
-    description: "R&D priorities on their own, no candidate join — useful for understanding the priority landscape itself: author, publication date, target population, efficacy and safety expectations, source. Filter by global health area or disease, then choose columns to focus on what matters."
-    title: R&D priorities
-  rd_priorities:
-    description: R&D priorities joined to the candidates that address them — useful for seeing which priorities are well covered and which remain open. Filter by global health area or disease, then choose columns to compare priority detail against candidate progress.
-    title: R&D priorities & candidates
-  reset_filters: Reset filters
-  tabs:
-    candidates_approved: Candidates & approved products
-    clinical_trials: Clinical trials & candidates
-    rd_only: R&D priorities
-    rd_priorities: R&D priorities & candidates
+    help:
+      button: Help
+      contact_description: Have a question or need further support? Reach out to the Impact Global Health team directly.
+      contact_title: Contact IGH
+      intro: Choose how you'd like to get started or get support.
+      send_email: Send email
+      start_tour: Start guided tour
+      title: Need help?
+      tour_description: New to the platform? Let us walk you through the key features step by step.
+      tour_title: Take the guided tour
+    nav:
+      home: Home
+      pipeline_explorer: Pipeline Explorer
+      pipeline_overview: Pipeline Overview
+      pipeline_trends: Pipeline trends
+      who_priority: WHO Priority alignment
+      section_general: GENERAL

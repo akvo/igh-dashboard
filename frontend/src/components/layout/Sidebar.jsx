@@ -21,21 +21,21 @@ import { t } from '@/content';
 
 const defaultMenuItems = [
   {
-    section: t('layout.sidebar.section_general'),
+    section: t('layout.sidebar.nav.section_general'),
     items: [
-      { id: 'home', label: t('layout.sidebar.nav_home'), icon: HomeIcon, href: '/' },
-      { id: 'pipeline-overview', label: t('layout.sidebar.nav_pipeline_overview'), icon: GridIcon, href: '/pipeline-overview' },
+      { id: 'home', label: t('layout.sidebar.nav.home'), icon: HomeIcon, href: '/' },
+      { id: 'pipeline-overview', label: t('layout.sidebar.nav.pipeline_overview'), icon: GridIcon, href: '/pipeline-overview' },
       {
         id: 'pipeline-explorer',
-        label: t('layout.sidebar.nav_pipeline_explorer'),
+        label: t('layout.sidebar.nav.pipeline_explorer'),
         icon: SearchIcon,
         href: '/pipeline-explorer',
         // Single entry that stays highlighted across both child routes
         // (/pipeline-explorer and /pipeline-explorer/table-builder).
         match: 'prefix',
       },
-      { id: 'pipeline-trends', label: t('layout.sidebar.nav_pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
-      { id: 'who-priority-alignment', label: t('layout.sidebar.nav_who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
+      { id: 'pipeline-trends', label: t('layout.sidebar.nav.pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
+      { id: 'who-priority-alignment', label: t('layout.sidebar.nav.who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
     ],
   },
 ];
@@ -208,7 +208,7 @@ export default function Sidebar({
                     className="group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-sidebar-hover bg-transparent border-0 cursor-pointer"
                   >
                     <HelpIcon className="w-5 h-5 text-sidebar-icon group-hover:text-orange-500 transition-colors" strokeWidth={2.5} />
-                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">{t('layout.sidebar.help_button')}</span>
+                    <span className="text-sm text-sidebar-text group-hover:text-black transition-colors">{t('layout.sidebar.help.button')}</span>
                   </button>
                   {showHelpPopup && (
                     <div
@@ -235,17 +235,17 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help.title')}</h4>
                       <p className="text-sm text-gray-500 m-0 mb-4">
-                        {t('layout.sidebar.help_intro')}
+                        {t('layout.sidebar.help.intro')}
                       </p>
 
                       <div className="mb-3">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
+                          <strong>{t('layout.sidebar.help.tour_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            {t('layout.sidebar.help_tour_description')}
+                            {t('layout.sidebar.help.tour_description')}
                           </span>
                         </p>
                       </div>
@@ -253,9 +253,9 @@ export default function Sidebar({
                       <div className="mb-4">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
+                          <strong>{t('layout.sidebar.help.contact_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            {t('layout.sidebar.help_contact_description')}
+                            {t('layout.sidebar.help.contact_description')}
                           </span>
                         </p>
                       </div>
@@ -266,7 +266,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
                           style={{ flex: 1 }}
                         >
-                          {t('layout.sidebar.help_send_email')}
+                          {t('layout.sidebar.help.send_email')}
                         </a>
                         <button
                           onClick={() => {
@@ -276,7 +276,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
-                          {t('layout.sidebar.help_start_tour')}
+                          {t('layout.sidebar.help.start_tour')}
                         </button>
                       </div>
                     </div>
@@ -330,17 +330,17 @@ export default function Sidebar({
                           boxShadow: '4px 4px 8px rgba(0,0,0,0.05)',
                         }}
                       />
-                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help_title')}</h4>
+                      <h4 className="text-base font-bold text-black m-0 mb-1">{t('layout.sidebar.help.title')}</h4>
                       <p className="text-sm text-gray-500 m-0 mb-4">
-                        {t('layout.sidebar.help_intro')}
+                        {t('layout.sidebar.help.intro')}
                       </p>
 
                       <div className="mb-3">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>{t('layout.sidebar.help_tour_title')}</strong>{' '}
+                          <strong>{t('layout.sidebar.help.tour_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            {t('layout.sidebar.help_tour_description')}
+                            {t('layout.sidebar.help.tour_description')}
                           </span>
                         </p>
                       </div>
@@ -348,9 +348,9 @@ export default function Sidebar({
                       <div className="mb-4">
                         <p className="text-sm m-0 mb-1">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>{t('layout.sidebar.help_contact_title')}</strong>{' '}
+                          <strong>{t('layout.sidebar.help.contact_title')}</strong>{' '}
                           <span className="text-gray-500">
-                            {t('layout.sidebar.help_contact_description')}
+                            {t('layout.sidebar.help.contact_description')}
                           </span>
                         </p>
                       </div>
@@ -361,7 +361,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-black no-underline hover:bg-gray-50 transition-colors"
                           style={{ flex: 1 }}
                         >
-                          {t('layout.sidebar.help_send_email')}
+                          {t('layout.sidebar.help.send_email')}
                         </a>
                         <button
                           onClick={() => {
@@ -371,7 +371,7 @@ export default function Sidebar({
                           className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium text-black transition-colors"
                           style={{ flex: 1, border: 'none', background: '#fe7449', cursor: 'pointer' }}
                         >
-                          {t('layout.sidebar.help_start_tour')}
+                          {t('layout.sidebar.help.start_tour')}
                         </button>
                       </div>
                     </div>

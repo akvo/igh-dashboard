@@ -56,20 +56,20 @@ const ext4FilterSerializer = makeFilterSerializer(EXTRACT_TAB_COLUMNS['rd-only']
 // the single generic description the standalone Extract page used.
 const TAB_META = {
   'candidates-approved': {
-    title: t('table_builder.candidates_approved.title'),
-    description: t('table_builder.candidates_approved.description'),
+    title: t('pipeline_explorer.table_builder.candidates_approved.title'),
+    description: t('pipeline_explorer.table_builder.candidates_approved.description'),
   },
   'rd-priorities': {
-    title: t('table_builder.rd_priorities.title'),
-    description: t('table_builder.rd_priorities.description'),
+    title: t('pipeline_explorer.table_builder.rd_priorities.title'),
+    description: t('pipeline_explorer.table_builder.rd_priorities.description'),
   },
   'clinical-trials': {
-    title: t('table_builder.clinical_trials.title'),
-    description: t('table_builder.clinical_trials.description'),
+    title: t('pipeline_explorer.table_builder.clinical_trials.title'),
+    description: t('pipeline_explorer.table_builder.clinical_trials.description'),
   },
   'rd-only': {
-    title: t('table_builder.rd_only.title'),
-    description: t('table_builder.rd_only.description'),
+    title: t('pipeline_explorer.table_builder.rd_only.title'),
+    description: t('pipeline_explorer.table_builder.rd_only.description'),
   },
 };
 
@@ -391,10 +391,10 @@ export default function TableBuilderTabs() {
       >
         <TabNav
           tabs={[
-            { value: 'candidates-approved', label: t('table_builder.tabs.candidates_approved') },
-            { value: 'rd-priorities', label: t('table_builder.tabs.rd_priorities') },
-            { value: 'clinical-trials', label: t('table_builder.tabs.clinical_trials') },
-            { value: 'rd-only', label: t('table_builder.tabs.rd_only') },
+            { value: 'candidates-approved', label: t('pipeline_explorer.table_builder.tabs.candidates_approved') },
+            { value: 'rd-priorities', label: t('pipeline_explorer.table_builder.tabs.rd_priorities') },
+            { value: 'clinical-trials', label: t('pipeline_explorer.table_builder.tabs.clinical_trials') },
+            { value: 'rd-only', label: t('pipeline_explorer.table_builder.tabs.rd_only') },
           ]}
           activeTab={extractTab}
           onChange={setExtractTab}
@@ -427,7 +427,7 @@ export default function TableBuilderTabs() {
                 onClick={handleExtractDownloadCSV}
               >
                 <CloudDownloadIcon className="w-4 h-4" />
-                {extractDownloading ? t('table_builder.downloading') : t('table_builder.download_csv')}
+                {extractDownloading ? t('pipeline_explorer.table_builder.downloading') : t('pipeline_explorer.table_builder.download_csv')}
               </button>
             </div>
           </div>
@@ -510,7 +510,7 @@ export default function TableBuilderTabs() {
                   : 'text-gray-400 bg-transparent border-gray-200 cursor-not-allowed'
               }`}
             >
-              {t('table_builder.reset_filters')}
+              {t('pipeline_explorer.table_builder.reset_filters')}
               <RefreshIcon className="w-4 h-4" />
             </button>
           </div>
@@ -682,10 +682,10 @@ function ExtractDataTable({
       emptyState={
         Object.keys(filters).length > 0
           ? {
-              title: t('table_builder.empty_state.no_results_title'),
-              description: t('table_builder.empty_state.no_results_description'),
+              title: t('pipeline_explorer.table_builder.empty_state.no_results_title'),
+              description: t('pipeline_explorer.table_builder.empty_state.no_results_description'),
             }
-          : { title: t('table_builder.empty_state.no_data_title') }
+          : { title: t('pipeline_explorer.table_builder.empty_state.no_data_title') }
       }
     />
   );

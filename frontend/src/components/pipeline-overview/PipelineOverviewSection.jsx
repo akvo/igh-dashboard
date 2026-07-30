@@ -132,22 +132,22 @@ export default function PipelineOverviewSection() {
         ) : (
           <>
             <StatCard
-              title={t('pipeline_overview.kpi.candidates_title')}
+              title={t('pipeline_overview.kpi.candidates.title')}
               value={activeCandidates}
-              description={t('pipeline_overview.kpi.candidates_description')}
-              tooltip={t('pipeline_overview.kpi.candidates_tooltip')}
+              description={t('pipeline_overview.kpi.candidates.description')}
+              tooltip={t('pipeline_overview.kpi.candidates.tooltip')}
             />
             <StatCard
-              title={t('pipeline_overview.kpi.trials_title')}
+              title={t('pipeline_overview.kpi.trials.title')}
               value={ongoingTrials}
-              description={t('pipeline_overview.kpi.trials_description')}
-              tooltip={t('pipeline_overview.kpi.trials_tooltip')}
+              description={t('pipeline_overview.kpi.trials.description')}
+              tooltip={t('pipeline_overview.kpi.trials.tooltip')}
             />
             <StatCard
-              title={t('pipeline_overview.kpi.approved_title')}
+              title={t('pipeline_overview.kpi.approved.title')}
               value={approvedProducts}
-              description={t('pipeline_overview.kpi.approved_description')}
-              tooltip={t('pipeline_overview.kpi.approved_tooltip')}
+              description={t('pipeline_overview.kpi.approved.description')}
+              tooltip={t('pipeline_overview.kpi.approved.tooltip')}
             />
           </>
         )}

@@ -32,10 +32,10 @@ import ClinicalTrialsTab from './ClinicalTrialsTab';
 import TechnologyTypesTab from './TechnologyTypesTab';
 
 const TABS = [
-  { label: t('pipeline_explorer.tabs.candidates'), value: 'candidates' },
-  { label: t('pipeline_explorer.tabs.approved_products'), value: 'approved' },
-  { label: t('pipeline_explorer.tabs.clinical_trials'), value: 'trials' },
-  { label: t('pipeline_explorer.tabs.technology_types'), value: 'technology' },
+  { label: t('pipeline_explorer.visual_insights.tabs.candidates'), value: 'candidates' },
+  { label: t('pipeline_explorer.visual_insights.tabs.approved_products'), value: 'approved' },
+  { label: t('pipeline_explorer.visual_insights.tabs.clinical_trials'), value: 'trials' },
+  { label: t('pipeline_explorer.visual_insights.tabs.technology_types'), value: 'technology' },
 ];
 
 export default function VisualInsightsTabs() {

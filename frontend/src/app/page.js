@@ -581,8 +581,8 @@ export default function Home() {
                     activeTab={mapTab}
                     onChange={setMapTab}
                     tabs={[
-                      { label: t('home.map.tab_trials'), value: 'trials' },
-                      { label: t('home.map.tab_developers'), value: 'development' },
+                      { label: t('home.map.tabs.trials'), value: 'trials' },
+                      { label: t('home.map.tabs.developers'), value: 'development' },
                     ]}
                   />
                 </div>
