@@ -79,6 +79,57 @@ code change; editors only ever change *values*.
 
 Changing existing copy is just editing the value in `content.yaml`.
 
+## Naming a key
+
+A key's path is the containment path of the thing it labels:
+
+    <area>[.<view>][.<tab>].<element>.<leaf>
+
+**Area** is a route (`home`, `pipeline_overview`, `pipeline_explorer`,
+`pipeline_trends`, `who_priority`), plus `layout` for the persistent
+chrome and `guided_tour` for the overlay. Route-level copy — the page
+title, the page intro — goes under `<area>.page.*`.
+
+**View** and **tab** appear only where the UI has them. Pipeline
+Explorer has both: `pipeline_explorer.visual_insights.approved.*`.
+
+**Element** is something on screen an editor can point at: a chart, a
+table, a KPI card, a menu, a card. All of its copy nests beneath it, so
+a chart's title, description and axis labels are adjacent files in the
+content repo.
+
+**Leaf** comes from a fixed vocabulary: `title`, `description`,
+`intro`, `footnote`, `label`, `cta`, `loading`, `empty`, `empty_title`,
+`empty_description`, `x_axis`, `y_axis`, `source`, `tooltip`. Use
+`empty` for a single empty-state string and the
+`empty_title`/`empty_description` pair when an element has both.
+
+Two rules follow:
+
+1. **Nest when two or more keys share a prefix.** Write
+   `approval_status.{title,description}`, not `approval_status_title`
+   and `approval_status_description`.
+2. **Repeated sets become named sub-maps.** `cards.1.title`, not
+   `card_1_title`; `items.gfinder.label`, not `item_gfinder_label`.
+
+`x_axis` and `y_axis` name what the reader sees, not the bar
+orientation. In `BarChart`, `StackedBarChart` and `GroupedBarChart`,
+`xAxisLabel` always renders along the bottom and `yAxisLabel` rotated
+on the left, whichever way the bars run.
+
+Two exceptions exist in the current tree. Transient strings that are
+not element copy — `loading`, `download_csv`, `downloading`,
+`share_copied` — stay at the level that owns them rather than being
+duplicated into every element, so editors don't have eight files to
+keep identical. And the filter keys (`layout.filters.*`,
+`home.filters.reset`, `pipeline_trends.filter.*`) predate this
+convention and are inconsistent with it; their wording is agreed with
+the client, so they were left alone.
+
+Prefer duplicating a value over sharing a key across components. Two
+charts that happen to show the same axis label should have two keys, so
+either can change without the other.
+
 ## Live editing during development
 
 `content.yaml` is compiled to `content.generated.js` (gitignored) at
@@ -128,6 +179,10 @@ The merge engine and its tests live in `scripts/content-sync/`.
 
 - Don't edit `content.generated.js`, `content.snapshot.json`, or
   `content.conflicts.json` by hand — they're generated or bot-written.
-- Don't hardcode user-facing strings in JSX — add a key instead.
+- Don't hardcode user-facing strings in JSX — add a key instead. This
+  includes chart axis labels, and it includes default parameter values
+  in shared components: a default is copy no editor can reach, and one
+  such default is how the Approved Products tab came to label its
+  counts "Number of candidates".
 - Don't point `<Markdown>` at a `text` key (or `t()` at content you
   need rendered as markdown); `content:check` flags the mismatch.
