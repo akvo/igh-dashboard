@@ -170,12 +170,17 @@ describe("priorityAlignmentOverview — unfiltered", () => {
   it("byArea snapshot values match tracked DB", () => {
     const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
     // ND total updated 1777 → 1882 after DB update (2026-06-10).
+    // ND/EID/WH totals updated (1890/1206/1119) → (1883/1185/1110) after the
+    // 2026 reporting year was added (2026-08-03): is_active_flag now marks
+    // each candidate's 2026 row instead of the old rolling column that had
+    // been mislabeled 2025, and the 2026 pipeline-included set is a few
+    // candidates smaller than that mislabeled snapshot.
     expect(byKey["Neglected disease"].candidatesWithPriority).toBe(234);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1890);
+    expect(byKey["Neglected disease"].totalCandidates).toBe(1883);
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
-    expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1206);
+    expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1185);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
-    expect(byKey["Womens Health"].totalCandidates).toBe(1119);
+    expect(byKey["Womens Health"].totalCandidates).toBe(1110);
   });
 
   it("byArea sharePercentage = candidatesWithPriority / totalCandidates", () => {
