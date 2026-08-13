@@ -241,22 +241,22 @@ export default function Sidebar({
                       </p>
 
                       <div className="mb-3">
-                        <p className="text-sm m-0 mb-1">
+                        <p className="text-sm m-0 mb-0.5">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>{t('layout.sidebar.help.tour_title')}</strong>{' '}
-                          <span className="text-gray-500">
-                            {t('layout.sidebar.help.tour_description')}
-                          </span>
+                          <strong>{t('layout.sidebar.help.tour_title')}</strong>
+                        </p>
+                        <p className="text-sm text-gray-500 m-0" style={{ paddingLeft: 26 }}>
+                          {t('layout.sidebar.help.tour_description')}
                         </p>
                       </div>
 
                       <div className="mb-4">
-                        <p className="text-sm m-0 mb-1">
+                        <p className="text-sm m-0 mb-0.5">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>{t('layout.sidebar.help.contact_title')}</strong>{' '}
-                          <span className="text-gray-500">
-                            {t('layout.sidebar.help.contact_description')}
-                          </span>
+                          <strong>{t('layout.sidebar.help.contact_title')}</strong>
+                        </p>
+                        <p className="text-sm text-gray-500 m-0" style={{ paddingLeft: 26 }}>
+                          {t('layout.sidebar.help.contact_description')}
                         </p>
                       </div>
 
@@ -336,22 +336,22 @@ export default function Sidebar({
                       </p>
 
                       <div className="mb-3">
-                        <p className="text-sm m-0 mb-1">
+                        <p className="text-sm m-0 mb-0.5">
                           <span style={{ marginRight: 6 }}>&#x1F5FA;</span>
-                          <strong>{t('layout.sidebar.help.tour_title')}</strong>{' '}
-                          <span className="text-gray-500">
-                            {t('layout.sidebar.help.tour_description')}
-                          </span>
+                          <strong>{t('layout.sidebar.help.tour_title')}</strong>
+                        </p>
+                        <p className="text-sm text-gray-500 m-0" style={{ paddingLeft: 26 }}>
+                          {t('layout.sidebar.help.tour_description')}
                         </p>
                       </div>
 
                       <div className="mb-4">
-                        <p className="text-sm m-0 mb-1">
+                        <p className="text-sm m-0 mb-0.5">
                           <span style={{ marginRight: 6 }}>&#x2709;</span>
-                          <strong>{t('layout.sidebar.help.contact_title')}</strong>{' '}
-                          <span className="text-gray-500">
-                            {t('layout.sidebar.help.contact_description')}
-                          </span>
+                          <strong>{t('layout.sidebar.help.contact_title')}</strong>
+                        </p>
+                        <p className="text-sm text-gray-500 m-0" style={{ paddingLeft: 26 }}>
+                          {t('layout.sidebar.help.contact_description')}
                         </p>
                       </div>
 

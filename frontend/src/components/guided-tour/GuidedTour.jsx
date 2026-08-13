@@ -6,6 +6,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import tourSteps from './tourConfig';
 import { t } from '@/content';
 
+/**
+ * Parse **bold** markers in text into React <strong> elements.
+ * Returns an array of strings and <strong> elements.
+ */
+function parseBold(text) {
+  if (!text || !text.includes('**')) return text;
+  const parts = text.split(/\*\*(.*?)\*\*/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? <strong key={i} style={{ color: '#111', fontWeight: 600 }}>{part}</strong> : part
+  );
+}
+
 /** Extract the pathname part of a route (strip query string). */
 const routePathname = (route) => (route ? route.split('?')[0] : route);
 
@@ -23,105 +35,31 @@ function getScrollParent(el) {
   return document.documentElement;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Confirmation dialog                                               */
-/* ------------------------------------------------------------------ */
-function ConfirmDialog({ onConfirm, onCancel }) {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.4)',
-      }}
-    >
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: 12,
-          padding: '32px 36px 28px',
-          maxWidth: 400,
-          width: '90%',
-          position: 'relative',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-        }}
-      >
-        <button
-          onClick={onCancel}
-          aria-label="Close"
-          style={{
-            position: 'absolute',
-            top: 14,
-            right: 14,
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 22,
-            color: '#666',
-            lineHeight: 1,
-          }}
-        >
-          &times;
-        </button>
-        <p
-          style={{
-            fontSize: 18,
-            fontWeight: 500,
-            color: '#111',
-            margin: '0 0 28px',
-            lineHeight: 1.4,
-            paddingRight: 24,
-          }}
-        >
-          {t('guided_tour.confirm.prompt')}
-        </p>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              border: '1.5px solid #ccc',
-              borderRadius: 8,
-              background: '#fff',
-              fontSize: 15,
-              fontWeight: 500,
-              cursor: 'pointer',
-              color: '#111',
-            }}
-          >
-            {t('guided_tour.confirm.no')}
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              border: 'none',
-              borderRadius: 8,
-              background: '#fe7449',
-              fontSize: 15,
-              fontWeight: 500,
-              cursor: 'pointer',
-              color: '#111',
-            }}
-          >
-            {t('guided_tour.confirm.start')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+/**
+ * Find the sidebar nav link that corresponds to a step's route.
+ */
+function findSidebarLink(stepRoute) {
+  if (!stepRoute) return null;
+  const stepPath = routePathname(stepRoute);
+  const nav = document.querySelector('[data-tour="sidebar-nav"]');
+  if (!nav) return null;
+  const links = nav.querySelectorAll('a');
+  for (const link of links) {
+    try {
+      const linkPath = new URL(link.href).pathname;
+      if (stepPath === '/' && linkPath === '/') return link;
+      if (stepPath !== '/' && linkPath !== '/' && stepPath.startsWith(linkPath)) return link;
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Spotlight overlay                                                 */
+/*  Spotlight overlay (supports primary + secondary highlight)        */
 /* ------------------------------------------------------------------ */
-function Spotlight({ rect }) {
+function Spotlight({ rect, secondaryRect }) {
   if (!rect) return null;
   const pad = 8;
   const r = {
@@ -130,6 +68,15 @@ function Spotlight({ rect }) {
     width: rect.width + pad * 2,
     height: rect.height + pad * 2,
   };
+  const pad2 = 4;
+  const r2 = secondaryRect
+    ? {
+        top: secondaryRect.top - pad2,
+        left: secondaryRect.left - pad2,
+        width: secondaryRect.width + pad2 * 2,
+        height: secondaryRect.height + pad2 * 2,
+      }
+    : null;
   return (
     <svg
       style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}
@@ -147,6 +94,16 @@ function Spotlight({ rect }) {
             rx="8"
             fill="black"
           />
+          {r2 && (
+            <rect
+              x={r2.left}
+              y={r2.top}
+              width={r2.width}
+              height={r2.height}
+              rx="6"
+              fill="black"
+            />
+          )}
         </mask>
       </defs>
       <rect
@@ -193,7 +150,7 @@ function ProgressBar({ current, total }) {
 /* ------------------------------------------------------------------ */
 /*  Step tooltip                                                      */
 /* ------------------------------------------------------------------ */
-function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose }) {
+function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onBack, onClose }) {
   const tooltipRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -237,6 +194,7 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
   }, [targetRect, step.position]);
 
   const isLast = stepIndex === totalSteps - 1;
+  const isFirst = stepIndex === 0;
 
   return (
     <div
@@ -303,9 +261,31 @@ function StepTooltip({ step, stepIndex, totalSteps, targetRect, onNext, onClose 
           whiteSpace: 'pre-line',
         }}
       >
-        {t(step.descKey)}
+        {parseBold(t(step.descKey))}
       </p>
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          {!isFirst && (
+            <button
+              onClick={onBack}
+              style={{
+                background: '#fff',
+                border: '1.5px solid #ccc',
+                borderRadius: 6,
+                padding: '8px 16px',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                color: '#555',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              &larr; {t('guided_tour.controls.back')}
+            </button>
+          )}
+        </div>
         <button
           onClick={onNext}
           style={{
@@ -338,10 +318,6 @@ function ClickBlocker() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Block clicks/taps but forward wheel events to the correct
-    // scroll container so the user can still scroll during the tour.
-    // Some pages scroll inside <main overflow-y-auto>, others scroll
-    // at the document level — detect which one is scrollable.
     const handleWheel = (e) => {
       e.preventDefault();
       const main = document.querySelector('main');
@@ -372,11 +348,9 @@ function ClickBlocker() {
 export default function GuidedTour({ active, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
-  // Build the current full path (pathname + query) for route comparison.
-  // Read search directly from window.location to avoid useSearchParams()
-  // which requires a Suspense boundary during SSR/prerendering.
   const currentSearch = typeof window !== 'undefined' ? window.location.search : '';
   const currentFullPath = currentSearch ? `${pathname}${currentSearch}` : pathname;
+
   // Restore tour state from sessionStorage so cross-page navigation
   // doesn't lose progress.
   const [phase, setPhase] = useState(() => {
@@ -384,7 +358,7 @@ export default function GuidedTour({ active, onClose }) {
       const saved = sessionStorage.getItem('guidedTourStep');
       if (saved != null) return 'touring';
     }
-    return 'confirm';
+    return 'idle';
   });
   const [currentStep, setCurrentStep] = useState(() => {
     if (typeof window !== 'undefined' && active) {
@@ -394,7 +368,7 @@ export default function GuidedTour({ active, onClose }) {
     return 0;
   });
   const [targetRect, setTargetRect] = useState(null);
-  // Track whether we're waiting for a page navigation to complete
+  const [sidebarRect, setSidebarRect] = useState(null);
   const [navigating, setNavigating] = useState(false);
   const totalSteps = tourSteps.length;
 
@@ -406,7 +380,6 @@ export default function GuidedTour({ active, onClose }) {
   }, [phase, currentStep]);
 
   // Reset only when tour is freshly activated (not on page navigations).
-  // We use a ref to detect the actual false→true transition.
   const prevActive = useRef(active);
   useEffect(() => {
     if (active && !prevActive.current) {
@@ -416,24 +389,34 @@ export default function GuidedTour({ active, onClose }) {
         setPhase('touring');
         setCurrentStep(Number(saved));
       } else {
-        setPhase('confirm');
+        // Start touring immediately (no confirm dialog)
+        setPhase('touring');
         setCurrentStep(0);
+        // Navigate to first step's route if needed
+        const firstStep = tourSteps[0];
+        if (firstStep.route && firstStep.route !== (typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '')) {
+          setNavigating(true);
+          const targetPath = routePathname(firstStep.route);
+          if (targetPath === window.location.pathname) {
+            window.history.pushState(null, '', firstStep.route);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          } else {
+            router.push(firstStep.route);
+          }
+        }
       }
       setTargetRect(null);
+      setSidebarRect(null);
       setNavigating(false);
     }
     prevActive.current = active;
-  }, [active]);
+  }, [active, router]);
 
   // When navigating, wait for the page to be ready then clear the flag.
-  // For cross-page navigations, pathname changes trigger this.
-  // For same-page query changes, currentStep changing + navigating flag
-  // triggers this immediately (the pushState already happened synchronously).
   useEffect(() => {
     if (navigating && phase === 'touring') {
       const step = tourSteps[currentStep];
       if (step && routePathname(step.route) === pathname) {
-        // Give the page time to render before showing the step
         const timer = setTimeout(() => setNavigating(false), 500);
         return () => clearTimeout(timer);
       }
@@ -448,13 +431,27 @@ export default function GuidedTour({ active, onClose }) {
     if (el) {
       setTargetRect(el.getBoundingClientRect());
     }
+    // Also remeasure sidebar highlight
+    const sidebarLink = findSidebarLink(step.route);
+    if (sidebarLink) {
+      setSidebarRect(sidebarLink.getBoundingClientRect());
+    } else {
+      setSidebarRect(null);
+    }
   }, [currentStep]);
 
   // Scroll to target and measure — called once per step change.
-  // Retries if the element hasn't rendered yet (async data loads).
   const scrollAndMeasure = useCallback(() => {
     const step = tourSteps[currentStep];
     if (!step) return;
+
+    // Measure sidebar link for secondary highlight
+    const sidebarLink = findSidebarLink(step.route);
+    if (sidebarLink) {
+      setSidebarRect(sidebarLink.getBoundingClientRect());
+    } else {
+      setSidebarRect(null);
+    }
 
     let attempts = 0;
     const maxAttempts = 15;
@@ -464,10 +461,6 @@ export default function GuidedTour({ active, onClose }) {
       if (cancelled) return;
       const el = document.querySelector(step.target);
       if (el) {
-        // Check if element is outside the visible viewport area.
-        // Account for the sticky header (~90px) and leave room for
-        // the tooltip. Works regardless of whether the page scrolls
-        // inside <main> or at the document level.
         const elRect = el.getBoundingClientRect();
         const headerHeight = 90;
         const margin = 60;
@@ -477,9 +470,6 @@ export default function GuidedTour({ active, onClose }) {
         if (!isVisible) {
           const startTop = elRect.top;
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Wait for scroll to begin, then poll until position stabilizes.
-          // The initial 100ms delay prevents false "stable" readings
-          // before the smooth scroll animation kicks in.
           setTimeout(() => {
             if (cancelled) return;
             let lastTop = el.getBoundingClientRect().top;
@@ -499,14 +489,11 @@ export default function GuidedTour({ active, onClose }) {
               lastTop = r.top;
               requestAnimationFrame(pollScroll);
             };
-            // If position already changed from start, begin polling.
-            // Otherwise wait a bit more for scroll to start.
             if (Math.abs(el.getBoundingClientRect().top - startTop) > 5) {
               requestAnimationFrame(pollScroll);
             } else {
               setTimeout(() => {
                 if (cancelled) return;
-                // Scroll might not have started — measure anyway
                 setTargetRect(el.getBoundingClientRect());
               }, 400);
             }
@@ -515,7 +502,6 @@ export default function GuidedTour({ active, onClose }) {
           setTargetRect(el.getBoundingClientRect());
         }
       } else if (attempts < maxAttempts) {
-        // Element not rendered yet — retry
         attempts++;
         setTimeout(tryFind, 300);
       } else {
@@ -525,17 +511,14 @@ export default function GuidedTour({ active, onClose }) {
 
     tryFind();
 
-    // Return cancellation function
     return () => { cancelled = true; };
   }, [currentStep]);
 
   useEffect(() => {
     if (phase !== 'touring' || navigating) return;
-    // Scroll to the target once when the step changes
     const timer = setTimeout(() => {
       scrollAndMeasure();
     }, 150);
-    // Re-measure on resize only
     window.addEventListener('resize', remeasure);
     return () => {
       clearTimeout(timer);
@@ -543,32 +526,15 @@ export default function GuidedTour({ active, onClose }) {
     };
   }, [phase, navigating, scrollAndMeasure, remeasure]);
 
-  // Navigate to a tour step's route.
-  // For same-page query-param changes, we update the URL directly
-  // via pushState + popstate dispatch so useQueryParams (which
-  // powers useUrlState) picks up the change immediately.
-  // For cross-page navigation, we use router.push.
   const navigateToRoute = useCallback((route) => {
     const targetPathname = routePathname(route);
     if (targetPathname === pathname) {
-      // Same page — update query params directly
       window.history.pushState(null, '', route);
       window.dispatchEvent(new PopStateEvent('popstate'));
     } else {
-      // Different page
       router.push(route);
     }
   }, [pathname, router]);
-
-  const handleConfirm = () => {
-    setPhase('touring');
-    setCurrentStep(0);
-    const firstStep = tourSteps[0];
-    if (firstStep.route && firstStep.route !== currentFullPath) {
-      setNavigating(true);
-      navigateToRoute(firstStep.route);
-    }
-  };
 
   const handleNext = () => {
     if (currentStep >= totalSteps - 1) {
@@ -579,11 +545,25 @@ export default function GuidedTour({ active, onClose }) {
     const nextStep = tourSteps[nextIdx];
     setCurrentStep(nextIdx);
     setTargetRect(null);
+    setSidebarRect(null);
 
-    // Navigate if the next step targets a different page or query params
     if (nextStep.route && nextStep.route !== currentFullPath) {
       setNavigating(true);
       navigateToRoute(nextStep.route);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep <= 0) return;
+    const prevIdx = currentStep - 1;
+    const prevStep = tourSteps[prevIdx];
+    setCurrentStep(prevIdx);
+    setTargetRect(null);
+    setSidebarRect(null);
+
+    if (prevStep.route && prevStep.route !== currentFullPath) {
+      setNavigating(true);
+      navigateToRoute(prevStep.route);
     }
   };
 
@@ -594,16 +574,15 @@ export default function GuidedTour({ active, onClose }) {
 
   const step = tourSteps[currentStep];
 
+  // Don't highlight sidebar link if the current step IS the sidebar
+  const showSidebarHighlight = sidebarRect && step && !step.target.includes('sidebar');
+
   return createPortal(
     <>
-      {phase === 'confirm' && (
-        <ConfirmDialog onConfirm={handleConfirm} onCancel={handleClose} />
-      )}
-
       {phase === 'touring' && !navigating && (
         <>
           <ClickBlocker />
-          <Spotlight rect={targetRect} />
+          <Spotlight rect={targetRect} secondaryRect={showSidebarHighlight ? sidebarRect : null} />
           {step && (
             <StepTooltip
               step={step}
@@ -611,6 +590,7 @@ export default function GuidedTour({ active, onClose }) {
               totalSteps={totalSteps}
               targetRect={targetRect}
               onNext={handleNext}
+              onBack={handleBack}
               onClose={handleClose}
             />
           )}

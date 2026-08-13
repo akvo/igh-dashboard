@@ -352,78 +352,66 @@ who_priority:
       safety: Safety
       target_population: Target population
 guided_tour:
-  confirm:
-    prompt: Do you want to take a guided tour through the platform?
-    no: No
-    start: Start tour
   controls:
     navigating: Navigating to next page...
     next: Next
+    back: Back
     finish: Finish
     step_of: of
   steps:
     "1":
-      title: Navigate the platform
-      description: Use the side menu to jump between Home, Pipeline Overview, Pipeline Explorer, Pipeline Trends and WHO Priority Alignment.
+      title: Welcome to the Product Pipeline Portal
+      description: |-
+        An at-a-glance view of health products approved or in development across three global health areas: neglected diseases, emerging infectious diseases and women’s health.
+
+        **Home** — a snapshot of research activity, where trials and developers are located, how the pipeline is spread across development stages, and how progress has shifted over time.
+
+        **Pipeline Overview** — filter and explore the data by global health area, disease, product type and R&D stage.
+
+        **Pipeline Explorer** — explore candidates, approved products, clinical trials and technology types, as visuals or as a custom table.
+
+        **Pipeline Trends** — see how the pipeline evolves over time and compare portfolios.
+
+        **WHO Priority alignment** — map the pipeline against the World Health Organization’s product-development priorities.
     "2":
-      title: Navigate to main website
-      description: Use the top menu to jump to the other components of the IGH website.
+      title: Active filters
+      description: See which filters are currently active. Use the x to remove a single filter, or Clear all to remove every filter — wherever in the portal it was applied.
     "3":
-      title: Hide side menu
-      description: Click the « to hide the side bar and create more space to look at the visuals.
+      title: Download visuals and data
+      description: Wherever you see the three-dot menu, save the chart as an image or download the underlying data.
     "4":
-      title: Overview of filters
-      description: Every filter that is activated remains active throughout the portal. To deactivate a filter you can always see which filters are active in this filter screen.
+      title: Filters apply to all pages
+      description: Any filter you set here is applied across the whole portal, not only this page. Your selection stays with you as you move between pages.
     "5":
-      title: Welcome to the Global Health R&D Pipeline
-      description: |-
-        This platform gives you an at-a-glance view of the global effort to develop new health products for the world’s most neglected diseases. The home page brings together key statistics from across the full pipeline — from early-stage candidates still in the lab, through to products that have reached the people who need them most.
-
-        Each visual on this page offers a snapshot of a different dimension of that story: the scale of research activity across disease areas, where in the world trials are being conducted and developers are based, how pipelines are distributed across development stages, and how progress has shifted over time.
-
-        Use the visuals to explore what interests you most, and follow the links to dive deeper into the detailed data and analysis available throughout the portal.
+      title: Use the legend to filter the data in the visual
+      description: Wherever a chart has a legend with tickboxes, tick or untick to show or hide those categories.
     "6":
-      title: Download visual information
-      description: Save a snapshot of this chart as an image, or download the underlying data to explore in your own tools.
-    "7":
-      title: Filters apply to all visuals on this page
-      description: Use these filters to focus the data across every chart and map on this page at once. Any selection you make will automatically update all visuals to reflect your chosen scope.
-    "8":
-      title: Use legend to filter the visual
-      description: Tick or untick the checkboxes in the legend to show or hide specific categories within the charts.
-    "9":
-      title: How do you like to look at the data?
+      title: Two ways to explore
       description: |-
-        Visual insights: discover trends and patterns through interactive charts, maps and diagrams. A visual deep dive into the pipeline data.
+        Visual insights — discover trends and patterns through interactive charts, maps and diagrams.
 
-        Table builder: filter and slice the data your way. Build a custom table and download it as .csv to use in your own analysis.
-    "10":
+        Table builder — filter and arrange columns to build a custom table, and download it as .csv.
+    "7":
       title: Explore the portfolio in depth
-      description: Use the four tabs to dive deeper into your filtered selection. Each tab gives you a different lens on the data. Switch between them to explore active candidates, approved products, clinical trials and the technology types driving development across your chosen scope.
-    "11":
-      title: Welcome to cross-pipeline analysis
-      description: Build and compare your own portfolios across the global health R&D landscape. Define a custom selection of diseases and product types, then compare how your portfolio has evolved over time or see how it stacks up against others. To get you started, the visual below gives you a taste of what’s possible.
-    "12":
+      description: Switch between tabs to explore active candidates, approved products, clinical trials and the technology types driving development across the selected scope.
+    "8":
+      title: Build a portfolio and track it over time
+      description: Define a selection of diseases and product types, then see how that portfolio has evolved over time.
+    "9":
       title: Choose your comparison mode
-      description: |-
-        Decide how you want to explore the data.
-        ✔ Compare single portfolio over time: Track how a single portfolio has changed across IGH’s annual pipeline snapshots.
-        ✔ Compare different portfolios: Place up to four portfolios side by side to see how they differ at a single point in time.
-    "13":
-      title: Build your portfolio and select your years
-      description: Choose the diseases and product types you want to include — these will be combined into a single portfolio. Then select the years you want to compare across. The available years reflect the annual snapshots IGH has taken of the global R&D pipeline over time.
-    "14":
-      title: Define and compare your portfolios
-      description: Build up to four portfolios by selecting a disease and/or product type for each one. Use the + button to add more portfolios to your comparison. Once you’re happy with your selection, choose a single year and click Apply to see the results side by side.
-    "15":
+      description: Compare a single portfolio across multiple years, or compare up to four portfolios against each other within a single year.
+    "10":
       title: Explore the WHO priorities
-      description: Filter the disease on global health area, disease or product type to get an understanding of the WHO priorities that are developed for this selection.
-    "16":
-      title: Explore the priority in depth
-      description: Select one specific priority and click on apply to load the pipeline that is related to that priority.
-    "17":
-      title: Click on Explore
-      description: Click on explore in any table, to activate a slide-in panel that will show the in-depth information of that row in the table.
+      description: Filter by global health area, disease or product type to see which WHO priorities are covered by your selection.
+    "11":
+      title: Explore the pipeline for a WHO priority
+      description: Select a priority and click Apply to load the pipeline related to it.
+    "12":
+      title: Understand the WHO priority
+      description: Click Explore for key information on the priority, including intended use, target population, efficacy and safety.
+    "13":
+      title: Navigate back to Impact Global Health
+      description: Use the top menu to return to the main IGH website and its other components.
 layout:
   filters:
     clear: Clear
