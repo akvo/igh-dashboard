@@ -412,22 +412,6 @@ guided_tour:
     "13":
       title: Navigate back to Impact Global Health
       description: Use the top menu to return to the main IGH website and its other components.
-    "14":
-      title: Define and compare your portfolios
-      description: Build up to four portfolios by selecting a disease and/or product type for each one. Use the + button to add more portfolios to your comparison. Once you’re happy with your selection, choose a single year and click Apply to see the results side by side.
-    "15":
-      title: Explore the WHO priorities
-      description: Filter the disease on global health area, disease or product type to get an understanding of the WHO priorities that are developed for this selection.
-    "16":
-      title: Explore the priority in depth
-      description: Select one specific priority and click on apply to load the pipeline that is related to that priority.
-    "17":
-      title: Click on Explore
-      description: Click on explore in any table, to activate a slide-in panel that will show the in-depth information of that row in the table.
-  confirm:
-    prompt: Do you want to take a guided tour through the platform?
-    no: No
-    start: Start tour
 layout:
   filters:
     clear: Clear
