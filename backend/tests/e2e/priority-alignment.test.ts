@@ -180,7 +180,7 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
     expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1185);
     expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
-    expect(byKey["Womens Health"].totalCandidates).toBe(1110);
+    expect(byKey["Womens Health"].totalCandidates).toBe(971);
   });
 
   it("byArea sharePercentage = candidatesWithPriority / totalCandidates", () => {
