@@ -205,10 +205,35 @@ function Expandable({ title, children }) {
 // -------------------------------------------------------------------
 // Page
 // -------------------------------------------------------------------
+// Map annex TOC ids to accordion keys
+const ANNEX_ID_TO_KEY = { 'annex-a': 'a', 'annex-b': 'b', 'annex-c': 'c' };
+
 export default function MethodologyPage() {
   const [activeTab, setActiveTab] = useState('methodology');
+  const [openAnnex, setOpenAnnex] = useState(null);
   const toc = activeTab === 'methodology' ? METHODOLOGY_TOC : WHAT_WE_TRACK_TOC;
-  const activeSection = useActiveSection(toc.map((item) => item.id));
+  const methodologyActive = useActiveSection(
+    activeTab === 'methodology' ? toc.map((item) => item.id) : []
+  );
+  // For "what we track", highlight based on which accordion is open
+  const activeSection = activeTab === 'methodology'
+    ? methodologyActive
+    : openAnnex
+      ? `annex-${openAnnex}`
+      : toc[0]?.id;
+
+  const handleTocClick = (e, itemId) => {
+    const annexKey = ANNEX_ID_TO_KEY[itemId];
+    if (annexKey) {
+      e.preventDefault();
+      setOpenAnnex(annexKey);
+      // Scroll to the section after state update
+      setTimeout(() => {
+        const el = document.getElementById(itemId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] lg:min-h-0 lg:h-[calc(100vh-90px)] bg-cream-200">
@@ -237,7 +262,7 @@ export default function MethodologyPage() {
                   </p>
                 </div>
               )}
-              {activeTab === 'methodology' ? <MethodologyContent /> : <WhatWeTrackContent />}
+              {activeTab === 'methodology' ? <MethodologyContent /> : <WhatWeTrackContent openAnnex={openAnnex} setOpenAnnex={setOpenAnnex} />}
             </article>
 
             {/* Right sidebar — Tab toggle + TOC + CTA (desktop only) */}
@@ -276,6 +301,7 @@ export default function MethodologyPage() {
                       <a
                         key={item.id}
                         href={`#${item.id}`}
+                        onClick={(e) => handleTocClick(e, item.id)}
                         className={`flex items-start gap-1.5 text-xs py-1 px-2 rounded no-underline transition-colors ${
                           activeSection === item.id
                             ? 'text-orange-600 bg-orange-50 font-semibold'
@@ -577,8 +603,7 @@ function MethodologyContent() {
 // -------------------------------------------------------------------
 // What we track tab content
 // -------------------------------------------------------------------
-function WhatWeTrackContent() {
-  const [openAnnex, setOpenAnnex] = useState(null);
+function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
   const toggle = (id) => setOpenAnnex(openAnnex === id ? null : id);
 
   const partialInclusions = [
