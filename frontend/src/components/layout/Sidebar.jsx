@@ -11,6 +11,7 @@ import {
   GridIcon,
   HelpIcon,
   SearchIcon,
+  FileIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
 } from '../icons';
@@ -36,6 +37,7 @@ const defaultMenuItems = [
       },
       { id: 'pipeline-trends', label: t('layout.sidebar.nav.pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
       { id: 'who-priority-alignment', label: t('layout.sidebar.nav.who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
+      { id: 'methodology', label: t('layout.sidebar.nav.methodology'), icon: FileIcon, href: '/methodology' },
     ],
   },
 ];

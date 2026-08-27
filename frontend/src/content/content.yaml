@@ -412,6 +412,167 @@ guided_tour:
     "13":
       title: Navigate back to Impact Global Health
       description: Use the top menu to return to the main IGH website and its other components.
+methodology:
+  page:
+    title: How this pipeline is built
+    intro: "Scope, sources, process, definitions and limitations of the Impact Global Health product R&D pipeline. This page explains what the pipeline covers, where the information comes from, and what it does not claim to be."
+    body_intro: The Impact Global Health product R&D pipeline records the products being developed for diseases and health conditions that attract too little commercial research attention. This page explains what the pipeline covers, where the information comes from, and what it does not claim to be.
+  tabs:
+    methodology: Methodology
+    what_we_track: What we track
+  toc:
+    title: Table of contents
+  cta:
+    title: Drop us a message!
+    placeholder: Enter Email
+    button: Get in touch
+  toc_labels:
+    scope: Scope
+    where_information: Where the information comes from
+    how_record_reaches: How a record reaches the pipeline
+    definitions: Definitions
+    limitations: Limitations
+    corrections: Corrections and feedback
+    version: Version and review cycle
+  toc_annex_labels:
+    annex_a: Annex - Neglected diseases
+    annex_b: Annex - Emerging infectious diseases
+    annex_c: "Annex - Women\u2019s health"
+  scope:
+    title: Scope
+    p1: "The pipeline covers three global health areas: neglected diseases, emerging infectious diseases and women\u2019s health. Each area has a defined set of diseases or conditions, and each disease or condition has a defined set of product areas tracked for it. Both lists are fixed before a review begins. Neither is decided record by record."
+    p2: "Eight product types appear across the pipeline: drugs, vaccines, biologics, diagnostics, microbicides, vector control products, dietary supplements and devices. Not every one applies to every disease. Vector control products are tracked only where a disease is vector-borne or has an animal reservoir; microbicides apply to neglected diseases and women\u2019s health; dietary supplements and devices apply to women\u2019s health only, and there only for particular conditions."
+    p3: "Scope therefore operates on the combination of a disease and a product type. A product type not tracked for a disease is out of scope for that disease, however scientifically valuable the work. Some combinations are only partially included, against stated criteria. The annexes list every disease, the product types tracked for it, and the criteria attached to any partial inclusion."
+    exclusions_title: Outside the pipeline by definition
+    exclusions_intro: "Across all three areas, the following sit outside the pipeline by definition:"
+    exclusion_1_title: No identifiable candidate or product
+    exclusion_1_desc: "Discovery or screening programmes where no unique candidate has been defined, including target identification and biomarker discovery."
+    exclusion_2_title: Non-product development research
+    exclusion_2_desc: "Behavioural, educational, health-system and service-delivery interventions."
+    exclusion_3_title: Observational or non-interventional evidence
+    exclusion_3_desc: Candidates described only in observational studies are not considered for inclusion.
+    exclusion_4_title: Comparator and control arms
+    exclusion_4_desc: Placebo and standard-of-care arms are not recorded as separate entries.
+    exclusion_5_title: Nothing new being developed
+    exclusion_5_desc: Work on an already-marketed product where nothing new is being developed for it.
+  where_information:
+    title: Where the information comes from
+    p1: Every cycle draws on the same classes of source. That is what makes one review comparable to the last.
+    p2: "Breadth comes from two places, both searched disease by disease: the clinical trial registries \u2014 ClinicalTrials.gov and the World Health Organization International Clinical Trials Registry Platform \u2014 and a major biomedical literature database. Registries capture what has been formally registered. The literature captures work published or presented but never registered, so original research including conference abstracts is eligible, while reviews, editorials and commentary are not."
+    p3: "Regulatory and prequalification listings answer a narrower question: what has actually been approved. Those are World Health Organization prequalification and emergency use listings covering medicines, vaccines, in-vitro diagnostics and vector control products, plus the US Food and Drug Administration and the European Medicines Agency. A specialist diagnostics test directory supplies the diagnostics pipeline, which the trial registries cover poorly."
+    p4: "Product development portfolios published by organisations working in each disease area are read last, and read as a test: if something highly visible is missing from what the searches returned, that is where it surfaces. Alongside all of this sit Impact Global Health\u2019s existing pipeline records, used to match new evidence against records already held rather than to find new candidates."
+    callout: Not every source can originate a record. Some are consulted only to verify and enrich what another source found, adding mechanism of action, molecular target or route of administration. They never introduce a candidate on their own.
+    expandable_title: Targeted information sources
+    source_1_title: Disease-area and product development portfolios
+    source_1_badge: Can originate a record
+    source_1_desc: "Medicines for Malaria Venture, DNDi, TB Alliance, IAVI, IVCC, WHO immunization programme, CEPI, IVI, EVI, Sabin Vaccine Institute, READDI, RIGHT Fund and others."
+    source_2_title: Research grant databases
+    source_2_badge: Can originate a record
+    source_2_desc: "G-FINDER, NIH RePORTER, UKRI Gateway to Research, Gates Foundation, CORDIS, SNSF grants database."
+    source_3_title: Technical enrichment
+    source_3_badge: "Verify and enrich only; never originates a record"
+    source_3_desc: "AdisInsight \u2014 confirms mechanism of action, molecular target, route of administration, drug class, alternative names, developer roles and regulatory flags."
+    source_4_title: Matching reference
+    source_4_badge: Never originates a record
+    source_4_desc: "Impact Global Health\u2019s existing pipeline records are carried into each review so new evidence can be matched against records already held."
+  how_record_reaches:
+    title: How a record reaches the pipeline
+    intro: A record moves through a structured review process before it is added to the published pipeline. The order of the steps is deliberate; scope is set first, sources are searched, records are reviewed and checked, and only then are they reconciled into the database.
+    step_1: "Scope is fixed \u2014 diseases, product areas, partial-inclusion criteria and time period are set before searching begins."
+    step_2: "Sources are searched and relevant records are extracted, captured as they appear in each source."
+    step_3: "Records are checked for duplicates \u2014 the same candidate often appears in more than one source, under more than one name."
+    step_4: "Each record is classified by product name, target disease, product area, R&D stage and developer, and matched against existing pipeline records."
+    step_5: Each record is reviewed by a subject-matter reviewer who confirms or corrects the classification.
+    step_6: Independent quality control is carried out before records are reconciled into the database and published.
+    ai_title: The part artificial intelligence plays
+    ai_p1: Impact Global Health uses artificial intelligence to support the pipeline review process. Its role is to help retrieve records, extract structured information, match candidates across sources, add technical details and check consistency.
+    ai_p2: "**AI does not decide whether a record is in scope, and it does not validate records for publication.** It is never the only source behind a record. Its outputs are treated as proposals."
+    ai_p3: "Every record is reviewed by a subject-matter reviewer, and independent quality control is carried out before it reaches the published pipeline."
+  definitions:
+    title: Definitions
+    candidate_title: Candidate and product
+    candidate_desc: A candidate is still in development. A product has reached approval. Both sit in the same pipeline; what separates them is the stage reached, not the kind of thing being developed.
+    product_types_title: Product types
+    product_types_p1: "Drugs are new chemical entities, repurposed compounds and fixed-dose combinations. Vaccines are preventive or therapeutic, and include new antigens, adjuvanted formulations and new delivery platforms. Biologics are biological products that are not vaccines: monoclonal antibodies, recombinant proteins, and gene and cell therapies. Monoclonal antibodies are always biologics, never drugs."
+    product_types_p2: "Diagnostics are defined functionally \u2014 by what a product detects or measures, not by its regulatory classification. Microbicides are topical or intravaginal prevention products. Vector control products divide three ways: chemical, biological, and vaccines given to animal reservoirs to stop transmission to people."
+    rd_stage_title: R&D stage
+    rd_stage_desc: "Product families do not develop along the same path, so the pipeline uses several stage scales rather than forcing them into one. Drugs, vaccines, biologics and microbicides run from discovery and preclinical work through Phases I, II, III and IV to approved. Diagnostics run from early development to late development to approved. Chemical vector control products run from primary and secondary screening and optimisation, through development, to prequalification listing and regulatory approval. Biological vector control products use Phase I to IV labels on a scale of their own; a Phase II there is not the milestone a Phase II drug has reached. A record with no usable stage is shown as unclear or not applicable rather than assigned one."
+    approved_title: Approved
+    approved_desc: "A product is recorded as approved once a recognised regulator or normative body has authorised it. Three are treated as core: the US Food and Drug Administration, the European Medicines Agency and Japan\u2019s Pharmaceuticals and Medical Devices Agency. Health Canada and Australia\u2019s Therapeutic Goods Administration are associates. The World Health Organization is progressively replacing the stringent-regulatory-authority concept with its WHO-Listed Authority framework. The Therapeutic Goods Administration reached that status in December 2025. In-vitro diagnostics are not yet within the framework\u2019s scope. Prequalification and emergency use listing are recorded alongside regulatory approval."
+  limitations:
+    title: "Limitations \u2014 what this pipeline is not"
+    p1: "**The pipeline is not a market analysis.** It does not assess market size, demand, pricing, access, procurement or commercial viability. Its purpose is to show what is in development, or already approved, within the defined scope."
+    p2: "**The pipeline is a point-in-time record.** Each global health area is reviewed on its own cycle, and the published information reflects what was publicly available at the time of that review. New, changed or discontinued activity may not appear until the next review cycle."
+    p3: "A missing candidate or product does not necessarily mean there is no activity in that area. It may be outside the pipeline\u2019s defined scope, not yet publicly disclosed, or not captured in the sources reviewed. Similarly, an area that is out of scope is not being judged as unimportant; it is simply not part of what this pipeline tracks."
+    p4: The pipeline depends on publicly available information. Development activity that is not registered, published, listed or otherwise publicly disclosed cannot be captured. Because the pipeline includes both candidates in development and approved products, counts should be read as covering both.
+  corrections:
+    title: Corrections and feedback
+    p1: "If a record is missing, incorrect or out of date, please let us know through the help section on the pipeline home page. This could include a missing candidate or approved product, an incorrect developer or product name, a development stage that has changed, or a product that has since been approved or discontinued."
+    p2: "Where possible, please include the product name, disease or condition, developer, and a public reference, such as a trial registration, publication, regulatory listing or organisational announcement."
+    p3: All corrections are assessed against the same scope rules and review process as other pipeline records. If a submission falls outside the defined scope, it will not be added to the pipeline.
+  version:
+    title: Version and review cycle
+    version_label: Version 1.0. Published [publication date].
+    col_area: Area
+    col_cycle: Review cycle
+    row_nd_area: Neglected diseases
+    row_nd_cycle: "Annual, completing in March"
+    row_eid_area: Emerging infectious diseases
+    row_eid_cycle: "Annual, completing in July"
+    row_wh_area: "Women\u2019s health"
+    row_wh_cycle: "First review under this methodology runs October\u2013December 2026. A recurring point in the year has not yet been set"
+    footnote: "These cycles describe how the pipeline is maintained; they are not a commitment to a publication date."
+  what_we_track:
+    title: Annexes
+    annex_a:
+      title: Neglected diseases
+      label: Annexes A
+      subtitle: Diseases tracked, and the product types tracked for each.
+      partial_title: Partial inclusions
+      partial_pneumo: "**Pneumococcal vaccines** \u2014 only vaccines developed for use in low- and middle-income countries, or to support registration there. A vaccine must be designed for infants under two years, give broad coverage across serotypes or focused protection against those prevalent in low- and middle-income countries (at minimum serotypes 1, 5 and 14), and match or improve on existing conjugate vaccines."
+      partial_meningo: "**Meningococcal vaccines** \u2014 only conjugate vaccines covering serogroup A, designed for infants under two years and intended to cost under one US dollar per dose, developed for or being registered in low- and middle-income countries."
+      partial_dengue_rota: "**Dengue and rotavirus vaccines** \u2014 only development specific to low- and middle-income countries."
+      partial_diarrhoeal: "**Cholera, Shigella, cryptosporidiosis and multiple diarrhoeal diseases** \u2014 drugs only where they act on the pathogen; supportive therapies such as zinc, oral rehydration and nutritional supplements are excluded. Biologics only where developed for low- and middle-income country needs or registration there."
+      partial_hepb: "**Hepatitis B** \u2014 drugs only where they are new drugs or reformulations for low- and middle-income country use, such as curative therapies, products preventing mother-to-child transmission, or long-acting formulations, or where they support registration there. Biologics on the same basis, and must cover the hepatitis B genotypes prevalent in low- and middle-income countries."
+      partial_hepc: "**Hepatitis C** \u2014 drugs only where they are new drugs or reformulations for low- and middle-income country use, such as fixed-dose combinations, or support registration there."
+      partial_hiv: "**HIV/AIDS** \u2014 drugs only where they are new drugs or reformulations for low- and middle-income country use: paediatric or slow-release formulations, fixed-dose combinations, low-dose formulations for prophylaxis, and long-acting injectables. Biologics only where developed for low- and middle-income country needs or registration there."
+      partial_lepto: "**Leptospirosis diagnostics** \u2014 only tests suited to resource-limited settings: a test must detect the disease in its septicaemic or early acute phase, be accurate and easy to interpret with results within one to two hours, and be cheap, stable and usable without specialist equipment or highly trained staff."
+      partial_snakebite: "**Snakebite envenoming** \u2014 drugs only where developed for low- and middle-income country needs, such as antivenoms incorporating small-molecule inhibitors or heat-stable venom-agnostic oral drugs, or supporting registration there. Biologics only where they are antivenom immunoglobulins based on the venom of snakes from those countries, or support registration there. Diagnostics only where capable of identifying envenomation by medically important snake species common to those countries."
+      partial_yaws: "**Yaws diagnostics** \u2014 only novel point-of-care tests that identify a single active case of infection, detect resistance to azithromycin, or both."
+      vector_title: Vector control products
+      vector_p1: "Chemical vector control products are limited to active ingredients and formulations intended for public health use that inhibit, kill or repel vectors: new insecticides and formulations for treated nets and indoor residual spraying, systemic insecticides and endectocides, insecticide-based baits and traps, spatial repellents, and chemical larvicides. Biological vector control products are limited to innovative biological interventions such as microbial larvicides, sterilisation techniques and genetic modification. Reservoir-targeted vaccines are limited to veterinary vaccines developed specifically to prevent animal-to-human transmission."
+      vector_p2: "Predation measures, habitat control and infrastructure measures are excluded, as are vaccines developed and used solely for veterinary purposes."
+    annex_b:
+      title: Emerging infectious diseases
+      label: Annexes B
+      subtitle: "Fifteen pathogens are tracked: Lassa fever, Crimean-Congo haemorrhagic fever, Rift Valley fever, Hantaan virus, Andes virus, Sin Nombre virus, Middle East respiratory syndrome, COVID-19, Ebola, Marburg, Zika, highly pathogenic avian influenza A(H5N1), Nipah, mpox and chikungunya."
+      callout: Drugs, vaccines, biologics and diagnostics are tracked for every one of them. Vector control products are tracked where applicable. Microbicides do not apply in this area, and no disease in it carries a partial inclusion.
+      notes_title: Qualifying notes
+      note_1: Vector control products divide into chemical products, biological products and reservoir-targeted vaccines. Which apply to a given pathogen depends on whether it is vector-borne and whether it has an animal reservoir. For pathogens that are not vector-borne, the category covers only veterinary vaccines developed specifically to prevent transmission from animals to people.
+      note_2: "Influenza is tracked only for products specific to H5N1, and for pan-influenza products that provide H5N1 coverage. Seasonal influenza is not in scope."
+      note_3: "Dengue is tracked under neglected diseases, not here. No dengue disease-product combination is recorded in this area."
+      note_4: "Andes virus and Sin Nombre virus enter the pipeline with the 2026 cycle. Neither was curated in an earlier review, so their records begin from a longer look-back than the other pathogens."
+      note_5: "The disease set follows the pathogens covered by the 100 Days Mission Scorecard, extended by Andes virus and Sin Nombre virus."
+    annex_c:
+      title: "Women\u2019s health"
+      label: Annexes C
+      summary: "Women\u2019s health covers twelve conditions in three groups: gynaecological conditions, maternal conditions, and sexually transmitted infections carrying a risk of antimicrobial resistance. The product types tracked differ by group, so each group has its own table."
+      qualifying: "Across all three groups, a product qualifies whether it is a new entity, an existing product being repurposed or extended to a new label, or a new formulation or dose of something already registered. Predictive or diagnostic strategies with no identifiable product are not tracked, and neither are risk models that combine several separately evaluated parameters into a single entry, nor clinical guidelines and criteria, which are not products."
+      gynae_title: Gynaecological conditions
+      gynae_p1: "Products are tracked where they prevent or treat the condition or its symptoms. For endometriosis that includes pain, migration of endometrial tissue, endometrial lesions and related infertility, and extends to products regulating the menstrual cycle. For polyendocrine metabolic ovarian syndrome it includes products targeting hyperandrogenism, metabolic regulation, fertility and menstrual cycle regulation. For uterine fibroids it includes menstrual cycle regulation, shrinking or preventing fibroids, and pain management."
+      gynae_p2: "A device here means an instrument or appliance, with or without a pharmacological element, intended to deliver a drug or biologic or to control uterine bleeding. Diagnostics cover predictive, screening and diagnostic tests: biochemical markers, non-biomarker tests and fixed multiparametric tests alike."
+      gynae_p3: "Not tracked: dietary supplements, for any of the three conditions; and surgical interventions, whether used to treat or to diagnose. Products must be applicable to use in low- and middle-income settings."
+      maternal_title: Maternal conditions
+      maternal_p1: "Every maternal condition tracks drugs, biologics and dietary supplements. Diagnostics are tracked for three conditions only \u2014 preterm labour/birth, preeclampsia/eclampsia and intrauterine growth restriction. Devices are tracked for postpartum haemorrhage only."
+      maternal_p2: "Across the group, products must be intended for pregnant women, or for lactating mothers within the postpartum period, taken as the first 42 days after birth. Products are tracked whatever setting they are intended for, high-income or otherwise."
+      maternal_p3: "Diagnostics cover predictive, screening and diagnostic tests, including maternal and fetal biochemical serum markers, non-biomarker tests and fixed multiparametric tests. Clinical criteria already in routine use \u2014 blood pressure measurement, urinalysis, uric acid measurement \u2014 are not products and are not tracked."
+      maternal_p4: "Devices for postpartum haemorrhage must have standalone action to prevent or control bleeding: balloon, suction or sponge tamponades, tools assisting bimanual compression, and devices with wider application that have demonstrated use against postpartum haemorrhage. A device combined with a pharmaceutical element qualifies only where the device and the pharmaceutical element each act independently against the bleed. Not tracked: devices used in management that do not control bleeding, such as cell salvage for blood replacement; diagnostic devices such as those measuring blood loss; devices that only deliver a medicine, which are captured as medicines instead; digital tools guiding diagnosis and management; and embolisation and surgical procedures."
+      maternal_p5: "Maternal anaemia is limited to iron deficiency-related anaemia. Products qualify where they prevent or treat it, directly stimulate erythropoiesis, or supply nutrients that erythroid precursor cells need. Both oral and intravenous iron supplementation are recorded as drugs, for consistency. Not tracked: anaemia arising from other micronutrient deficiencies such as folate or vitamin B12; conventional foods; supplements or traditional medicines that are not properly dosed or formulated for use."
+      maternal_p6: "Maternal enteric microbiome covers interventions directed at the maternal enteric microbiome and at environmental enteric dysfunction. Two kinds qualify: foods enriched to deliver a physiological benefit the unmodified food does not, such as polyphenols, microbial metabolites, glycans, bioactive peptides and fermented foods; and live biotherapeutic products intended to colonise the gut, such as faecal microbiota transplantation. Not tracked: interventions directed at a microbiome other than the enteric one, including vaginal microbiome therapies; and interventions with no standardised dosing or formulation."
+      sti_title: Sexually transmitted infections with risk of antimicrobial resistance
+      sti_p1: "These three infections are tracked because each carries a risk of antimicrobial resistance. Resistance is already documented in all three: in Neisseria gonorrhoeae to both traditional and currently recommended treatments, in Mycoplasma genitalium to azithromycin and to alternative regimens, and in Trichomonas vaginalis to nitroimidazoles, the only drug class with demonstrated efficacy against it."
+      sti_p2: "Drugs and biologics are tracked where they prevent transmission, prevent acquisition of the infection, or clear it. Vaccines are tracked on the same basis, whether preventive or therapeutic. Microbicides are tracked where they are topical products preventing transmission of one of the three infections and are suitable for low- and middle-income settings \u2014 heat stable and easy to use, for instance. Diagnostics cover both tests for the infection itself and tests for antimicrobial resistance."
+      sti_p3: "Not tracked: dietary supplements. Products must be applicable to use in low- and middle-income settings."
 layout:
   filters:
     clear: Clear
@@ -526,4 +687,5 @@ layout:
       pipeline_overview: Pipeline Overview
       pipeline_trends: Pipeline trends
       who_priority: WHO Priority alignment
+      methodology: Methodology
       section_general: GENERAL
