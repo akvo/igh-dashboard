@@ -58,23 +58,31 @@ beforeAll(() => {
     // Pick a non-stub priority with at least one bridged candidate AND a
     // non-null target_population so every sub-query returns non-trivial
     // data. Also capture its disease's GHA for the cross-filter case.
+    //
+    // Among those, prefer the priority whose count diverges most from what
+    // the retired `new_include_in_pipeline_2025` pin would have returned.
+    // That makes the count assertion below a genuine regression guard: if
+    // the pin ever comes back, this priority's count drops and the test
+    // fails. Ordering (not filtering) on the divergence keeps the picker
+    // working on a refresh where no priority diverges at all.
     const row = db
       .prepare(
-        `SELECT p.priority_key, p.target_population, d.global_health_area
+        `SELECT p.priority_key, p.target_population, d.global_health_area,
+                COUNT(DISTINCT f.candidate_key)
+                  - COUNT(DISTINCT CASE WHEN c.new_include_in_pipeline_2025 = 1
+                                        THEN f.candidate_key END) AS divergence
          FROM dim_priority p
          JOIN dim_disease d ON d.disease_key = p.disease_key
+         JOIN bridge_candidate_priority bp ON bp.priority_key = p.priority_key
+         JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key
+         JOIN dim_candidate_core c ON c.candidate_key = f.candidate_key
          WHERE p.priority_name IS NOT NULL
            AND TRIM(p.priority_name) != ''
            AND p.target_population IS NOT NULL
-           AND p.priority_key IN (
-             SELECT bp.priority_key
-             FROM bridge_candidate_priority bp
-             JOIN fact_pipeline_snapshot f ON f.candidate_key = bp.candidate_key
-             JOIN dim_candidate_core c ON c.candidate_key = f.candidate_key
-             WHERE f.is_active_flag = 1 AND f.include_in_pipeline = 1
-               AND c.candidate_type = 'Candidate'
-               AND c.new_include_in_pipeline_2025 = 1
-           )
+           AND f.is_active_flag = 1 AND f.include_in_pipeline = 1
+           AND c.candidate_type = 'Candidate'
+         GROUP BY p.priority_key
+         ORDER BY divergence DESC, p.priority_key
          LIMIT 1`,
       )
       .get() as {
@@ -91,7 +99,7 @@ beforeAll(() => {
 });
 
 describe("individualPriorityAnalysis", () => {
-  it("counts only strict-2025 candidates and excludes products", async () => {
+  it("counts active-pipeline candidates and excludes products", async () => {
     const { data } = await query<{ individualPriorityAnalysis: Analysis }>(GQL, {
       priorityKey: pickedPriorityKey,
     });
@@ -101,7 +109,8 @@ describe("individualPriorityAnalysis", () => {
     const sumByRow = a.pipelineBuildUp.reduce((s, r) => s + r.candidateCount, 0);
     expect(sumByRow).toBe(a.candidatesCount);
 
-    // candidatesCount equals the strict SQL count for this priority.
+    // candidatesCount equals the active-pipeline SQL count for this
+    // priority — the same inclusion rule every other page uses.
     const db = new Database(path.resolve(__dirname, "../star_schema.db"), { readonly: true });
     try {
       const { n } = db
@@ -112,12 +121,11 @@ describe("individualPriorityAnalysis", () => {
            JOIN bridge_candidate_priority bp ON bp.candidate_key = f.candidate_key
            WHERE f.is_active_flag = 1 AND f.include_in_pipeline = 1
              AND c.candidate_type = 'Candidate'
-             AND c.new_include_in_pipeline_2025 = 1
              AND bp.priority_key = ?`,
         )
         .get(pickedPriorityKey) as { n: number };
       expect(a.candidatesCount).toBe(n);
-      // Confirm the picked priority genuinely has strict candidates, so the
+      // Confirm the picked priority genuinely has candidates, so the
       // assertions above are not trivially satisfied by 0 === 0.
       expect(a.candidatesCount).toBeGreaterThan(0);
     } finally {
