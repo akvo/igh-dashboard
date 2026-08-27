@@ -27,22 +27,31 @@ const Dropdown = ({
   const updatePosition = useCallback(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      const menuHeight = 288; // max-h-72 = 18rem = 288px
+      // Use actual menu height when available, otherwise estimate
+      const menuHeight = menuRef.current
+        ? menuRef.current.offsetHeight
+        : 288;
       const spaceBelow = window.innerHeight - rect.bottom;
       const fitsBelow = spaceBelow >= menuHeight + 4;
       const top = fitsBelow
         ? rect.bottom + 4
         : Math.max(4, rect.top - menuHeight - 4);
-      setMenuPosition({ top, left: rect.left, width: rect.width });
+      // Align left edge to button left, but clamp so menu doesn't overflow viewport
+      const menuWidth = Math.max(rect.width, 200);
+      const left = Math.min(rect.left, window.innerWidth - menuWidth - 8);
+      setMenuPosition({ top, left, width: menuWidth });
     }
   }, []);
 
   useEffect(() => {
     if (isOpen) {
       updatePosition();
+      // Reposition after portal renders so actual menu height is available
+      const raf = requestAnimationFrame(updatePosition);
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
       return () => {
+        cancelAnimationFrame(raf);
         window.removeEventListener('scroll', updatePosition, true);
         window.removeEventListener('resize', updatePosition);
       };
