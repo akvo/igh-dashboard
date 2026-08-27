@@ -28,9 +28,7 @@ function applyPriorityKeysFilter(
 
 // Scalar equality filters on dim_candidate_core. Extracted from
 // `buildWhere` (like `applyPriorityKeysFilter`) so the parent stays under
-// the cyclomatic-complexity threshold. `new_include_in_pipeline_2025` is
-// opt-in: only the WHO Priority page sets it, so every other caller keeps
-// the forward-filled `include_in_pipeline` behaviour untouched.
+// the cyclomatic-complexity threshold.
 function applyCandidateScalarFilters(
   filter: PortfolioCandidateFilter | undefined,
   conditions: string[],
@@ -39,9 +37,6 @@ function applyCandidateScalarFilters(
   if (filter?.candidate_type) {
     conditions.push("c.candidate_type = ?");
     params.push(filter.candidate_type);
-  }
-  if (filter?.new_include_in_pipeline_2025) {
-    conditions.push("c.new_include_in_pipeline_2025 = 1");
   }
 }
 
