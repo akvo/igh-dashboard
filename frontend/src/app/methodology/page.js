@@ -28,52 +28,57 @@ const WHAT_WE_TRACK_TOC = [
 // -------------------------------------------------------------------
 // Disease-product tracking tables
 // -------------------------------------------------------------------
+
+// Partial cells are represented as objects: { v: 'Partial', criterion: '<id>', disease: '<name>', product: '<area>' }
+// Full inclusion cells are just strings.
+const p = (criterion, disease, product) => ({ v: 'Partial', criterion, disease, product });
+
 const NEGLECTED_DISEASES = [
-  ['Streptococcus pneumoniae', '–', 'Partial', '–', '✓', '–', '–'],
-  ['Neisseria meningitidis', '–', 'Partial', '–', '✓', '–', '–'],
-  ['Both S. pneumoniae and N. meningitidis', '–', '–', '–', '✓', '–', '–'],
-  ['Buruli ulcer', '✓', '✓', '–', '✓', '–', '–'],
-  ['Cryptococcal meningitis', '✓', '–', '✓', '–', '–', '–'],
-  ['Dengue', '✓', 'Partial', '✓', '✓', '–', '✓'],
-  ['Rotavirus', '–', 'Partial', '–', '–', '–', '–'],
-  ['Cholera', 'Partial', '✓', 'Partial', '✓', '–', '–'],
-  ['Shigella', 'Partial', '✓', 'Partial', '✓', '–', '–'],
-  ['Cryptosporidiosis', 'Partial', '✓', 'Partial', '✓', '–', '–'],
-  ['Enterotoxigenic E. coli (ETEC)', '–', '✓', '–', '✓', '–', '–'],
-  ['Enteroaggregative E. coli (EAEC)', '–', '✓', '–', '✓', '–', '–'],
-  ['Multiple diarrhoeal diseases', 'Partial', '✓', 'Partial', '✓', '–', '–'],
-  ['Schistosomiasis', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Onchocerciasis (river blindness)', '✓', '✓', '–', '✓', '–', '✓'],
-  ['Lymphatic filariasis (elephantiasis)', '✓', '–', '–', '✓', '–', '✓'],
-  ['Tapeworm (taeniasis / cysticercosis)', '✓', '–', '–', '✓', '–', '✓'],
-  ['Hookworm', '✓', '✓', '–', '–', '–', '–'],
-  ['Whipworm (trichuriasis)', '✓', '–', '–', '–', '–', '–'],
-  ['Roundworm (ascariasis)', '✓', '–', '–', '–', '–', '–'],
-  ['Strongyloidiasis and other intestinal roundworms', '✓', '✓', '–', '✓', '–', '–'],
-  ['Multiple helminth infections', '✓', '✓', '–', '✓', '–', '✓'],
-  ['Hepatitis B', 'Partial', '–', 'Partial', '✓', '–', '–'],
-  ['Hepatitis C', 'Partial', '✓', '–', '✓', '–', '–'],
-  ['Histoplasmosis', '✓', '–', '–', '✓', '–', '–'],
-  ['HIV/AIDS', 'Partial', '✓', 'Partial', '✓', '✓', '–'],
-  ['Sleeping sickness (human African trypanosomiasis)', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Leishmaniasis', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Chagas\' disease', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Multiple kinetoplastid diseases', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Leprosy', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Leptospirosis', '–', '–', '–', 'Partial', '–', '–'],
-  ['Malaria \u2014 P. falciparum', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Malaria \u2014 P. vivax', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Malaria \u2014 multiple or other strains', '✓', '✓', '✓', '✓', '–', '✓'],
-  ['Mycetoma', '✓', '–', '–', '✓', '–', '–'],
-  ['Rheumatic fever', '–', '✓', '–', '–', '–', '–'],
-  ['Typhoid and paratyphoid fever', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Non-typhoidal S. enterica', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Multiple Salmonella infections', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Scabies', '✓', '–', '–', '✓', '–', '–'],
-  ['Snakebite envenoming', 'Partial', '–', 'Partial', 'Partial', '–', '–'],
-  ['Trachoma', '–', '✓', '–', '✓', '–', '–'],
-  ['Tuberculosis', '✓', '✓', '✓', '✓', '–', '–'],
-  ['Yaws', '–', '–', '–', 'Partial', '–', '–'],
+  ['Streptococcus pneumoniae', '\u2013', p('pneumococcal-vaccines', 'Streptococcus pneumoniae', 'Vaccines'), '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Neisseria meningitidis', '\u2013', p('meningococcal-vaccines', 'Neisseria meningitidis', 'Vaccines'), '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Both S. pneumoniae and N. meningitidis', '\u2013', '\u2013', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Buruli ulcer', '\u2713', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Cryptococcal meningitis', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013', '\u2013'],
+  ['Dengue', '\u2713', p('dengue-rotavirus-vaccines', 'Dengue', 'Vaccines'), '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Rotavirus', '\u2013', p('dengue-rotavirus-vaccines', 'Rotavirus', 'Vaccines'), '\u2013', '\u2013', '\u2013', '\u2013'],
+  ['Cholera', p('diarrhoeal', 'Cholera', 'Drugs'), '\u2713', p('diarrhoeal', 'Cholera', 'Biologics'), '\u2713', '\u2013', '\u2013'],
+  ['Shigella', p('diarrhoeal', 'Shigella', 'Drugs'), '\u2713', p('diarrhoeal', 'Shigella', 'Biologics'), '\u2713', '\u2013', '\u2013'],
+  ['Cryptosporidiosis', p('diarrhoeal', 'Cryptosporidiosis', 'Drugs'), '\u2713', p('diarrhoeal', 'Cryptosporidiosis', 'Biologics'), '\u2713', '\u2013', '\u2013'],
+  ['Enterotoxigenic E. coli (ETEC)', '\u2013', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Enteroaggregative E. coli (EAEC)', '\u2013', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Multiple diarrhoeal diseases', p('diarrhoeal', 'Multiple diarrhoeal diseases', 'Drugs'), '\u2713', p('diarrhoeal', 'Multiple diarrhoeal diseases', 'Biologics'), '\u2713', '\u2013', '\u2013'],
+  ['Schistosomiasis', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Onchocerciasis (river blindness)', '\u2713', '\u2713', '\u2013', '\u2713', '\u2013', '\u2713'],
+  ['Lymphatic filariasis (elephantiasis)', '\u2713', '\u2013', '\u2013', '\u2713', '\u2013', '\u2713'],
+  ['Tapeworm (taeniasis / cysticercosis)', '\u2713', '\u2013', '\u2013', '\u2713', '\u2013', '\u2713'],
+  ['Hookworm', '\u2713', '\u2713', '\u2013', '\u2013', '\u2013', '\u2013'],
+  ['Whipworm (trichuriasis)', '\u2713', '\u2013', '\u2013', '\u2013', '\u2013', '\u2013'],
+  ['Roundworm (ascariasis)', '\u2713', '\u2013', '\u2013', '\u2013', '\u2013', '\u2013'],
+  ['Strongyloidiasis and other intestinal roundworms', '\u2713', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Multiple helminth infections', '\u2713', '\u2713', '\u2013', '\u2713', '\u2013', '\u2713'],
+  ['Hepatitis B', p('hepatitis-b', 'Hepatitis B', 'Drugs'), '\u2013', p('hepatitis-b', 'Hepatitis B', 'Biologics'), '\u2713', '\u2013', '\u2013'],
+  ['Hepatitis C', p('hepatitis-c', 'Hepatitis C', 'Drugs'), '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Histoplasmosis', '\u2713', '\u2013', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['HIV/AIDS', p('hiv-aids', 'HIV/AIDS', 'Drugs'), '\u2713', p('hiv-aids', 'HIV/AIDS', 'Biologics'), '\u2713', '\u2713', '\u2013'],
+  ['Sleeping sickness (human African trypanosomiasis)', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Leishmaniasis', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Chagas\' disease', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Multiple kinetoplastid diseases', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Leprosy', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Leptospirosis', '\u2013', '\u2013', '\u2013', p('leptospirosis-diagnostics', 'Leptospirosis', 'Diagnostics'), '\u2013', '\u2013'],
+  ['Malaria \u2014 P. falciparum', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Malaria \u2014 P. vivax', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Malaria \u2014 multiple or other strains', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
+  ['Mycetoma', '\u2713', '\u2013', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Rheumatic fever', '\u2013', '\u2713', '\u2013', '\u2013', '\u2013', '\u2013'],
+  ['Typhoid and paratyphoid fever', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Non-typhoidal S. enterica', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Multiple Salmonella infections', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Scabies', '\u2713', '\u2013', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Snakebite envenoming', p('snakebite', 'Snakebite envenoming', 'Drugs'), '\u2013', p('snakebite', 'Snakebite envenoming', 'Biologics'), p('snakebite', 'Snakebite envenoming', 'Diagnostics'), '\u2013', '\u2013'],
+  ['Trachoma', '\u2013', '\u2713', '\u2013', '\u2713', '\u2013', '\u2013'],
+  ['Tuberculosis', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013', '\u2013'],
+  ['Yaws', '\u2013', '\u2013', '\u2013', p('yaws-diagnostics', 'Yaws', 'Diagnostics'), '\u2013', '\u2013'],
 ];
 
 const ND_HEADERS = ['Disease', 'Drugs', 'Vaccines', 'Biologics', 'Diagnostics', 'Microbicides', 'Vector control'];
@@ -86,25 +91,39 @@ const EID_PATHOGENS = [
 ];
 
 const GYNAE = [
-  ['Endometriosis', '✓', '✓', '✓', '✓'],
-  ['Polyendocrine metabolic ovarian syndrome (PMOS)', '✓', '✓', '✓', '✓'],
-  ['Uterine fibroids', '✓', '✓', '✓', '✓'],
+  ['Endometriosis', '\u2713', '\u2713', '\u2713', '\u2713'],
+  ['Polyendocrine metabolic ovarian syndrome (PMOS)', '\u2713', '\u2713', '\u2713', '\u2713'],
+  ['Uterine fibroids', '\u2713', '\u2713', '\u2713', '\u2713'],
 ];
 
 const MATERNAL = [
-  ['Preterm labour/birth', '✓', '✓', '✓', '✓', '–'],
-  ['Preeclampsia/eclampsia', '✓', '✓', '✓', '✓', '–'],
-  ['Intrauterine growth restriction', '✓', '✓', '✓', '✓', '–'],
-  ['Postpartum haemorrhage', '✓', '✓', '✓', '–', '✓'],
-  ['Maternal anaemia', '✓', '✓', '✓', '–', '–'],
-  ['Maternal enteric microbiome', '✓', '✓', '✓', '–', '–'],
+  ['Preterm labour/birth', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013'],
+  ['Preeclampsia/eclampsia', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013'],
+  ['Intrauterine growth restriction', '\u2713', '\u2713', '\u2713', '\u2713', '\u2013'],
+  ['Postpartum haemorrhage', '\u2713', '\u2713', '\u2713', '\u2013', '\u2713'],
 ];
 
 const STI = [
-  ['Gonorrhoea', '✓', '✓', '✓', '✓', '✓'],
-  ['Mycoplasma genitalium', '✓', '✓', '✓', '✓', '✓'],
-  ['Trichomoniasis', '✓', '✓', '✓', '✓', '✓'],
+  ['Gonorrhoea', '\u2713', '\u2713', '\u2713', '\u2713', '\u2713'],
+  ['Mycoplasma genitalium', '\u2713', '\u2713', '\u2713', '\u2713', '\u2713'],
+  ['Trichomoniasis', '\u2713', '\u2713', '\u2713', '\u2713', '\u2713'],
 ];
+
+// -------------------------------------------------------------------
+// Partial-inclusion criteria content (10 criteria)
+// -------------------------------------------------------------------
+const CRITERIA = {
+  'pneumococcal-vaccines': 'methodology.what_we_track.annex_a.partial_pneumo',
+  'meningococcal-vaccines': 'methodology.what_we_track.annex_a.partial_meningo',
+  'dengue-rotavirus-vaccines': 'methodology.what_we_track.annex_a.partial_dengue_rota',
+  'diarrhoeal': 'methodology.what_we_track.annex_a.partial_diarrhoeal',
+  'hepatitis-b': 'methodology.what_we_track.annex_a.partial_hepb',
+  'hepatitis-c': 'methodology.what_we_track.annex_a.partial_hepc',
+  'hiv-aids': 'methodology.what_we_track.annex_a.partial_hiv',
+  'leptospirosis-diagnostics': 'methodology.what_we_track.annex_a.partial_lepto',
+  'snakebite': 'methodology.what_we_track.annex_a.partial_snakebite',
+  'yaws-diagnostics': 'methodology.what_we_track.annex_a.partial_yaws',
+};
 
 // -------------------------------------------------------------------
 // Scroll-spy
@@ -139,18 +158,28 @@ function useActiveSection(ids) {
 }
 
 // -------------------------------------------------------------------
-// Reusable tracking table
+// Reusable tracking table — uses tick marks, partial buttons
 // -------------------------------------------------------------------
-function TrackingTable({ headers, rows }) {
+function TrackingTable({ headers, rows, onPartialClick }) {
   const renderCell = (cell, isFirst) => {
     if (isFirst) return cell;
-    if (cell === '✓') {
-      return <span className="inline-block px-2.5 py-0.5 rounded text-xs font-medium" style={{ background: '#dcf2e4', color: '#4e765d' }}>Yes</span>;
+    // Partial cell object
+    if (typeof cell === 'object' && cell.v === 'Partial') {
+      return (
+        <button
+          type="button"
+          onClick={() => onPartialClick && onPartialClick(cell)}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border-none cursor-pointer transition-colors hover:brightness-95"
+          style={{ background: '#fef3c7', color: '#92400e' }}
+        >
+          Partial
+        </button>
+      );
     }
-    if (cell === 'Partial') {
-      return <span className="inline-block px-2.5 py-0.5 rounded text-xs font-medium" style={{ background: '#fef3c7', color: '#92400e' }}>Partial</span>;
+    if (cell === '\u2713') {
+      return <span className="text-green-700 font-bold text-sm">{'\u2713'}</span>;
     }
-    return <span className="text-gray-400">–</span>;
+    return <span className="text-gray-400">{'\u2013'}</span>;
   };
 
   return (
@@ -184,15 +213,18 @@ function TrackingTable({ headers, rows }) {
 // -------------------------------------------------------------------
 // Expandable section
 // -------------------------------------------------------------------
-function Expandable({ title, children }) {
-  const [open, setOpen] = useState(false);
+function Expandable({ title, subtitle, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border border-gray-200 rounded-lg my-4">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-left bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg border-none cursor-pointer"
+        className="w-full flex items-center justify-between px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 transition-colors rounded-lg border-none cursor-pointer"
       >
-        {title}
+        <div>
+          <span className="text-sm font-semibold">{title}</span>
+          {subtitle && <span className="block text-xs text-gray-500 mt-0.5">{subtitle}</span>}
+        </div>
         <span className={`transition-transform ${open ? 'rotate-45' : ''}`}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </span>
@@ -203,19 +235,71 @@ function Expandable({ title, children }) {
 }
 
 // -------------------------------------------------------------------
+// Slide-in panel for partial inclusion criteria
+// -------------------------------------------------------------------
+function SlideInPanel({ data, onClose }) {
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [onClose]);
+
+  if (!data) return null;
+
+  const criterionPath = CRITERIA[data.criterion];
+
+  return (
+    <>
+      {/* Scrim */}
+      <div className="fixed inset-0 bg-black/30 z-[9998]" onClick={onClose} />
+      {/* Panel */}
+      <aside className="fixed top-0 right-0 w-full max-w-md h-full bg-white shadow-2xl z-[9999] flex flex-col">
+        <div className="flex items-start justify-between p-5 border-b border-gray-200">
+          <div>
+            <span className="text-xs text-gray-400 uppercase tracking-wider font-medium">Partial inclusion criteria</span>
+            <h2 className="text-lg font-bold text-black mt-1">{data.disease}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 border-none bg-transparent cursor-pointer text-gray-400 hover:text-black"
+            aria-label="Close"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5">
+          <p className="text-sm text-gray-500 mb-4">
+            {data.product} &middot; Neglected diseases &middot; Partial
+          </p>
+          {criterionPath && (
+            <div className="text-sm text-gray-700 leading-relaxed">
+              <Markdown path={criterionPath} className="[&_p]:mb-0 [&_strong]:text-black" />
+            </div>
+          )}
+        </div>
+        <div className="flex items-center justify-between p-4 border-t border-gray-200 text-xs text-gray-400">
+          <span>Esc to close</span>
+          <a href="#definitions" className="text-orange-500 no-underline hover:underline">Definition: {data.product} &rarr;</a>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// -------------------------------------------------------------------
 // Page
 // -------------------------------------------------------------------
-// Map annex TOC ids to accordion keys
 const ANNEX_ID_TO_KEY = { 'annex-a': 'a', 'annex-b': 'b', 'annex-c': 'c' };
 
 export default function MethodologyPage() {
   const [activeTab, setActiveTab] = useState('methodology');
   const [openAnnex, setOpenAnnex] = useState(null);
+  const [slideInData, setSlideInData] = useState(null);
   const toc = activeTab === 'methodology' ? METHODOLOGY_TOC : WHAT_WE_TRACK_TOC;
   const methodologyActive = useActiveSection(
     activeTab === 'methodology' ? toc.map((item) => item.id) : []
   );
-  // For "what we track", highlight based on which accordion is open
   const activeSection = activeTab === 'methodology'
     ? methodologyActive
     : openAnnex
@@ -227,7 +311,6 @@ export default function MethodologyPage() {
     if (annexKey) {
       e.preventDefault();
       setOpenAnnex(annexKey);
-      // Scroll to the section after state update
       setTimeout(() => {
         const el = document.getElementById(itemId);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -252,9 +335,7 @@ export default function MethodologyPage() {
           </div>
 
           <div className="flex gap-8">
-            {/* Main content — full width */}
             <article className="flex-1 min-w-0">
-              {/* Intro text — methodology tab only */}
               {activeTab === 'methodology' && (
                 <div className="mb-8">
                   <p className="text-sm text-gray-700 leading-relaxed">
@@ -262,10 +343,13 @@ export default function MethodologyPage() {
                   </p>
                 </div>
               )}
-              {activeTab === 'methodology' ? <MethodologyContent /> : <WhatWeTrackContent openAnnex={openAnnex} setOpenAnnex={setOpenAnnex} />}
+              {activeTab === 'methodology'
+                ? <MethodologyContent />
+                : <WhatWeTrackContent openAnnex={openAnnex} setOpenAnnex={setOpenAnnex} onPartialClick={setSlideInData} />
+              }
             </article>
 
-            {/* Right sidebar — Tab toggle + TOC + CTA (desktop only) */}
+            {/* Right sidebar */}
             <aside className="hidden lg:block w-64 shrink-0">
               <div className="sticky top-4">
                 {/* Tab toggle */}
@@ -345,9 +429,21 @@ export default function MethodologyPage() {
           </div>
         </div>
       </main>
+
+      {/* Slide-in panel for partial inclusions */}
+      <SlideInPanel data={slideInData} onClose={() => setSlideInData(null)} />
     </div>
   );
 }
+
+// -------------------------------------------------------------------
+// Section heading helper
+// -------------------------------------------------------------------
+const SectionH2 = ({ children }) => (
+  <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>
+    {children}
+  </h2>
+);
 
 // -------------------------------------------------------------------
 // Methodology tab content
@@ -370,21 +466,29 @@ function MethodologyContent() {
     t('methodology.how_record_reaches.step_6'),
   ];
 
+  const productAreas = [
+    { key: 'drugs', label: 'Drugs' },
+    { key: 'vaccines', label: 'Vaccines' },
+    { key: 'biologics', label: 'Biologics' },
+    { key: 'diagnostics', label: 'Diagnostics' },
+    { key: 'microbicides', label: 'Microbicides' },
+    { key: 'vector_control', label: 'Vector control products' },
+    { key: 'dietary_supplements', label: 'Dietary supplements' },
+    { key: 'devices', label: 'Devices' },
+  ];
+
   return (
     <>
       {/* 1. Scope */}
       <section id="scope" className="mb-10">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.scope.title')}</h2>
+        <SectionH2>{t('methodology.scope.title')}</SectionH2>
         <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
           <p>{t('methodology.scope.p1')}</p>
           <p>{t('methodology.scope.p2')}</p>
           <p>{t('methodology.scope.p3')}</p>
-        </div>
-
-        {/* Exclusions */}
-        <h3 className="text-base font-bold text-black mt-6 mb-3">{t('methodology.scope.exclusions_title')}</h3>
-        <div className="text-sm text-gray-700 leading-relaxed">
-          <p className="mb-3">{t('methodology.scope.exclusions_intro')}</p>
+          <p>{t('methodology.scope.p4')}</p>
+          <p>{t('methodology.scope.p5')}</p>
+          <p>{t('methodology.scope.exclusions_intro')}</p>
           <ul className="space-y-2 list-none pl-0">
             {exclusions.map(([title, desc]) => (
               <li key={title} className="flex gap-3 items-start">
@@ -398,34 +502,38 @@ function MethodologyContent() {
 
       {/* 2. Where information comes from */}
       <section id="where-information-comes-from" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.where_information.title')}</h2>
+        <SectionH2>{t('methodology.where_information.title')}</SectionH2>
         <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
           <p>{t('methodology.where_information.p1')}</p>
           <p>{t('methodology.where_information.p2')}</p>
           <p>{t('methodology.where_information.p3')}</p>
           <p>{t('methodology.where_information.p4')}</p>
+          <p>{t('methodology.where_information.p5')}</p>
+          <p>{t('methodology.where_information.p6')}</p>
+          <p>{t('methodology.where_information.p7')}</p>
         </div>
 
-        {/* Info callout */}
-        <div className="flex gap-3 items-start rounded-lg p-4 mt-4 mb-4" style={{ background: '#FBF6EB' }}>
-          <span className="shrink-0 w-5 h-5 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-400 text-xs font-bold mt-0.5">i</span>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {t('methodology.where_information.callout')}
-          </p>
-        </div>
-
-        {/* Expandable targeted sources */}
-        <Expandable title={t('methodology.where_information.expandable_title')}>
+        {/* Annex D expandable */}
+        <Expandable
+          title={t('methodology.where_information.expandable_title')}
+          subtitle={t('methodology.where_information.expandable_subtitle')}
+        >
           <div className="space-y-4 text-sm text-gray-700">
+            <p>{t('methodology.where_information.expandable_intro_1')}</p>
+            <p>{t('methodology.where_information.expandable_intro_2')}</p>
+
             <div>
               <h4 className="font-semibold text-black mb-1">{t('methodology.where_information.source_1_title')}</h4>
               <p className="text-xs text-green-700 font-medium mb-1">{t('methodology.where_information.source_1_badge')}</p>
               <p>{t('methodology.where_information.source_1_desc')}</p>
+              <p>{t('methodology.where_information.source_1_nd')}</p>
+              <p>{t('methodology.where_information.source_1_eid')}</p>
             </div>
             <div>
               <h4 className="font-semibold text-black mb-1">{t('methodology.where_information.source_2_title')}</h4>
               <p className="text-xs text-green-700 font-medium mb-1">{t('methodology.where_information.source_2_badge')}</p>
               <p>{t('methodology.where_information.source_2_desc')}</p>
+              <p>{t('methodology.where_information.source_2_wh')}</p>
             </div>
             <div>
               <h4 className="font-semibold text-black mb-1">{t('methodology.where_information.source_3_title')}</h4>
@@ -443,17 +551,29 @@ function MethodologyContent() {
 
       {/* 3. How a record reaches the pipeline */}
       <section id="how-a-record-reaches" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.how_record_reaches.title')}</h2>
+        <SectionH2>{t('methodology.how_record_reaches.title')}</SectionH2>
         <div className="text-sm text-gray-700 leading-relaxed">
           <p className="mb-4">{t('methodology.how_record_reaches.intro')}</p>
           <ol className="space-y-3 pl-0 list-none">
             {steps.map((step, i) => (
-              <li key={i} className="flex gap-3 items-start">
-                <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">{i + 1}</span>
-                <span>{step}</span>
+              <li key={i}>
+                <div className="flex gap-3 items-start">
+                  <span className="w-6 h-6 rounded-full bg-gray-900 text-white text-xs flex items-center justify-center shrink-0 mt-0.5 font-bold">{i + 1}</span>
+                  <span>{step}</span>
+                </div>
+                {/* Sign-off between steps */}
+                {i < steps.length - 1 && (
+                  <div className="flex items-center gap-2 ml-3 my-2">
+                    <div className="w-px h-4 bg-gray-300" />
+                    <span className="text-[10px] uppercase tracking-wider text-gray-400 font-medium">Sign-off</span>
+                  </div>
+                )}
               </li>
             ))}
           </ol>
+          <p className="text-xs text-gray-500 mt-4 italic">
+            {t('methodology.how_record_reaches.spine_note')}
+          </p>
 
           <h3 className="text-base font-bold text-black mt-6 mb-3">{t('methodology.how_record_reaches.ai_title')}</h3>
           <div className="space-y-3">
@@ -466,10 +586,10 @@ function MethodologyContent() {
 
       {/* 4. Definitions */}
       <section id="definitions" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.definitions.title')}</h2>
+        <SectionH2>{t('methodology.definitions.title')}</SectionH2>
 
         <div className="text-sm text-gray-700 leading-relaxed divide-y divide-gray-200">
-          {/* Candidate and product */}
+          {/* Candidate */}
           <div className="flex gap-8 py-6 first:pt-0">
             <div className="w-40 shrink-0">
               <h4 className="font-bold text-black">{t('methodology.definitions.candidate_title')}</h4>
@@ -477,14 +597,56 @@ function MethodologyContent() {
             <p className="flex-1">{t('methodology.definitions.candidate_desc')}</p>
           </div>
 
-          {/* Product types */}
+          {/* Approved */}
           <div className="flex gap-8 py-6">
             <div className="w-40 shrink-0">
-              <h4 className="font-bold text-black">{t('methodology.definitions.product_types_title')}</h4>
+              <h4 className="font-bold text-black mb-3">{t('methodology.definitions.approved_title')}</h4>
+              <div className="flex flex-wrap gap-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#cbecd7', color: '#4e765d' }}>Approved</span>
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#cbecd7', color: '#4e765d' }}>Emergency Use Authorisation</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#fef3c7', color: '#92400e' }}>Application under review</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#fdd', color: '#b91c1c' }}>Approval withdrawn</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#f3f3f3', color: '#888' }}>Used off-label</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#f3f3f3', color: '#888' }}>Approval status unclear</span>
+              </div>
             </div>
-            <div className="flex-1 space-y-3">
-              <p>{t('methodology.definitions.product_types_p1')}</p>
-              <p>{t('methodology.definitions.product_types_p2')}</p>
+            <div className="flex-1">
+              <p>{t('methodology.definitions.approved_desc')}</p>
+            </div>
+          </div>
+
+          {/* Product areas */}
+          <div className="flex gap-8 py-6">
+            <div className="w-40 shrink-0">
+              <h4 className="font-bold text-black mb-3">{t('methodology.definitions.product_areas_title')}</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {productAreas.map((pa) => (
+                  <span key={pa.key} className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#e8e8ea', color: '#444' }}>
+                    {pa.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="mb-3">{t('methodology.definitions.product_areas_intro')}</p>
+              <div className="space-y-3">
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Drugs</h5><p>{t('methodology.definitions.product_areas_drugs')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Vaccines</h5><p>{t('methodology.definitions.product_areas_vaccines')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Biologics</h5><p>{t('methodology.definitions.product_areas_biologics')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Diagnostics</h5><p>{t('methodology.definitions.product_areas_diagnostics')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Microbicides</h5><p>{t('methodology.definitions.product_areas_microbicides')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Vector control products</h5><p>{t('methodology.definitions.product_areas_vector_control')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Dietary supplements</h5><p>{t('methodology.definitions.product_areas_dietary_supplements')}</p></div>
+                <div><h5 className="font-semibold text-black text-sm mb-0.5">Devices</h5><p>{t('methodology.definitions.product_areas_devices')}</p></div>
+              </div>
             </div>
           </div>
 
@@ -493,49 +655,17 @@ function MethodologyContent() {
             <div className="w-40 shrink-0">
               <h4 className="font-bold text-black mb-3">{t('methodology.definitions.rd_stage_title')}</h4>
               <div className="flex flex-wrap gap-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#F9A78D' }}>Phase 1</span>
-                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#B28FC9' }}>Phase 2</span>
-                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#CBAFDE' }}>Phase 3</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#FE7449' }}>Pre clinical</span>
-                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#999999' }}>Unknown</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
                 <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#AD5133' }}>Discovery</span>
+                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#FE7449' }}>Preclinical</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#F9A78D' }}>Phase I</span>
+                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#B28FC9' }}>Phase II</span>
+                <span className="px-2.5 py-1 rounded text-xs font-medium text-white" style={{ background: '#CBAFDE' }}>Phase III</span>
               </div>
             </div>
             <div className="flex-1">
               <p>{t('methodology.definitions.rd_stage_desc')}</p>
-            </div>
-          </div>
-
-          {/* Approved */}
-          <div className="flex gap-8 py-6">
-            <div className="w-40 shrink-0">
-              <h4 className="font-bold text-black mb-3">{t('methodology.definitions.approved_title')}</h4>
-              <div className="flex flex-wrap gap-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#f3f3f3', color: '#888' }}>Used off-label</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#fdd', color: '#b91c1c' }}>Approval withdrawn</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#cbecd7', color: '#4e765d' }}>Approved</span>
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#cbecd7', color: '#4e765d' }}>Emergency Use</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#dcf2e4', color: '#4e765d' }}>Authorisation</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                <span className="px-2.5 py-1 rounded text-xs font-medium" style={{ background: '#fef3c7', color: '#92400e' }}>Application under review</span>
-              </div>
-              <div className="mt-1.5">
-                <span className="text-xs text-gray-500">Approval status unclear</span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <p>{t('methodology.definitions.approved_desc')}</p>
             </div>
           </div>
         </div>
@@ -543,10 +673,10 @@ function MethodologyContent() {
 
       {/* 5. Limitations */}
       <section id="limitations" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.limitations.title')}</h2>
+        <SectionH2>{t('methodology.limitations.title')}</SectionH2>
         <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
-          <Markdown path="methodology.limitations.p1" className="[&_p]:mb-0" />
-          <Markdown path="methodology.limitations.p2" className="[&_p]:mb-0" />
+          <p>{t('methodology.limitations.p1')}</p>
+          <p>{t('methodology.limitations.p2')}</p>
           <p>{t('methodology.limitations.p3')}</p>
           <p>{t('methodology.limitations.p4')}</p>
         </div>
@@ -554,7 +684,7 @@ function MethodologyContent() {
 
       {/* 6. Corrections and feedback */}
       <section id="corrections" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.corrections.title')}</h2>
+        <SectionH2>{t('methodology.corrections.title')}</SectionH2>
         <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
           <p>{t('methodology.corrections.p1')}</p>
           <p>{t('methodology.corrections.p2')}</p>
@@ -564,7 +694,7 @@ function MethodologyContent() {
 
       {/* 7. Version and review cycle */}
       <section id="version" className="mb-10 pt-10 border-t border-gray-200">
-        <h2 className="text-black mb-4" style={{ fontFamily: 'var(--font-align), serif', fontSize: 22, fontWeight: 700, lineHeight: '32px' }}>{t('methodology.version.title')}</h2>
+        <SectionH2>{t('methodology.version.title')}</SectionH2>
         <div className="text-sm text-gray-700 leading-relaxed">
           <p className="mb-4 text-gray-500">{t('methodology.version.version_label')}</p>
           <div className="overflow-x-auto rounded-lg border border-gray-200">
@@ -603,28 +733,14 @@ function MethodologyContent() {
 // -------------------------------------------------------------------
 // What we track tab content
 // -------------------------------------------------------------------
-function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
+function WhatWeTrackContent({ openAnnex, setOpenAnnex, onPartialClick }) {
   const toggle = (id) => setOpenAnnex(openAnnex === id ? null : id);
 
-  const partialInclusions = [
-    'methodology.what_we_track.annex_a.partial_pneumo',
-    'methodology.what_we_track.annex_a.partial_meningo',
-    'methodology.what_we_track.annex_a.partial_dengue_rota',
-    'methodology.what_we_track.annex_a.partial_diarrhoeal',
-    'methodology.what_we_track.annex_a.partial_hepb',
-    'methodology.what_we_track.annex_a.partial_hepc',
-    'methodology.what_we_track.annex_a.partial_hiv',
-    'methodology.what_we_track.annex_a.partial_lepto',
-    'methodology.what_we_track.annex_a.partial_snakebite',
-    'methodology.what_we_track.annex_a.partial_yaws',
-  ];
-
   const eidNotes = [
-    t('methodology.what_we_track.annex_b.note_1'),
-    t('methodology.what_we_track.annex_b.note_2'),
-    t('methodology.what_we_track.annex_b.note_3'),
-    t('methodology.what_we_track.annex_b.note_4'),
-    t('methodology.what_we_track.annex_b.note_5'),
+    'methodology.what_we_track.annex_b.note_1',
+    'methodology.what_we_track.annex_b.note_2',
+    'methodology.what_we_track.annex_b.note_3',
+    'methodology.what_we_track.annex_b.note_4',
   ];
 
   return (
@@ -651,19 +767,12 @@ function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
         {openAnnex === 'a' && (
           <div className="px-5 pb-5 border-t border-gray-200">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-4 mb-3">
-              {NEGLECTED_DISEASES.length} DISEASES &middot; {ND_HEADERS.length - 1} PRODUCT TYPES
+              {NEGLECTED_DISEASES.length} DISEASES &middot; {ND_HEADERS.length - 1} PRODUCT AREAS
             </p>
             <p className="text-sm text-gray-700 mb-4 leading-relaxed">
               {t('methodology.what_we_track.annex_a.subtitle')}
             </p>
-            <TrackingTable headers={ND_HEADERS} rows={NEGLECTED_DISEASES} />
-
-            <h3 className="text-base font-bold text-black mt-8 mb-3">{t('methodology.what_we_track.annex_a.partial_title')}</h3>
-            <ul className="space-y-3 text-sm text-gray-700 leading-relaxed list-disc pl-5">
-              {partialInclusions.map((path) => (
-                <li key={path}><Markdown path={path} className="inline [&_p]:inline [&_strong]:text-black" /></li>
-              ))}
-            </ul>
+            <TrackingTable headers={ND_HEADERS} rows={NEGLECTED_DISEASES} onPartialClick={onPartialClick} />
 
             <h3 className="text-base font-bold text-black mt-8 mb-3">{t('methodology.what_we_track.annex_a.vector_title')}</h3>
             <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
@@ -703,17 +812,19 @@ function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
             {/* Info callout */}
             <div className="flex gap-3 items-start rounded-lg p-4 mb-6" style={{ background: '#FBF6EB' }}>
               <span className="shrink-0 w-5 h-5 rounded-full border-2 border-orange-400 flex items-center justify-center text-orange-400 text-xs font-bold mt-0.5">i</span>
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {t('methodology.what_we_track.annex_b.callout')}
-              </p>
+              <div className="text-sm text-gray-700 leading-relaxed">
+                <Markdown path="methodology.what_we_track.annex_b.callout" className="[&_p]:mb-0 [&_strong]:text-black" />
+              </div>
             </div>
 
             <h3 className="text-base font-bold text-black mb-3">{t('methodology.what_we_track.annex_b.notes_title')}</h3>
-            <ul className="space-y-3 text-sm text-gray-700 leading-relaxed list-disc pl-5">
-              {eidNotes.map((note, i) => (
-                <li key={i}>{note}</li>
+            <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
+              {eidNotes.map((path, i) => (
+                <div key={i}>
+                  <Markdown path={path} className="[&_p]:mb-0 [&_strong]:text-black" />
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
       </div>
@@ -738,7 +849,7 @@ function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
         {openAnnex === 'c' && (
           <div className="px-5 pb-5 border-t border-gray-200">
             <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mt-4 mb-3">
-              12 CONDITIONS &middot; 3 GROUPS
+              10 CONDITIONS &middot; 3 GROUPS
             </p>
             <div className="space-y-3 text-sm text-gray-700 leading-relaxed mb-6">
               <p>{t('methodology.what_we_track.annex_c.summary')}</p>
@@ -759,14 +870,12 @@ function WhatWeTrackContent({ openAnnex, setOpenAnnex }) {
             {/* Maternal conditions */}
             <div className="mb-8">
               <h3 className="text-base font-bold text-black mb-3">{t('methodology.what_we_track.annex_c.maternal_title')}</h3>
-              <TrackingTable headers={['Condition', 'Drugs', 'Biologics', 'Dietary suppl.', 'Diagnostics', 'Devices']} rows={MATERNAL} />
+              <TrackingTable headers={['Condition', 'Drugs', 'Biologics', 'Dietary supplements', 'Diagnostics', 'Devices']} rows={MATERNAL} />
               <div className="mt-4 space-y-3 text-sm text-gray-700 leading-relaxed">
                 <p>{t('methodology.what_we_track.annex_c.maternal_p1')}</p>
                 <p>{t('methodology.what_we_track.annex_c.maternal_p2')}</p>
-                <p>{t('methodology.what_we_track.annex_c.maternal_p3')}</p>
-                <p>{t('methodology.what_we_track.annex_c.maternal_p4')}</p>
-                <p>{t('methodology.what_we_track.annex_c.maternal_p5')}</p>
-                <p>{t('methodology.what_we_track.annex_c.maternal_p6')}</p>
+                <Markdown path="methodology.what_we_track.annex_c.maternal_p3" className="[&_p]:mb-0 [&_strong]:text-black" />
+                <Markdown path="methodology.what_we_track.annex_c.maternal_p4" className="[&_p]:mb-0 [&_strong]:text-black" />
               </div>
             </div>
 
