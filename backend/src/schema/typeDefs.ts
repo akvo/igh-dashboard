@@ -552,7 +552,6 @@ export const typeDefs = `#graphql
     phase_names: [String!]
     priority_keys: [Int!]
     column_filters: [ColumnFilter!]
-    new_include_in_pipeline_2025: Boolean
   }
 
   input ClinicalTrialFilter {

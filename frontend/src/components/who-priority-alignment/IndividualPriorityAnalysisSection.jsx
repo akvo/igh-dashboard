@@ -473,7 +473,6 @@ export default function IndividualPriorityAnalysisSection() {
       productNames: page.expandedProduct,
       phaseNames: page.rdPhase,
       candidateType: 'Candidate',
-      newIncludeInPipeline2025: true,
       priorityKeys:
         state.committedPriority != null ? [state.committedPriority] : null,
       columnFilters: candidatesColumnFilters,
@@ -499,7 +498,6 @@ export default function IndividualPriorityAnalysisSection() {
         secondaryDiseaseNames: page.secondary,
         productNames: page.expandedProduct,
         candidateType: 'Candidate',
-        newIncludeInPipeline2025: true,
         priorityKeys:
           state.committedPriority != null ? [state.committedPriority] : null,
         columnFilters: candidatesColumnFilters,

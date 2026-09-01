@@ -11,16 +11,15 @@ import type {
 // =========================================================
 // One resolver returns three pipeline aggregates for a single priority:
 //   - candidatesCount         — distinct active-pipeline candidates of
-//                                candidate_type = 'Candidate' with
-//                                new_include_in_pipeline_2025 = 1,
-//                                bridged to the selected priority.
+//                                candidate_type = 'Candidate' bridged to
+//                                the selected priority.
 //   - targetPopulation        — dim_priority.target_population, read
 //                                verbatim. Not narrowed by page filters.
 //   - pipelineBuildUp         — one row per (product_name × phase_name)
 //                                for candidate_type = 'Candidate' only
 //                                (no approved-product "Approved" phase).
 //                                Distinct candidates per cell under the
-//                                active-pipeline + strict-2025 guard.
+//                                active-pipeline guard.
 //
 // The four page-level filters (GHA / primary disease / secondary disease /
 // product type) narrow the counts and the chart but do NOT narrow
@@ -37,11 +36,12 @@ const COMMON_JOINS = `
 function buildPipelineWhere(input: IndividualPriorityAnalysisInput) {
   const conditions = [
     "f.is_active_flag = 1",
+    // Inclusion follows the portal-wide active-pipeline definition (the
+    // same one Pipeline Trends uses), so this page tracks the current
+    // snapshot year. It previously pinned to `new_include_in_pipeline_2025`
+    // — a frozen archive column — which silently dropped every candidate
+    // admitted in a later collection round.
     PIPELINE_FILTER,
-    // Strict 2025 rule: new_include_in_pipeline_2025 = 1 means the source
-    // CRM field new_includeinpipeline was "Yes" in 2025 — not the
-    // forward-filled include_in_pipeline fact flag used by other pages.
-    "c.new_include_in_pipeline_2025 = 1",
     // The WHO drill-down counts/charts true candidates only; approved
     // products are excluded from the count, chart, and table.
     "c.candidate_type = 'Candidate'",
