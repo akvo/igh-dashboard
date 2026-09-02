@@ -170,7 +170,7 @@
   "methodology.definitions.product_areas_diagnostics": { "type": "text", "maxLength": 150 },
   "methodology.definitions.product_areas_microbicides": { "type": "text", "maxLength": 100 },
   "methodology.definitions.product_areas_vector_control": { "type": "text", "maxLength": 200 },
-  "methodology.definitions.product_areas_dietary_supplements": { "type": "text", "maxLength": 300 },
+  "methodology.definitions.product_areas_dietary_supplements": { "type": "text", "maxLength": 350 },
   "methodology.definitions.product_areas_devices": { "type": "text", "maxLength": 250 },
   "methodology.definitions.rd_stage_title": { "type": "text", "maxLength": 30 },
   "methodology.definitions.rd_stage_desc": { "type": "text", "maxLength": 900 },
