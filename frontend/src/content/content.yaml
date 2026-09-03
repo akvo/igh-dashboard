@@ -543,7 +543,7 @@ methodology:
     annex_a:
       title: Neglected diseases
       label: Annex A
-      subtitle: "Diseases tracked, and the product areas tracked for each. **✓** — tracked. **Partial** — tracked against stated criteria; select a Partial cell to read them. **–** — not tracked."
+      subtitle: Diseases tracked, and the product areas tracked for each. **✓** — tracked. **Partial** — tracked against stated criteria; select a Partial cell to read them. **–** — not tracked.
       partial_pneumo: "**Pneumococcal vaccines** — only vaccines developed for use in low- and middle-income countries, or to support registration there. A vaccine must be designed for infants under two years, give broad coverage across serotypes or focused protection against those prevalent in low- and middle-income countries (at minimum serotypes 1, 5 and 14), and match or improve on existing conjugate vaccines."
       partial_meningo: "**Meningococcal vaccines** — only conjugate vaccines covering serogroup A, designed for infants under two years and intended to cost under one US dollar per dose, developed for or being registered in low- and middle-income countries."
       partial_dengue_rota: "**Dengue and rotavirus vaccines** — only development specific to low- and middle-income countries."
