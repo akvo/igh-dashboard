@@ -1,8 +1,8 @@
 /**
  * Guided Tour Configuration
  *
- * Thirteen steps across five pages: Home, Pipeline Overview, Pipeline Explorer,
- * Pipeline Trends, WHO Priority Alignment, then exit.
+ * Fourteen steps across six pages: Home, Pipeline Overview, Pipeline Explorer,
+ * Pipeline Trends, WHO Priority Alignment, Methodology, then exit.
  *
  * Each step defines:
  *  - target:      CSS selector for the element to highlight
@@ -108,12 +108,21 @@ const tourSteps = [
     position: 'top',
   },
 
-  // ---- Navigate back (last step) ----
+  // ---- Methodology ----
   {
-    route: '/who-priority-alignment',
-    target: '[data-tour="header-nav"]',
+    route: '/methodology',
+    target: '[data-tour="sidebar-methodology"]',
     titleKey: 'guided_tour.steps.13.title',
     descKey: 'guided_tour.steps.13.description',
+    position: 'right',
+  },
+
+  // ---- Navigate back (last step) ----
+  {
+    route: '/methodology',
+    target: '[data-tour="header-nav"]',
+    titleKey: 'guided_tour.steps.14.title',
+    descKey: 'guided_tour.steps.14.description',
     position: 'bottom',
   },
 ];

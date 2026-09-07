@@ -373,6 +373,8 @@ guided_tour:
         **Pipeline Trends** — see how the pipeline evolves over time and compare portfolios.
 
         **WHO Priority alignment** — map the pipeline against the World Health Organization’s product-development priorities.
+
+        **Methodology** — how the data is collected, what we track, how records are reviewed, and what the pipeline does not cover.
     "2":
       title: Active filters
       description: See which filters are currently active. Use the x to remove a single filter, or Clear all to remove every filter — wherever in the portal it was applied.
@@ -410,6 +412,9 @@ guided_tour:
       title: Understand the WHO priority
       description: Click Explore for key information on the priority, including intended use, target population, efficacy and safety.
     "13":
+      title: How this pipeline is built
+      description: Read the methodology behind the data — which diseases and product areas are covered, where the information comes from, how records are reviewed, and what the pipeline does not include.
+    "14":
       title: Navigate back to Impact Global Health
       description: Use the top menu to return to the main IGH website and its other components.
 methodology:

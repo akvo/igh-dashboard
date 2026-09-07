@@ -37,7 +37,7 @@ const defaultMenuItems = [
       },
       { id: 'pipeline-trends', label: t('layout.sidebar.nav.pipeline_trends'), icon: RefreshIcon, href: '/pipeline-trends' },
       { id: 'who-priority-alignment', label: t('layout.sidebar.nav.who_priority'), icon: ListIcon, href: '/who-priority-alignment' },
-      { id: 'methodology', label: t('layout.sidebar.nav.methodology'), icon: FileIcon, href: '/methodology' },
+      { id: 'methodology', label: t('layout.sidebar.nav.methodology'), icon: FileIcon, href: '/methodology', dataTour: 'sidebar-methodology' },
     ],
   },
 ];
@@ -163,6 +163,7 @@ export default function Sidebar({
                           : 'hover:bg-sidebar-hover'
                       } ${!isExpanded ? 'justify-center' : ''}`}
                       title={!isExpanded ? item.label : undefined}
+                      {...(item.dataTour ? { 'data-tour': item.dataTour } : {})}
                     >
                       <Icon
                         className={`w-5 h-5 flex-shrink-0 transition-colors ${
