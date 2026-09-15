@@ -1,0 +1,45 @@
+%% The eight bridge tables. Reads left to right: the thing being described, the bridge, the thing it links to.
+flowchart LR
+    cand["<b>dim_candidate_core</b><br/>candidate_key PK<br/>candidate_name"]
+    trial["<b>fact_clinical_trial_event</b><br/>trial_id PK<br/>trial_name"]
+
+    subgraph bridges["Bridge tables - one row per pair"]
+        direction TB
+        b1["<b>bridge_candidate_geography</b><br/>candidate_key, country_key,<br/>location_scope"]
+        b2["<b>bridge_candidate_developer</b><br/>candidate_key, developer_key"]
+        b3["<b>bridge_candidate_funder</b><br/>candidate_key, funder_key"]
+        b4["<b>bridge_candidate_organization</b><br/>candidate_key, organization_key"]
+        b5["<b>bridge_candidate_priority</b><br/>candidate_key, priority_key"]
+        b6["<b>bridge_candidate_age_group</b><br/>candidate_key, age_group_key"]
+        b7["<b>bridge_candidate_approving_authority</b><br/>candidate_key, authority_key"]
+        b8["<b>bridge_trial_geography</b><br/>trial_key, country_key"]
+    end
+
+    subgraph dims["Dimensions"]
+        direction TB
+        geo["<b>dim_geography</b><br/>country_key PK<br/>country_name, iso_code"]
+        dev["<b>dim_developer</b><br/>developer_key PK<br/>developer_name, org_type"]
+        fun["<b>dim_funder</b><br/>funder_key PK<br/>funder_name"]
+        org["<b>dim_organization</b><br/>organization_key PK<br/>org_name, org_type"]
+        pri["<b>dim_priority</b><br/>priority_key PK<br/>priority_name, intended_use,<br/>target_population"]
+        age["<b>dim_age_group</b><br/>age_group_key PK<br/>age_group_name"]
+        auth["<b>dim_approving_authority</b><br/>authority_key PK<br/>authority_name"]
+    end
+
+    cand --> b1 & b2 & b3 & b4 & b5 & b6 & b7
+    trial --> b8
+    b1 -->|"target country or<br/>developer location"| geo
+    b2 --> dev
+    b3 --> fun
+    b4 --> org
+    b5 --> pri
+    b6 --> age
+    b7 --> auth
+    b8 --> geo
+
+    classDef fact fill:#fff1ed,stroke:#fe7449,stroke-width:2px,color:#3d3a36
+    classDef bridge fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    classDef dim fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    class cand,trial fact
+    class b1,b2,b3,b4,b5,b6,b7,b8 bridge
+    class geo,dev,fun,org,pri,age,auth dim

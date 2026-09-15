@@ -1,0 +1,52 @@
+%% Updating the data. Reads top to bottom. Loops return on the right without crossing a stage.
+flowchart TB
+    start(["IGH closes a review cycle in Dataverse"])
+
+    subgraph local["1. Locally, in igh-data-transform"]
+        direction TB
+        l1["<b>./sync-and-run-etl.sh</b><br/>Sync, then bronze to silver to gold.<br/>Leaves the gold database at data/star_schema.db"]
+        l2["<b>cp data/star_schema.db</b><br/>Into the igh-dashboard checkout, as<br/>backend/star_schema.db and backend/tests/star_schema.db"]
+        l1 --> l2
+    end
+
+    subgraph tests["2. Fix the tests, in igh-dashboard"]
+        direction TB
+        x1["<b>npm run check:all</b><br/>Read the failures"]
+        x2{"Changes<br/>expected?"}
+        x3["<b>UPDATE_FIXTURES=1 npm run check:all</b><br/>Regenerates the CSV golden files.<br/>Edit the hard-coded counts by hand."]
+        x1 --> x2
+        x2 -->|yes| x3
+    end
+
+    subgraph stage["3. Staging"]
+        direction TB
+        s1["Open a PR, merge to main"]
+        s2["Staging deploys automatically<br/>with the committed database"]
+        s3["QA on staging"]
+        s4{"Approved?"}
+        s1 --> s2 --> s3 --> s4
+    end
+
+    subgraph prod["4. Production"]
+        direction TB
+        p1["In igh-airflow, bump the pinned commits:<br/><b>uv lock --upgrade-package igh-data-sync</b><br/><b>uv lock --upgrade-package igh-data-transform</b>"]
+        p2["Merge and release igh-airflow.<br/>The deploy rebuilds the image with the new packages."]
+        p3["Trigger the ingestion DAG.<br/>Transform and deployment follow."]
+        p4(["Production serves the new data"])
+        p1 --> p2 --> p3 --> p4
+    end
+
+    fix["Investigate and fix the transform"]
+
+    start --> l1
+    l2 --> x1
+    x3 --> s1
+    s4 -->|yes| p1
+    x2 -->|no| fix
+    s4 -->|no| fix
+    fix --> l1
+
+    classDef step fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef gate fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    class l1,l2,x1,x3,s1,s2,s3,p1,p2,p3,fix step
+    class x2,s4,start,p4 gate

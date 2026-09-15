@@ -1,0 +1,41 @@
+%% C4 level 3 - backend. Reads top to bottom: request in, resolvers, SQL, file.
+%% Arrows follow the request; labels say what each step does with the next.
+flowchart TB
+    fe["<b>Frontend</b><br/>Apollo Client"]
+    index["<b>src/index.ts</b><br/>Apollo Server, :4000<br/>Builds a fresh set of DataLoaders<br/>for every request"]
+
+    subgraph schema["src/schema/"]
+        direction LR
+        typedefs["<b>typeDefs.ts</b><br/>Schema-first SDL<br/>37 Query root fields"]
+        resolvers["<b>resolvers.ts</b><br/>Query resolvers and nested<br/>resolvers for DimCandidateCore<br/>and the SlideIn types"]
+    end
+
+    loaders["<b>src/utils/dataloader.ts</b><br/>createLoaders()<br/>One batching loader per relationship"]
+
+    subgraph queries["src/db/queries/ - hand-written SQL, one module per domain"]
+        direction LR
+        agg["<b>Aggregates</b><br/>kpis, globalHealthArea,<br/>disease, productDistribution,<br/>phaseDistribution, temporal,<br/>geographic, clinicalTrialStats,<br/>regulatoryDistribution, ..."]
+        rec["<b>Record level</b><br/>portfolioCandidates,<br/>clinicalTrials, rdPriorities,<br/>priorityAlignment, slideIns,<br/>lookups, metadata"]
+        engine["<b>Table engine</b><br/>columnRegistry.ts<br/>columnFilters.ts<br/>distinctValues.ts<br/>filterUtils.ts"]
+        agg -->|"filters via"| engine
+        rec -->|"filters via"| engine
+    end
+
+    conn["<b>src/db/connection.ts</b><br/>DatabaseManager<br/>better-sqlite3, read-only<br/>Reopens when the file changes"]
+    db[("<b>star_schema.db</b><br/>delivered by the pipeline")]
+
+    fe -->|"POST /"| index
+    index -->|"validates against"| typedefs
+    index -->|"dispatches to"| resolvers
+    resolvers -->|"calls"| queries
+    resolvers -->|"batches nested<br/>fields through"| loaders
+    queries -->|"parameterised SQL"| conn
+    loaders -->|"SQL, keys batched"| conn
+    conn -->|"opens read-only"| db
+
+    classDef comp fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
+    class index,typedefs,resolvers,loaders,agg,rec,engine,conn comp
+    class db store
+    class fe ext
