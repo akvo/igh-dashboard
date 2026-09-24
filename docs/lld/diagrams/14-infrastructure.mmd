@@ -19,25 +19,30 @@ flowchart TB
         dprod -.->|"uses"| ca
     end
 
-    subgraph airvm["Airflow VM"]
-        direction TB
-        a_traefik["Traefik, Let's Encrypt"]
-        a_airflow["Apache Airflow :8080<br/>runs the three DAGs<br/>UI + /igh/download"]
-        a_vols[("volumes: data, logs,<br/>ssh key, letsencrypt")]
-        a_traefik -->|"HTTPS"| a_airflow
-        a_airflow -->|"bronze, silver, gold"| a_vols
-    end
-
-    subgraph testvm["Test VM - igh-dashboard.akvotest.org"]
+    subgraph testvm["Test VM"]
         direction TB
         t_traefik["Traefik, Let's Encrypt"]
         t_fe["frontend :3000"]
         t_be["backend :4000"]
         t_db[("./data/star_schema.db<br/>re-seeded from the repo<br/>on every update")]
+        t_deploy["update.sh<br/>docker compose build + up"]
+        t_deploy -.->|"rebuilds"| t_traefik
         t_traefik -->|"routes / to"| t_fe
         t_traefik -->|"routes /api to"| t_be
         t_be -->|"reads"| t_db
     end
+
+    subgraph airvm["Airflow VM"]
+        direction TB
+        a_traefik["Traefik, Let's Encrypt"]
+        a_airflow["Apache Airflow :8080<br/>runs the three DAGs<br/>UI + /igh/download"]
+        a_vols[("volumes: data, logs,<br/>ssh key, letsencrypt")]
+        a_deploy["update.sh<br/>docker compose build + up"]
+        a_deploy -.->|"rebuilds"| a_airflow
+        a_traefik -->|"HTTPS"| a_airflow
+        a_airflow -->|"bronze, silver, gold"| a_vols
+    end
+
 
     subgraph prodvm["Production VM - pipeline.impactglobalhealth.org"]
         direction TB
@@ -45,6 +50,8 @@ flowchart TB
         p_fe["frontend :3000<br/>Next.js standalone"]
         p_be["backend :4000<br/>Apollo, readonly SQLite"]
         p_db[("./data/star_schema.db<br/>IS_PRODUCTION=true<br/>never overwritten by update.sh")]
+        p_deploy["update.sh<br/>docker compose build + up"]
+        p_deploy -.->|"rebuilds"| p_traefik
         p_traefik -->|"routes / to"| p_fe
         p_traefik -->|"routes /api to"| p_be
         p_be -->|"reads"| p_db
@@ -52,16 +59,16 @@ flowchart TB
 
     user["Browser"]
 
-    ca -.->|"ssh, runs<br/>vars.COMMAND"| airvm
-    ca -.->|"ssh, runs<br/>vars.COMMAND"| testvm
-    ca -.->|"ssh, runs<br/>vars.COMMAND"| prodvm
-    dv -->|"entity records"| airvm
+    ca -.->|"ssh, runs<br/>vars.COMMAND"| t_deploy
+    ca -.->|"ssh, runs<br/>vars.COMMAND"| a_deploy
+    ca -.->|"ssh, runs<br/>vars.COMMAND"| p_deploy
+    dv -->|"entity records"| a_airflow
     a_airflow ==>|"scp star_schema.db.new<br/>then ssh mv"| p_db
     user -->|"HTTPS"| p_traefik
 
     classDef comp fill:#fff1ed,stroke:#fe7449,color:#3d3a36
     classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
     classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
-    class repos,qa,dtest,dprod,csync,ca,t_traefik,t_fe,t_be,p_traefik,p_fe,p_be,a_traefik,a_airflow comp
+    class repos,qa,dtest,dprod,csync,ca,a_deploy,t_deploy,p_deploy,t_traefik,t_fe,t_be,p_traefik,p_fe,p_be,a_traefik,a_airflow comp
     class t_db,p_db,a_vols store
     class dv,user ext
