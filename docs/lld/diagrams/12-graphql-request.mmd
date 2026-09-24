@@ -1,0 +1,40 @@
+%% A GraphQL request, end to end
+sequenceDiagram
+    autonumber
+    participant P as Page component
+    participant H as useXxx hook
+    participant Z as zustand store<br/>24h TTL
+    participant A as Apollo Client<br/>InMemoryCache
+    participant S as Apollo Server<br/>:4000
+    participant R as Resolver
+    participant L as DataLoader
+    participant Q as SQL query module
+    participant D as better-sqlite3<br/>readonly
+
+    P->>H: filters, pagination
+    H->>Z: getCachedData(queryName + params)
+    alt fresh entry under 24h
+        Z-->>H: cached rows
+        Note over H,A: query is skipped entirely
+    else miss or stale
+        H->>A: useQuery, network-only
+        A->>S: POST /, operation + variables
+        S->>S: context() builds 17 fresh<br/>DataLoaders for this request
+        S->>R: resolve root field
+        R->>Q: getPortfolioKPIs(filters)
+        Q->>Q: build SQL, add a JOIN only<br/>when a filter needs it
+        Q->>D: prepare(sql).all(params)
+        D-->>Q: rows
+        Q-->>R: rows
+        loop each nested field
+            R->>L: load(key)
+            L->>D: one SELECT ... WHERE key IN (?, ?, ...)
+            D-->>L: rows
+            L-->>R: per-key result
+        end
+        R-->>S: data
+        S-->>A: JSON
+        A-->>H: data
+        H->>Z: setCachedData(key, data, now)
+    end
+    H-->>P: rows for the chart or table

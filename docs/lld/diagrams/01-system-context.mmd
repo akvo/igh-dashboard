@@ -1,0 +1,19 @@
+%% C4 level 1 - system context. Reads top to bottom: source, portal, audience.
+flowchart TB
+    igh["<b>IGH data team</b><br/>Curates the pipeline"]
+    dataverse[("<b>Microsoft Dataverse</b><br/>IGH curation system")]
+    portal["<b>IGH Pipeline Portal</b><br/>Public analytics over the R&D pipeline"]
+    analyst["<b>Analyst / funder / researcher</b><br/>Public visitor"]
+    website["<b>impactglobalhealth.org</b><br/>Reports, insights, G-FINDER"]
+
+    igh -->|"Records candidates,<br/>products and trials"| dataverse
+    dataverse -->|"Reads data for sync"| portal
+    portal -->|"Browsing, filtering,<br/>CSV and PNG export"| analyst
+    portal -.->|"Links out to"| website
+
+    classDef person fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    classDef system fill:#fff1ed,stroke:#fe7449,stroke-width:2px,color:#3d3a36
+    classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
+    class analyst,igh person
+    class portal system
+    class dataverse,website ext
