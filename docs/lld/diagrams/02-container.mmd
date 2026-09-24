@@ -5,21 +5,8 @@ flowchart TB
 
     subgraph airflowvm["Airflow VM - Docker Compose behind Traefik"]
         direction TB
-        subgraph orchestration["Apache Airflow"]
-            direction LR
-            atraefik["<b>Traefik</b><br/>TLS for the Airflow UI"]
-            api["<b>API server</b><br/>UI, :8080"]
-            sched["<b>Scheduler</b><br/>+ DAG processor<br/>+ triggerer"]
-            redis[("<b>Redis</b><br/>Celery broker")]
-            worker["<b>Celery worker</b><br/>Runs every task"]
-            meta[("<b>PostgreSQL</b><br/>Airflow metadata")]
-            atraefik -->|"HTTPS"| api
-            meta -->|"DAG and task state"| api
-            sched -->|"DAG and task state"| meta
-            sched -->|"task messages"| redis
-            redis -->|"task messages"| worker
-        end
-        subgraph pipeline["Pipeline packages, installed in the worker image"]
+        airflow["<b>Apache Airflow</b><br/>Orchestrates the three DAGs<br/>UI behind Traefik, :8080"]
+        subgraph pipeline["Pipeline packages, installed in the Airflow image"]
             direction LR
             sync["<b>igh-data-sync</b><br/>Dataverse to bronze"]
             bronze[("<b>bronze</b><br/>dataverse_complete_raw.db")]
@@ -46,7 +33,7 @@ flowchart TB
     user["<b>Analyst</b><br/>Browser"]
 
     dataverse -->|"entity records,<br/>OAuth2 + paged reads"| pipeline
-    worker -.->|"imports and runs"| pipeline
+    airflow -.->|"runs the DAGs,<br/>which call"| pipeline
     pipeline ==>|"gold star_schema.db,<br/>one file over SSH"| prodgold
     prodgold -->|"rows, read-only"| be
     be -->|"GraphQL responses"| fe
@@ -58,6 +45,6 @@ flowchart TB
     classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
     classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
     class user person
-    class atraefik,api,sched,worker,sync,b2s,s2g,be,fe,traefik container
-    class meta,redis,bronze,silver,gold,prodgold store
+    class airflow,sync,b2s,s2g,be,fe,traefik container
+    class bronze,silver,gold,prodgold store
     class dataverse ext

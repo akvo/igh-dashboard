@@ -5,7 +5,7 @@
 | Document | Low-Level Design — technical description |
 | System | IGH Pipeline Portal |
 | Companion document | `IGH-Pipeline-Portal-HLD.docx` (functional description) |
-| Repositories | `igh-dashboard`, `igh-data-sync`, `igh-data-transform`, `igh-airflow`, `igh-dashboard-content` |
+| Repositories | [`igh-dashboard`](https://github.com/akvo/igh-dashboard), [`igh-data-sync`](https://github.com/akvo/igh-data-sync), [`igh-data-transform`](https://github.com/akvo/igh-data-transform), [`igh-airflow`](https://github.com/akvo/igh-airflow), [`igh-dashboard-content`](https://github.com/akvo/igh-dashboard-content) |
 | Production | https://pipeline.impactglobalhealth.org |
 | Test | A separate test environment |
 | Prepared by | Akvo Foundation |
@@ -43,11 +43,11 @@ Five repositories:
 
 | Repository | Language | Role |
 | --- | --- | --- |
-| `igh-data-sync` | Python | Pulls every tracked entity out of Dataverse into a raw SQLite database. |
-| `igh-data-transform` | Python | Cleans the raw data, then builds the star schema. |
-| `igh-airflow` | Python | Orchestrates the other two and ships the result to production. |
-| `igh-dashboard` | TypeScript, JavaScript | The GraphQL API and the Next.js front end. |
-| `igh-dashboard-content` | Text | The site's copy, in a form non-developers can edit. |
+| [`igh-data-sync`](https://github.com/akvo/igh-data-sync) | Python | Pulls every tracked entity out of Dataverse into a raw SQLite database. |
+| [`igh-data-transform`](https://github.com/akvo/igh-data-transform) | Python | Cleans the raw data, then builds the star schema. |
+| [`igh-airflow`](https://github.com/akvo/igh-airflow) | Python | Orchestrates the other two and ships the result to production. |
+| [`igh-dashboard`](https://github.com/akvo/igh-dashboard) | TypeScript, JavaScript | The GraphQL API and the Next.js front end. |
+| [`igh-dashboard-content`](https://github.com/akvo/igh-dashboard-content) | Text | The site's copy, in a form non-developers can edit. |
 
 ---
 
@@ -72,11 +72,8 @@ portal. Nothing writes back to Dataverse.
 
 Two virtual machines. Both run Docker Compose behind Traefik.
 
-**Airflow VM.** Apache Airflow on the Celery executor. PostgreSQL holds Airflow's own
-metadata, Redis is the Celery broker. Five Airflow services: API server, scheduler, DAG
-processor, triggerer and worker. The worker does all the real work. It imports `igh-data-sync`
-and `igh-data-transform` as ordinary Python packages — there is no git clone at run time and no
-container-in-container. Three SQLite files live on a volume: bronze, silver and gold.
+**Airflow VM.** Apache Airflow orchestrates the three DAGs described in section 5.1. The Airflow image has `igh-data-sync` and `igh-data-transform` installed as ordinary Python packages, and the DAG
+tasks call them directly. Three SQLite files live on a volume: bronze, silver and gold.
 
 **Dashboard VM.** Traefik terminates TLS and routes `/` to Next.js on port 3000 and `/api/*`
 to Apollo Server on port 4000, stripping the `/api` prefix. The backend opens
@@ -90,18 +87,13 @@ file. Section 5.1 describes the steps.
 | Container | Image or stack | Port | Source |
 | --- | --- | --- | --- |
 | traefik (Airflow) | `traefik:v3.6.7` | 80, 443 | `igh-airflow/self-hosted/docker-compose.yml` |
-| airflow-apiserver | `apache/airflow:3.1.6-python3.11` plus the two pipeline packages | 8080 | `igh-airflow/docker/Dockerfile` |
-| airflow-scheduler, dag-processor, triggerer | `apache/airflow:3.1.6-python3.11` plus the two pipeline packages | — | `igh-airflow/docker/Dockerfile` |
-| airflow-worker | `apache/airflow:3.1.6-python3.11` plus the two pipeline packages | — | `igh-airflow/docker/Dockerfile` |
-| postgres | `postgres:16` | — | `igh-airflow/self-hosted/docker-compose.yml` |
-| redis | `redis:7.2-bookworm` | — | `igh-airflow/self-hosted/docker-compose.yml` |
-| flower | `apache/airflow:3.1.6-python3.11` plus the two pipeline packages | 5555 | Compose profile `flower` |
+| Apache Airflow | `apache/airflow:3.1.6-python3.11` plus the two pipeline packages | 8080 (UI) | `igh-airflow/docker/Dockerfile`, `igh-airflow/self-hosted/docker-compose.yml` |
 | traefik (dashboard) | `traefik:v3.3` | 80, 443 | `igh-dashboard/self-hosted/docker-compose.yml` |
 | frontend | `node:20-alpine`, Next.js standalone | 3000 | `igh-dashboard/frontend/Dockerfile` |
 | backend | `node:20-alpine` | 4000 | `igh-dashboard/backend/Dockerfile` |
 
-All Airflow services run one image, built once from `igh-airflow/docker/Dockerfile` with both
-pipeline packages installed into it.
+The Airflow image is built once from `igh-airflow/docker/Dockerfile` with both pipeline
+packages installed into it.
 
 The dashboard stack puts all four services in one network namespace. A `mainnetwork` container
 holds the published ports and the others join it with `network_mode: service:mainnetwork`.
@@ -203,8 +195,7 @@ them correct.
 Three DAGs, run in order. Each writes a new database file, and the next DAG starts when that
 file is written. The chain is wired with Airflow 3 **Assets**: a task that finishes with an
 asset in its `outlets` emits an event, and a DAG with that asset in its `schedule` starts.
-`igh-airflow/dags/igh_assets.py` declares one asset per database. Neither
-`TriggerDagRunOperator` nor `ExternalTaskSensor` is used. Declaring the chain this way rather
+`igh-airflow/dags/igh_assets.py` declares one asset per database. Declaring the chain this way rather
 than in task code means the dependency is visible in the Airflow UI: each DAG shows the asset
 it waits on and the asset it produces.
 
@@ -308,7 +299,7 @@ delivered.
    `UPDATE_FIXTURES=1` to re-record the CSV golden files and the snapshot counts. Never edit
    a fixture by hand — reading the failures first is what makes re-recording safe.
 
-3. **Merge to main.** Open a PR; `qa.yml` runs on it. Staging deploys automatically on merge,
+3. **Merge to main.** Open a PR; `qa.yml` runs on it. Staging deploys automatically on the push to `main` that the merge makes,
    with the committed database.
 
 4. **QA on staging.** Check the counters, the trend years and the tables against what the data
@@ -1142,7 +1133,7 @@ the Compose stacks under `self-hosted/`, and the workflows under `.github/workfl
 | --- | --- |
 | Production — `pipeline.impactglobalhealth.org` | Delivered by `igh_deployment`. `IS_PRODUCTION=true` stops a code deploy overwriting it. |
 | Test | `backend/star_schema.db` from the repository, re-copied on every deploy |
-| Airflow | PostgreSQL for its own metadata; the bronze, silver and gold SQLite files on a volume |
+| Airflow | The bronze, silver and gold SQLite files on a volume |
 
 Google Analytics is enabled only on the production hostname, so the test site does not report
 traffic.
@@ -1177,7 +1168,7 @@ docker compose build --no-cache
 docker compose stop && docker compose up -d
 ```
 
-Test deploys on every merge to `main`. Production deploys when a GitHub Release is published.
+Test deploys on every push to `main`. Production deploys when a GitHub Release is published.
 Both use a concurrency group with `cancel-in-progress: false`, so deploys queue rather than
 interrupt each other.
 
