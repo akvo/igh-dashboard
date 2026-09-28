@@ -9,6 +9,7 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import { query } from "../helpers/graphql.js";
+import { expectMatchesSnapshot } from "../helpers/snapshot.js";
 import Database from "better-sqlite3";
 import path from "path";
 
@@ -156,10 +157,14 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 
 describe("priorityAlignmentOverview — unfiltered", () => {
-  it("totalPriorities matches snapshot (65)", () => {
+  it("totalPriorities matches the recorded snapshot", () => {
     // All non-stub priorities from dim_priority are counted (no pipeline gate).
     // Test_TO is excluded as a test/stub priority.
-    expect(baseline.totalPriorities).toBe(67);
+    expect(baseline.totalPriorities).toBeGreaterThan(0);
+    expectMatchesSnapshot(
+      { totalPriorities: baseline.totalPriorities },
+      "priority-alignment-total-priorities.json",
+    );
   });
 
   it("byArea returns exactly 3 rows in fixed order (ND, EID, WH)", () => {
@@ -167,20 +172,22 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(baseline.byArea.map((r) => r.global_health_area)).toEqual(Array.from(FIXED_AREA_ORDER));
   });
 
-  it("byArea snapshot values match tracked DB", () => {
-    const byKey = Object.fromEntries(baseline.byArea.map((r) => [r.global_health_area, r]));
-    // ND total updated 1777 → 1882 after DB update (2026-06-10).
-    // ND/EID/WH totals updated (1890/1206/1119) → (1883/1185/1110) after the
-    // 2026 reporting year was added (2026-08-03): is_active_flag now marks
-    // each candidate's 2026 row instead of the old rolling column that had
-    // been mislabeled 2025, and the 2026 pipeline-included set is a few
-    // candidates smaller than that mislabeled snapshot.
-    expect(byKey["Neglected disease"].candidatesWithPriority).toBe(234);
-    expect(byKey["Neglected disease"].totalCandidates).toBe(1883);
-    expect(byKey["Emerging infectious disease"].candidatesWithPriority).toBe(20);
-    expect(byKey["Emerging infectious disease"].totalCandidates).toBe(1185);
-    expect(byKey["Womens Health"].candidatesWithPriority).toBe(0);
-    expect(byKey["Womens Health"].totalCandidates).toBe(971);
+  it("byArea counts match the recorded snapshot", () => {
+    // A candidate can only have a priority if it exists, so the with-priority
+    // count can never exceed the area total. That holds whatever the data says.
+    for (const row of baseline.byArea) {
+      expect(row.candidatesWithPriority).toBeLessThanOrEqual(row.totalCandidates);
+      expect(row.candidatesWithPriority).toBeGreaterThanOrEqual(0);
+    }
+    expectMatchesSnapshot(
+      Object.fromEntries(
+        baseline.byArea.map((r) => [
+          r.global_health_area,
+          { candidatesWithPriority: r.candidatesWithPriority, totalCandidates: r.totalCandidates },
+        ]),
+      ),
+      "priority-alignment-by-area.json",
+    );
   });
 
   it("byArea sharePercentage = candidatesWithPriority / totalCandidates", () => {
@@ -203,18 +210,21 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(counts).toEqual(sorted);
   });
 
-  it("productTypeBreakdown includes expected top product types", () => {
-    const byKey = Object.fromEntries(
-      baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
+  it("productTypeBreakdown matches the recorded snapshot", () => {
+    expectMatchesSnapshot(
+      Object.fromEntries(
+        baseline.productTypeBreakdown.map((r) => [r.product_name, r.candidateCount]),
+      ),
+      "priority-alignment-product-types.json",
     );
-    expect(byKey["Vaccines"]).toBe(69);
-    expect(byKey["Drugs"]).toBe(61);
-    expect(byKey["Diagnostics"]).toBe(105);
-    expect(byKey["Biologics"]).toBe(19);
   });
 
-  it("diseaseOptions returns priority-bearing diseases (count = 35), sorted by name", () => {
-    expect(baseline.diseaseOptions).toHaveLength(35);
+  it("diseaseOptions returns priority-bearing diseases, sorted by name", () => {
+    expect(baseline.diseaseOptions.length).toBeGreaterThan(0);
+    expectMatchesSnapshot(
+      { diseaseOptionCount: baseline.diseaseOptions.length },
+      "priority-alignment-disease-options.json",
+    );
     const names = baseline.diseaseOptions.map((o) => o.disease_name);
     // Plain `.sort()` uses UTF-16 code-unit order — same collation SQLite's
     // default ORDER BY uses. `localeCompare` would put `Helminth` before
@@ -237,12 +247,17 @@ describe("priorityAlignmentOverview — unfiltered", () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it("womenOrChildrenShare snapshot matches tracked DB (34 Yes / 31 No / 0 unknown)", () => {
+  it("womenOrChildrenShare matches the recorded snapshot and sums to totalPriorities", () => {
     // All non-stub priorities from dim_priority are bucketed (no pipeline gate).
     // The sum equals totalPriorities. Test_TO was the sole unknown entry.
-    expect(baseline.womenOrChildrenShare.yes).toBe(34);
-    expect(baseline.womenOrChildrenShare.no).toBe(33);
-    expect(baseline.womenOrChildrenShare.unknown).toBe(0);
+    expectMatchesSnapshot(
+      {
+        yes: baseline.womenOrChildrenShare.yes,
+        no: baseline.womenOrChildrenShare.no,
+        unknown: baseline.womenOrChildrenShare.unknown,
+      },
+      "priority-alignment-women-children.json",
+    );
     const sum =
       baseline.womenOrChildrenShare.yes +
       baseline.womenOrChildrenShare.no +

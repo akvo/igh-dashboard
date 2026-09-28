@@ -1,0 +1,59 @@
+%% C4 level 3 - frontend. Reads top to bottom: browser, routes, components, data access, API.
+%% Arrows follow the request; labels say what each layer does with the next.
+flowchart TB
+    browser["<b>Browser</b>"]
+    content["<b>src/content/</b><br/>content.yaml, t()"]
+
+    subgraph app["src/app/ - App Router, client components"]
+        direction LR
+        layout["<b>layout.js</b><br/>ApolloProvider,<br/>GlobalFiltersProvider,<br/>Header, ResponsiveGate"]
+        pages["<b>Seven pages</b><br/>/, /pipeline-overview,<br/>/pipeline-explorer (+ table-builder),<br/>/pipeline-trends,<br/>/who-priority-alignment,<br/>/methodology"]
+        layout -->|"renders"| pages
+    end
+
+    subgraph comps["src/components/"]
+        direction LR
+        sections["<b>Page sections</b><br/>pipeline-overview/,<br/>pipeline-explorer/,<br/>who-priority-alignment/"]
+        gfilters["<b>global-filters/</b><br/>Filter bar and context"]
+        charts["<b>charts/</b><br/>Recharts wrappers,<br/>WorldMap"]
+        ui["<b>ui/</b><br/>Primitives and<br/>data-table/"]
+        slide["<b>slideins/</b><br/>Candidate, Product, Trial"]
+    end
+
+    subgraph data["Data access"]
+        direction LR
+        hooks["<b>src/graphql/hooks/</b><br/>One hook per query"]
+        trans["<b>src/lib/transformations/</b><br/>Rows to chart shapes"]
+        store["<b>src/store/dashboardStore.js</b><br/>In-memory result cache"]
+        apollo["<b>src/lib/apollo-provider.js</b><br/>Apollo Client"]
+        hooks -->|"shapes rows with"| trans
+        hooks -->|"caches in"| store
+        hooks -->|"queries through"| apollo
+    end
+
+    subgraph lib["src/lib/"]
+        direction LR
+        urlstate["<b>useUrlState.js</b><br/>Filters held in the URL"]
+        colcfg["<b>exploreColumnConfig.js</b><br/><b>extractColumnConfig.js</b><br/>Column definitions"]
+        exports["<b>csv.js</b>, <b>png.js</b><br/>Export"]
+    end
+
+    be["<b>Backend</b><br/>GraphQL"]
+
+    browser -->|"loads"| layout
+    content -.->|"copy via t()"| pages
+    pages -->|"compose"| sections
+    sections -->|"render"| gfilters
+    sections -->|"render"| charts
+    sections -->|"render"| ui
+    sections -->|"open"| slide
+    sections -->|"request data<br/>through"| hooks
+    gfilters -->|"read and write<br/>filters in"| urlstate
+    ui -->|"column<br/>definitions"| colcfg
+    sections -->|"export through"| exports
+    apollo -->|"GraphQL over HTTPS"| be
+
+    classDef comp fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
+    class layout,pages,sections,gfilters,charts,ui,slide,hooks,store,apollo,urlstate,colcfg,exports,trans,content comp
+    class browser,be ext

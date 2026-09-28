@@ -1,0 +1,34 @@
+%% The three DAGs. Reads top to bottom. Each step writes a new database file.
+flowchart TB
+    operator["<b>Operator</b><br/>Triggers the ingestion DAG in the Airflow UI"]
+
+    subgraph d1["DAG 1 - igh_ingestion"]
+        t1["<b>sync_dataverse</b><br/>igh_data_sync.run_sync()"]
+    end
+    bronze[("<b>bronze</b><br/>dataverse_complete_raw.db<br/>new file every run")]
+
+    subgraph d2["DAG 2 - igh_transform, starts when bronze is written"]
+        direction TB
+        t2["<b>bronze_to_silver</b><br/>igh_data_transform.bronze_to_silver()"]
+        silver[("<b>silver</b><br/>silver.db<br/>new file every run")]
+        t3["<b>silver_to_gold</b><br/>igh_data_transform.silver_to_gold()"]
+    end
+    gold[("<b>gold</b><br/>star_schema.db<br/>new file every run")]
+
+    subgraph d3["DAG 3 - igh_deployment, starts when gold is written or on demand"]
+        direction TB
+        t4["<b>scp_gold_db</b><br/>Copies the file to the dashboard VM<br/>as star_schema.db.new"]
+        t5["<b>swap_remote_db</b><br/>Renames it over the live file"]
+    end
+
+    backend["<b>Dashboard backend</b><br/>Notices the new file and reopens it.<br/>No restart, no downtime."]
+
+    operator --> t1
+    t1 --> bronze --> t2 --> silver --> t3 --> gold --> t4 --> t5 --> backend
+
+    classDef task fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    classDef person fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    class t1,t2,t3,t4,t5,backend task
+    class bronze,silver,gold store
+    class operator person

@@ -1,0 +1,112 @@
+%%{init: {"flowchart": {"rankSpacing": 25, "nodeSpacing": 25, "subGraphTitleMargin": {"top": 4, "bottom": 28}}}}%%
+%% Which GraphQL queries each page issues. One column per page; read each column top to bottom.
+flowchart LR
+    subgraph home["<b>Home</b>"]
+        direction TB
+        h1["portfolioKPIs"]
+        h2["globalHealthAreaSummaries"]
+        h3["ghaProductTypeSummaries"]
+        h4["diseaseSummaries"]
+        h5["diseaseProductTypeSummaries"]
+        h6["candidateTypeDistribution"]
+        h7["geographicDistribution"]
+        h8["temporalSnapshots"]
+        h9["priorityAlignmentOverview"]
+        h10["diseaseHierarchy, products,<br/>phases, availableYears,<br/>lastSyncDate"]
+        h1 ~~~ h2 ~~~ h3 ~~~ h4 ~~~ h5 ~~~ h6 ~~~ h7 ~~~ h8 ~~~ h9 ~~~ h10
+    end
+
+    subgraph overview["<b>Pipeline Overview</b>"]
+        direction TB
+        o1["portfolioKPIs"]
+        o2["clinicalTrialStats"]
+        o3["productPhaseDistribution"]
+        o4["productDistribution"]
+        o1 ~~~ o2 ~~~ o3 ~~~ o4
+    end
+
+    subgraph exc["<b>Pipeline Explorer</b><br/>Candidates tab"]
+        direction TB
+        c1["portfolioKPIs"]
+        c2["globalHealthAreaSummaries"]
+        c3["diseaseSummaries"]
+        c4["productDistribution"]
+        c5["portfolioCandidates"]
+        c6["slideInCandidate"]
+        c1 ~~~ c2 ~~~ c3 ~~~ c4 ~~~ c5 ~~~ c6
+    end
+
+    subgraph exa["<b>Pipeline Explorer</b><br/>Approved Products tab"]
+        direction TB
+        a1["portfolioKPIs"]
+        a2["globalHealthAreaSummaries"]
+        a3["diseaseSummaries"]
+        a4["productDistribution"]
+        a5["regulatoryDistribution"]
+        a6["portfolioCandidates"]
+        a7["slideInProduct"]
+        a1 ~~~ a2 ~~~ a3 ~~~ a4 ~~~ a5 ~~~ a6 ~~~ a7
+    end
+
+    subgraph ext["<b>Pipeline Explorer</b><br/>Clinical Trials tab"]
+        direction TB
+        t1["clinicalTrialStats"]
+        t2["geographicDistribution"]
+        t3["clinicalTrials"]
+        t4["slideInTrial"]
+        t1 ~~~ t2 ~~~ t3 ~~~ t4
+    end
+
+    subgraph exy["<b>Pipeline Explorer</b><br/>Technology Types tab"]
+        direction TB
+        y1["diseaseSummaries"]
+        y2["productDistribution"]
+        y3["technologyTypeDistribution"]
+        y4["portfolioCandidates"]
+        y5["slideInCandidate"]
+        y1 ~~~ y2 ~~~ y3 ~~~ y4 ~~~ y5
+    end
+
+    subgraph tb["<b>Pipeline Explorer</b><br/>Table Builder"]
+        direction TB
+        b1["portfolioCandidates"]
+        b2["clinicalTrials"]
+        b3["rdPrioritiesWithCandidates"]
+        b4["rdPriorities"]
+        b5["distinctValues"]
+        b1 ~~~ b2 ~~~ b3 ~~~ b4 ~~~ b5
+    end
+
+    subgraph trends["<b>Pipeline trends</b>"]
+        direction TB
+        r1["temporalSnapshots"]
+        r2["globalHealthAreaSummaries"]
+        r3["pipelineFilterPairs"]
+        r4["diseaseHierarchy, products,<br/>availableYears"]
+        r1 ~~~ r2 ~~~ r3 ~~~ r4
+    end
+
+    subgraph who["<b>WHO Priority alignment</b>"]
+        direction TB
+        w1["priorityAlignmentOverview"]
+        w2["individualPriorityAnalysis"]
+        w3["rdPriorities"]
+        w4["portfolioCandidates"]
+        w5["globalHealthAreaSummaries"]
+        w6["activePipelineFilterPairs"]
+        w7["diseases, diseaseHierarchy,<br/>products, phases"]
+        w1 ~~~ w2 ~~~ w3 ~~~ w4 ~~~ w5 ~~~ w6 ~~~ w7
+    end
+
+    subgraph bar["<b>Filter bar</b><br/>shared component"]
+        direction TB
+        f1["globalHealthAreaSummaries"]
+        f2["activePipelineFilterPairs"]
+        f3["diseases, diseaseHierarchy,<br/>products, phases"]
+        f1 ~~~ f2 ~~~ f3
+    end
+
+    home ~~~ overview ~~~ exc ~~~ exa ~~~ ext ~~~ exy ~~~ tb ~~~ trends ~~~ who ~~~ bar
+
+    classDef query fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    class h1,h2,h3,h4,h5,h6,h7,h8,h9,h10,o1,o2,o3,o4,c1,c2,c3,c4,c5,c6,a1,a2,a3,a4,a5,a6,a7,t1,t2,t3,t4,y1,y2,y3,y4,y5,b1,b2,b3,b4,b5,r1,r2,r3,r4,w1,w2,w3,w4,w5,w6,w7,f1,f2,f3 query

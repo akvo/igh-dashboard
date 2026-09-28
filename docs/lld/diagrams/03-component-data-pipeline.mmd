@@ -1,0 +1,67 @@
+%% C4 level 3 - the data pipeline. Reads top to bottom: orchestration, sync, transform, delivery.
+%% Solid arrows carry data and say what flows. Dotted arrows show one thing running another.
+flowchart TB
+    subgraph airflow["igh-airflow - orchestration"]
+        direction LR
+        d1["<b>1. Ingestion DAG</b><br/>igh_ingestion"]
+        d2["<b>2. Transform DAG</b><br/>igh_transform"]
+        d3["<b>3. Deployment DAG</b><br/>igh_deployment"]
+        d1 -->|"on completion"| d2 -->|"on completion"| d3
+    end
+
+    dataverse[("<b>Microsoft Dataverse</b>")]
+
+    subgraph syncrepo["igh-data-sync"]
+        direction LR
+        s1["<b>Authenticate</b><br/>auth.py<br/>OAuth2 client credentials"]
+        s2["<b>Fetch every entity</b><br/>dataverse_client.py<br/>Paged reads, retry, backoff"]
+        s3["<b>Resolve option sets</b><br/>optionset_detector.py<br/>Code and label from<br/>the same response"]
+        s4["<b>Write bronze</b><br/>sync/database/<br/>One table per entity,<br/>one lookup per option set"]
+        s1 --> s2 --> s3 --> s4
+    end
+
+    bronze[("<b>bronze</b><br/>dataverse_complete_raw.db")]
+
+    subgraph transformrepo["igh-data-transform"]
+        direction TB
+        subgraph b2s["Bronze to silver - transformations/"]
+            direction LR
+            t1["<b>1. Walk every table</b><br/>bronze_to_silver.py<br/>Skips empty tables,<br/>dispatches by TABLE_REGISTRY"]
+            t2["<b>2. Table-specific transform</b><br/>candidates, clinical_trials,<br/>diseases, developers, priorities<br/>Generic path for the rest"]
+            t3["<b>3. Clean</b><br/>cleanup.py<br/>Drop, rename, trim,<br/>consolidate values"]
+            t1 --> t2 --> t3
+        end
+        silver[("<b>silver</b><br/>silver.db")]
+        subgraph s2g["Silver to gold - transformations/silver_to_gold/"]
+            direction LR
+            g1["<b>1. Read the map</b><br/>config/schema_map.py<br/>Every table, source<br/>and column expression"]
+            g2["<b>2. Extract</b><br/>core/extractor.py<br/>Source rows and<br/>option set cache"]
+            g3["<b>3. Evaluate</b><br/>core/transformer.py<br/>core/expressions.py<br/>COALESCE, CASE, LOOKUP,<br/>OPTIONSET, FK resolution"]
+            g4["<b>4. Generate DDL</b><br/>core/ddl_generator.py<br/>Types from column<br/>name conventions"]
+            g5["<b>5. Load in order</b><br/>core/loader.py<br/>Dimensions, facts,<br/>then bridges"]
+            g6["<b>6. Verify</b><br/>core/loader.py<br/>Orphan check on<br/>every foreign key"]
+            g7["<b>7. Index</b><br/>core/loader.py<br/>One index per<br/>dashboard query"]
+            g1 --> g2 --> g3 --> g4 --> g5 --> g6 --> g7
+        end
+        b2s -->|"cleaned tables"| silver -->|"cleaned tables"| s2g
+    end
+
+    gold[("<b>gold</b><br/>star_schema.db")]
+    dashboard["<b>Dashboard VM</b><br/>Receives one copy of the gold file"]
+
+    dataverse -->|"entity records"| syncrepo
+    airflow -.->|"DAG 1 runs"| syncrepo
+    airflow -.->|"DAG 2 runs"| transformrepo
+    syncrepo -->|"raw tables"| bronze -->|"raw tables"| b2s
+    s2g -->|"star schema"| gold
+    gold -->|"one file"| dashboard
+    airflow -.->|"DAG 3 copies"| dashboard
+
+    classDef dag fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    classDef comp fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
+    class d1,d2,d3 dag
+    class s1,s2,s3,s4,t1,t2,t3,g1,g2,g3,g4,g5,g6,g7 comp
+    class bronze,silver,gold store
+    class dataverse,dashboard ext

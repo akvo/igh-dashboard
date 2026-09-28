@@ -1,0 +1,50 @@
+%% Gold layer - the trial and publication facts and the dimensions they join
+erDiagram
+    fact_clinical_trial_event {
+        int trial_id PK
+        text clinicaltrialid
+        int candidate_key FK
+        int disease_key FK
+        int product_key FK
+        int start_date_key FK
+        int end_date_key FK
+        int last_updated_key FK
+        int primary_completion_date_key FK
+        text trial_name
+        text trial_phase
+        text status
+        text sponsor
+        text locations
+    }
+    fact_publication {
+        int publication_id PK
+        int candidate_key FK
+        text title
+        text url
+    }
+    dim_candidate_core {
+        int candidate_key PK
+        text candidate_name
+        text candidate_type
+    }
+    dim_disease {
+        int disease_key PK
+        text disease_name
+        text global_health_area
+    }
+    dim_product {
+        int product_key PK
+        text product_name
+        text product_type
+    }
+    dim_date {
+        int date_key PK
+        text full_date
+        int year
+    }
+
+    dim_candidate_core ||--o{ fact_clinical_trial_event : ""
+    dim_disease        ||--o{ fact_clinical_trial_event : "via candidate"
+    dim_product        ||--o{ fact_clinical_trial_event : "via candidate"
+    dim_date           ||--o{ fact_clinical_trial_event : "4 date roles"
+    dim_candidate_core ||--o{ fact_publication : ""

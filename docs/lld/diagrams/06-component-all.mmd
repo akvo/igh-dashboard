@@ -1,0 +1,51 @@
+%% All repositories at one box per subsystem. Reads left to right: source to user.
+%% Solid arrows carry data and say what flows. Dotted arrows show one thing running another.
+flowchart LR
+    subgraph airflow["igh-airflow"]
+        direction LR
+        a1["Ingestion DAG"] -->|"on completion"| a2["Transform DAG"] -->|"on completion"| a3["Deployment DAG"]
+    end
+
+    dv[("<b>Microsoft<br/>Dataverse</b>")]
+
+    subgraph r1["igh-data-sync"]
+        direction LR
+        s1["Authenticate<br/>and fetch"] -->|"entity records"| s2["Write bronze<br/>+ option sets"]
+    end
+
+    b[("bronze")]
+
+    subgraph r2["igh-data-transform"]
+        direction LR
+        t1["Clean to silver"] -->|"cleaned tables"| sv[("silver")] -->|"cleaned tables"| t2["Build the<br/>star schema"]
+    end
+
+    g[("gold<br/>star_schema.db")]
+
+    subgraph r4["igh-dashboard"]
+        direction LR
+        d1["GraphQL API<br/>over the gold file"] -->|"GraphQL responses"| d2["Next.js pages,<br/>charts and tables"]
+    end
+
+    user["<b>Analyst</b><br/>Reads the pages<br/>in a browser"]
+
+    dv -->|"entity records"| s1
+    s2 -->|"raw tables"| b -->|"raw tables"| t1
+    t2 -->|"star schema"| g
+    g ==>|"one file copied<br/>to the dashboard VM"| d1
+    d2 -->|"pages"| user
+
+    airflow -.->|"Ingestion DAG runs"| r1
+    airflow -.->|"Transform DAG runs"| r2
+    airflow -.->|"Deployment DAG<br/>copies"| g
+
+    classDef comp fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef dag fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    classDef ext fill:#f4f4f3,stroke:#b2afa7,color:#696763
+    classDef person fill:#fbf6eb,stroke:#8a8781,stroke-width:2px,color:#3d3a36
+    class s1,s2,t1,t2,d1,d2 comp
+    class a1,a2,a3 dag
+    class b,sv,g store
+    class dv ext
+    class user person

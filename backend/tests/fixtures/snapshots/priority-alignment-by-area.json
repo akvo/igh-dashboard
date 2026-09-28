@@ -1,0 +1,14 @@
+{
+  "Neglected disease": {
+    "candidatesWithPriority": 234,
+    "totalCandidates": 1883
+  },
+  "Emerging infectious disease": {
+    "candidatesWithPriority": 20,
+    "totalCandidates": 1185
+  },
+  "Womens Health": {
+    "candidatesWithPriority": 0,
+    "totalCandidates": 971
+  }
+}

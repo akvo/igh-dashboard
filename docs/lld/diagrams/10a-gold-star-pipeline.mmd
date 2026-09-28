@@ -1,0 +1,70 @@
+%% Gold layer - fact_pipeline_snapshot and the seven dimensions it joins
+erDiagram
+    fact_pipeline_snapshot {
+        int snapshot_id PK
+        int candidate_key FK
+        int product_key FK
+        int sub_product_key FK
+        int disease_key FK
+        int technology_key FK
+        int regulatory_key FK
+        int phase_key FK
+        int date_key FK
+        int is_active_flag
+        int include_in_pipeline
+    }
+    dim_candidate_core {
+        int candidate_key PK
+        text candidateid
+        text candidate_name
+        text candidate_type
+        text development_status
+        text current_rd_stage
+        text indication
+        text indication_type
+    }
+    dim_product {
+        int product_key PK
+        text vin_productid
+        text product_name
+        text product_type
+        text product_level
+    }
+    dim_disease {
+        int disease_key PK
+        text diseaseid
+        text disease_name
+        text disease_group_name
+        text global_health_area
+        text disease_filter
+    }
+    dim_phase {
+        int phase_key PK
+        text phase_name
+        int sort_order
+    }
+    dim_date {
+        int date_key PK
+        text full_date
+        int year
+        int quarter
+    }
+    dim_candidate_tech {
+        int technology_key PK
+        text technology_type
+    }
+    dim_candidate_regulatory {
+        int regulatory_key PK
+        text approval_status
+        text who_prequalification
+        text nra_approval_status
+        text sra_approval_status
+    }
+
+    dim_candidate_core       ||--o{ fact_pipeline_snapshot : ""
+    dim_product              ||--o{ fact_pipeline_snapshot : "product + sub_product"
+    dim_disease              ||--o{ fact_pipeline_snapshot : ""
+    dim_candidate_tech       ||--o{ fact_pipeline_snapshot : ""
+    dim_candidate_regulatory ||--o{ fact_pipeline_snapshot : ""
+    dim_phase                ||--o{ fact_pipeline_snapshot : ""
+    dim_date                 ||--o{ fact_pipeline_snapshot : ""

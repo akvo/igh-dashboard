@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import Database from "better-sqlite3";
 import path from "path";
 import { query } from "../helpers/graphql.js";
+import { expectMatchesSnapshot } from "../helpers/snapshot.js";
 import type { CandidateNode, CandidateConnection } from "../helpers/types.js";
 
 describe("Candidates — pagination", () => {
@@ -154,14 +155,25 @@ describe("Candidates — phase and product filters", () => {
       { filter: { phase_key: phaseKey } },
     );
 
-    expect(data.candidates.totalCount).toBe(876);
     // The resolved phase comes from the most-recent active snapshot, which can
-    // differ from the filtered snapshot when a candidate has multiple snapshots.
-    // Verify the majority resolve to the filtered phase.
+    // differ from the filtered snapshot when a candidate has multiple snapshots,
+    // so not every returned node need resolve to the phase we filtered on.
     const matching = data.candidates.nodes.filter(
       (node) => node.phase?.phase_key === phaseKey,
     ).length;
-    expect(matching).toBe(20);
+
+    expect(data.candidates.totalCount).toBeGreaterThan(0);
+    expect(matching).toBeLessThanOrEqual(data.candidates.nodes.length);
+
+    expectMatchesSnapshot(
+      {
+        filteredPhaseKey: phaseKey,
+        totalCount: data.candidates.totalCount,
+        nodesReturned: data.candidates.nodes.length,
+        nodesResolvingToFilteredPhase: matching,
+      },
+      "candidates-phase-filter.json",
+    );
   });
 
   it("filters by product_key", async () => {

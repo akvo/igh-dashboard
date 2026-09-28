@@ -48,8 +48,6 @@ graphql-api/
 │   │   ├── graphql.ts               # Shared Apollo test client
 │   │   └── types.ts                 # Shared response type definitions
 │   └── star_schema.db               # Static DB snapshot for tests
-├── docs/
-│   └── FRONTEND_API_MAPPING.md    # Complete API reference for frontend
 └── package.json
 ```
 
@@ -105,7 +103,9 @@ SQL queries are organized by dashboard visualization rather than by table. This 
 
 ## API Reference
 
-See **[docs/FRONTEND_API_MAPPING.md](docs/FRONTEND_API_MAPPING.md)** for complete query documentation with examples, response structures, and UI mapping guidance.
+See **section 5.8 of the [Low Level Design](../docs/lld/IGH-Pipeline-Portal-LLD.md)** for the
+full list of Query root fields with their arguments and return types, and for how a query
+reaches the data.
 
 **Query categories:**
 - KPIs: `portfolioKPIs`

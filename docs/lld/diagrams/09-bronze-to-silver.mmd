@@ -1,0 +1,48 @@
+%% Bronze to silver cleaning
+flowchart TB
+    bronze[("<b>bronze</b><br/>26 entity tables<br/>_optionset_* lookups<br/>_junction_* multi-selects<br/>_sync_state, _sync_log")]
+
+    loop{"Table in<br/>TABLE_REGISTRY?"}
+    empty{"Table empty?"}
+
+    generic["<b>transform_table()</b><br/>Generic path"]
+
+    subgraph funcs["cleanup.py - five reusable steps"]
+        direction TB
+        f1["<b>drop_columns_by_name</b><br/>Remove named columns"]
+        f2["<b>drop_empty_columns</b><br/>Remove all-NULL columns,<br/>keep valid_from / valid_to"]
+        f3["<b>rename_columns</b><br/>Bronze names to readable names"]
+        f4["<b>normalize_whitespace</b><br/>Trim, collapse runs,<br/>strip br tags and nbsp"]
+        f5["<b>replace_values</b><br/>Consolidate duplicate<br/>and deprecated values"]
+    end
+
+    subgraph dedicated["Dedicated transformers"]
+        direction TB
+        g1["<b>candidates.py</b><br/>Temporal row expansion per<br/>reporting year, R&D stage<br/>forward fill, strict-year capture"]
+        g2["<b>clinical_trials.py</b><br/>Source URL synthesis,<br/>phase / status / age standardising"]
+        g3["<b>diseases.py</b><br/>disease_filter and label,<br/>global health area fallback"]
+        g4["<b>developers.py</b><br/>Enriched from accounts<br/>and countries"]
+        g5["<b>priorities.py</b><br/>Column drop and rename"]
+    end
+
+    opt["<b>Option set tables</b><br/>Cleaned version if a transformer<br/>returned one, else copied as is.<br/>Renamed per OPTIONSET_RENAMES."]
+
+    silver[("<b>silver</b><br/>Cleaned tables,<br/>silver column names")]
+
+    bronze --> empty
+    empty -->|yes| skip(["Skip"])
+    empty -->|no| loop
+    loop -->|no| generic
+    loop -->|yes| dedicated
+    generic --> funcs
+    dedicated --> funcs
+    funcs --> silver
+    bronze --> opt --> silver
+
+
+    classDef step fill:#fff1ed,stroke:#fe7449,color:#3d3a36
+    classDef store fill:#fdfbf6,stroke:#b2afa7,color:#3d3a36
+    classDef gate fill:#fbf6eb,stroke:#8a8781,color:#3d3a36
+    class generic,f1,f2,f3,f4,f5,g1,g2,g3,g4,g5,opt step
+    class bronze,silver store
+    class loop,empty,skip gate
