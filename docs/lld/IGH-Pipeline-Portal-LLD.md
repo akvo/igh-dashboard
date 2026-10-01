@@ -10,7 +10,7 @@
 | Test | A separate test environment |
 | Prepared by | Akvo Foundation |
 | Date | September 2026 |
-| Status | Draft for review |
+| Status | Reviewed and approved - September 28th 2026 |
 
 ---
 
