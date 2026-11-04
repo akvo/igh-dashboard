@@ -9,8 +9,8 @@
 | Production | https://pipeline.impactglobalhealth.org |
 | Test | A separate test environment |
 | Prepared by | Akvo Foundation |
-| Date | September 2026 |
-| Status | Reviewed and approved - September 28th 2026 |
+| Date | November 2026 |
+| Status | Revised November 2026 — API clarifications |
 
 ---
 
@@ -285,6 +285,18 @@ decision explains the staging workflow:
 Production works the other way round. `IS_PRODUCTION=true` in `self-hosted/.env` makes the
 deploy script skip the copy, so a code deploy never overwrites the file the Airflow pipeline
 delivered.
+
+**Why do we run the pipeline on a dev machine and test in staging first with the output when we update data or change the data pipeline code?** 
+
+The logic run by this manual approach tests the production pipeline's logic as well as
+the data. Airflow only orchestrates: its tasks call the same `igh-data-sync` and
+`igh-data-transform` code that `sync-and-run-etl.sh` runs on a developer's machine. A change to
+the pipeline or a data update is therefore tested locally first, by the automated tests, then by Akvo's internal
+QA, then by IGH on the staging site. Only after that does the change reach the code Airflow
+runs in production. What staging does not test is the orchestration itself: the Airflow
+schedule, task order and the hand-off of the finished file to the production server. 
+Given this code is expected to be static and has been well tested this is reasonable. 
+The production server ignoring the new db copy we commit to the igh-dashboard repository as part of this process ensures all these checks are followed before the real update is run in airflow.
 
 ### 5.3 The process of updating the data
 
@@ -603,7 +615,7 @@ built per request cannot. Rebuilding them costs nothing, because the work they s
 inside a single request: one query per relationship instead of one per row. Section 6.3
 describes that batching.
 
-The 37 root query fields fall into five groups.
+The 38 root query fields fall into five groups.
 
 **Counters and aggregates.** All take the same five optional filter arrays —
 `global_health_areas`, `primary_disease_names`, `secondary_disease_names`, `product_names`,
@@ -634,7 +646,8 @@ The 37 root query fields fall into five groups.
 | `individualPriorityAnalysis` | `priority_key: Int!` + the five filter arrays | `IndividualPriorityAnalysis!` |
 
 **Record-level and paged.** Every connection returns `{ nodes, totalCount, hasNextPage }`.
-`limit` is capped server-side at 100 in every one of them.
+The four that take `sort` also return `ignoredInputs` (section 5.8.1). `limit` is capped
+server-side at 100 in every one of them.
 
 | Field | Arguments | Returns |
 | --- | --- | --- |
@@ -645,6 +658,7 @@ The 37 root query fields fall into five groups.
 | `rdPrioritiesWithCandidates` | `filter: RdPriorityFilter`, `sort`, `limit`, `offset` | `RdPriorityConnection!` |
 | `rdPriorities` | `filter: RdPriorityFilter`, `sort`, `limit`, `offset` | `RdPriorityConnection!` |
 | `distinctValues` | `table: DataTable!`, `column: String!`, `filter: ColumnFilterContext` | `[String!]!` |
+| `tableColumns` | `table: DataTable!` | `[ColumnDescription!]!` |
 
 **Slide-overs.** One query fills a whole detail panel.
 
@@ -678,6 +692,68 @@ concatenated string per row — a developer list such as `"GSK; Merck"`. A text 
 `LIKE '%GSK%'` gives the right "contains" result on such a column; a category filter with
 `IN (...)` would not, so the registry never offers one. `columnFilters.ts` and
 `distinctValues.ts` build `WHERE` and `ORDER BY` from the registry.
+
+**Which column names the API accepts.** The `tableColumns` query returns the column names
+that `column_filters` and `sort` accept for one table. It reads the registry directly, so its
+answer always matches the code. The registry has four tables: `PORTFOLIO_CANDIDATES`,
+`CLINICAL_TRIALS`, `RD_PRIORITIES` and `RD_PRIORITIES_WITH_CANDIDATES`. This document does
+not copy the column lists, because a copy would go out of date when a column changes.
+
+```graphql
+query {
+  tableColumns(table: PORTFOLIO_CANDIDATES) { name filterKind sortable aggregated note }
+}
+```
+
+Each row describes one column:
+
+| Field | Meaning |
+| --- | --- |
+| `name` | The name to use in `column_filters` and `sort`. |
+| `filterKind` | The filter that works on the column: `TEXT`, `CATEGORY`, `NUMBER` or `DATE`. |
+| `sortable` | Whether `sort` on this column has any effect. |
+| `aggregated` | Whether the value is a `"; "`-separated list. Only a `TEXT` filter works on these. |
+| `note` | Set only where the name alone would mislead. Otherwise null. |
+
+An example of four rows from the output. The full list is longer.
+
+| `name` | `filterKind` | `sortable` | `aggregated` | `note` |
+| --- | --- | --- | --- | --- |
+| `candidate_name` | `TEXT` | true | false | — |
+| `phase_name` | `CATEGORY` | true | false | — |
+| `disease_name` | `CATEGORY` | true | false | The disease shown in the table: the secondary disease where there is one, otherwise the primary disease. Malaria strains are written `Malaria – <strain>`… |
+| `developers_agg` | `TEXT` | false | true | A `"; "`-separated list per row. `TEXT` filter only. |
+
+For a `CATEGORY` column, `distinctValues` returns the values that exist. Developers will find
+the registry itself in `backend/src/db/queries/columnRegistry.ts`.
+
+#### 5.8.1 Using the API outside the dashboard
+
+The API was built to serve the dashboard, and its contract is the dashboard's needs. It works
+for other callers, but some of its behaviours come from that purpose. One example:
+
+**Inputs that have no effect are ignored, and reported.** A `column_filters` or `sort` entry
+that names an unknown column, or that cannot apply to the column it names, is ignored and the
+query still runs. The reason is that dashboard links save their filters in the URL. A saved
+link must keep working after a column is renamed or removed, so the API cannot reject it. The
+cost is that a mistyped column name returns the unfiltered result, which looks plausible. To
+make that visible, `portfolioCandidates`, `clinicalTrials`, `rdPriorities` and
+`rdPrioritiesWithCandidates` return an `ignoredInputs` list naming each input that had no
+effect, and why:
+
+| Reason | Meaning |
+| --- | --- |
+| `UNKNOWN_COLUMN` | The table has no column of that name. Check `tableColumns`. |
+| `KIND_MISMATCH` | A `NUMBER` or `DATE` filter on a column of another kind. |
+| `NOT_SORTABLE` | A `sort` on a column that cannot be sorted. |
+| `AGGREGATED_CATEGORY` | A `CATEGORY` filter on a list column. Use `TEXT` instead. |
+
+The list is empty when every input was used. A blank filter value (empty text or an empty
+category list) is the dashboard's "filter cleared" state and is not reported. `distinctValues`
+also ignores unusable inputs, but it returns a bare list of strings, so it cannot report them
+without changing its result type.
+
+Addressing this kind of issue further by making the API consistent for non dashboard callers is outside the scope of the current work. 
 
 ### 5.9 Examples of what each page asks for
 
@@ -1094,8 +1170,14 @@ who approves it. Everything is manually QAed before release.
 ### 6.9 The content repository
 
 `akvo/igh-dashboard-content` exists so that IGH staff can change the site's copy without a
-developer and without touching the dashboard code. The client has their own documentation for
-editing; this section describes only the shape.
+developer and without touching the dashboard code. This section describes only the shape.
+Three files document content editing:
+
+| File | Written for | Covers |
+| --- | --- | --- |
+| `README.md` in `igh-dashboard-content` | IGH editors | Finding and editing a piece of text in the GitHub web interface. |
+| `frontend/docs/content-editing.md` in `igh-dashboard` | Developers | Reading copy in a component, adding or changing a key, and how the sync works. |
+| `frontend/src/content/README.md` in `igh-dashboard` | Developers | What each file in the content directory is, and which ones only the sync writes. |
 
 The dashboard holds the copy in one file, `frontend/src/content/content.yaml`, keyed by dotted
 names such as `home.hero.title`. The content repository projects that file into one small text

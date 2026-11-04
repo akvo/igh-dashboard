@@ -65,10 +65,20 @@ done
 
 Open the PNGs and look for blank boxes.
 
-## Exporting to Word
+## Exporting to PDF and Word
 
 ```bash
-pandoc IGH-Pipeline-Portal-LLD.md -o IGH-Pipeline-Portal-LLD.docx
+./export-lld.sh
 ```
 
-Point the image links at `diagrams/out/*.png` first if the SVGs do not carry across.
+This writes three files to `export/`, which git ignores:
+
+| Output | What it is |
+| --- | --- |
+| `export/IGH-Pipeline-Portal-LLD.pdf` | The copy to send. A4, with a linked table of contents. |
+| `export/IGH-Pipeline-Portal-LLD.docx` | Word copy, with the PNG diagrams. Word fills in the table of contents when you open the file and agree to update fields. |
+| `export/IGH-Pipeline-Portal-LLD.html` | The page Chrome prints to make the PDF. |
+
+The PDF needs `pandoc` and Chrome. Chrome's path comes from `diagrams/puppeteer-config.json`;
+set `CHROME` to use another. Print styles are in `export.css`. If a `reference.docx` sits next
+to the script, the Word copy takes its styles from it.

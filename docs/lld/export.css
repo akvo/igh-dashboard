@@ -1,0 +1,110 @@
+/* Print styles for export-lld.sh. Palette and font follow diagrams/mermaid-config.json. */
+
+@page {
+  size: A4;
+  margin: 20mm 18mm;
+}
+
+body {
+  font-family: "Public Sans", "DejaVu Sans", system-ui, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.45;
+  color: #3d3a36;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4 {
+  line-height: 1.25;
+  break-after: avoid;
+}
+
+/* Each numbered section starts a new page. */
+h2 {
+  break-before: page;
+  border-bottom: 2px solid #fe7449;
+  padding-bottom: 4px;
+}
+
+#title-block-header {
+  margin-bottom: 0;
+}
+
+#TOC {
+  break-after: page;
+}
+
+#TOC ul {
+  list-style: none;
+  padding-left: 1.2em;
+}
+
+#TOC > ul {
+  padding-left: 0;
+}
+
+#TOC a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a {
+  color: #c4502c;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 9pt;
+  break-inside: avoid;
+}
+
+th, td {
+  border: 1px solid #d8d4cb;
+  padding: 4px 6px;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+th {
+  background: #fbf6eb;
+}
+
+code {
+  font-size: 0.9em;
+  overflow-wrap: break-word;
+}
+
+pre {
+  background: #f4f4f3;
+  padding: 8px;
+  white-space: pre-wrap;
+  font-size: 8.5pt;
+  break-inside: avoid;
+}
+
+img {
+  max-width: 100%;
+  max-height: 230mm;
+  display: block;
+  margin: 1em auto;
+  break-inside: avoid;
+}
+
+figure {
+  margin: 0;
+  break-inside: avoid;
+}
+
+figcaption {
+  text-align: center;
+  font-size: 9pt;
+  color: #8a8781;
+}
+
+hr {
+  display: none;
+}
