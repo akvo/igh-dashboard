@@ -9,6 +9,10 @@
 # Word: pandoc writes a .docx with the PNG diagrams. Word fills in its table of
 # contents when the file is opened and fields are updated.
 #
+# Cross-references in the LLD are links to heading anchors. The export stops if
+# a link points to a heading that doesn't exist, so a renamed heading is caught
+# here rather than by a reader.
+#
 # Chrome's path is read from diagrams/puppeteer-config.json; set CHROME to
 # override it. If reference.docx exists here, the Word copy takes its styles.
 #
@@ -34,12 +38,28 @@ body | pandoc \
   --from gfm --to html5 --standalone \
   --toc --toc-depth=4 \
   --metadata title="$TITLE" \
+  --lua-filter "$DIR/keep-with-table.lua" \
   --css "$DIR/export.css" --embed-resources \
   --resource-path "$DIR" \
   -o "$OUT/$NAME.html"
 
+# Guard: neither GitHub nor pandoc warns about a link to a missing anchor.
+# Every in-page link must have a matching id in the HTML pandoc just wrote,
+# which names headings the same way GitHub does.
+echo "  Checking internal links"
+html="$OUT/$NAME.html"
+missing=$(comm -23 \
+  <(grep -o 'href="#[^"]*"' "$html" | sed 's/^href="#//; s/"$//' | sort -u) \
+  <(grep -o ' id="[^"]*"' "$html" | sed 's/^ id="//; s/"$//' | sort -u))
+if [ -n "$missing" ]; then
+  echo "Links to headings that don't exist. Fix the link or the heading:" >&2
+  echo "$missing" >&2
+  exit 1
+fi
+
 echo "  PDF"
 "$CHROME" --headless --no-sandbox --disable-gpu --no-pdf-header-footer \
+  --generate-pdf-document-outline \
   --print-to-pdf="$OUT/$NAME.pdf" \
   "file://$OUT/$NAME.html" 2>/dev/null
 

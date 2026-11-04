@@ -80,5 +80,16 @@ This writes three files to `export/`, which git ignores:
 | `export/IGH-Pipeline-Portal-LLD.html` | The page Chrome prints to make the PDF. |
 
 The PDF needs `pandoc` and Chrome. Chrome's path comes from `diagrams/puppeteer-config.json`;
-set `CHROME` to use another. Print styles are in `export.css`. If a `reference.docx` sits next
+set `CHROME` to use another. Print styles are in `export.css`, and `keep-with-table.lua` keeps a
+bold lead-in line on the same page as the table it introduces. If a `reference.docx` sits next
 to the script, the Word copy takes its styles from it.
+
+The PDF has a bookmarks panel built from the headings.
+
+### Cross-references are links
+
+A reference to another section is written as a link to that heading's anchor, using GitHub's
+anchor names: `[section 5.1](#51-the-airflow-dag-chain)`. The same link works on GitHub, in the
+PDF and in the Word copy. Neither GitHub nor pandoc warns about a link to a heading that doesn't
+exist, so `export-lld.sh` checks every link and stops if one has no matching heading. If you
+rename a heading, update the links to it.

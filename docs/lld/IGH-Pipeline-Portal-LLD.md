@@ -14,6 +14,27 @@
 
 ---
 
+## How to read this document
+
+This document describes how the portal is built. Sections 1 to 4 need no knowledge of the code; sections 5 to 7
+are mainly for developers. Names from the code are formatted `like this`, and the key to the
+diagrams is at the start of [section 2](#2-system-context-diagram).
+
+| If you want to… | Read |
+| --- | --- |
+| Understand the system in outline | Sections [1](#1-system-purpose) to [3](#3-container-diagram) |
+| Follow a data update from Dataverse to the site | Sections [5.1](#51-the-airflow-dag-chain) to [5.3](#53-the-process-of-updating-the-data) |
+| Call the API from your own code | Sections [5.8](#58-the-graphql-api) and [5.8.1](#581-using-the-api-outside-the-dashboard) |
+| Add a new reporting year | Section [6.6](#66-adding-a-new-reporting-year) |
+| Take over development | Sections [4](#4-component-diagram), [6](#6-code-explanations) and [7](#7-infrastructure) |
+
+Three terms appear throughout. **Dataverse** is the CRM where IGH curates the pipeline data.
+**Bronze, silver and gold** are the three databases the pipeline writes in turn: the raw copy
+of Dataverse, the cleaned copy, and the database the site reads. A **DAG** is an Airflow
+workflow; the pipeline is three of them, run in order.
+
+---
+
 ## 1. System Purpose
 
 The portal presents the Impact Global Health product R&D pipeline. It covers the candidates
@@ -72,7 +93,7 @@ portal. Nothing writes back to Dataverse.
 
 Two virtual machines. Both run Docker Compose behind Traefik.
 
-**Airflow VM.** Apache Airflow orchestrates the three DAGs described in section 5.1. The Airflow image has `igh-data-sync` and `igh-data-transform` installed as ordinary Python packages, and the DAG
+**Airflow VM.** Apache Airflow orchestrates the three DAGs described in [section 5.1](#51-the-airflow-dag-chain). The Airflow image has `igh-data-sync` and `igh-data-transform` installed as ordinary Python packages, and the DAG
 tasks call them directly. Three SQLite files live on a volume: bronze, silver and gold.
 
 **Dashboard VM.** Traefik terminates TLS and routes `/` to Next.js on port 3000 and `/api/*`
@@ -82,7 +103,7 @@ to Apollo Server on port 4000, stripping the `/api` prefix. The backend opens
 The only thing that passes between the two machines is the finished gold database. The
 deployment DAG sends it as a single file over an authenticated SSH connection. There is no
 downtime: the site is never stopped, and requests already in flight finish against the previous
-file. Section 5.1 describes the steps.
+file. [Section 5.1](#51-the-airflow-dag-chain) describes the steps.
 
 | Container | Image or stack | Port | Source |
 | --- | --- | --- | --- |
@@ -113,14 +134,14 @@ work.
 **Orchestration.** `igh-airflow` holds three DAGs, run in order: ingestion, transform,
 deployment. Each DAG calls a Python function from one of the packages below. The Airflow UI
 also offers a download of a consistent snapshot of the bronze, silver or gold database, for
-inspecting a run without touching the server. Section 5.1 covers the DAGs in detail.
+inspecting a run without touching the server. [Section 5.1](#51-the-airflow-dag-chain) covers the DAGs in detail.
 
 **Sync.** `igh-data-sync` reads every tracked Dataverse entity and writes it, unchanged, into
 the bronze database. It authenticates with OAuth2 client credentials, fetches each entity page
 by page, and resolves option-set labels from the same response that carries the codes. Every
 run builds the bronze database from scratch. The package can version rows over time — the
 tables carry `valid_from` and `valid_to` — but this is not used: each record is written once
-per run. Section 6.7 explains why the capability exists.
+per run. [Section 6.7](#67-how-this-could-work-with-scd2) explains why the capability exists.
 
 **Transform.** `igh-data-transform` has two halves that share only the command-line entry
 point. Bronze to silver is a cleaning pass over every table: five reusable functions in
@@ -131,7 +152,7 @@ gold builds the star schema, in seven steps:
    primary key and one expression per column.
 2. **Extract.** `core/extractor.py` opens the silver database read-only and loads the option
    set lookups into memory — the same code-to-label tables the sync built from Dataverse
-   choice fields (section 5.5), carried through into silver. They are the only thing loaded up
+   choice fields ([section 5.5](#55-option-sets)), carried through into silver. They are the only thing loaded up
    front, because the `OPTIONSET:` expressions in step 3 need a code-to-label map for every
    row; every other table is read as the table that needs it is built.
 3. **Evaluate.** `core/transformer.py` and `core/expressions.py` compute each column from its
@@ -144,7 +165,7 @@ gold builds the star schema, in seven steps:
 6. **Verify.** The loader runs an orphan check on every foreign key and prints what it finds.
 7. **Index.** The loader creates one index for each dashboard query pattern.
 
-Section 6.1 explains why the map is declarative and why gold is rebuilt from nothing every run.
+[Section 6.1](#61-igh-data-transform) explains why the map is declarative and why gold is rebuilt from nothing every run.
 
 ### 4.2 Dashboard backend
 
@@ -157,7 +178,7 @@ read-only connection.
 
 `columnRegistry.ts` is worth highlighting. It maps a front-end column name to a SQL
 expression and describes how that column may be filtered and sorted. `columnFilters.ts` and
-`distinctValues.ts` build `WHERE` and `ORDER BY` clauses from it. Section 6.3 explains how this
+`distinctValues.ts` build `WHERE` and `ORDER BY` clauses from it. [Section 6.3](#63-the-backend) explains how this
 lets one table component drive four datasets.
 
 The gold file is the join to the pipeline: the deployment DAG writes it, and the backend's
@@ -172,7 +193,7 @@ routing, bundling and the standalone server, not server rendering.
 
 Pages compose sections from `src/components/`. Sections read data through one hook per query
 in `src/graphql/hooks/`, which sit on Apollo Client and an in-memory result store. Filter state
-is held in the URL. Copy comes from `src/content/` through a `t()` accessor. Section 6.4 covers
+is held in the URL. Copy comes from `src/content/` through a `t()` accessor. [Section 6.4](#64-the-frontend) covers
 each of these.
 
 ### 4.4 All repositories together
@@ -212,7 +233,7 @@ transform step.
 every entity from scratch. The DAG exposes a checkbox, `update_mode`, which keeps the existing
 bronze database and fetches only records changed since the last run. This is not part of the
 current operating procedure. It is groundwork for a future update process built on row
-versioning, described in section 6.7.
+versioning, described in [section 6.7](#67-how-this-could-work-with-scd2).
 
 **`igh_transform`** has two tasks in sequence, `bronze_to_silver` then `silver_to_gold`. This
 DAG must be unpaused or the asset event goes nowhere.
@@ -234,7 +255,7 @@ The consequence matters more than the mechanism. When either package changes —
 the configuration for a new reporting year in the transform — Airflow keeps running the old
 code until two things happen: the pinned commit in `uv.lock` is moved forward, and
 `igh-airflow` is redeployed. The deploy rebuilds the image, which installs the new version.
-Section 5.3 places these steps in the full update procedure.
+[Section 5.3](#53-the-process-of-updating-the-data) places these steps in the full update procedure.
 
 **Inspecting a run.** The Airflow UI carries three extra menu items under *Downloads* —
 Bronze DB, Silver DB, Gold DB — served by `GET /igh/download/{layer}` from
@@ -443,7 +464,7 @@ On top of that, the dedicated transformers do the work that is specific to one t
 - **`candidates.py`** — expands one Dataverse row into one row per reporting year, resolves
   R&D stage GUIDs to names, normalises the pipeline-inclusion columns onto one set of codes,
   and captures the strict current-year value the WHO page needs. This is the most involved
-  transformer and section 6.6 covers it.
+  transformer and [section 6.6](#66-adding-a-new-reporting-year) covers it.
 - **`clinical_trials.py`** — synthesises a source URL per registry, standardises trial phase,
   status, age group and sex.
 - **`diseases.py`** — derives `disease_filter` and `disease_label`, and falls back for a
@@ -545,7 +566,7 @@ away.
 
 **Foreign keys are not enforced.** The generated DDL has no `FOREIGN KEY` constraints. Instead
 `Loader.verify_foreign_keys()` runs 22 orphan checks after loading and prints what it finds.
-It reports; it does not fail the run. Section 6.2 gives the situations in which a check fails.
+It reports; it does not fail the run. [Section 6.2](#62-error-handling-recovery-and-retry) gives the situations in which a check fails.
 
 **Indexes.** 22, created by `Loader.create_indexes()` and chosen for specific dashboard
 queries:
@@ -612,7 +633,7 @@ request, before any resolver runs, and this one returns a fresh set of DataLoade
 DataLoader remembers every key it has looked up for as long as it lives, so a set shared
 across requests would go on returning rows it read before the gold file was replaced. A set
 built per request cannot. Rebuilding them costs nothing, because the work they save happens
-inside a single request: one query per relationship instead of one per row. Section 6.3
+inside a single request: one query per relationship instead of one per row. [Section 6.3](#63-the-backend)
 describes that batching.
 
 The 38 root query fields fall into five groups.
@@ -646,7 +667,7 @@ The 38 root query fields fall into five groups.
 | `individualPriorityAnalysis` | `priority_key: Int!` + the five filter arrays | `IndividualPriorityAnalysis!` |
 
 **Record-level and paged.** Every connection returns `{ nodes, totalCount, hasNextPage }`.
-The four that take `sort` also return `ignoredInputs` (section 5.8.1). `limit` is capped
+The four that take `sort` also return `ignoredInputs` ([section 5.8.1](#581-using-the-api-outside-the-dashboard)). `limit` is capped
 server-side at 100 in every one of them.
 
 | Field | Arguments | Returns |
@@ -693,10 +714,10 @@ concatenated string per row — a developer list such as `"GSK; Merck"`. A text 
 `IN (...)` would not, so the registry never offers one. `columnFilters.ts` and
 `distinctValues.ts` build `WHERE` and `ORDER BY` from the registry.
 
-**Which column names the API accepts.** The `tableColumns` query returns the column names
+**Which table column names the API accepts.** The `tableColumns` query returns the column names
 that `column_filters` and `sort` accept for one table. It reads the registry directly, so its
 answer always matches the code. The registry has four tables: `PORTFOLIO_CANDIDATES`,
-`CLINICAL_TRIALS`, `RD_PRIORITIES` and `RD_PRIORITIES_WITH_CANDIDATES`. This document does
+`CLINICAL_TRIALS`, `RD_PRIORITIES` and `RD_PRIORITIES_WITH_CANDIDATES`, one for each kind of table the dashboard shows. This document does
 not copy the column lists, because a copy would go out of date when a column changes.
 
 ```graphql
@@ -715,13 +736,12 @@ Each row describes one column:
 | `aggregated` | Whether the value is a `"; "`-separated list. Only a `TEXT` filter works on these. |
 | `note` | Set only where the name alone would mislead. Otherwise null. |
 
-An example of four rows from the output. The full list is longer.
+An example of rows from the output. The full list is longer.
 
 | `name` | `filterKind` | `sortable` | `aggregated` | `note` |
 | --- | --- | --- | --- | --- |
 | `candidate_name` | `TEXT` | true | false | — |
 | `phase_name` | `CATEGORY` | true | false | — |
-| `disease_name` | `CATEGORY` | true | false | The disease shown in the table: the secondary disease where there is one, otherwise the primary disease. Malaria strains are written `Malaria – <strain>`… |
 | `developers_agg` | `TEXT` | false | true | A `"; "`-separated list per row. `TEXT` filter only. |
 
 For a `CATEGORY` column, `distinctValues` returns the values that exist. Developers will find
@@ -835,7 +855,7 @@ in two tables: `_sync_state`, one row per entity with its state and last timesta
 not recovery. Nothing reads them to continue a failed run — the next sync deletes the database
 and starts again. They exist so that a failure can afterwards be traced to an entity, a time
 and a message. (`get_last_sync_timestamp()` does read `_sync_state`, but only in the
-incremental mode described in section 5.1, which is not part of the current procedure.)
+incremental mode described in [section 5.1](#51-the-airflow-dag-chain), which is not part of the current procedure.)
 
 **Recovery is a fresh run.** Every sync deletes the bronze database and rebuilds it. A failed
 run is retried from the start, and that is safe because there is nothing to resume: the next
@@ -935,7 +955,7 @@ multi-level sort and CSV export all use that one path.
 **DataLoaders.** Nested fields — a candidate's developers, geographies, priorities, trials, and
 every sub-field of the slide-over types — go through DataLoaders. Each one collects the keys
 requested during one resolver pass, issues a single `WHERE key IN (?, ?, ...)`, and hands each
-caller its rows. Without them, a page of 100 candidates would issue hundreds of queries. Section 5.8
+caller its rows. Without them, a page of 100 candidates would issue hundreds of queries. [Section 5.8](#58-the-graphql-api)
 explains why a new set is built for every request.
 
 ### 6.4 The frontend
@@ -971,7 +991,7 @@ so they cannot disagree.
 **Content.** User-facing copy lives in `src/content/content.yaml`, not in JSX. A build step
 validates it against a schema and generates `content.generated.js`; components read it
 through `t('key')` or `<Markdown path="key">`. A missing key throws rather than rendering
-"undefined". Section 6.9 describes how that file is edited by people who are not developers.
+"undefined". [Section 6.9](#69-the-content-repository) describes how that file is edited by people who are not developers.
 
 ### 6.5 Caching and optimisation
 
@@ -1062,7 +1082,7 @@ that in the pipeline, in `transformations/candidates.py`:
 4. Add a unit test for the new boundary in `tests/unit/test_candidates.py`, and an e2e
    assertion in `tests/e2e/test_silver_to_gold_e2e.py` that the new year appears in
    `fact_pipeline_snapshot` and that the two most recent years read distinct columns.
-5. Follow the release procedure in section 5.3 so that Airflow runs the new version.
+5. Follow the release procedure in [section 5.3](#53-the-process-of-updating-the-data) so that Airflow runs the new version.
 
 **R&D stage.** The stage list ends with `_resolved_rdstage_current`, the resolved value of the
 rolling stage column, pinned to the most recent year that has a frozen stage archive. If IGH
@@ -1106,12 +1126,12 @@ Dataverse, and the pipeline would carry cleaner data with fewer special cases.
 
 The practical path is to keep the year columns for the historical years that predate
 continuous syncing, and derive new years from SCD2 once the bronze database has been running
-long enough to cover one. Until then, section 6.6 is the procedure.
+long enough to cover one. Until then, [section 6.6](#66-adding-a-new-reporting-year) is the procedure.
 
 ### 6.8 Development approach
 
 **Git and GitHub.** Five repositories under `akvo`: the four already described in detail, and
-the content repository described in section 6.9, which handles copy editing. Work is done on
+the content repository described in [section 6.9](#69-the-content-repository), which handles copy editing. Work is done on
 branches and merged through pull requests. Production deploys are triggered by publishing a
 GitHub Release, so what is live is always a tagged commit.
 

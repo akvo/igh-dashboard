@@ -20,6 +20,11 @@ h1, h2, h3, h4 {
   break-after: avoid;
 }
 
+/* A lead-in line and its table, wrapped together by keep-with-table.lua. */
+.keep-together {
+  break-inside: avoid;
+}
+
 /* Each numbered section starts a new page. */
 h2 {
   break-before: page;
