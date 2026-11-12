@@ -1,7 +1,12 @@
 import { getDatabase } from "../connection.js";
 import type { RdPriorityNode, RdPriorityFilter, RdPriorityConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
-import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
+import {
+  buildColumnFilterClauses,
+  buildOrderBy,
+  type ColumnSortInput,
+  type IgnoredInput,
+} from "./columnFilters.js";
 
 import type { DataTableId } from "./columnRegistry.js";
 
@@ -15,6 +20,7 @@ const MAX_LIMIT = 100;
 function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITIES") {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
+  const ignored: IgnoredInput[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
@@ -30,10 +36,11 @@ function buildWhere(filter?: RdPriorityFilter, table: DataTableId = "RD_PRIORITI
     const cf = buildColumnFilterClauses(table, filter.column_filters);
     conditions.push(...cf.conditions);
     params.push(...cf.params);
+    ignored.push(...cf.ignored);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-  return { whereClause, params };
+  return { whereClause, params, ignored };
 }
 
 // =========================================================
@@ -53,10 +60,10 @@ export function getRdPrioritiesWithCandidates(
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES_WITH_CANDIDATES");
+  const { whereClause, params, ignored } = buildWhere(filter, "RD_PRIORITIES_WITH_CANDIDATES");
 
-  const orderBy =
-    buildOrderBy("RD_PRIORITIES_WITH_CANDIDATES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
+  const sortResult = buildOrderBy("RD_PRIORITIES_WITH_CANDIDATES", sort);
+  const orderBy = sortResult.orderBy ?? "ORDER BY p.priority_name NULLS LAST";
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
@@ -104,6 +111,7 @@ export function getRdPrioritiesWithCandidates(
     nodes,
     totalCount,
     hasNextPage: offset + nodes.length < totalCount,
+    ignoredInputs: [...ignored, ...sortResult.ignored],
   };
 }
 
@@ -122,9 +130,10 @@ export function getRdPriorities(
 ): RdPriorityConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, params } = buildWhere(filter, "RD_PRIORITIES");
+  const { whereClause, params, ignored } = buildWhere(filter, "RD_PRIORITIES");
 
-  const orderBy = buildOrderBy("RD_PRIORITIES", sort) ?? "ORDER BY p.priority_name NULLS LAST";
+  const sortResult = buildOrderBy("RD_PRIORITIES", sort);
+  const orderBy = sortResult.orderBy ?? "ORDER BY p.priority_name NULLS LAST";
 
   const joins = `
     LEFT JOIN dim_disease d ON p.disease_key = d.disease_key
@@ -168,5 +177,6 @@ export function getRdPriorities(
     nodes,
     totalCount,
     hasNextPage: offset + nodes.length < totalCount,
+    ignoredInputs: [...ignored, ...sortResult.ignored],
   };
 }

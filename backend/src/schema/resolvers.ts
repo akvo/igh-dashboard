@@ -37,6 +37,7 @@ import { getClinicalTrials } from "../db/queries/clinicalTrials.js";
 import { getPortfolioCandidates } from "../db/queries/portfolioCandidates.js";
 import { getRdPrioritiesWithCandidates, getRdPriorities } from "../db/queries/rdPriorities.js";
 import { getDistinctValues } from "../db/queries/distinctValues.js";
+import { describeColumns, type DataTableId } from "../db/queries/columnRegistry.js";
 import {
   getDiseases,
   getSecondaryDiseases,
@@ -305,6 +306,9 @@ export const resolvers = {
         offset?: number;
       },
     ) => getRdPriorities(args.filter, args.sort ?? null, args.limit ?? 20, args.offset ?? 0),
+
+    // Column names column_filters and sort accept, per table.
+    tableColumns: (_: unknown, args: { table: DataTableId }) => describeColumns(args.table),
 
     // DataTable category-filter dropdown options (one column at a time).
     distinctValues: (

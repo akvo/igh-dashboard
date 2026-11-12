@@ -18,14 +18,23 @@
 // separator and matching each token); aggregated columns in the registry are
 // flagged TEXT so the dropdown UI never offers them as a category filter.
 //
+// Unusable inputs are ignored rather than rejected, so a saved dashboard URL
+// keeps working after a column is renamed or removed. Each ignored input is
+// reported back (`ignored`) so an API caller can see that a filter or sort
+// had no effect: an unknown column, a NUMBER/DATE filter on a column of
+// another kind, CATEGORY on a number, date or aggregated column, or a sort on
+// an unsortable column. On a known column, blank values (empty text, empty
+// category list, no operator or no usable number or date) are the normal
+// "filter cleared" state and are not reported.
+//
 // NUMBER and DATE operate on registered columns only. Bad input (non-finite
-// numbers, malformed dates) is dropped silently — the frontend should be
-// validating before send, but the resolver defends in depth. BETWEEN with one
+// numbers, malformed dates) is dropped without a report — the frontend should
+// be validating before send, but the resolver defends in depth. BETWEEN with one
 // bound null degrades to single-sided (>= or <= only); both null is a no-op.
 // DATE EQ and BETWEEN wrap both sides in `DATE()` so a column carrying a
 // timestamp still matches by calendar day.
 
-import { resolveColumn, type DataTableId } from "./columnRegistry.js";
+import { resolveColumn, type ColumnDef, type DataTableId } from "./columnRegistry.js";
 
 export type ColumnFilterOperator = "EQ" | "LT" | "GT" | "BEFORE" | "AFTER" | "BETWEEN";
 
@@ -56,6 +65,27 @@ export interface FilterFragment {
   params: (string | number)[];
 }
 
+export type IgnoredReason =
+  | "UNKNOWN_COLUMN"
+  | "KIND_MISMATCH"
+  | "NOT_SORTABLE"
+  | "AGGREGATED_CATEGORY";
+
+export interface IgnoredInput {
+  input: "FILTER" | "SORT";
+  column: string;
+  reason: IgnoredReason;
+}
+
+export interface ColumnFilterResult extends FilterFragment {
+  ignored: IgnoredInput[];
+}
+
+export interface OrderByResult {
+  orderBy: string | null;
+  ignored: IgnoredInput[];
+}
+
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function escapeLikePattern(input: string): string {
@@ -82,17 +112,13 @@ function emitText(sqlExpr: string, f: ColumnFilterInput): FilterFragment | null 
   };
 }
 
-function emitCategory(
-  sqlExpr: string,
-  isAggregated: boolean,
-  f: ColumnFilterInput,
-): FilterFragment | null {
-  const values = (f.values ?? []).filter((v) => v !== null && v !== undefined);
+function categoryValues(f: ColumnFilterInput): string[] {
+  return (f.values ?? []).filter((v) => v !== null && v !== undefined);
+}
+
+function emitCategory(sqlExpr: string, f: ColumnFilterInput): FilterFragment | null {
+  const values = categoryValues(f);
   if (values.length === 0) return null;
-  // CATEGORY on aggregated columns is unsupported (the dropdown
-  // registry never offers it). Treat as no-op rather than emit
-  // broken SQL.
-  if (isAggregated) return null;
   const placeholders = values.map(() => "?").join(", ");
   return {
     conditions: [`${sqlExpr} IN (${placeholders})`],
@@ -165,55 +191,97 @@ function emitDate(sqlExpr: string, f: ColumnFilterInput): FilterFragment | null 
   return null;
 }
 
-// eslint-disable-next-line complexity -- four kinds × kind-mismatch guards
+// A filter with no value to apply: the dashboard's "filter cleared" state.
+// Checked before the kind rules so a cleared filter is never reported.
+function isBlankFilter(f: ColumnFilterInput): boolean {
+  if (f.kind === "TEXT") return (f.text ?? "").trim() === "";
+  if (f.kind === "CATEGORY") return categoryValues(f).length === 0;
+  if (!f.operator) return true;
+  if (f.kind === "NUMBER") {
+    return !Number.isFinite(f.number_value) && !Number.isFinite(f.number_value_end);
+  }
+  const isDate = (d: string | null | undefined) => typeof d === "string" && ISO_DATE.test(d);
+  return !isDate(f.date_value) && !isDate(f.date_value_end);
+}
+
+const isNumberOrDate = (kind: ColumnFilterInput["kind"]) => kind === "NUMBER" || kind === "DATE";
+
+// Why a filter on a registered column can't be applied, or null if it can.
+// TEXT is allowed on any column: a substring match on a number or date
+// still means something. CATEGORY on a number or date column compares
+// strings with stored values and would quietly match nothing.
+function filterIgnoredReason(def: ColumnDef, f: ColumnFilterInput): IgnoredReason | null {
+  if (isNumberOrDate(f.kind) && def.filterKind !== f.kind) return "KIND_MISMATCH";
+  if (f.kind === "CATEGORY" && isNumberOrDate(def.filterKind)) return "KIND_MISMATCH";
+  // Matching a value inside a "; "-joined list needs a split, which isn't
+  // built; registering these columns as TEXT keeps the dashboard off it.
+  if (f.kind === "CATEGORY" && def.isAggregated) return "AGGREGATED_CATEGORY";
+  return null;
+}
+
+function emitFilter(def: ColumnDef, f: ColumnFilterInput): FilterFragment | null {
+  if (f.kind === "TEXT") return emitText(def.sqlExpr, f);
+  if (f.kind === "CATEGORY") return emitCategory(def.sqlExpr, f);
+  if (f.kind === "NUMBER") return emitNumber(def.sqlExpr, f);
+  if (f.kind === "DATE") return emitDate(def.sqlExpr, f);
+  return null;
+}
+
 export function buildColumnFilterClauses(
   table: DataTableId,
   filters: ColumnFilterInput[] | null | undefined,
-): FilterFragment {
-  if (!filters || filters.length === 0) return { conditions: [], params: [] };
-
+): ColumnFilterResult {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
+  const ignored: IgnoredInput[] = [];
 
-  for (const f of filters) {
+  for (const f of filters ?? []) {
     const def = resolveColumn(table, f.column);
-    if (!def) continue; // Forward-compat: drop unknown columns silently.
-
-    let frag: FilterFragment | null = null;
-    if (f.kind === "TEXT") {
-      frag = emitText(def.sqlExpr, f);
-    } else if (f.kind === "CATEGORY") {
-      frag = emitCategory(def.sqlExpr, def.isAggregated, f);
-    } else if (f.kind === "NUMBER" && def.filterKind === "NUMBER") {
-      frag = emitNumber(def.sqlExpr, f);
-    } else if (f.kind === "DATE" && def.filterKind === "DATE") {
-      frag = emitDate(def.sqlExpr, f);
+    // An unknown column is reported even when blank, because a caller who
+    // mistypes a name should hear about it whatever the value.
+    if (!def) {
+      ignored.push({ input: "FILTER", column: f.column, reason: "UNKNOWN_COLUMN" });
+      continue;
+    }
+    if (isBlankFilter(f)) continue;
+    const reason = filterIgnoredReason(def, f);
+    if (reason) {
+      ignored.push({ input: "FILTER", column: f.column, reason });
+      continue;
     }
 
+    const frag = emitFilter(def, f);
     if (frag) {
       conditions.push(...frag.conditions);
       params.push(...frag.params);
     }
   }
 
-  return { conditions, params };
+  return { conditions, params, ignored };
 }
 
 export function buildOrderBy(
   table: DataTableId,
   sorts: ColumnSortInput[] | null | undefined,
-): string | null {
-  if (!sorts || sorts.length === 0) return null;
+): OrderByResult {
   // One term per valid level, in priority order. Unknown / unsortable
-  // columns are skipped silently (forward-compat with stale URLs), and
-  // an all-invalid list degrades to null so callers fall back to their
-  // per-table default ORDER BY.
+  // columns are skipped (forward-compat with stale URLs) and reported,
+  // and an all-invalid list degrades to null so callers fall back to
+  // their per-table default ORDER BY.
   const terms: string[] = [];
-  for (const sort of sorts) {
+  const ignored: IgnoredInput[] = [];
+  for (const sort of sorts ?? []) {
     const def = resolveColumn(table, sort.column);
-    if (!def || !def.sortable) continue;
+    if (!def || !def.sortable) {
+      ignored.push({
+        input: "SORT",
+        column: sort.column,
+        reason: def ? "NOT_SORTABLE" : "UNKNOWN_COLUMN",
+      });
+      continue;
+    }
     const dir = sort.direction === "DESC" ? "DESC" : "ASC";
     terms.push(`${def.sqlExpr} ${dir} NULLS LAST`);
   }
-  return terms.length === 0 ? null : `ORDER BY ${terms.join(", ")}`;
+  return { orderBy: terms.length === 0 ? null : `ORDER BY ${terms.join(", ")}`, ignored };
 }

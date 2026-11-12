@@ -5,7 +5,12 @@ import type {
   PortfolioCandidateConnection,
 } from "../types.js";
 import { addArrayCondition, PIPELINE_FILTER } from "./filterUtils.js";
-import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
+import {
+  buildColumnFilterClauses,
+  buildOrderBy,
+  type ColumnSortInput,
+  type IgnoredInput,
+} from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
 
@@ -44,6 +49,7 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
   const conditions = ["f.is_active_flag = 1", PIPELINE_FILTER];
   const params: (string | number)[] = [];
   const extraJoins: string[] = [];
+  const ignored: IgnoredInput[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
@@ -64,12 +70,14 @@ function buildWhere(filter?: PortfolioCandidateFilter) {
     const cf = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", filter.column_filters);
     conditions.push(...cf.conditions);
     params.push(...cf.params);
+    ignored.push(...cf.ignored);
   }
 
   return {
     whereClause: `WHERE ${conditions.join(" AND ")}`,
     extraJoins: extraJoins.join("\n    "),
     params,
+    ignored,
   };
 }
 
@@ -95,10 +103,10 @@ export function getPortfolioCandidates(
 ): PortfolioCandidateConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { whereClause, extraJoins, params } = buildWhere(filter);
+  const { whereClause, extraJoins, params, ignored } = buildWhere(filter);
 
-  const orderBy =
-    buildOrderBy("PORTFOLIO_CANDIDATES", sort) ?? "ORDER BY c.candidate_name NULLS LAST";
+  const sortResult = buildOrderBy("PORTFOLIO_CANDIDATES", sort);
+  const orderBy = sortResult.orderBy ?? "ORDER BY c.candidate_name NULLS LAST";
 
   const countSql = `
     SELECT COUNT(DISTINCT c.candidate_key) as total
@@ -186,5 +194,6 @@ export function getPortfolioCandidates(
     nodes,
     totalCount,
     hasNextPage: offset + nodes.length < totalCount,
+    ignoredInputs: [...ignored, ...sortResult.ignored],
   };
 }

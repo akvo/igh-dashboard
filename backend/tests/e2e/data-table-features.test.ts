@@ -225,3 +225,111 @@ describe("DataTable GraphQL features (e2e)", () => {
     expect(data.distinctValues.length).toBeGreaterThan(1);
   });
 });
+
+interface IgnoredInput {
+  input: "FILTER" | "SORT";
+  column: string;
+  reason: string;
+}
+
+describe("Ignored filter and sort inputs are reported on portfolioCandidates (e2e)", () => {
+  it("portfolioCandidates ignores an unknown filter column, returns the full set and reports it", async () => {
+    const { data: all } = await query<{ portfolioCandidates: { totalCount: number } }>(
+      `query Q { portfolioCandidates(limit: 1) { totalCount } }`,
+    );
+    const { data } = await query<{
+      portfolioCandidates: { totalCount: number; ignoredInputs: IgnoredInput[] };
+    }>(
+      `query Q {
+        portfolioCandidates(
+          filter: {
+            column_filters: [
+              { column: "primary_disease_name", kind: CATEGORY, values: ["Malaria"] }
+            ]
+          }
+          limit: 1
+        ) {
+          totalCount
+          ignoredInputs { input column reason }
+        }
+      }`,
+    );
+    expect(data.portfolioCandidates.totalCount).toBe(all.portfolioCandidates.totalCount);
+    expect(data.portfolioCandidates.ignoredInputs).toEqual([
+      { input: "FILTER", column: "primary_disease_name", reason: "UNKNOWN_COLUMN" },
+    ]);
+  });
+
+  it("portfolioCandidates reports nothing when every input is used", async () => {
+    const { data } = await query<{ portfolioCandidates: { ignoredInputs: IgnoredInput[] } }>(
+      `query Q {
+        portfolioCandidates(
+          filter: { column_filters: [{ column: "indication", kind: TEXT, text: "tb" }] }
+          sort: { column: "candidate_name", direction: ASC }
+          limit: 1
+        ) {
+          ignoredInputs { input column reason }
+        }
+      }`,
+    );
+    expect(data.portfolioCandidates.ignoredInputs).toEqual([]);
+  });
+});
+
+describe("Ignored sort inputs are reported on the other list queries (e2e)", () => {
+  it("clinicalTrials reports an unsortable sort column", async () => {
+    const { data } = await query<{ clinicalTrials: { ignoredInputs: IgnoredInput[] } }>(
+      `query Q {
+        clinicalTrials(sort: { column: "locations", direction: ASC }, limit: 1) {
+          ignoredInputs { input column reason }
+        }
+      }`,
+    );
+    expect(data.clinicalTrials.ignoredInputs).toEqual([
+      { input: "SORT", column: "locations", reason: "NOT_SORTABLE" },
+    ]);
+  });
+
+  it("rdPriorities and rdPrioritiesWithCandidates report an unknown sort column", async () => {
+    const { data } = await query<{
+      rdPriorities: { ignoredInputs: IgnoredInput[] };
+      rdPrioritiesWithCandidates: { ignoredInputs: IgnoredInput[] };
+    }>(
+      `query Q {
+        rdPriorities(sort: { column: "ghost", direction: ASC }, limit: 1) {
+          ignoredInputs { input column reason }
+        }
+        rdPrioritiesWithCandidates(sort: { column: "ghost", direction: ASC }, limit: 1) {
+          ignoredInputs { input column reason }
+        }
+      }`,
+    );
+    const expected = [{ input: "SORT", column: "ghost", reason: "UNKNOWN_COLUMN" }];
+    expect(data.rdPriorities.ignoredInputs).toEqual(expected);
+    expect(data.rdPrioritiesWithCandidates.ignoredInputs).toEqual(expected);
+  });
+});
+
+describe("tableColumns (e2e)", () => {
+  it("lists the accepted columns for a table, with notes", async () => {
+    const { data } = await query<{
+      tableColumns: Array<{
+        name: string;
+        filterKind: string;
+        sortable: boolean;
+        aggregated: boolean;
+        note: string | null;
+      }>;
+    }>(
+      `query Q {
+        tableColumns(table: PORTFOLIO_CANDIDATES) { name filterKind sortable aggregated note }
+      }`,
+    );
+    const names = data.tableColumns.map((c) => c.name);
+    expect(names).toContain("disease_name");
+    expect(names).not.toContain("primary_disease_name");
+    const disease = data.tableColumns.find((c) => c.name === "disease_name");
+    expect(disease).toMatchObject({ filterKind: "CATEGORY", sortable: true, aggregated: false });
+    expect(disease?.note).toContain("Malaria");
+  });
+});

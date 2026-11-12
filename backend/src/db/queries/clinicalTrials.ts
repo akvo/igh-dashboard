@@ -1,7 +1,12 @@
 import { getDatabase } from "../connection.js";
 import type { ClinicalTrialNode, ClinicalTrialFilter, ClinicalTrialConnection } from "../types.js";
 import { addArrayCondition } from "./filterUtils.js";
-import { buildColumnFilterClauses, buildOrderBy, type ColumnSortInput } from "./columnFilters.js";
+import {
+  buildColumnFilterClauses,
+  buildOrderBy,
+  type ColumnSortInput,
+  type IgnoredInput,
+} from "./columnFilters.js";
 
 const MAX_LIMIT = 100;
 
@@ -17,6 +22,7 @@ function buildWhere(filter?: ClinicalTrialFilter) {
   ];
   const conditions: string[] = [];
   const params: (string | number)[] = [];
+  const ignored: IgnoredInput[] = [];
 
   addArrayCondition(filter?.global_health_areas, "d.global_health_area", conditions, params);
   addArrayCondition(filter?.primary_disease_names, "d.disease_filter", conditions, params);
@@ -34,11 +40,12 @@ function buildWhere(filter?: ClinicalTrialFilter) {
     const cf = buildColumnFilterClauses("CLINICAL_TRIALS", filter.column_filters);
     conditions.push(...cf.conditions);
     params.push(...cf.params);
+    ignored.push(...cf.ignored);
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  return { joins, whereClause, params };
+  return { joins, whereClause, params, ignored };
 }
 
 /**
@@ -52,9 +59,10 @@ export function getClinicalTrials(
 ): ClinicalTrialConnection {
   limit = Math.min(limit, MAX_LIMIT);
   const db = getDatabase();
-  const { joins, whereClause, params } = buildWhere(filter);
+  const { joins, whereClause, params, ignored } = buildWhere(filter);
 
-  const orderBy = buildOrderBy("CLINICAL_TRIALS", sort) ?? "ORDER BY t.trial_id DESC NULLS LAST";
+  const sortResult = buildOrderBy("CLINICAL_TRIALS", sort);
+  const orderBy = sortResult.orderBy ?? "ORDER BY t.trial_id DESC NULLS LAST";
 
   const countSql = `
     SELECT COUNT(DISTINCT t.trial_id) as total
@@ -107,5 +115,6 @@ export function getClinicalTrials(
     nodes,
     totalCount,
     hasNextPage: offset + nodes.length < totalCount,
+    ignoredInputs: [...ignored, ...sortResult.ignored],
   };
 }

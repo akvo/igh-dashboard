@@ -764,7 +764,7 @@ effect, and why:
 | Reason | Meaning |
 | --- | --- |
 | `UNKNOWN_COLUMN` | The table has no column of that name. Check `tableColumns`. |
-| `KIND_MISMATCH` | A `NUMBER` or `DATE` filter on a column of another kind. |
+| `KIND_MISMATCH` | A `NUMBER` or `DATE` filter on a column of another kind, or a `CATEGORY` filter on a number or date column. |
 | `NOT_SORTABLE` | A `sort` on a column that cannot be sorted. |
 | `AGGREGATED_CATEGORY` | A `CATEGORY` filter on a list column. Use `TEXT` instead. |
 
