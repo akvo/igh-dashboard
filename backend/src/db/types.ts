@@ -3,9 +3,9 @@
  * Column names match DB column names for transparent mapping.
  */
 
-import type { ColumnFilterInput, ColumnSortInput } from "./queries/columnFilters.js";
+import type { ColumnFilterInput, ColumnSortInput, IgnoredInput } from "./queries/columnFilters.js";
 
-export type { ColumnFilterInput, ColumnSortInput };
+export type { ColumnFilterInput, ColumnSortInput, IgnoredInput };
 
 // =============================================================================
 // DIMENSION TABLES
@@ -394,6 +394,7 @@ export interface ClinicalTrialConnection {
   nodes: ClinicalTrialNode[];
   totalCount: number;
   hasNextPage: boolean;
+  ignoredInputs: IgnoredInput[];
 }
 
 export interface PortfolioCandidateNode {
@@ -466,6 +467,7 @@ export interface PortfolioCandidateConnection {
   nodes: PortfolioCandidateNode[];
   totalCount: number;
   hasNextPage: boolean;
+  ignoredInputs: IgnoredInput[];
 }
 
 export interface ApprovalStatusRow {
@@ -533,6 +535,7 @@ export interface RdPriorityConnection {
   nodes: RdPriorityNode[];
   totalCount: number;
   hasNextPage: boolean;
+  ignoredInputs: IgnoredInput[];
 }
 
 // =============================================================================

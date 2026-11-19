@@ -7,7 +7,7 @@ import {
 describe("buildColumnFilterClauses", () => {
   it("returns empty fragment for no filters", () => {
     const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", []);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({ conditions: [], params: [], ignored: [] });
   });
 
   it("emits LIKE for a TEXT filter on a scalar column", () => {
@@ -42,23 +42,114 @@ describe("buildColumnFilterClauses", () => {
     const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
       { column: "technology_type", kind: "CATEGORY", values: [] },
     ]);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({ conditions: [], params: [], ignored: [] });
   });
 
   it("skips empty/whitespace TEXT values (no constraint)", () => {
     const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
       { column: "indication", kind: "TEXT", text: "   " },
     ]);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({ conditions: [], params: [], ignored: [] });
   });
 
-  it("skips unknown column accessors silently (forward-compat)", () => {
+  it("skips unknown column accessors and reports them (forward-compat)", () => {
     const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
       { column: "nonexistent_column", kind: "TEXT", text: "foo" },
       { column: "indication", kind: "TEXT", text: "bar" },
     ]);
     expect(result.conditions).toEqual(["c.indication LIKE ?"]);
     expect(result.params).toEqual(["%bar%"]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "nonexistent_column", reason: "UNKNOWN_COLUMN" },
+    ]);
+  });
+
+  it("reports an unknown column even when its value is blank", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "primary_disease_name", kind: "CATEGORY", values: [] },
+    ]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "primary_disease_name", reason: "UNKNOWN_COLUMN" },
+    ]);
+  });
+
+  it("reports a NUMBER or DATE filter on a column of another kind", () => {
+    const result = buildColumnFilterClauses("CLINICAL_TRIALS", [
+      { column: "status", kind: "DATE", operator: "EQ", date_value: "2025-01-15" },
+      { column: "start_date", kind: "NUMBER", operator: "EQ", number_value: 3 },
+    ]);
+    expect(result.conditions).toEqual([]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "status", reason: "KIND_MISMATCH" },
+      { input: "FILTER", column: "start_date", reason: "KIND_MISMATCH" },
+    ]);
+  });
+
+  it("reports a CATEGORY filter on an aggregated column", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "developers_agg", kind: "CATEGORY", values: ["GSK"] },
+    ]);
+    expect(result.conditions).toEqual([]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "developers_agg", reason: "AGGREGATED_CATEGORY" },
+    ]);
+  });
+
+  it("does not report blank values on a known column (filter cleared)", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "indication", kind: "TEXT", text: "" },
+      { column: "technology_type", kind: "CATEGORY", values: [] },
+    ]);
+    expect(result.ignored).toEqual([]);
+  });
+
+  it("does not report a blank filter whose kind can't apply to the column", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "developers_agg", kind: "CATEGORY", values: [] },
+    ]);
+    expect(result.ignored).toEqual([]);
+    const trials = buildColumnFilterClauses("CLINICAL_TRIALS", [
+      { column: "status", kind: "DATE" },
+      { column: "status", kind: "NUMBER", operator: "EQ", number_value: null },
+      { column: "start_date", kind: "CATEGORY", values: [] },
+    ]);
+    expect(trials.ignored).toEqual([]);
+    expect(trials.conditions).toEqual([]);
+  });
+
+  it("reports a CATEGORY filter on a number or date column", () => {
+    const result = buildColumnFilterClauses("CLINICAL_TRIALS", [
+      { column: "start_date", kind: "CATEGORY", values: ["2025"] },
+      { column: "enrollment_count", kind: "CATEGORY", values: ["100"] },
+    ]);
+    expect(result.conditions).toEqual([]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "start_date", reason: "KIND_MISMATCH" },
+      { input: "FILTER", column: "enrollment_count", reason: "KIND_MISMATCH" },
+    ]);
+  });
+
+  it("still applies a TEXT filter to a date column", () => {
+    const result = buildColumnFilterClauses("CLINICAL_TRIALS", [
+      { column: "start_date", kind: "TEXT", text: "2025" },
+    ]);
+    expect(result.ignored).toEqual([]);
+    expect(result.conditions).toHaveLength(1);
+  });
+
+  it("reports names every JavaScript object has as unknown columns", () => {
+    const result = buildColumnFilterClauses("PORTFOLIO_CANDIDATES", [
+      { column: "constructor", kind: "TEXT", text: "x" },
+      { column: "toString", kind: "CATEGORY", values: ["x"] },
+    ]);
+    expect(result.conditions).toEqual([]);
+    expect(result.ignored).toEqual([
+      { input: "FILTER", column: "constructor", reason: "UNKNOWN_COLUMN" },
+      { input: "FILTER", column: "toString", reason: "UNKNOWN_COLUMN" },
+    ]);
+    expect(
+      buildOrderBy("PORTFOLIO_CANDIDATES", [{ column: "constructor", direction: "ASC" }]).ignored,
+    ).toEqual([{ input: "SORT", column: "constructor", reason: "UNKNOWN_COLUMN" }]);
   });
 
   it("escapes LIKE wildcards in user input", () => {
@@ -90,7 +181,7 @@ describe("buildColumnFilterClauses", () => {
     // Stub: register a synthetic NUMBER column on a known table to
     // exercise the builder. We use trial_id once it gains a NUMBER
     // entry; absent registration the builder drops the filter.
-    // This test asserts the dropped-silently behavior for now.
+    // This test asserts the dropped-and-reported behavior for now.
     const result = buildColumnFilterClauses("CLINICAL_TRIALS", [
       {
         column: "trial_id",
@@ -99,7 +190,11 @@ describe("buildColumnFilterClauses", () => {
         number_value: 50,
       },
     ]);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({
+      conditions: [],
+      params: [],
+      ignored: [{ input: "FILTER", column: "trial_id", reason: "UNKNOWN_COLUMN" }],
+    });
   });
 
   it("DATE eq wraps both sides in DATE() so timestamps match by day", () => {
@@ -179,7 +274,7 @@ describe("buildColumnFilterClauses", () => {
         date_value_end: null,
       },
     ]);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({ conditions: [], params: [], ignored: [] });
   });
 
   it("DATE invalid yyyy-mm-dd is dropped silently", () => {
@@ -191,20 +286,20 @@ describe("buildColumnFilterClauses", () => {
         date_value: "not-a-date",
       },
     ]);
-    expect(result).toEqual({ conditions: [], params: [] });
+    expect(result).toEqual({ conditions: [], params: [], ignored: [] });
   });
 });
 
 describe("buildOrderBy", () => {
   it("returns null for no sort", () => {
-    expect(buildOrderBy("PORTFOLIO_CANDIDATES", null)).toBeNull();
-    expect(buildOrderBy("PORTFOLIO_CANDIDATES", [])).toBeNull();
+    expect(buildOrderBy("PORTFOLIO_CANDIDATES", null)).toEqual({ orderBy: null, ignored: [] });
+    expect(buildOrderBy("PORTFOLIO_CANDIDATES", [])).toEqual({ orderBy: null, ignored: [] });
   });
 
   it("emits ORDER BY for a single sortable column ASC", () => {
     expect(
       buildOrderBy("PORTFOLIO_CANDIDATES", [{ column: "candidate_name", direction: "ASC" }]),
-    ).toBe("ORDER BY c.candidate_name ASC NULLS LAST");
+    ).toEqual({ orderBy: "ORDER BY c.candidate_name ASC NULLS LAST", ignored: [] });
   });
 
   it("emits multi-term ORDER BY preserving priority order", () => {
@@ -212,26 +307,32 @@ describe("buildOrderBy", () => {
       buildOrderBy("PORTFOLIO_CANDIDATES", [
         { column: "current_rd_stage", direction: "DESC" },
         { column: "candidate_name", direction: "ASC" },
-      ]),
+      ]).orderBy,
     ).toBe("ORDER BY c.current_rd_stage DESC NULLS LAST, c.candidate_name ASC NULLS LAST");
   });
 
-  it("skips unsortable / unknown columns, keeps valid ones", () => {
+  it("skips unsortable / unknown columns, keeps valid ones, reports the skipped", () => {
     expect(
       buildOrderBy("PORTFOLIO_CANDIDATES", [
         { column: "indication", direction: "ASC" }, // unsortable
         { column: "ghost_col", direction: "ASC" }, // unknown
         { column: "candidate_name", direction: "DESC" },
       ]),
-    ).toBe("ORDER BY c.candidate_name DESC NULLS LAST");
+    ).toEqual({
+      orderBy: "ORDER BY c.candidate_name DESC NULLS LAST",
+      ignored: [
+        { input: "SORT", column: "indication", reason: "NOT_SORTABLE" },
+        { input: "SORT", column: "ghost_col", reason: "UNKNOWN_COLUMN" },
+      ],
+    });
   });
 
-  it("returns null when no valid column remains (silently)", () => {
-    expect(
-      buildOrderBy("PORTFOLIO_CANDIDATES", [
-        { column: "indication", direction: "ASC" },
-        { column: "ghost_col", direction: "ASC" },
-      ]),
-    ).toBeNull();
+  it("returns null when no valid column remains", () => {
+    const result = buildOrderBy("PORTFOLIO_CANDIDATES", [
+      { column: "indication", direction: "ASC" },
+      { column: "ghost_col", direction: "ASC" },
+    ]);
+    expect(result.orderBy).toBeNull();
+    expect(result.ignored).toHaveLength(2);
   });
 });

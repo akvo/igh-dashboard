@@ -391,6 +391,7 @@ export const typeDefs = `#graphql
     nodes: [PortfolioCandidateNode!]!
     totalCount: Int!
     hasNextPage: Boolean!
+    ignoredInputs: [IgnoredInput!]!
   }
 
   type ClinicalTrialNode {
@@ -428,6 +429,7 @@ export const typeDefs = `#graphql
     nodes: [ClinicalTrialNode!]!
     totalCount: Int!
     hasNextPage: Boolean!
+    ignoredInputs: [IgnoredInput!]!
   }
 
   type CandidateGeography {
@@ -464,6 +466,7 @@ export const typeDefs = `#graphql
     nodes: [RdPriorityNode!]!
     totalCount: Int!
     hasNextPage: Boolean!
+    ignoredInputs: [IgnoredInput!]!
   }
 
   # =============================================================================
@@ -527,6 +530,36 @@ export const typeDefs = `#graphql
     CLINICAL_TRIALS
     RD_PRIORITIES
     RD_PRIORITIES_WITH_CANDIDATES
+  }
+
+  # A column_filters or sort entry that had no effect. These are ignored
+  # rather than rejected so saved dashboard URLs keep working after a column
+  # is renamed or removed; list queries report them in ignoredInputs.
+  enum IgnoredInputType {
+    FILTER
+    SORT
+  }
+
+  enum IgnoredInputReason {
+    UNKNOWN_COLUMN       # not a column of this table; see tableColumns
+    KIND_MISMATCH        # NUMBER/DATE filter on another kind of column, or CATEGORY on a NUMBER/DATE column
+    NOT_SORTABLE         # sort on a column that can't be sorted
+    AGGREGATED_CATEGORY  # CATEGORY filter on a list column; use TEXT
+  }
+
+  type IgnoredInput {
+    input: IgnoredInputType!
+    column: String!
+    reason: IgnoredInputReason!
+  }
+
+  # One column that column_filters and sort accept for a table.
+  type ColumnDescription {
+    name: String!
+    filterKind: ColumnFilterKind!
+    sortable: Boolean!
+    aggregated: Boolean!
+    note: String
   }
 
   # Generic context filter used by distinctValues. Any irrelevant fields
@@ -778,6 +811,10 @@ export const typeDefs = `#graphql
     # the requesting column's own entry from column_filters so dropdown
     # values stay contextual.
     distinctValues(table: DataTable!, column: String!, filter: ColumnFilterContext): [String!]!
+
+    # The column names column_filters and sort accept for a table. Use
+    # distinctValues for the valid values of a CATEGORY column.
+    tableColumns(table: DataTable!): [ColumnDescription!]!
 
     # Portfolio analysis - clinical trial stats (trials tab)
     clinicalTrialStats(global_health_areas: [String!], primary_disease_names: [String!], secondary_disease_names: [String!], product_names: [String!], phase_names: [String!]): ClinicalTrialStats!

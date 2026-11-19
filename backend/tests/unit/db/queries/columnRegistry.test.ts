@@ -3,6 +3,8 @@ import {
   resolveColumn,
   isCategoryColumn,
   TABLE_COLUMNS,
+  describeColumns,
+  type DataTableId,
 } from "../../../../src/db/queries/columnRegistry.js";
 
 describe("columnRegistry", () => {
@@ -33,6 +35,10 @@ describe("columnRegistry", () => {
 
   it("returns null for an unknown column", () => {
     expect(resolveColumn("PORTFOLIO_CANDIDATES", "nonexistent")).toBeNull();
+    // Names every JavaScript object has are not columns.
+    for (const name of ["constructor", "toString", "hasOwnProperty", "__proto__"]) {
+      expect(resolveColumn("PORTFOLIO_CANDIDATES", name)).toBeNull();
+    }
   });
 
   it("isCategoryColumn returns true only for CATEGORY columns", () => {
@@ -64,6 +70,48 @@ describe("disease_name aligns filter/sort with the displayed specific disease", 
       sortable: true,
       filterKind: "CATEGORY",
       isAggregated: false,
+      note: expect.stringContaining("Malaria – <strain>"),
     });
+  });
+});
+
+describe("describeColumns", () => {
+  const tables = Object.keys(TABLE_COLUMNS) as DataTableId[];
+
+  it("lists every registered column of each table, in registry order", () => {
+    for (const table of tables) {
+      expect(describeColumns(table).map((c) => c.name)).toEqual(Object.keys(TABLE_COLUMNS[table]));
+    }
+  });
+
+  it("describes a column by kind, sortability, aggregation and note", () => {
+    const disease = describeColumns("PORTFOLIO_CANDIDATES").find((c) => c.name === "disease_name");
+    expect(disease).toEqual({
+      name: "disease_name",
+      filterKind: "CATEGORY",
+      sortable: true,
+      aggregated: false,
+      note: expect.stringContaining("primary_disease_names"),
+    });
+    const name = describeColumns("PORTFOLIO_CANDIDATES").find((c) => c.name === "candidate_name");
+    expect(name?.note).toBeNull();
+  });
+
+  // Notes are hand-written, so these rules keep the ones a test can check
+  // from falling behind the registry.
+  it("gives every disease_name column a note", () => {
+    for (const table of tables) {
+      const disease = describeColumns(table).find((c) => c.name === "disease_name");
+      if (disease) expect(disease.note, table).toBeTruthy();
+    }
+  });
+
+  it("gives every aggregated column a note and never a CATEGORY filter", () => {
+    for (const table of tables) {
+      for (const col of describeColumns(table).filter((c) => c.aggregated)) {
+        expect(col.note, `${table}.${col.name}`).toBeTruthy();
+        expect(col.filterKind, `${table}.${col.name}`).not.toBe("CATEGORY");
+      }
+    }
   });
 });

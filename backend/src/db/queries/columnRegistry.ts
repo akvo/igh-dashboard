@@ -22,6 +22,10 @@
 //
 // `isAggregated: true` is a hint that filter / sort semantics need to handle
 // concatenated text like "GSK; Merck" (see columnFilters.ts).
+//
+// `note` is returned by the `tableColumns` GraphQL query for API callers. Set
+// it only where the name alone would mislead. Notes are hand-written: if you
+// change a column's `sqlExpr`, re-read its note.
 
 export type DataTableId =
   | "PORTFOLIO_CANDIDATES"
@@ -36,6 +40,21 @@ export interface ColumnDef {
   sortable: boolean;
   filterKind: FilterKind;
   isAggregated: boolean;
+  note?: string;
+}
+
+const DISEASE_NAME_NOTE =
+  "The disease shown in the table: the secondary disease where there is one, otherwise the " +
+  "primary disease. Malaria strains are written 'Malaria – <strain>' (e.g. 'Malaria – P. " +
+  "falciparum'), so 'Malaria' alone matches nothing here. This differs from the top-level " +
+  "primary_disease_names filter, which takes the primary disease ('Malaria'). Use " +
+  "distinctValues for the valid values.";
+
+const AGGREGATED_NOTE =
+  "A '; '-separated list per row (e.g. 'GSK; Merck'). TEXT filter only; it matches a substring.";
+
+function rdStageNote(year: number): string {
+  return `Phase at the latest pipeline snapshot in or before ${year}.`;
 }
 
 // Portfolio candidates columns (Candidates, Approved, Extract — same shape).
@@ -91,6 +110,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
+    note: DISEASE_NAME_NOTE,
   },
   product_name: {
     sqlExpr: "pr.product_name",
@@ -170,6 +190,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: true,
+    note: AGGREGATED_NOTE,
   },
   // Historical R&D stage snapshots (correlated subqueries)
   rd_stage_2023: {
@@ -182,6 +203,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: false,
+    note: rdStageNote(2023),
   },
   rd_stage_2019: {
     sqlExpr:
@@ -193,6 +215,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: false,
+    note: rdStageNote(2019),
   },
   // Free text
   indication: { sqlExpr: "c.indication", sortable: false, filterKind: "TEXT", isAggregated: false },
@@ -239,6 +262,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: true,
+    note: AGGREGATED_NOTE,
   },
   // Unlike developers_agg this column is not pre-aggregated on
   // dim_candidate_core; the list query computes it via correlated
@@ -256,6 +280,7 @@ const PORTFOLIO_CANDIDATES: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: true,
+    note: AGGREGATED_NOTE,
   },
   // Regulatory
   approval_status: {
@@ -358,8 +383,15 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
     sortable: false,
     filterKind: "TEXT",
     isAggregated: true,
+    note: AGGREGATED_NOTE,
   },
-  locations: { sqlExpr: "t.locations", sortable: false, filterKind: "TEXT", isAggregated: true },
+  locations: {
+    sqlExpr: "t.locations",
+    sortable: false,
+    filterKind: "TEXT",
+    isAggregated: true,
+    note: AGGREGATED_NOTE,
+  },
   source_text: {
     sqlExpr: "t.source_text",
     sortable: false,
@@ -372,6 +404,7 @@ const CLINICAL_TRIALS: Record<string, ColumnDef> = {
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
+    note: DISEASE_NAME_NOTE,
   },
   funder_type: {
     sqlExpr: "t.funder_type",
@@ -447,6 +480,7 @@ const RD_PRIORITIES: Record<string, ColumnDef> = {
     sortable: true,
     filterKind: "CATEGORY",
     isAggregated: false,
+    note: DISEASE_NAME_NOTE,
   },
   product_name: {
     sqlExpr: "pr.product_name",
@@ -497,9 +531,32 @@ export const TABLE_COLUMNS: Record<DataTableId, Record<string, ColumnDef>> = {
 };
 
 export function resolveColumn(table: DataTableId, accessor: string): ColumnDef | null {
-  return TABLE_COLUMNS[table]?.[accessor] ?? null;
+  // hasOwn: a plain lookup would also find "constructor", "toString" and
+  // other names every JavaScript object has.
+  const columns = TABLE_COLUMNS[table];
+  return columns && Object.hasOwn(columns, accessor) ? columns[accessor] : null;
 }
 
 export function isCategoryColumn(table: DataTableId, accessor: string): boolean {
   return resolveColumn(table, accessor)?.filterKind === "CATEGORY";
+}
+
+export interface ColumnDescription {
+  name: string;
+  filterKind: FilterKind;
+  sortable: boolean;
+  aggregated: boolean;
+  note: string | null;
+}
+
+// The column names `column_filters` and `sort` accept for a table, in
+// registry order. Backs the `tableColumns` GraphQL query.
+export function describeColumns(table: DataTableId): ColumnDescription[] {
+  return Object.entries(TABLE_COLUMNS[table]).map(([name, def]) => ({
+    name,
+    filterKind: def.filterKind,
+    sortable: def.sortable,
+    aggregated: def.isAggregated,
+    note: def.note ?? null,
+  }));
 }

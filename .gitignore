@@ -18,6 +18,8 @@ coverage
 out/
 # ...but the LLD's rendered diagrams are deliverables, not build output
 !docs/lld/diagrams/out/
+# ...and exported copies of the LLD are built on demand by export-lld.sh
+docs/lld/export/
 
 # production
 build
